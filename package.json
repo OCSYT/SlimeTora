@@ -1,0 +1,17 @@
+{
+  "name": "SlimeTora",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron .",
+    "build-prod": "npx electron-packager . BracketBrowser --asar=true --app-id=com.bracketproto.bracketbrowser --protocol=http --protocol-name='http' --protocol=https --protocol-name='https' --protocol=file --protocol-name='file' --platform=linux,win32 --arch=all --icon='src/renderer/img/BracketBrowser.ico' --overwrite --out='dist/'",
+    "build-dev": "npx electron-packager . BracketBrowser --app-id=com.bracketproto.bracketbrowser --protocol=http --protocol-name='http' --protocol=https --protocol-name='https' --protocol=file --protocol-name='file' --platform=linux,win32 --arch=all --icon='src/renderer/img/BracketBrowser.ico' --overwrite --out='dist/'",
+    "build-installer-all": "node src/installer/build-installer.js --all",
+    "build-installer-web": "node src/installer/build-installer.js --online",
+    "build-installer-x64": "node src/installer/build-installer.js --arch x64",
+    "build-installer-ia32": "node src/installer/build-installer.js --arch ia32",
+    "build-installer-arm64": "node src/installer/build-installer.js --arch arm64"
+  }
+
+}
