@@ -186,7 +186,6 @@ function buildRotationAndSend(rotation, trackerId) {
     const y = rotation["y"];
     const z = rotation["z"];
     const w = rotation["w"];
-    console.log(x,y,z,w);
     const buffer = buildRotationPacket(x, y, z, w, trackerId);
     //console.log(buffer);
 
