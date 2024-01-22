@@ -2,7 +2,7 @@
   "name": "SlimeTora",
   "version": "0.0.1",
   "description": "",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
     "start": "electron .",
     "build-prod": "npx electron-packager . BracketBrowser --asar=true --app-id=com.bracketproto.bracketbrowser --protocol=http --protocol-name='http' --protocol=https --protocol-name='https' --protocol=file --protocol-name='file' --platform=linux,win32 --arch=all --icon='src/renderer/img/BracketBrowser.ico' --overwrite --out='dist/'",

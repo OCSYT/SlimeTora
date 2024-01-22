@@ -1,0 +1,1 @@
+npx electron-packager . SlimeTora --platform=linux,win32 --arch=all --overwrite --out="dist/"
