@@ -157,18 +157,23 @@ ipcMain.on('sendData', (event, postData) => {
     buildRotationAndSend(postData["rotation"], connectedDevices.indexOf(postData["deviceName"]));
 });
 
-function buildRotationPacket(qw, qx, qy, qz, tracker_id) { //THIS FUNCTION NEEDS FIXING/REWRITING
+//broken
+function buildRotationPacket(qx, qy, qz, qw, tracker_id) {
     let buffer = new Uint8Array(128);
     let view = new DataView(buffer.buffer);
-    view.setInt32(0, 17);
-    view.setBigInt64(4, BigInt(PACKET_COUNTER));
-    view.setUint8(12, tracker_id);                        
-    view.setUint8(13, 1);   
-    view.setFloat32(14, -qx, true);
-    view.setFloat32(18, qz, true);
-    view.setFloat32(22, qy, true);
-    view.setFloat32(26, qw, true);
-    view.setUint8(30, 0);  
+
+    view.setInt32(0, 17); 
+    view.setBigInt64(4, BigInt(PACKET_COUNTER));  
+    view.setUint8(12, tracker_id); 
+    view.setUint8(13, 1);
+
+    view.setFloat32(14, qx);
+    view.setFloat32(18, qy);
+    view.setFloat32(22, qz);
+    view.setFloat32(26, qw);
+
+    view.setUint8(30, 0); 
+
     return buffer;
 }
 
@@ -181,9 +186,9 @@ function buildRotationAndSend(rotation, trackerId) {
     const y = rotation["y"];
     const z = rotation["z"];
     const w = rotation["w"];
-
+    console.log(x,y,z,w);
     const buffer = buildRotationPacket(x, y, z, w, trackerId);
-    console.log(buffer);
+    //console.log(buffer);
 
 
     sock.send(buffer, 0, buffer.length, SLIME_PORT, SLIME_IP, (err) => {

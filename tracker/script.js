@@ -81,9 +81,10 @@ async function connectToDevice() {
                     deviceName: IMUData[0].name,
                     deviceId: IMUData[0].id,
                     rotation: {
-                        x: rotation_Euler.x,
-                        y: rotation_Euler.y,
-                        z: rotation_Euler.z
+                        x: IMUData[1].x,
+                        y: IMUData[1].y,
+                        z: IMUData[1].z,
+                        w: IMUData[1].w
                     },
                     accel: {
                         x: IMUData[2].x,
