@@ -162,10 +162,6 @@ function decodeIMUPacket(device, rawdata) {
 
 
 
-
-    const rotationVec = quaternionToEulerAngles(rotation);
-
-
     const gravity = {
         x: dataView.getInt16(8, true) / 256.0,
         y: dataView.getInt16(10, true) / 256.0,
