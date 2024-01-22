@@ -9,6 +9,23 @@ async function connectToTrackers() {
     connecting = false;
 }
 
+function disconnectAllDevices() {
+    for (const deviceId in trackers) {
+        const device = trackerdevices[deviceId];
+        disconnectDevice(device);
+    }
+}
+
+// Add this function to disconnect a specific device
+async function disconnectDevice(device) {
+    try {
+        await device.gatt.disconnect();
+    } catch (error) {
+        console.error('Error disconnecting from Bluetooth device:', error);
+    }
+}
+
+
 async function connectToDevice() {
     try {
         const sensorServiceId = "00dbec3a-90aa-11ed-a1eb-0242ac120002";
@@ -44,6 +61,7 @@ async function connectToDevice() {
         deviceelement.id = device.name;
         devicelist.appendChild(deviceelement);
         trackers[device.id] = { x: 0, y: 0, z: 0 };
+        trackerdevices[device.id] = device;
 
         try {
             const trackercheck = setInterval(async () => {
@@ -101,6 +119,7 @@ async function connectToDevice() {
                 clearInterval(trackercheck);
                 deviceelement.remove();
                 delete trackers[device.id];
+                delete trackerdevices[device.id];
                 const iframe = document.getElementById(device.id + "threejs");
                 iframe.remove();
                 ipc.send("disconnect", device.name);
@@ -117,7 +136,7 @@ async function connectToDevice() {
     }
 }
 
-
+trackerdevices = {};
 trackers = {};
 
 function quaternionToEulerAngles(q) {

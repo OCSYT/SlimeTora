@@ -154,16 +154,26 @@ app.on('ready', createWindow);
 
 ipcMain.on('sendData', (event, postData) => {
     buildAccelAndSend(postData["acceleration"], connectedDevices.indexOf(postData["deviceName"]));
+    PACKET_COUNTER += 1;
     buildRotationAndSend(postData["rotation"], connectedDevices.indexOf(postData["deviceName"]));
+    PACKET_COUNTER += 1;
 });
-
+const struct = require('bufferpack');
 
 function buildAccelPacket(ax, ay, az, trackerID) {
     let buffer = new Uint8Array(128);
     let view = new DataView(buffer.buffer);
+
+    view.setInt32(0, 4); // packet 4 header
+    view.setBigInt64(4, BigInt(PACKET_COUNTER)); // packet counter
+    view.setFloat32(12, ax);
+    view.setFloat32(16, ay);
+    view.setFloat32(20, az);
+    view.setUint8(24, trackerID); // tracker id
     return buffer;
-    //todo
 }
+
+
 
 
 
@@ -171,14 +181,13 @@ function buildAccelAndSend(acceleration, trackerId) {
     const ax = acceleration["x"];
     const ay = acceleration["y"];
     const az = acceleration["z"];
-    console.log(ax,ay,az);
     const buffer = buildAccelPacket(ax, ay, az, trackerId);
 
     sock.send(buffer, 0, buffer.length, SLIME_PORT, SLIME_IP, (err) => {
         if (err) {
             console.error(`Error sending acceleration packet for sensor ${trackerId}:`, err);
         } else {
-            PACKET_COUNTER += 1;
+
         }
     });
 }
@@ -217,7 +226,7 @@ function buildRotationAndSend(rotation, trackerId) {
         if (err) {
             console.error(`Error sending rotation packet for sensor ${trackerId}:`, err);
         } else {
-            PACKET_COUNTER += 1;
+
         }
     });
 }
