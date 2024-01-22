@@ -12,6 +12,8 @@
     "build-installer-x64": "node src/installer/build-installer.js --arch x64",
     "build-installer-ia32": "node src/installer/build-installer.js --arch ia32",
     "build-installer-arm64": "node src/installer/build-installer.js --arch arm64"
+  },
+  "dependencies": {
+    "bufferpack": "^0.0.6"
   }
-
 }

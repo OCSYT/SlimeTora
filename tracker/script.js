@@ -86,7 +86,7 @@ async function connectToDevice() {
                         z: IMUData[1].z,
                         w: IMUData[1].w
                     },
-                    accel: {
+                    acceleration: {
                         x: IMUData[2].x,
                         y: IMUData[2].y,
                         z: IMUData[2].z
@@ -121,7 +121,7 @@ async function connectToDevice() {
 trackers = {};
 
 function quaternionToEulerAngles(q) {
-    return { x: q.x, y: q.y, z: q.z }; //just removing w axis for now
+    return { x: q.x * 100, y: q.y * 100, z: q.z * 100 }; //just removing w axis for now and multiplying by 100
 }
 
 function decodeBatteryPacket(device, data) {
@@ -136,10 +136,10 @@ function decodeIMUPacket(device, rawdata) {
     const dataView = new DataView(rawdata.buffer);
 
     const rotation = {
-        x: dataView.getInt16(0, true) / 180.0 * 1,
-        y: dataView.getInt16(2, true) / 180.0 * 1,
-        z: dataView.getInt16(4, true) / 180.0 * 1 * -1.0,
-        w: dataView.getInt16(6, true) / 180.0 * 1 * -1.0,
+        x: dataView.getInt16(0, true) / 180.0 * 0.01,
+        y: dataView.getInt16(2, true) / 180.0 * 0.01,
+        z: dataView.getInt16(4, true) / 180.0 * 0.01 * -1.0,
+        w: dataView.getInt16(6, true) / 180.0 * 0.01 * -1.0,
     };
 
 

@@ -153,11 +153,36 @@ app.on('ready', createWindow);
 
 
 ipcMain.on('sendData', (event, postData) => {
-
+    buildAccelAndSend(postData["acceleration"], connectedDevices.indexOf(postData["deviceName"]));
     buildRotationAndSend(postData["rotation"], connectedDevices.indexOf(postData["deviceName"]));
 });
 
-//broken
+
+function buildAccelPacket(ax, ay, az, trackerID) {
+    let buffer = new Uint8Array(128);
+    let view = new DataView(buffer.buffer);
+    return buffer;
+    //todo
+}
+
+
+
+function buildAccelAndSend(acceleration, trackerId) {
+    const ax = acceleration["x"];
+    const ay = acceleration["y"];
+    const az = acceleration["z"];
+    console.log(ax,ay,az);
+    const buffer = buildAccelPacket(ax, ay, az, trackerId);
+
+    sock.send(buffer, 0, buffer.length, SLIME_PORT, SLIME_IP, (err) => {
+        if (err) {
+            console.error(`Error sending acceleration packet for sensor ${trackerId}:`, err);
+        } else {
+            PACKET_COUNTER += 1;
+        }
+    });
+}
+
 function buildRotationPacket(qx, qy, qz, qw, tracker_id) {
     let buffer = new Uint8Array(128);
     let view = new DataView(buffer.buffer);
@@ -187,8 +212,6 @@ function buildRotationAndSend(rotation, trackerId) {
     const z = rotation["z"];
     const w = rotation["w"];
     const buffer = buildRotationPacket(x, y, z, w, trackerId);
-    //console.log(buffer);
-
 
     sock.send(buffer, 0, buffer.length, SLIME_PORT, SLIME_IP, (err) => {
         if (err) {
