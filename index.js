@@ -69,6 +69,8 @@ function createWindow() {
         height: 600,
         webPreferences: {
             nodeIntegration: true,
+            sandbox: false,
+            webSecurity: false, //disable sandbox and websecurity so we can request for multiple bluetooth devices without having to do multiple user gestures
             backgroundThrottling: false,
             preload: path.join(__dirname, 'preload.js')
         },
@@ -153,10 +155,13 @@ app.on('ready', createWindow);
 
 
 ipcMain.on('sendData', (event, postData) => {
-    buildAccelAndSend(postData["acceleration"], connectedDevices.indexOf(postData["deviceName"]));
+    const deviceid = connectedDevices.indexOf(postData["deviceName"]);
+    buildAccelAndSend(postData["acceleration"], deviceid);
     PACKET_COUNTER += 1;
-    buildRotationAndSend(postData["rotation"], connectedDevices.indexOf(postData["deviceName"]));
+    buildRotationAndSend(postData["rotation"], deviceid);
     PACKET_COUNTER += 1;
+    //buildBatteryAndSend(postData["battery"], deviceid);
+    //PACKET_COUNTER += 1;
 });
 const struct = require('bufferpack');
 
@@ -210,8 +215,6 @@ function buildRotationPacket(qx, qy, qz, qw, tracker_id) {
 
     return buffer;
 }
-
-
 
 
 

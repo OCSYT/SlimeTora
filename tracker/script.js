@@ -1,12 +1,10 @@
-var connecting = false;
+var connecting = null;
 async function connectToTrackers() {
-    if (!connecting) {
-        connecting = true;
-        for (let i = 0; i < 8; i++) {
+    if (connecting == null) {
+        connecting = setInterval(async() => {
             await connectToDevice();
-        }
+        }, 1000);
     }
-    connecting = false;
 }
 
 function disconnectAllDevices() {
@@ -14,6 +12,7 @@ function disconnectAllDevices() {
         const device = trackerdevices[deviceId];
         disconnectDevice(device);
     }
+    clearInterval(connecting);
 }
 
 // Add this function to disconnect a specific device
@@ -24,7 +23,7 @@ async function disconnectDevice(device) {
         console.error('Error disconnecting from Bluetooth device:', error);
     }
 }
-
+const trackercount = document.getElementById("trackercount");
 
 async function connectToDevice() {
     try {
@@ -62,7 +61,7 @@ async function connectToDevice() {
         devicelist.appendChild(deviceelement);
         trackers[device.id] = { x: 0, y: 0, z: 0 };
         trackerdevices[device.id] = device;
-
+        trackercount.innerHTML = "Connected Trackers: " + Object.values(trackers).length;
         try {
             const trackercheck = setInterval(async () => {
                 const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
@@ -123,7 +122,7 @@ async function connectToDevice() {
                 const iframe = document.getElementById(device.id + "threejs");
                 iframe.remove();
                 ipc.send("disconnect", device.name);
-
+                trackercount.innerHTML = "Connected Trackers: " + Object.values(trackers).length;
             });
 
         } catch {

@@ -1,34 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Haritora Tracker Data</title>
+    <title>SlimeTora</title>
     <style>
-        body{
+        body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: rgb(30, 30, 35);
             color: white;
             font-size: 25px;
+            margin: 0;
+            padding: 0;
+            text-align: center;
         }
-        #devicelist{
-            display: grid;
+
+        #devicelist {
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
         iframe{
             border: none;
         }
+
+        button {
+            border: solid white 2px;
+            background-color: rgba(0, 0, 0, 0);
+            color: white;
+            border-radius: 15px;
+            font-size: 25px;
+            position: relative;
+            width: 50%;
+        }
+
+        button:hover {
+            border: solid black 2px;
+            background-color: white;
+            color: black;
+        }
     </style>
 </head>
+
 <body>
-
-<button onclick="connectToTrackers()">Connect to Bluetooth Devices</button>
-<button onclick="disconnectAllDevices()">Disconnect All Devices</button>
-
-<div id="devicelist">
-
-</div>
-<script src="./script.js">
-</script>
+    <br>
+    <button onclick="connectToTrackers()">Connect to Trackers</button>
+    <br>
+    <br>
+    <button onclick="disconnectAllDevices()">Disconnect All Devices</button>
+    <h1 id="trackercount">Connected Trackers: 0</h1>
+    <div id="devicelist">
+    </div>
+    <script src="./script.js">
+    </script>
 
 </body>
+
 </html>
