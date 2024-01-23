@@ -194,6 +194,8 @@ async function connectToDevice() {
                         },
                         battery: battery
                     };
+
+                    
                     if (postDataCurrent == null) {
                         postDataCurrent = postData;
                     }
