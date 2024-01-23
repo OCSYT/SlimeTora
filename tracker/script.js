@@ -153,7 +153,6 @@ async function connectToDevice() {
 
         deviceelement.id = device.name;
         devicelist.appendChild(deviceelement);
-        trackers[device.id] = { x: 0, y: 0, z: 0 };
         trackerdevices[device.id] = device;
         trackercount.innerHTML = "Connected Trackers: " + Object.values(trackers).length;
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
