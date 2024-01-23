@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer } = require("electron");
-/* Buttons */
+
 contextBridge.exposeInMainWorld("ipc", {
     send: (channel, data) => {
         ipcRenderer.send(channel, data);
@@ -13,4 +13,5 @@ contextBridge.exposeInMainWorld("ipc", {
     invoke: (channel, data) => {
         return ipcRenderer.invoke(channel, data);
     },
+
 });

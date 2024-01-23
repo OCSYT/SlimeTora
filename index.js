@@ -1,6 +1,53 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const dgram = require('dgram');
 const sock = dgram.createSocket('udp4');
+const fs = require('fs');
+const path = require('path');
+
+const mainPath = app.isPackaged
+  ? path.dirname(app.getPath('exe'))
+  : __dirname;
+
+const jsonFilePath = path.join(mainPath, 'store.json');
+
+let inMemoryStore = {};
+updateData();
+ipcMain.handle('get-data', async (event, key) => {
+    updateData();
+    return inMemoryStore[key];
+});
+
+ipcMain.on('set-data', (event, { key, value }) => {
+    inMemoryStore[key] = value;
+    saveToJSON();
+});
+
+ipcMain.on('delete-data', (event, key) => {
+    delete inMemoryStore[key];
+    saveToJSON();
+});
+
+
+ipcMain.handle('has-data', async (event, key) => {
+    updateData();
+    return inMemoryStore.hasOwnProperty(key);
+});
+
+
+function saveToJSON() {
+    // Save the inMemoryStore to the JSON file
+    const jsonData = JSON.stringify(inMemoryStore, null, 2);
+    fs.writeFileSync(jsonFilePath, jsonData, 'utf8');
+}
+function updateData() {
+    try {
+        const data = fs.readFileSync(jsonFilePath, 'utf8');
+        inMemoryStore = JSON.parse(data);
+        //console.log(inMemoryStore);
+    } catch (error) {
+        // If the file doesn't exist or there is an error reading it, continue with an empty store
+    }
+}
 
 var SLIME_IP = '0.0.0.0';
 var SLIME_PORT = 6969;
@@ -41,11 +88,6 @@ function addIMU(trackerID) {
         }
     });
 }
-
-
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
 
 let mainWindow;
 
@@ -168,12 +210,12 @@ ipcMain.on('sendData', (event, postData) => {
     const timeDifference = currentTimestamp - lastTimestamp;
     if (deviceid == 0) {
         if (timeDifference >= 1000) {
-            const tps = tpsCounter / (timeDifference / 1000); 
+            const tps = tpsCounter / (timeDifference / 1000);
             console.log(`TPS: ${tps}`);
             tpsCounter = 0;
             lastTimestamp = currentTimestamp;
         } else {
-            tpsCounter += 1; 
+            tpsCounter += 1;
         }
     }
 });
