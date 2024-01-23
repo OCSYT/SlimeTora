@@ -10,22 +10,27 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log(localStorage.getItem("smoothingEnabled"));
 
     // Convert the stored value to a boolean, or default to false if null
-    smoothingCheckbox.checked = localStorage.getItem("smoothingEnabled") === "true";
     var isSmoothingEnabled = smoothingCheckbox.checked;
     if (isSmoothingEnabled) {
-        smooth_val = smooth_val;
+        saveSmoothValue();
     }
     else {
         smooth_val = 1;
     }
 
+    if(localStorage.getItem("smoothingEnabled")){
+        smoothingCheckbox.checked = localStorage.getItem("smoothingEnabled") === "true";
+    }   
+    else{
+        smoothingCheckbox.checked = true;
+    }
     smoothingCheckbox.addEventListener("change", function () {
 
         isSmoothingEnabled = smoothingCheckbox.checked;
 
         localStorage.setItem("smoothingEnabled", isSmoothingEnabled);
         if (isSmoothingEnabled) {
-            smooth_val = 0.75;
+            saveSmoothValue();
         }
         else {
             smooth_val = 1;
