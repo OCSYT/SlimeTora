@@ -130,7 +130,7 @@ async function connectToDevice() {
             filters: [{ namePrefix: 'HaritoraXW-' }],
             optionalServices: [sensorServiceId, settingId, batteryId, deviceInfoId]
         });
-        if (trackers[device.id]) return;
+        if (trackerdevices[device.id]) return;
         const server = await device.gatt.connect();
 
         const battery_service = await server.getPrimaryService(batteryId);
@@ -226,7 +226,6 @@ async function connectToDevice() {
             device.addEventListener('gattserverdisconnected', (event) => {
                 clearInterval(trackercheck);
                 deviceelement.remove();
-                delete trackers[device.id];
                 delete trackerdevices[device.id];
                 iframe.remove();
                 ipc.send("disconnect", device.name);
@@ -244,7 +243,6 @@ async function connectToDevice() {
 }
 
 trackerdevices = {};
-trackers = {};
 
 function quaternionToEulerAngles(q) {
     return { x: q.x * 100, y: q.y * 100, z: q.z * 100 }; //just removing w axis for now and multiplying by 100
@@ -313,10 +311,6 @@ function decodeIMUPacket(device, rawdata) {
         y: gravityRaw.y - hfinal[2] * -1.2,
         z: gravityRaw.z - hfinal[3] * 1.2,
     };
-
-
-
-    trackers[device.id] = gravity;
 
     return [device, rotation, gravity];
 }
