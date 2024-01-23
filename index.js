@@ -153,7 +153,8 @@ function createWindow() {
 app.on('ready', createWindow);
 
 
-
+let lastTimestamp = Date.now();
+let tpsCounter = 0;
 ipcMain.on('sendData', (event, postData) => {
     const deviceid = connectedDevices.indexOf(postData["deviceName"]);
     buildAccelAndSend(postData["acceleration"], deviceid);
@@ -162,8 +163,20 @@ ipcMain.on('sendData', (event, postData) => {
     PACKET_COUNTER += 1;
     //buildBatteryAndSend(postData["battery"], deviceid);
     //PACKET_COUNTER += 1;
+
+    const currentTimestamp = Date.now();
+    const timeDifference = currentTimestamp - lastTimestamp;
+    if (deviceid == 0) {
+        if (timeDifference >= 1000) {
+            const tps = tpsCounter / (timeDifference / 1000); 
+            console.log(`TPS: ${tps}`);
+            tpsCounter = 0;
+            lastTimestamp = currentTimestamp;
+        } else {
+            tpsCounter += 1; 
+        }
+    }
 });
-const struct = require('bufferpack');
 
 function buildAccelPacket(ax, ay, az, trackerID) {
     let buffer = new Uint8Array(128);
@@ -201,9 +214,9 @@ function buildRotationPacket(qx, qy, qz, qw, tracker_id) {
     let buffer = new Uint8Array(128);
     let view = new DataView(buffer.buffer);
 
-    view.setInt32(0, 17); 
-    view.setBigInt64(4, BigInt(PACKET_COUNTER));  
-    view.setUint8(12, tracker_id); 
+    view.setInt32(0, 17);
+    view.setBigInt64(4, BigInt(PACKET_COUNTER));
+    view.setUint8(12, tracker_id);
     view.setUint8(13, 1);
 
     view.setFloat32(14, qx);
@@ -211,7 +224,7 @@ function buildRotationPacket(qx, qy, qz, qw, tracker_id) {
     view.setFloat32(22, qz);
     view.setFloat32(26, qw);
 
-    view.setUint8(30, 0); 
+    view.setUint8(30, 0);
 
     return buffer;
 }
@@ -250,7 +263,6 @@ ipcMain.on('disconnect', (event, deviceName) => {
 app.on('window-all-closed', function () {
     if (process.platform !== 'darwin') app.quit();
 });
-
 
 app.on('activate', function () {
     if (mainWindow === null) createWindow();

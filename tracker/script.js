@@ -1,7 +1,65 @@
+var smooth_val = 0.75;
+document.addEventListener("DOMContentLoaded", function () {
+    if (localStorage.getItem("smoothinput")) {
+        smooth_val = localStorage.getItem("smoothinput");
+    }
+    document.getElementById("smoothinput").value = smooth_val * 100;
+
+
+    var smoothingCheckbox = document.getElementById("smoothing");
+    console.log(localStorage.getItem("smoothingEnabled"));
+
+    // Convert the stored value to a boolean, or default to false if null
+    smoothingCheckbox.checked = localStorage.getItem("smoothingEnabled") === "true";
+    var isSmoothingEnabled = smoothingCheckbox.checked;
+    if (isSmoothingEnabled) {
+        smooth_val = smooth_val;
+    }
+    else {
+        smooth_val = 1;
+    }
+
+    smoothingCheckbox.addEventListener("change", function () {
+
+        isSmoothingEnabled = smoothingCheckbox.checked;
+
+        localStorage.setItem("smoothingEnabled", isSmoothingEnabled);
+        if (isSmoothingEnabled) {
+            smooth_val = 0.75;
+        }
+        else {
+            smooth_val = 1;
+        }
+    });
+
+});
+
+function justNumbers(string) {
+    var numsStr = string.replace(/[^0-9]/g, '');
+
+    // Check if numsStr is empty, and return 1 if true
+    if (!numsStr) {
+        return 100;
+    }
+
+    return parseInt(numsStr);
+}
+function saveSmoothValue() {
+    // Get the user input value
+    var userInputValue = justNumbers(document.getElementById("smoothinput").value) / 100;
+
+    // Save the value in local storage
+    localStorage.setItem("smoothinput", userInputValue);
+    smooth_val = userInputValue;
+}
+
+
+
+
 var connecting = null;
 async function connectToTrackers() {
     if (connecting == null) {
-        connecting = setInterval(async() => {
+        connecting = setInterval(async () => {
             await connectToDevice();
         }, 1000);
     }
@@ -12,7 +70,10 @@ function disconnectAllDevices() {
         const device = trackerdevices[deviceId];
         disconnectDevice(device);
     }
-    clearInterval(connecting);
+    if (connecting) {
+        clearInterval(connecting);
+        connecting = null;
+    }
 }
 
 // Add this function to disconnect a specific device
@@ -24,6 +85,34 @@ async function disconnectDevice(device) {
     }
 }
 const trackercount = document.getElementById("trackercount");
+
+
+function lerp(start, end, amt) {
+    return (1 - amt) * start + amt * end
+}
+
+
+function interpolateIMU(currentData, newData, t) {
+    const interpolatedData = {
+        deviceName: newData.deviceName,
+        deviceId: newData.deviceId,
+        rotation: {
+            x: lerp(currentData.rotation.x, newData.rotation.x, t),
+            y: lerp(currentData.rotation.y, newData.rotation.y, t),
+            z: lerp(currentData.rotation.z, newData.rotation.z, t),
+            w: lerp(currentData.rotation.w, newData.rotation.w, t),
+        },
+        acceleration: {
+            x: lerp(currentData.acceleration.x, newData.acceleration.x, t),
+            y: lerp(currentData.acceleration.y, newData.acceleration.y, t),
+            z: lerp(currentData.acceleration.z, newData.acceleration.z, t),
+        },
+        battery: newData.battery
+    };
+
+    return interpolatedData;
+}
+
 
 async function connectToDevice() {
     try {
@@ -62,64 +151,78 @@ async function connectToDevice() {
         trackers[device.id] = { x: 0, y: 0, z: 0 };
         trackerdevices[device.id] = device;
         trackercount.innerHTML = "Connected Trackers: " + Object.values(trackers).length;
+        const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
+        const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
+        var sensor_value = await sensor_characteristic.readValue();
+        var battery_value = await battery_characteristic.readValue();
+        var postDataCurrent = null;
+        var postData = null;
         try {
+            const updateValues = async () => {
+                sensor_value = await sensor_characteristic.readValue();
+                battery_value = await battery_characteristic.readValue();
+                setTimeout(updateValues, 16.7);
+            }
+            updateValues();
             const trackercheck = setInterval(async () => {
-                const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
-                const sensor_value = await sensor_characteristic.readValue();
+                try {
 
-                const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
-                const battery_value = await battery_characteristic.readValue();
-                const battery = decodeBatteryPacket(device, battery_value)[1];
+                    const battery = decodeBatteryPacket(device, battery_value)[1];
 
 
-                const IMUData = decodeIMUPacket(device, sensor_value);
-                const iframe = document.getElementById(device.id + "threejs");
+                    const IMUData = decodeIMUPacket(device, sensor_value);
+                    const iframe = document.getElementById(device.id + "threejs");
 
-                const rotation_Euler = quaternionToEulerAngles(IMUData[1]);
-                iframe.contentWindow.postMessage({
-                    type: 'rotate',
-                    rotationX: IMUData[1].x,
-                    rotationY: IMUData[1].y,
-                    rotationZ: IMUData[1].z,
-                    rotationW: IMUData[1].w
-                }, '*');
+                    postData = {
+                        deviceName: IMUData[0].name,
+                        deviceId: IMUData[0].id,
+                        rotation: {
+                            x: IMUData[1].x,
+                            y: IMUData[1].y,
+                            z: IMUData[1].z,
+                            w: IMUData[1].w
+                        },
+                        acceleration: {
+                            x: IMUData[2].x,
+                            y: IMUData[2].y,
+                            z: IMUData[2].z
+                        },
+                        battery: battery
+                    };
+                    if (postDataCurrent == null) {
+                        postDataCurrent = postData;
+                    }
+                    postDataCurrent = interpolateIMU(postDataCurrent, postData, smooth_val);
+                    //remove lag
+
+                    ipc.send('sendData', postDataCurrent);
+                    iframe.contentWindow.postMessage({
+                        type: 'rotate',
+                        rotationX: postDataCurrent["rotation"].x,
+                        rotationY: postDataCurrent["rotation"].y,
+                        rotationZ: postDataCurrent["rotation"].z,
+                        rotationW: postDataCurrent["rotation"].w
+                    }, '*');
+
+                    const rotation_Euler = quaternionToEulerAngles(postDataCurrent["rotation"]);
+                    deviceelement.innerHTML =
+                        "Device name: " + postDataCurrent["deviceName"] + "<br>" +
+                        "Device ID: " + postDataCurrent["deviceId"] + "<br>" +
+                        "Rotation: " + rotation_Euler.x.toFixed(0) + ", " + rotation_Euler.y.toFixed(0) + ", " + rotation_Euler.z.toFixed(0) + "<br>"
+                        + "Accel: " + postDataCurrent["acceleration"].x.toFixed(0) + ", " + postDataCurrent["acceleration"].y.toFixed(0) + ", " + postDataCurrent["acceleration"].z.toFixed(0) + ", " + "<br>"
+                        + "Battery: " + battery * 100 + "% <br><br>";
 
 
-                deviceelement.innerHTML =
-                    "Device name: " + IMUData[0].name + "<br>" +
-                    "Device ID: " + IMUData[0].id + "<br>" +
-                    "Rotation: " + rotation_Euler.x.toFixed(0) + ", " + rotation_Euler.y.toFixed(0) + ", " + rotation_Euler.z.toFixed(0) + "<br>"
-                    + "Accel: " + IMUData[2].x.toFixed(0) + ", " + IMUData[2].y.toFixed(0) + ", " + IMUData[2].z.toFixed(0) + ", " + "<br>"
-                    + "Battery: " + battery;
+                } catch {
 
-
-
-                const postData = {
-                    deviceName: IMUData[0].name,
-                    deviceId: IMUData[0].id,
-                    rotation: {
-                        x: IMUData[1].x,
-                        y: IMUData[1].y,
-                        z: IMUData[1].z,
-                        w: IMUData[1].w
-                    },
-                    acceleration: {
-                        x: IMUData[2].x,
-                        y: IMUData[2].y,
-                        z: IMUData[2].z
-                    },
-                    battery: battery
-                };
-                ipc.send('sendData', postData);
-
-
+                }
             }, 16.7);
+
             device.addEventListener('gattserverdisconnected', (event) => {
                 clearInterval(trackercheck);
                 deviceelement.remove();
                 delete trackers[device.id];
                 delete trackerdevices[device.id];
-                const iframe = document.getElementById(device.id + "threejs");
                 iframe.remove();
                 ipc.send("disconnect", device.name);
                 trackercount.innerHTML = "Connected Trackers: " + Object.values(trackers).length;
@@ -131,7 +234,7 @@ async function connectToDevice() {
 
 
     } catch (error) {
-        console.error('Error connecting to Bluetooth device:', error);
+
     }
 }
 
@@ -150,6 +253,20 @@ function decodeBatteryPacket(device, data) {
 
 }
 
+function calcGravityVec(qwxyz, gravVec) {
+    var newgrav = {
+        x: 0,
+        y: 0,
+        z: 0
+    }
+
+    newgrav.x = 2 * (qwxyz.y * qwxyz.w - qwxyz.x * qwxyz.z);
+    newgrav.y = 2 * (qwxyz.x * qwxyz.y + qwxyz.z * qwxyz.w);
+    newgrav.z = qwxyz.x * qwxyz.x - qwxyz.y * qwxyz.y - qwxyz.z * qwxyz.z + qwxyz.w * qwxyz.w;
+    return newgrav;
+}
+
+
 function decodeIMUPacket(device, rawdata) {
     const dataView = new DataView(rawdata.buffer);
 
@@ -162,19 +279,39 @@ function decodeIMUPacket(device, rawdata) {
 
 
 
-    const gravity = {
+    const gravityRaw = {
         x: dataView.getInt16(8, true) / 256.0,
         y: dataView.getInt16(10, true) / 256.0,
         z: dataView.getInt16(12, true) / 256.0,
     };
 
-    const gravityAccell = {
-        x: gravity.x - trackers[device.id].x,
-        y: gravity.y - trackers[device.id].y,
-        z: gravity.z - trackers[device.id].z,
+    const rc = [rotation.w, rotation.x, rotation.y, rotation.z];
+    const r = [rc[0], -rc[1], -rc[2], -rc[3]];
+    const p = [0.0, 0.0, 0.0, 9.8];
+
+    const hrp = [
+        r[0] * p[0] - r[1] * p[1] - r[2] * p[2] - r[3] * p[3],
+        r[0] * p[1] + r[1] * p[0] + r[2] * p[3] - r[3] * p[2],
+        r[0] * p[2] - r[1] * p[3] + r[2] * p[0] + r[3] * p[1],
+        r[0] * p[3] + r[1] * p[2] - r[2] * p[1] + r[3] * p[0],
+    ];
+
+    const hfinal = [
+        hrp[0] * rc[0] - hrp[1] * rc[1] - hrp[2] * rc[2] - hrp[3] * rc[3],
+        hrp[0] * rc[1] + hrp[1] * rc[0] + hrp[2] * rc[3] - hrp[3] * rc[2],
+        hrp[0] * rc[2] - hrp[1] * rc[3] + hrp[2] * rc[0] + hrp[3] * rc[1],
+        hrp[0] * rc[3] + hrp[1] * rc[2] - hrp[2] * rc[1] + hrp[3] * rc[0],
+    ];
+
+    const gravity = {
+        x: gravityRaw.x - hfinal[1] * -1.2,
+        y: gravityRaw.y - hfinal[2] * -1.2,
+        z: gravityRaw.z - hfinal[3] * 1.2,
     };
+
+
 
     trackers[device.id] = gravity;
 
-    return [device, rotation, gravityAccell];
+    return [device, rotation, gravity];
 }
