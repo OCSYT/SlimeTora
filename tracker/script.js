@@ -271,7 +271,7 @@ async function connectToDevice() {
                 "<strong>Device ID:</strong> " + deviceId + "<br>" +
                 "<strong>Rotation:</strong> X: " + rotX.toFixed(0) + ", Y: " + rotY.toFixed(0) + ", Z: " + rotZ.toFixed(0) + "<br>" +
                 "<strong>Acceleration:</strong> X: " + accelX.toFixed(0) + ", Y: " + accelY.toFixed(0) + ", Z: " + accelZ.toFixed(0) + "<br>" +
-                "<strong>Battery:</strong> " + batteryPercentage + "% <br><br>";
+                "<strong>Battery:</strong> " + batteryPercentage.toFixed(0) + "% <br><br>";
             deviceelement.innerHTML = content;
         
         }, 16.7);
