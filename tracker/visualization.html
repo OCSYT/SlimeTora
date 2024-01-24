@@ -53,11 +53,6 @@
 
             renderer.render(scene, camera);
         };
-        function rotateObject(object, degreeX = 0, degreeY = 0, degreeZ = 0) {
-            object.rotateX(THREE.MathUtils.degToRad(degreeX));
-            object.rotateY(THREE.MathUtils.degToRad(degreeY));
-            object.rotateZ(THREE.MathUtils.degToRad(degreeZ));
-        }
 
         window.addEventListener('message', (event) => {
             if (event.data.type === 'rotate') {

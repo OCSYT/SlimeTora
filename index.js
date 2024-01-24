@@ -5,8 +5,8 @@ const fs = require('fs');
 const path = require('path');
 
 const mainPath = app.isPackaged
-  ? path.dirname(app.getPath('exe'))
-  : __dirname;
+    ? path.dirname(app.getPath('exe'))
+    : __dirname;
 
 const jsonFilePath = path.join(mainPath, 'store.json');
 
@@ -203,9 +203,14 @@ ipcMain.on('sendData', (event, postData) => {
     PACKET_COUNTER += 1;
     buildRotationAndSend(postData["rotation"], deviceid);
     PACKET_COUNTER += 1;
-    //buildBatteryAndSend(postData["battery"], deviceid);
-    //PACKET_COUNTER += 1;
-
+    if (postData["yawReset"] == true) {
+        sendYawReset();
+        PACKET_COUNTER += 1;
+    }
+    if (deviceid == 0) {
+        sendBatteryLevel(postData["battery"]);
+        PACKET_COUNTER += 1;
+    }
     const currentTimestamp = Date.now();
     const timeDifference = currentTimestamp - lastTimestamp;
     if (deviceid == 0) {
@@ -219,6 +224,40 @@ ipcMain.on('sendData', (event, postData) => {
         }
     }
 });
+
+function sendYawReset() {
+    var buffer = new ArrayBuffer(128);
+    var view = new DataView(buffer);
+    view.setInt32(0, 21);                           
+    view.setBigInt64(4, BigInt(PACKET_COUNTER)); 
+    view.setInt8(12, 3);     
+    sendBuffer = new Uint8Array(buffer);
+    sock.send(sendBuffer, 0, sendBuffer.length, SLIME_PORT, SLIME_IP, (err) => {
+        if (err) {
+            console.error(`Error sending packet for sensor ${trackerId}:`, err);
+        } else {
+
+        }
+    });
+}
+
+function sendBatteryLevel(batteryLevel) {
+    var buffer = new ArrayBuffer(128);
+    var view = new DataView(buffer);
+    view.setInt32(0, 12);                           
+    view.setBigInt64(4, BigInt(PACKET_COUNTER)); 
+    view.setFloat32(12, 0);     
+    view.setFloat32(16, batteryLevel);     
+    sendBuffer = new Uint8Array(buffer);
+    sock.send(sendBuffer, 0, sendBuffer.length, SLIME_PORT, SLIME_IP, (err) => {
+        if (err) {
+            console.error(`Error sending packet for sensor ${trackerId}:`, err);
+        } else {
+
+        }
+    });
+}
+
 
 function buildAccelPacket(ax, ay, az, trackerID) {
     let buffer = new Uint8Array(128);
@@ -245,7 +284,7 @@ function buildAccelAndSend(acceleration, trackerId) {
 
     sock.send(buffer, 0, buffer.length, SLIME_PORT, SLIME_IP, (err) => {
         if (err) {
-            console.error(`Error sending acceleration packet for sensor ${trackerId}:`, err);
+            console.error(`Error sending packet for sensor ${trackerId}:`, err);
         } else {
 
         }
@@ -282,7 +321,7 @@ function buildRotationAndSend(rotation, trackerId) {
 
     sock.send(buffer, 0, buffer.length, SLIME_PORT, SLIME_IP, (err) => {
         if (err) {
-            console.error(`Error sending rotation packet for sensor ${trackerId}:`, err);
+            console.error(`Error sending packet for sensor ${trackerId}:`, err);
         } else {
 
         }

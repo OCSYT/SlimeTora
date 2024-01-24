@@ -15,6 +15,9 @@ body {
     justify-content: center;
     text-align: center;
 }
+.credits{
+    font-size: 15px;
+}
 
 #devicelist {
     background-color: #081e30;

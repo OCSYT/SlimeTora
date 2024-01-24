@@ -102,14 +102,13 @@ function lerp(start, end, amt) {
 
 function interpolateIMU(currentData, newData, t) {
 
-    if(t == 1){
+    if (t == 1) {
         return newData;
     }
 
     const currentrot = new Quaternion(currentData["rotation"]);
     const newrot = new Quaternion(newData["rotation"]);
     const interpolatedQuaternion = currentrot.slerp(newrot)(t);
-    console.log(interpolatedQuaternion);
     const interpolatedData = {
         deviceName: newData.deviceName,
         deviceId: newData.deviceId,
@@ -124,7 +123,8 @@ function interpolateIMU(currentData, newData, t) {
             y: lerp(currentData.acceleration.y, newData.acceleration.y, t),
             z: lerp(currentData.acceleration.z, newData.acceleration.z, t),
         },
-        battery: newData.battery
+        battery: newData.battery,
+        yawReset: newData.yawReset
     };
 
     return interpolatedData;
@@ -147,10 +147,12 @@ async function connectToDevice() {
 
         const battery_service = await server.getPrimaryService(batteryId);
         const sensor_service = await server.getPrimaryService(sensorServiceId);
+        const setting_service = await server.getPrimaryService(settingId);
+        const device_service = await server.getPrimaryService(deviceInfoId);
         console.log('Connected to device:', device.name);
 
         const devicelist = document.getElementById("devicelist");
-        const deviceelement = document.createElement("p");
+        const deviceelement = document.createElement("div");
         const iframe = document.createElement('iframe');
 
         // Set attributes for the iframe
@@ -166,23 +168,48 @@ async function connectToDevice() {
         deviceelement.id = device.name;
         devicelist.appendChild(deviceelement);
         trackerdevices[device.id] = device;
+        battery[device.id] = 0;
         trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
         const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
+        const button_characteristic = await sensor_service.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
         var sensor_value = await sensor_characteristic.readValue();
         var battery_value = await battery_characteristic.readValue();
+        var button_value = (await button_characteristic.readValue()).getInt8(0);
+        var new_button_value = null;
+        var button_enabled = false;
         var postDataCurrent = null;
         var postData = null;
+        var allowyawreset = false;
         const updateValues = async () => {
             sensor_value = await sensor_characteristic.readValue();
             battery_value = await battery_characteristic.readValue();
+            new_button_value = (await button_characteristic.readValue()).getInt8(0);
+            if (button_value != new_button_value) {
+                button_enabled = true;
+            }
+            else {
+                button_enabled = false;
+            }
+            button_value = new_button_value;
             setTimeout(updateValues, 16.7);
         }
         updateValues();
         const trackercheck = setInterval(async () => {
 
-            const battery = decodeBatteryPacket(device, battery_value)[1];
+            var yawreset = false;
+            if (button_enabled == true && allowyawreset == true) {
+                allowyawreset = false;
+                yawreset = true;
+            }
+            else {
+                if (button_enabled == false) {
+                    allowyawreset = true;
+                }
+            }
 
+            battery[device.id] = decodeBatteryPacket(device, battery_value)[1];;
+            const lowestbattery = Math.min(...Object.values(battery));
 
             const IMUData = decodeIMUPacket(device, sensor_value);
             const iframe = document.getElementById(device.id + "threejs");
@@ -201,7 +228,8 @@ async function connectToDevice() {
                     y: IMUData[2].y,
                     z: IMUData[2].z
                 },
-                battery: battery
+                battery: lowestbattery,
+                yawReset: yawreset
             };
 
 
@@ -220,34 +248,51 @@ async function connectToDevice() {
                 rotationW: postDataCurrent["rotation"].w
             }, '*');
 
-            const rotation_Euler = quaternionToEulerAngles(postDataCurrent["rotation"]);
-            deviceelement.innerHTML =
-                "Device name: " + postDataCurrent["deviceName"] + "<br>" +
-                "Device ID: " + postDataCurrent["deviceId"] + "<br>" +
-                "Rotation: " + rotation_Euler.x.toFixed(0) + ", " + rotation_Euler.y.toFixed(0) + ", " + rotation_Euler.z.toFixed(0) + "<br>"
-                + "Accel: " + postDataCurrent["acceleration"].x.toFixed(0) + ", " + postDataCurrent["acceleration"].y.toFixed(0) + ", " + postDataCurrent["acceleration"].z.toFixed(0) + ", " + "<br>"
-                + "Battery: " + battery * 100 + "% <br><br>";
+            // rotation is given in radians
+            const rotation = new Quaternion([postDataCurrent["rotation"].w, postDataCurrent["rotation"].x, postDataCurrent["rotation"].y, postDataCurrent["rotation"].z]);
+            const rotation_Euler_raw = rotation.toEuler("XYZ");
+
+            // Convert radians to degrees
+            const rotation_Euler = {
+                x: rotation_Euler_raw[0] * (180 / Math.PI),
+                y: rotation_Euler_raw[1] * (180 / Math.PI),
+                z: rotation_Euler_raw[2] * (180 / Math.PI)
+            };
+            
+            const deviceName = postDataCurrent["deviceName"];
+            const deviceId = postDataCurrent["deviceId"];
+            const { x: rotX, y: rotY, z: rotZ } = rotation_Euler;
+            const { x: accelX, y: accelY, z: accelZ } = postDataCurrent["acceleration"];
+            const batteryPercentage = (battery[device.id] * 100);
+            
+            // Build the HTML content
+            const content =
+                "<strong>Device name:</strong> " + deviceName + "<br>" +
+                "<strong>Device ID:</strong> " + deviceId + "<br>" +
+                "<strong>Rotation:</strong> X: " + rotX.toFixed(0) + ", Y: " + rotY.toFixed(0) + ", Z: " + rotZ.toFixed(0) + "<br>" +
+                "<strong>Acceleration:</strong> X: " + accelX.toFixed(0) + ", Y: " + accelY.toFixed(0) + ", Z: " + accelZ.toFixed(0) + "<br>" +
+                "<strong>Battery:</strong> " + batteryPercentage + "% <br><br>";
+            deviceelement.innerHTML = content;
+        
         }, 16.7);
 
         device.addEventListener('gattserverdisconnected', (event) => {
             clearInterval(trackercheck);
             deviceelement.remove();
             delete trackerdevices[device.id];
+            delete battery[device.id];
             iframe.remove();
             ipc.send("disconnect", device.name);
-            trackercount.innerHTML = "Connected Trackers: "  + Object.values(trackerdevices).length;
+            trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
         });
 
     } catch (error) {
-        console.log(error);
+        //console.log(error);
     }
 }
 
+battery = {};
 trackerdevices = {};
-
-function quaternionToEulerAngles(q) {
-    return { x: q.x * 100, y: q.y * 100, z: q.z * 100 }; //just removing w axis for now and multiplying by 100
-}
 
 function decodeBatteryPacket(device, data) {
     const dataView = new DataView(data.buffer);
