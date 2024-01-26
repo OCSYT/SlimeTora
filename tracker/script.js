@@ -17,7 +17,6 @@ var smooth_val = 0.5;
 
 document.addEventListener("DOMContentLoaded", async function () {
     var smoothingCheckbox = document.getElementById("smoothing");
-    console.log(await store.has("smoothingEnabled"));
     if (await store.has("smoothingEnabled")) {
         smoothingCheckbox.checked = await store.get("smoothingEnabled");
     } else {
@@ -164,23 +163,27 @@ async function connectToDevice() {
         // Append the iframe to the body or any other container
         devicelist.appendChild(iframe);
 
-
         deviceelement.id = device.name;
         devicelist.appendChild(deviceelement);
+
         trackerdevices[device.id] = device;
         battery[device.id] = 0;
+
         trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
         const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
         const button_characteristic = await sensor_service.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
+
         var sensor_value = await sensor_characteristic.readValue();
         var battery_value = await battery_characteristic.readValue();
         var button_value = (await button_characteristic.readValue()).getInt8(0);
+
         var new_button_value = null;
         var button_enabled = false;
         var postDataCurrent = null;
         var postData = null;
         var allowyawreset = false;
+
         const updateValues = async () => {
             sensor_value = await sensor_characteristic.readValue();
             battery_value = await battery_characteristic.readValue();
@@ -258,13 +261,13 @@ async function connectToDevice() {
                 y: rotation_Euler_raw[1] * (180 / Math.PI),
                 z: rotation_Euler_raw[2] * (180 / Math.PI)
             };
-            
+
             const deviceName = postDataCurrent["deviceName"];
             const deviceId = postDataCurrent["deviceId"];
             const { x: rotX, y: rotY, z: rotZ } = rotation_Euler;
             const { x: accelX, y: accelY, z: accelZ } = postDataCurrent["acceleration"];
             const batteryPercentage = (battery[device.id] * 100);
-            
+
             // Build the HTML content
             const content =
                 "<strong>Device name:</strong> " + deviceName + "<br>" +
@@ -273,7 +276,7 @@ async function connectToDevice() {
                 "<strong>Acceleration:</strong> X: " + accelX.toFixed(0) + ", Y: " + accelY.toFixed(0) + ", Z: " + accelZ.toFixed(0) + "<br>" +
                 "<strong>Battery:</strong> " + batteryPercentage.toFixed(0) + "% <br><br>";
             deviceelement.innerHTML = content;
-        
+
         }, 16.7);
 
         device.addEventListener('gattserverdisconnected', (event) => {
@@ -318,7 +321,7 @@ function calcGravityVec(qwxyz, gravVec) {
 
 function decodeIMUPacket(device, rawdata) {
     const dataView = new DataView(rawdata.buffer);
-
+    
     const rotation = {
         x: dataView.getInt16(0, true) / 180.0 * 0.01,
         y: dataView.getInt16(2, true) / 180.0 * 0.01,
