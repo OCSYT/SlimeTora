@@ -1,3 +1,4 @@
 {
-  "smoothinput": 0.5
+  "smoothinput": 0.5,
+  "smoothingEnabled": true
 }

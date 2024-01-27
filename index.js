@@ -1,8 +1,10 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, screen } = require('electron');
+
 const dgram = require('dgram');
 const sock = dgram.createSocket('udp4');
 const fs = require('fs');
 const path = require('path');
+
 
 const mainPath = app.isPackaged
     ? path.dirname(app.getPath('exe'))
@@ -31,6 +33,12 @@ ipcMain.on('delete-data', (event, key) => {
 ipcMain.handle('has-data', async (event, key) => {
     updateData();
     return inMemoryStore.hasOwnProperty(key);
+});
+
+
+var allow_connection = false;
+ipcMain.on('connection', (event, value) => {
+    allow_connection = value;
 });
 
 
@@ -111,22 +119,48 @@ function createWindow() {
         height: 600,
         webPreferences: {
             nodeIntegration: true,
-            sandbox: false,
-            webSecurity: false, //disable sandbox and websecurity so we can request for multiple bluetooth devices without having to do multiple user gestures
             backgroundThrottling: false,
             preload: path.join(__dirname, 'preload.js')
         },
     });
     mainWindow.loadFile('./tracker/index.html');
 
+    setInterval(() => {
+        mainWindow.webContents.sendInputEvent(
+            { type: 'mouseDown', x: 0, y: 0, button: 'left', clickCount: 1 });
+        mainWindow.webContents.sendInputEvent(
+            { type: 'mouseUp', x: 0, y: 0, button: 'left', clickCount: 1 });
+
+            // Get the position of the window
+            const windowPosition = mainWindow.getPosition();
+            const windowX = windowPosition[0];
+            const windowY = windowPosition[1];
+            
+            // Get the size of the window
+            const windowSize = mainWindow.getSize();
+            const windowWidth = windowSize[0];
+            const windowHeight = windowSize[1];
+            
+            // Calculate the coordinates relative to the window
+            const xRelative = screen.getCursorScreenPoint().x; // Adjust as needed
+            const yRelative = screen.getCursorScreenPoint().y; // Adjust as needed
+            
+            const x =  xRelative -windowX;
+            const y =  yRelative -windowY - 50;
+        mainWindow.webContents.sendInputEvent(
+            { type: 'mouseMove', x: x, y: y });
+    }, 1000);
+    //fake user gesture
+
     mainWindow.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {
         event.preventDefault();
-        console.log()
 
         const haritoraDevices = deviceList.filter(device =>
             device.deviceName.startsWith('HaritoraXW-') && !connectedDevices.includes(device.deviceName)
         );
-
+        if(!allow_connection){
+            return;
+        }
         if (haritoraDevices.length > 0) {
             const selectedDevice = haritoraDevices[0];
             console.log('Selected Haritora device:', selectedDevice.deviceName);
@@ -228,9 +262,9 @@ ipcMain.on('sendData', (event, postData) => {
 function sendYawReset() {
     var buffer = new ArrayBuffer(128);
     var view = new DataView(buffer);
-    view.setInt32(0, 21);                           
-    view.setBigInt64(4, BigInt(PACKET_COUNTER)); 
-    view.setInt8(12, 3);     
+    view.setInt32(0, 21);
+    view.setBigInt64(4, BigInt(PACKET_COUNTER));
+    view.setInt8(12, 3);
     sendBuffer = new Uint8Array(buffer);
     sock.send(sendBuffer, 0, sendBuffer.length, SLIME_PORT, SLIME_IP, (err) => {
         if (err) {
@@ -244,10 +278,10 @@ function sendYawReset() {
 function sendBatteryLevel(batteryLevel) {
     var buffer = new ArrayBuffer(128);
     var view = new DataView(buffer);
-    view.setInt32(0, 12);                           
-    view.setBigInt64(4, BigInt(PACKET_COUNTER)); 
-    view.setFloat32(12, 0);     
-    view.setFloat32(16, batteryLevel);     
+    view.setInt32(0, 12);
+    view.setBigInt64(4, BigInt(PACKET_COUNTER));
+    view.setFloat32(12, 0);
+    view.setFloat32(16, batteryLevel);
     sendBuffer = new Uint8Array(buffer);
     sock.send(sendBuffer, 0, sendBuffer.length, SLIME_PORT, SLIME_IP, (err) => {
         if (err) {
@@ -339,6 +373,7 @@ ipcMain.on('disconnect', (event, deviceName) => {
     console.log(connectedDevices);
 
 });
+
 
 // Quit when all windows are closed, except on macOS.
 app.on('window-all-closed', function () {

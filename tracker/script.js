@@ -67,6 +67,7 @@ function saveSmoothValue() {
 var connecting = null;
 async function connectToTrackers() {
     if (connecting == null) {
+        ipc.send('connection', true);
         connecting = setInterval(async () => {
             await connectToDevice();
         }, 1000);
@@ -79,6 +80,7 @@ function disconnectAllDevices() {
         disconnectDevice(device);
     }
     if (connecting) {
+        ipc.send('connection', false);
         clearInterval(connecting);
         connecting = null;
     }
@@ -290,7 +292,7 @@ async function connectToDevice() {
         });
 
     } catch (error) {
-        //console.log(error);
+        console.log(error);
     }
 }
 

@@ -39,7 +39,7 @@ button {
     border-radius: 15px;
     font-size: 25px;
     position: relative;
-    width: 350px;
+    max-width: 350px;
 }
 
 button:hover {
