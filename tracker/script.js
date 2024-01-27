@@ -14,14 +14,23 @@ const store = {
 
 
 var smooth_val = 0.5;
+var mag = false;
 
 document.addEventListener("DOMContentLoaded", async function () {
     var smoothingCheckbox = document.getElementById("smoothing");
     if (await store.has("smoothingEnabled")) {
         smoothingCheckbox.checked = await store.get("smoothingEnabled");
     } else {
-        smoothingCheckbox.checked = true;
+        smoothingCheckbox.checked = false;
     }
+
+    var magnetometerCheckbox = document.getElementById("magnetometer");
+    if (await store.has("magnetometer")) {
+        magnetometerCheckbox.checked = await store.get("magnetometer");
+    } else {
+        magnetometerCheckbox.checked = false;
+    }
+    mag = magnetometerCheckbox.checked;
 
     if (await store.has("smoothinput")) {
         smooth_val = await store.get("smoothinput");
@@ -42,6 +51,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             smooth_val = 1;
         }
+    });
+    magnetometerCheckbox.addEventListener("change", function () {
+        store.set("magnetometer", magnetometerCheckbox.checked);
+        mag = magnetometerCheckbox.checked;
     });
 });
 
@@ -175,10 +188,14 @@ async function connectToDevice() {
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
         const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
         const button_characteristic = await sensor_service.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
+        const fps_characteristic = await sensor_service.getCharacteristic("00dbf1c6-90aa-11ed-a1eb-0242ac120002");
+        const mode_characteristic = await setting_service.getCharacteristic("ef8445c2-90a9-11ed-a1eb-0242ac120002");
 
         var sensor_value = await sensor_characteristic.readValue();
         var battery_value = await battery_characteristic.readValue();
         var button_value = (await button_characteristic.readValue()).getInt8(0);
+        var fps_value = await fps_characteristic.readValue();
+        var mode_value = await mode_characteristic.readValue();
 
         var new_button_value = null;
         var button_enabled = false;
@@ -186,20 +203,82 @@ async function connectToDevice() {
         var postData = null;
         var allowyawreset = false;
 
+        var tpsCounter = 0;
+        var lastTimestamp = 0;
         const updateValues = async () => {
-            sensor_value = await sensor_characteristic.readValue();
-            battery_value = await battery_characteristic.readValue();
-            new_button_value = (await button_characteristic.readValue()).getInt8(0);
-            if (button_value != new_button_value) {
-                button_enabled = true;
-            }
-            else {
-                button_enabled = false;
-            }
-            button_value = new_button_value;
-            setTimeout(updateValues, 16.7);
-        }
+            if(trackerdevices[device.id] == null) return;
+            // Enable notifications for the characteristic
+            await sensor_characteristic.startNotifications();
+            await battery_characteristic.startNotifications();
+            await button_characteristic.startNotifications();
+            
+            // Handle notifications
+            sensor_characteristic.addEventListener('characteristicvaluechanged', (event) => {
+                // Handle sensor data
+                sensor_value = event.target.value;
+
+                if (Date.now() - lastTimestamp >= 1000) {
+                    const tps = tpsCounter / ((Date.now() - lastTimestamp) / 1000);
+                    //console.log(`TPS: ${tps}`);
+                    tpsCounter = 0;
+                    lastTimestamp = Date.now();
+                } else {
+                    tpsCounter += 1;
+                }
+
+            });
+
+            battery_characteristic.addEventListener('characteristicvaluechanged', (event) => {
+                // Handle battery data
+                battery_value = event.target.value;
+
+                if (Date.now() - lastTimestamp >= 1000) {
+                    const tps = tpsCounter / ((Date.now() - lastTimestamp) / 1000);
+                    //console.log(`TPS: ${tps}`);
+                    tpsCounter = 0;
+                    lastTimestamp = Date.now();
+                } else {
+                    tpsCounter += 1;
+                }
+
+            });
+
+            button_characteristic.addEventListener('characteristicvaluechanged', (event) => {
+                // Handle button data
+                new_button_value = event.target.value.getInt8(0);
+                if (button_value !== new_button_value) {
+                    button_enabled = true;
+                } else {
+                    button_enabled = false;
+                }
+                button_value = new_button_value;
+
+                if (Date.now() - lastTimestamp >= 1000) {
+                    const tps = tpsCounter / ((Date.now() - lastTimestamp) / 1000);
+                    //console.log(`TPS: ${tps}`);
+                    tpsCounter = 0;
+                    lastTimestamp = Date.now();
+                } else {
+                    tpsCounter += 1;
+                }
+
+            });
+        };
+
+        // Start the update loop
         updateValues();
+
+
+        const writeValues = async () =>{
+            if(trackerdevices[device.id] == null) return;
+            const magvalue = new DataView(new ArrayBuffer(1));
+            magvalue.setUint8(0, mag ? 5 : 8);
+            mode_value = magvalue;
+            await mode_characteristic.writeValue(magvalue);
+            setTimeout(writeValues, 1000);
+        }
+        writeValues();
+
         const trackercheck = setInterval(async () => {
 
             var yawreset = false;
@@ -279,7 +358,7 @@ async function connectToDevice() {
                 "<strong>Battery:</strong> " + batteryPercentage.toFixed(0) + "% <br><br>";
             deviceelement.innerHTML = content;
 
-        }, 16.7);
+        }, 10);
 
         device.addEventListener('gattserverdisconnected', (event) => {
             clearInterval(trackercheck);
@@ -323,7 +402,7 @@ function calcGravityVec(qwxyz, gravVec) {
 
 function decodeIMUPacket(device, rawdata) {
     const dataView = new DataView(rawdata.buffer);
-    
+
     const rotation = {
         x: dataView.getInt16(0, true) / 180.0 * 0.01,
         y: dataView.getInt16(2, true) / 180.0 * 0.01,
