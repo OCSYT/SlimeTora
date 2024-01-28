@@ -154,7 +154,7 @@ function createWindow() {
         const y = yRelative - windowY - 50;
         mainWindow.webContents.sendInputEvent(
             { type: 'mouseMove', x: x, y: y });
-    }, 2500);
+    }, 1000);
     //fake user gesture
 
     mainWindow.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {

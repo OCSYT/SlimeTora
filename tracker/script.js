@@ -210,7 +210,6 @@ async function connectToDevice() {
             // Enable notifications for the characteristic
             await sensor_characteristic.startNotifications();
             await battery_characteristic.startNotifications();
-            await button_characteristic.startNotifications();
             
             // Handle notifications
             sensor_characteristic.addEventListener('characteristicvaluechanged', (event) => {
@@ -242,27 +241,6 @@ async function connectToDevice() {
                 }
 
             });
-
-            button_characteristic.addEventListener('characteristicvaluechanged', (event) => {
-                // Handle button data
-                new_button_value = event.target.value.getInt8(0);
-                if (button_value !== new_button_value) {
-                    button_enabled = true;
-                } else {
-                    button_enabled = false;
-                }
-                button_value = new_button_value;
-
-                if (Date.now() - lastTimestamp >= 1000) {
-                    const tps = tpsCounter / ((Date.now() - lastTimestamp) / 1000);
-                    //console.log(`TPS: ${tps}`);
-                    tpsCounter = 0;
-                    lastTimestamp = Date.now();
-                } else {
-                    tpsCounter += 1;
-                }
-
-            });
         };
 
         // Start the update loop
@@ -275,7 +253,19 @@ async function connectToDevice() {
             magvalue.setUint8(0, mag ? 5 : 8);
             mode_value = magvalue;
             await mode_characteristic.writeValue(magvalue);
-            setTimeout(writeValues, 1000);
+
+
+            new_button_value = (await button_characteristic.readValue()).getInt8(0);
+            if (button_value !== new_button_value) {
+                button_enabled = true;
+            } else {
+                button_enabled = false;
+            }
+            if(button_enabled){
+                console.log(button_enabled);
+            }
+            button_value = new_button_value;
+            setTimeout(writeValues, 100);
         }
         writeValues();
 
