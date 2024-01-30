@@ -77,32 +77,50 @@ function saveSmoothValue() {
 
 
 
+var allowconnection = true;
 var connecting = null;
 async function connectToTrackers() {
     if (connecting == null) {
         connecting = setInterval(async () => {
-            ipc.send('connection', true);
-            await connectToDevice();
+            if (allowconnection) {
+                allowconnection = false;
+                ipc.send('connection', true);
+                await connectToDevice();
+            }
         }, 1000);
     }
 }
 
-function disconnectAllDevices() {
-    for (const deviceId in trackerdevices) {
-        const device = trackerdevices[deviceId];
-        disconnectDevice(device);
-    }
+async function disconnectAllDevices() {
     if (connecting) {
+        const devicelist = document.getElementById("devicelist");
+        trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+        devicelist.innerHTML = "<br><h1>Trackers: </h1><br></br>";
         ipc.send('connection', false);
         clearInterval(connecting);
         connecting = null;
+    }
+    for (const deviceId in trackerdevices) {
+        const device = trackerdevices[deviceId][0];
+        await disconnectDevice(device);
+    }
+    if (connecting) {
+        trackerdevices = {};
+        allowconnection = true;
     }
 }
 
 // Add this function to disconnect a specific device
 async function disconnectDevice(device) {
     try {
-        await device.gatt.disconnect();
+        if (device) {
+            if (trackerdevices[device.id]) {
+                clearInterval(trackerdevices[device.id][1]);
+            }
+            delete trackerdevices[device];
+            await device.gatt.disconnect();
+            console.log("disconnected");
+        }
     } catch (error) {
         console.error('Error disconnecting from Bluetooth device:', error);
     }
@@ -144,25 +162,89 @@ function interpolateIMU(currentData, newData, t) {
     return interpolatedData;
 }
 
+async function getService(server, serviceId) {
+    try {
+        // Check if the GATT server is connected before retrieving the service
+        if (server) {
+            const service = await server.getPrimaryService(serviceId);
+            return service;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        return null;
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function connectToDevice() {
+    var device = null
     try {
         const sensorServiceId = "00dbec3a-90aa-11ed-a1eb-0242ac120002";
         const settingId = "ef84369a-90a9-11ed-a1eb-0242ac120002";
         const batteryId = "0000180f-0000-1000-8000-00805f9b34fb";
         const deviceInfoId = "0000180a-0000-1000-8000-00805f9b34fb";
 
-        const device = await navigator.bluetooth.requestDevice({
-            filters: [{ namePrefix: 'HaritoraXW-' }],
-            optionalServices: [sensorServiceId, settingId, batteryId, deviceInfoId]
-        });
+        try {
+            device = await navigator.bluetooth.requestDevice({
+                filters: [{ namePrefix: 'HaritoraXW-' }],
+                optionalServices: [sensorServiceId, settingId, batteryId, deviceInfoId]
+            });
+            for (let i = 0; i < 10; i++) {
+                if (connecting == null) {
+                    await sleep(1000);
+                    console.log("cancelling connection");
+                    if (device != null) {
+                        if (device.gatt != null) {
+                            await device.gatt.disconnect();
+                        }
+                    }
+                    allowconnection = true;
+                    if (device) {
+                        if (trackerdevices[device.id]) {
+                            clearInterval(trackerdevices[device.id][1]);
+                        }
+                    }
+                    return null;
+                }
+                else{
+                    break;
+                }
+            }
+        } catch {
+            if (device != null) {
+                if (device.gatt != null) {
+                    await device.gatt.disconnect();
+                }
+            }
+            allowconnection = true;
+            if (device) {
+                if (trackerdevices[device.id]) {
+                    clearInterval(trackerdevices[device.id][1]);
+                }
+            }
+            return null;
+        }
         if (trackerdevices[device.id]) return;
         const server = await device.gatt.connect();
 
-        const battery_service = await server.getPrimaryService(batteryId);
-        const sensor_service = await server.getPrimaryService(sensorServiceId);
-        const setting_service = await server.getPrimaryService(settingId);
-        const device_service = await server.getPrimaryService(deviceInfoId);
+        const battery_service = await getService(server, batteryId);
+        const sensor_service = await getService(server, sensorServiceId);
+        const setting_service = await getService(server, settingId);
+        const device_service = await getService(server, deviceInfoId);
+        if (!battery_service || !sensorServiceId || !setting_service || !device_service) {
+            await device.gatt.disconnect();
+            allowconnection = true;
+            if (device) {
+                if (trackerdevices[device.id]) {
+                    clearInterval(trackerdevices[device.id]);
+                }
+            }
+            return null;
+        }
         console.log('Connected to device:', device.name);
 
         const devicelist = document.getElementById("devicelist");
@@ -181,7 +263,7 @@ async function connectToDevice() {
         deviceelement.id = device.name;
         devicelist.appendChild(deviceelement);
 
-        trackerdevices[device.id] = device;
+        trackerdevices[device.id] = [device, null];
         battery[device.id] = 0;
 
         trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
@@ -206,11 +288,11 @@ async function connectToDevice() {
         var tpsCounter = 0;
         var lastTimestamp = 0;
         const updateValues = async () => {
-            if(trackerdevices[device.id] == null) return;
+            if (trackerdevices[device.id] == null) return;
             // Enable notifications for the characteristic
             await sensor_characteristic.startNotifications();
             await battery_characteristic.startNotifications();
-            
+
             // Handle notifications
             sensor_characteristic.addEventListener('characteristicvaluechanged', (event) => {
                 // Handle sensor data
@@ -247,25 +329,31 @@ async function connectToDevice() {
         updateValues();
 
 
-        const writeValues = async () =>{
-            if(trackerdevices[device.id] == null) return;
-            const magvalue = new DataView(new ArrayBuffer(1));
-            magvalue.setUint8(0, mag ? 5 : 8);
-            mode_value = magvalue;
-            await mode_characteristic.writeValue(magvalue);
+        const writeValues = async () => {
+            if (trackerdevices[device.id] == null) return;
+            try {
+                const magvalue = new DataView(new ArrayBuffer(1));
+                magvalue.setUint8(0, mag ? 5 : 8);
+                mode_value = magvalue;
+                await mode_characteristic.writeValue(magvalue);
 
 
-            new_button_value = (await button_characteristic.readValue()).getInt8(0);
-            if (button_value !== new_button_value) {
-                button_enabled = true;
-            } else {
-                button_enabled = false;
+                new_button_value = (await button_characteristic.readValue()).getInt8(0);
+                if (button_value !== new_button_value) {
+                    button_enabled = true;
+                } else {
+                    button_enabled = false;
+                }
+                if (button_enabled) {
+                    console.log(button_enabled);
+                }
+                button_value = new_button_value;
+                if (connecting) {
+                    setTimeout(writeValues, 100);
+                }
+            } catch {
+
             }
-            if(button_enabled){
-                console.log(button_enabled);
-            }
-            button_value = new_button_value;
-            setTimeout(writeValues, 100);
         }
         writeValues();
 
@@ -314,13 +402,15 @@ async function connectToDevice() {
             //remove lag
 
             ipc.send('sendData', postDataCurrent);
-            iframe.contentWindow.postMessage({
-                type: 'rotate',
-                rotationX: postDataCurrent["rotation"].x,
-                rotationY: postDataCurrent["rotation"].y,
-                rotationZ: postDataCurrent["rotation"].z,
-                rotationW: postDataCurrent["rotation"].w
-            }, '*');
+            if (iframe) {
+                iframe.contentWindow.postMessage({
+                    type: 'rotate',
+                    rotationX: postDataCurrent["rotation"].x,
+                    rotationY: postDataCurrent["rotation"].y,
+                    rotationZ: postDataCurrent["rotation"].z,
+                    rotationW: postDataCurrent["rotation"].w
+                }, '*');
+            }
 
             // rotation is given in radians
             const rotation = new Quaternion([postDataCurrent["rotation"].w, postDataCurrent["rotation"].x, postDataCurrent["rotation"].y, postDataCurrent["rotation"].z]);
@@ -349,19 +439,54 @@ async function connectToDevice() {
             deviceelement.innerHTML = content;
 
         }, 10);
+        trackerdevices[device.id][1] = trackercheck;
 
-        device.addEventListener('gattserverdisconnected', (event) => {
-            clearInterval(trackercheck);
-            deviceelement.remove();
-            delete trackerdevices[device.id];
-            delete battery[device.id];
-            iframe.remove();
-            ipc.send("disconnect", device.name);
-            trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+        device.addEventListener('gattserverdisconnected', async (event) => {
+            try {
+                if (connecting) {
+                    await device.gatt.connect();
+                }
+                else {
+                    if (device) {
+                        if (trackerdevices[device.id]) {
+                            clearInterval(trackerdevices[device.id][1]);
+                        }
+                    }
+                    deviceelement.remove();
+                    delete trackerdevices[device.id];
+                    delete battery[device.id];
+                    iframe.remove();
+                    ipc.send("disconnect", device.name);
+                    trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+                }
+            } catch {
+                if (device) {
+                    if (trackerdevices[device.id]) {
+                        clearInterval(trackerdevices[device.id][1]);
+                    }
+                }
+                deviceelement.remove();
+                delete trackerdevices[device.id];
+                delete battery[device.id];
+                iframe.remove();
+                ipc.send("disconnect", device.name);
+                trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+            }
         });
-
+        allowconnection = true;
     } catch (error) {
         console.log(error);
+        allowconnection = true;
+        if (device) {
+            if (trackerdevices[device.id]) {
+                clearInterval(trackerdevices[device.id][1]);
+            }
+        }
+        if(Object.values(trackerdevices).length == 0){
+            const devicelist = document.getElementById("devicelist");
+            trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+            devicelist.innerHTML = "<br><h1>Trackers: </h1><br></br>";
+        }
     }
 }
 

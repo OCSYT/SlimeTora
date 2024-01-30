@@ -38,7 +38,11 @@ ipcMain.handle('has-data', async (event, key) => {
 
 var allow_connection = false;
 ipcMain.on('connection', (event, value) => {
-    allow_connection = value;
+    allow_connection = (value);
+    if(!allow_connection){
+        console.log("devices:", connectedDevices);
+        connectedDevices = [];
+    }
 });
 
 
@@ -100,17 +104,6 @@ function addIMU(trackerID) {
 let mainWindow;
 
 let connectedDevices = [];
-
-function stringToBinary(str) {
-    let binaryString = '';
-
-    for (let i = 0; i < str.length; i++) {
-        const binaryChar = str[i].charCodeAt(0).toString(2);
-        binaryString += '0'.repeat(8 - binaryChar.length) + binaryChar; // Ensure 8-bit representation
-    }
-
-    return binaryString;
-}
 
 
 function createWindow() {
