@@ -39,7 +39,7 @@ ipcMain.handle('has-data', async (event, key) => {
 var allow_connection = false;
 ipcMain.on('connection', (event, value) => {
     allow_connection = (value);
-    if(!allow_connection){
+    if (!allow_connection) {
         console.log("devices:", connectedDevices);
         connectedDevices = [];
     }
@@ -117,37 +117,40 @@ function createWindow() {
         },
     });
     mainWindow.loadFile('./tracker/index.html');
-
-    setInterval(() => {
-        mainWindow.webContents.executeJavaScript(`
+    try {
+        setInterval(() => {
+            mainWindow.webContents.executeJavaScript(`
         document.activeElement.tagName.toUpperCase() !== 'INPUT' && document.activeElement.tagName.toUpperCase() !== 'TEXTAREA';
     `).then((result) => {
-            if (result) {
-                mainWindow.webContents.sendInputEvent({ type: 'mouseDown', x: 0, y: 0, button: 'left', clickCount: 1 });
-                mainWindow.webContents.sendInputEvent({ type: 'mouseUp', x: 0, y: 0, button: 'left', clickCount: 1 });
-            }
-        }).catch((error) => {
-            console.error(error);
-        });
-        // Get the position of the window
-        const windowPosition = mainWindow.getPosition();
-        const windowX = windowPosition[0];
-        const windowY = windowPosition[1];
+                if (result) {
+                    mainWindow.webContents.sendInputEvent({ type: 'mouseDown', x: 0, y: 0, button: 'left', clickCount: 1 });
+                    mainWindow.webContents.sendInputEvent({ type: 'mouseUp', x: 0, y: 0, button: 'left', clickCount: 1 });
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+            // Get the position of the window
+            const windowPosition = mainWindow.getPosition();
+            const windowX = windowPosition[0];
+            const windowY = windowPosition[1];
 
-        // Get the size of the window
-        const windowSize = mainWindow.getSize();
-        const windowWidth = windowSize[0];
-        const windowHeight = windowSize[1];
+            // Get the size of the window
+            const windowSize = mainWindow.getSize();
+            const windowWidth = windowSize[0];
+            const windowHeight = windowSize[1];
 
-        // Calculate the coordinates relative to the window
-        const xRelative = screen.getCursorScreenPoint().x; // Adjust as needed
-        const yRelative = screen.getCursorScreenPoint().y; // Adjust as needed
+            // Calculate the coordinates relative to the window
+            const xRelative = screen.getCursorScreenPoint().x; // Adjust as needed
+            const yRelative = screen.getCursorScreenPoint().y; // Adjust as needed
 
-        const x = xRelative - windowX;
-        const y = yRelative - windowY - 50;
-        mainWindow.webContents.sendInputEvent(
-            { type: 'mouseMove', x: x, y: y });
-    }, 1000);
+            const x = xRelative - windowX;
+            const y = yRelative - windowY - 50;
+            mainWindow.webContents.sendInputEvent(
+                { type: 'mouseMove', x: x, y: y });
+        }, 1000);
+    } catch {
+
+    }
     //fake user gesture
 
     mainWindow.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {
