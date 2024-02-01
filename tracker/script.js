@@ -85,6 +85,7 @@ async function connectToTrackers() {
             if (allowconnection) {
                 allowconnection = false;
                 ipc.send('connection', true);
+                console.log("checking for connection");
                 await connectToDevice();
             }
         }, 1000);
@@ -98,16 +99,15 @@ async function disconnectAllDevices() {
         devicelist.innerHTML = "<br><h1>Trackers: </h1><br></br>";
         ipc.send('connection', false);
         clearInterval(connecting);
-        connecting = null;
     }
     for (const deviceId in trackerdevices) {
         const device = trackerdevices[deviceId][0];
         await disconnectDevice(device);
     }
-    if (connecting) {
-        trackerdevices = {};
-        allowconnection = true;
-    }
+    trackerdevices = {};
+    allowconnection = true;
+    connecting = null;
+
 }
 
 // Add this function to disconnect a specific device
@@ -210,7 +210,7 @@ async function connectToDevice() {
                     }
                     return null;
                 }
-                else{
+                else {
                     break;
                 }
             }
@@ -288,7 +288,6 @@ async function connectToDevice() {
         var tpsCounter = 0;
         var lastTimestamp = 0;
         const updateValues = async () => {
-            if (trackerdevices[device.id] == null) return;
             // Enable notifications for the characteristic
             await sensor_characteristic.startNotifications();
             await battery_characteristic.startNotifications();
@@ -442,36 +441,17 @@ async function connectToDevice() {
         trackerdevices[device.id][1] = trackercheck;
 
         device.addEventListener('gattserverdisconnected', async (event) => {
-            try {
-                if (connecting) {
-                    await device.gatt.connect();
+            if (device) {
+                if (trackerdevices[device.id]) {
+                    clearInterval(trackerdevices[device.id][1]);
                 }
-                else {
-                    if (device) {
-                        if (trackerdevices[device.id]) {
-                            clearInterval(trackerdevices[device.id][1]);
-                        }
-                    }
-                    deviceelement.remove();
-                    delete trackerdevices[device.id];
-                    delete battery[device.id];
-                    iframe.remove();
-                    ipc.send("disconnect", device.name);
-                    trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
-                }
-            } catch {
-                if (device) {
-                    if (trackerdevices[device.id]) {
-                        clearInterval(trackerdevices[device.id][1]);
-                    }
-                }
-                deviceelement.remove();
-                delete trackerdevices[device.id];
-                delete battery[device.id];
-                iframe.remove();
-                ipc.send("disconnect", device.name);
-                trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
             }
+            deviceelement.remove();
+            delete trackerdevices[device.id];
+            delete battery[device.id];
+            iframe.remove();
+            ipc.send("disconnect", device.name);
+            trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
         });
         allowconnection = true;
     } catch (error) {
@@ -482,7 +462,7 @@ async function connectToDevice() {
                 clearInterval(trackerdevices[device.id][1]);
             }
         }
-        if(Object.values(trackerdevices).length == 0){
+        if (Object.values(trackerdevices).length == 0) {
             const devicelist = document.getElementById("devicelist");
             trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
             devicelist.innerHTML = "<br><h1>Trackers: </h1><br></br>";
