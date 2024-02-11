@@ -1,3 +1,5 @@
 {
-  "magnetometer": false
+  "magnetometer": false,
+  "smoothingEnabled": false,
+  "smoothinput": 0.5
 }

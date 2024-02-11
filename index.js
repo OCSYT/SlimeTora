@@ -42,6 +42,7 @@ ipcMain.on('connection', (event, value) => {
     if (!allow_connection) {
         console.log("devices:", connectedDevices);
         connectedDevices = [];
+        last_connected_device_id = "";
     }
 });
 
@@ -112,6 +113,7 @@ function createWindow() {
         height: 600,
         webPreferences: {
             nodeIntegration: true,
+            contextIsolation: false,
             backgroundThrottling: false,
             preload: path.join(__dirname, 'preload.js')
         },
@@ -152,74 +154,84 @@ function createWindow() {
 
     }
     //fake user gesture
+    var last_connected_device_id = "";
 
-    mainWindow.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {
-        event.preventDefault();
+    if (mainWindow) {
+        mainWindow.webContents.on('select-bluetooth-device', async (event, deviceList, callback) => {
+            event.preventDefault();
 
-        const haritoraDevices = deviceList.filter(device =>
-            device.deviceName.startsWith('HaritoraXW-') && !connectedDevices.includes(device.deviceName)
-        );
-        if (!allow_connection) {
-            return;
-        }
-        if (haritoraDevices.length > 0) {
-            const selectedDevice = haritoraDevices[0];
-            console.log('Selected Haritora device:', selectedDevice.deviceName);
-            if (connectedDevices.length == 0) {
-                const fw_string = "Haritora";
+            const haritoraDevices = await deviceList.filter(device =>
+                device.deviceName.startsWith('HaritoraXW-') && !connectedDevices.includes(device.deviceName)
+            );
 
-                function buildHandshake() {
-                    var buffer = new ArrayBuffer(128);
-                    var view = new DataView(buffer);
-                    var offset = 0;
+            if (!allow_connection) {
+                return;
+            }
 
-                    view.setInt32(offset, 3);                                   // packet 3 header
-                    offset += 4;
-                    view.setBigInt64(offset, BigInt(PACKET_COUNTER));         // packet counter
-                    offset += 8;
-                    view.setInt32(offset, 0);                        // Board type
-                    offset += 4;
-                    view.setInt32(offset, 0);                          // IMU type
-                    offset += 4;
-                    view.setInt32(offset, 0);                          // MCU type
-                    offset += 4;
-                    for (var i = 0; i < 3; i++) {
-                        view.setInt32(offset, 0);               // IMU info (unused)
+            if (haritoraDevices[0] != null) {
+                const selectedDevice = haritoraDevices[0];
+                last_connected_device_id = selectedDevice.deviceId;
+                console.log('Selected Haritora device:', selectedDevice.deviceName);
+                if (connectedDevices.length == 0) {
+                    const fw_string = "Haritora";
+
+                    function buildHandshake() {
+                        var buffer = new ArrayBuffer(128);
+                        var view = new DataView(buffer);
+                        var offset = 0;
+
+                        view.setInt32(offset, 3);                                   // packet 3 header
                         offset += 4;
-                    }
-                    view.setInt32(offset, 0);                       // Firmware build
-                    offset += 4;
-                    view.setInt8(offset, fw_string.length);               // Length of fw string
-                    offset += 1;
-                    for (var i = 0; i < fw_string.length; i++) {
-                        view.setInt8(offset, fw_string.charCodeAt(i));   // fw string
+                        view.setBigInt64(offset, BigInt(PACKET_COUNTER));         // packet counter
+                        offset += 8;
+                        view.setInt32(offset, 0);                        // Board type
+                        offset += 4;
+                        view.setInt32(offset, 0);                          // IMU type
+                        offset += 4;
+                        view.setInt32(offset, 0);                          // MCU type
+                        offset += 4;
+                        for (var i = 0; i < 3; i++) {
+                            view.setInt32(offset, 0);               // IMU info (unused)
+                            offset += 4;
+                        }
+                        view.setInt32(offset, 0);                       // Firmware build
+                        offset += 4;
+                        view.setInt8(offset, fw_string.length);               // Length of fw string
                         offset += 1;
-                    }
-                    var macAddress = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
-                    for (var i = 0; i < macAddress.length; i++) {
-                        view.setInt8(offset, macAddress[i]); // MAC address
-                        offset += 1;
-                    }
+                        for (var i = 0; i < fw_string.length; i++) {
+                            view.setInt8(offset, fw_string.charCodeAt(i));   // fw string
+                            offset += 1;
+                        }
+                        var macAddress = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
+                        for (var i = 0; i < macAddress.length; i++) {
+                            view.setInt8(offset, macAddress[i]); // MAC address
+                            offset += 1;
+                        }
 
-                    return new Uint8Array(buffer);
-                }
-                const handshake = buildHandshake();
-                sock.send(handshake, 0, handshake.length, SLIME_PORT, SLIME_IP, (err) => {
-                    if (err) {
-                        console.error("Error sending handshake:", err);
+                        return new Uint8Array(buffer);
                     }
-                });
+                    const handshake = buildHandshake();
+                    sock.send(handshake, 0, handshake.length, SLIME_PORT, SLIME_IP, (err) => {
+                        if (err) {
+                            console.error("Error sending handshake:", err);
+                        }
+                    });
+                }
+                else {
+                    addIMU(connectedDevices.length);
+                }
+                connectedDevices.push(selectedDevice.deviceName);
+                connectedDevices.sort();
+                callback(selectedDevice.deviceId);
+            } else {
+                const delay = ms => new Promise(res => setTimeout(res, ms));
+                await delay(5000);
+                if (haritoraDevices[0] == null) {
+                    console.error("no device found");
+                }
             }
-            else {
-                addIMU(connectedDevices.length);
-            }
-            connectedDevices.push(selectedDevice.deviceName);
-            connectedDevices.sort();
-            callback(selectedDevice.deviceId);
-        } else {
-            console.log('No available or connected Haritora devices.');
-        }
-    });
+        });
+    }
 
     // Emitted when the window is closed.
     mainWindow.on('closed', function () {

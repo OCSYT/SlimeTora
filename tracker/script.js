@@ -1,15 +1,12 @@
 const store = {
     // Send a message to the main process to get data from the store
-    get: async (key) => await ipc.invoke('get-data', key),
+    get: async (key) => await window.ipc.invoke('get-data', key),
 
-    // Send a message to the main process to set data in the store
-    set: (key, value) => ipc.send('set-data', { key, value }),
+    set: (key, value) => window.ipc.send('set-data', { key, value }),
 
-    // Send a message to the main process to delete data from the store
-    delete: (key) => ipc.send('delete-data', key),
+    delete: (key) => window.ipc.send('delete-data', key),
 
-    // Send a message to the main process to check if a key exists in the store
-    has: async (key) => await ipc.invoke('has-data', key)
+    has: async (key) => await window.ipc.invoke('has-data', key)
 };
 
 
@@ -95,7 +92,7 @@ async function connectToTrackers() {
 async function disconnectAllDevices() {
     if (connecting) {
         const devicelist = document.getElementById("devicelist");
-        trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+        trackercount.innerHTML = "Connected Trackers: " + 0;
         devicelist.innerHTML = "<br><h1>Trackers: </h1><br></br>";
         ipc.send('connection', false);
         clearInterval(connecting);
@@ -117,7 +114,13 @@ async function disconnectDevice(device) {
             if (trackerdevices[device.id]) {
                 clearInterval(trackerdevices[device.id][1]);
             }
-            delete trackerdevices[device];
+            delete trackerdevices[device.id];
+            delete battery[device.id];
+            delete initialAccel[device.id];
+            delete startTimes[device.id];
+            delete calibrated[device.id];
+            delete trackerrotation[device.id];
+            delete trackeraccel[device.id];
             await device.gatt.disconnect();
             console.log("disconnected");
         }
@@ -247,6 +250,8 @@ async function connectToDevice() {
         }
         console.log('Connected to device:', device.name);
 
+        trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+
         const devicelist = document.getElementById("devicelist");
         const deviceelement = document.createElement("div");
         const iframe = document.createElement('iframe');
@@ -266,7 +271,6 @@ async function connectToDevice() {
         trackerdevices[device.id] = [device, null];
         battery[device.id] = 0;
 
-        trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
         const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
         const button_characteristic = await sensor_service.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
@@ -449,6 +453,11 @@ async function connectToDevice() {
             deviceelement.remove();
             delete trackerdevices[device.id];
             delete battery[device.id];
+            delete initialAccel[device.id];
+            delete startTimes[device.id];
+            delete calibrated[device.id];
+            delete trackerrotation[device.id];
+            delete trackeraccel[device.id];
             iframe.remove();
             ipc.send("disconnect", device.name);
             trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
@@ -480,23 +489,22 @@ function decodeBatteryPacket(device, data) {
     return [device, batteryLevel];
 
 }
-
-function calcGravityVec(qwxyz, gravVec) {
-    var newgrav = {
-        x: 0,
-        y: 0,
-        z: 0
-    }
-
-    newgrav.x = 2 * (qwxyz.y * qwxyz.w - qwxyz.x * qwxyz.z);
-    newgrav.y = 2 * (qwxyz.x * qwxyz.y + qwxyz.z * qwxyz.w);
-    newgrav.z = qwxyz.x * qwxyz.x - qwxyz.y * qwxyz.y - qwxyz.z * qwxyz.z + qwxyz.w * qwxyz.w;
-    return newgrav;
-}
-
+let initialRotations = {};
+let initialAccel = {};
+let startTimes = {};
+let calibrated = {};
+let trackerrotation = {};
+let trackeraccel = {};
 
 function decodeIMUPacket(device, rawdata) {
+    const deviceId = device.id;
+    const DriftInterval = 10000;
     const dataView = new DataView(rawdata.buffer);
+
+    const elapsedTime = Date.now() - startTimes[deviceId];
+
+    const driftFactor = 0;
+    // calibrated[deviceId] == null ? Math.sin(Date.now() / 2000) * 2 : 0; //fake drift for testing purposes for now
 
     const rotation = {
         x: dataView.getInt16(0, true) / 180.0 * 0.01,
@@ -504,14 +512,27 @@ function decodeIMUPacket(device, rawdata) {
         z: dataView.getInt16(4, true) / 180.0 * 0.01 * -1.0,
         w: dataView.getInt16(6, true) / 180.0 * 0.01 * -1.0,
     };
+    trackerrotation[deviceId] = rotation;
 
 
+    rotation.x += driftFactor; // Adjust with your desired drift rate
+    rotation.y += driftFactor;
+    rotation.z -= driftFactor;
+    rotation.w -= driftFactor;
 
     const gravityRaw = {
         x: dataView.getInt16(8, true) / 256.0,
         y: dataView.getInt16(10, true) / 256.0,
         z: dataView.getInt16(12, true) / 256.0,
     };
+
+    const gravityRawGForce = {
+        x: (dataView.getInt16(8, true) / 256.0) / 9.81,
+        y: (dataView.getInt16(10, true) / 256.0) / 9.81,
+        z: (dataView.getInt16(12, true) / 256.0) / 9.81,
+    };
+
+    trackeraccel[deviceId] = gravityRaw;
 
     const rc = [rotation.w, rotation.x, rotation.y, rotation.z];
     const r = [rc[0], -rc[1], -rc[2], -rc[3]];
@@ -537,5 +558,125 @@ function decodeIMUPacket(device, rawdata) {
         z: gravityRaw.z - hfinal[3] * 1.2,
     };
 
+
+    if (elapsedTime >= DriftInterval) {
+        if (!calibrated[deviceId]) {
+            const rotationDifference = calculateRotationDifference(new Quaternion(initialRotations[deviceId].w, initialRotations[deviceId].x, initialRotations[deviceId].y, initialRotations[deviceId].z).toEuler("XYZ"),
+                new Quaternion(rotation.w, rotation.x,
+                    rotation.y, rotation.z).toEuler("XYZ"));
+            const adjustedRotation = rotationDifference;
+            calibrated[deviceId] = adjustedRotation;
+
+            console.log(adjustedRotation);
+        }
+    }
+
+    if (elapsedTime >= DriftInterval && calibrated[deviceId]) {
+        const driftCorrection = {
+            pitch: calibrated[deviceId].pitch * (elapsedTime / DriftInterval), // Convert milliseconds to seconds
+            roll: calibrated[deviceId].roll * (elapsedTime / DriftInterval), // Convert milliseconds to seconds
+            yaw: calibrated[deviceId].yaw * (elapsedTime / DriftInterval), // Convert milliseconds to seconds
+        };
+
+        const rotQuat = new Quaternion([rotation.w, rotation.x,
+        rotation.y, rotation.z]);
+
+        const rotEuler = rotQuat.toEuler("XYZ");
+        const relativeToRot = rotateVector([driftCorrection.pitch, driftCorrection.roll, driftCorrection.yaw], rotEuler[0], rotEuler[1], rotEuler[2]);
+
+        // Apply the inverse rotation to the current rotation difference
+        const rotationDifference = {
+            pitch: relativeToRot[0], // Convert radians to degrees
+            roll: relativeToRot[1], // Convert radians to degrees
+            yaw: relativeToRot[2] // Yaw remains unchanged
+        };
+
+        // Convert the Euler angles to a quaternion representing the rotation difference
+        const rotationDifferenceQuat = Quaternion.fromEuler(rotationDifference.pitch, rotationDifference.roll, rotationDifference.yaw, "XYZ");
+
+        // Calculate the corrected rotation by multiplying the rotation quaternion with the inverse of the rotation difference quaternion
+        const rotationDriftCorrected = rotQuat.mul(rotationDifferenceQuat.inverse());
+
+
+
+        console.log("Applied fix");
+        console.log(rotation);
+        console.log(rotationDriftCorrected);
+        return [device, rotationDriftCorrected, gravity];
+    }
+
+    // Return original rotation data
     return [device, rotation, gravity];
+}
+
+function calculateRotationDifference(prevRotation, currentRotation) {
+    const pitchDifferenceRad = currentRotation[0] - prevRotation[0];
+    const rollDifferenceRad = currentRotation[1] - prevRotation[1];
+    const yawDifferenceRad = currentRotation[2] - prevRotation[2];
+
+    return { pitch: pitchDifferenceRad, roll: rollDifferenceRad, yaw: yawDifferenceRad };
+}
+
+
+// Function to rotate a 3D vector by Euler angles (pitch, roll, yaw)
+function rotateVector(vector, pitch, roll, yaw) {
+    // Rotation matrices
+    const rotationX = [
+        [1, 0, 0],
+        [0, Math.cos(pitch), -Math.sin(pitch)],
+        [0, Math.sin(pitch), Math.cos(pitch)]
+    ];
+
+    const rotationY = [
+        [Math.cos(roll), 0, Math.sin(roll)],
+        [0, 1, 0],
+        [-Math.sin(roll), 0, Math.cos(roll)]
+    ];
+
+    const rotationZ = [
+        [Math.cos(yaw), -Math.sin(yaw), 0],
+        [Math.sin(yaw), Math.cos(yaw), 0],
+        [0, 0, 1]
+    ];
+
+    // Apply rotations
+    const rotatedX = multiplyMatrixVector(rotationX, vector);
+    const rotatedY = multiplyMatrixVector(rotationY, rotatedX);
+    const rotatedZ = multiplyMatrixVector(rotationZ, rotatedY);
+
+    return rotatedZ;
+}
+
+// Function to multiply a matrix by a vector
+function multiplyMatrixVector(matrix, vector) {
+    const result = [];
+    for (let i = 0; i < matrix.length; i++) {
+        let sum = 0;
+        for (let j = 0; j < vector.length; j++) {
+            sum += matrix[i][j] * vector[j];
+        }
+        result.push(sum);
+    }
+    return result;
+}
+
+
+function CalibrateDrift() {
+    for (const deviceId in trackerrotation) {
+        if (!initialRotations[deviceId]) {
+            delete calibrated[deviceId];
+            initialRotations[deviceId] = trackerrotation[deviceId];
+            startTimes[deviceId] = Date.now();
+            console.log(trackeraccel[deviceId]);
+            initialAccel[deviceId] = [trackeraccel[deviceId].x, trackeraccel[deviceId].y, trackeraccel[deviceId].z];
+        }
+    }
+}
+function RemoveDriftOffsets() {
+    for (const deviceId in trackerrotation) {
+        delete calibrated[deviceId];
+        delete initialRotations[deviceId];
+        delete startTimes[deviceId];
+        delete initialAccel[deviceId];
+    }
 }
