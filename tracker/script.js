@@ -555,24 +555,22 @@ function decodeIMUPacket(device, rawdata) {
 
     if (elapsedTime >= DriftInterval && calibrated[deviceId]) {
         const driftCorrection = {
-            pitch: calibrated[deviceId].pitch * (elapsedTime / DriftInterval),
-            roll: calibrated[deviceId].roll * (elapsedTime / DriftInterval),
-            yaw: calibrated[deviceId].yaw * (elapsedTime / DriftInterval), 
+            pitch: calibrated[deviceId].pitch * (elapsedTime / DriftInterval) % (2 * Math.PI),
+            roll: calibrated[deviceId].roll * (elapsedTime / DriftInterval) % (2 * Math.PI),
+            yaw: calibrated[deviceId].yaw * (elapsedTime / DriftInterval) % (2 * Math.PI), 
         };
-
-        const rotQuat = new Quaternion([rotation.w, rotation.x,
-        rotation.y, rotation.z]);
-
+        
+        const rotQuat = new Quaternion([rotation.w, rotation.x, rotation.y, rotation.z]);
+        
         const rotEuler = rotQuat.toEuler("XYZ");
         const relativeToRot = rotateVector([driftCorrection.pitch, driftCorrection.roll, driftCorrection.yaw], rotEuler[0], rotEuler[1], rotEuler[2]);
-
-
+        
         const rotationDifference = {
-            pitch: relativeToRot[0],
-            roll: relativeToRot[1], 
-            yaw: relativeToRot[2] 
+            pitch: relativeToRot[0] % (2 * Math.PI),
+            roll: relativeToRot[1] % (2 * Math.PI), 
+            yaw: relativeToRot[2] % (2 * Math.PI) 
         };
-
+        
         const rotationDifferenceQuat = Quaternion.fromEuler(rotationDifference.pitch, rotationDifference.roll, rotationDifference.yaw, "XYZ");
 
         const rotationDriftCorrected = rotQuat.mul(rotationDifferenceQuat.inverse());
