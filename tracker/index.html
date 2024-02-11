@@ -16,13 +16,28 @@
         <br>
         <br>
         <button onclick="disconnectAllDevices()">Disconnect All Devices</button>
+        <h1 id="trackercount">Connected Trackers: 0</h1>
+        <br>
+    </div>
+    <div class="content">
+        <br>
+        <h1>Experimental</h1>
+        <br>
+        <h1>Drift Correction</h1>
+        <br>
+        <small>Leave the trackers on a flat surface and press calibrate and wait 15 seconds, </small>
+        <br>
+        <small>this will apply an inverse rotation over time.</small>
+        <br>
+        <br>
+        <div id="calibratingstatus">Status: No Calibration set, using default rotation.</div>
         <br>
         <br>
         <button onclick="CalibrateDrift()">Calibrate Trackers</button>
         <br>
         <br>
         <button onclick="RemoveDriftOffsets()">Remove Calibration Data</button>
-        <h1 id="trackercount">Connected Trackers: 0</h1>
+        <br>
         <br>
     </div>
     <div id="devicelist">

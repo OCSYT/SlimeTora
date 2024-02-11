@@ -496,10 +496,9 @@ let startTimes = {};
 let calibrated = {};
 let trackerrotation = {};
 let trackeraccel = {};
-
+const DriftInterval = 15000;
 function decodeIMUPacket(device, rawdata) {
     const deviceId = device.id;
-    const DriftInterval = 10000;
     const dataView = new DataView(rawdata.buffer);
 
     const elapsedTime = Date.now() - startTimes[deviceId];
@@ -653,6 +652,8 @@ function multiplyMatrixVector(matrix, vector) {
 
 
 function CalibrateDrift() {
+    const status = document.getElementById("calibratingstatus");
+    status.innerHTML = "Status: Calibrating";
     for (const deviceId in trackerrotation) {
         if (!initialRotations[deviceId]) {
             delete calibrated[deviceId];
@@ -662,12 +663,18 @@ function CalibrateDrift() {
             initialAccel[deviceId] = [trackeraccel[deviceId].x, trackeraccel[deviceId].y, trackeraccel[deviceId].z];
         }
     }
+    setTimeout(function() {
+        status.innerHTML = "Status: Finished Calibrating";
+    }, DriftInterval);
+       
 }
 function RemoveDriftOffsets() {
+    const status = document.getElementById("calibratingstatus");
     for (const deviceId in trackerrotation) {
         delete calibrated[deviceId];
         delete initialRotations[deviceId];
         delete startTimes[deviceId];
         delete initialAccel[deviceId];
     }
+    status.innerHTML = "Status: No Calibration set, using default rotation.";
 }
