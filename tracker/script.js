@@ -116,11 +116,6 @@ async function disconnectDevice(device) {
             }
             delete trackerdevices[device.id];
             delete battery[device.id];
-            delete initialAccel[device.id];
-            delete startTimes[device.id];
-            delete calibrated[device.id];
-            delete trackerrotation[device.id];
-            delete trackeraccel[device.id];
             await device.gatt.disconnect();
             console.log("disconnected");
         }
@@ -454,11 +449,6 @@ async function connectToDevice() {
             deviceelement.remove();
             delete trackerdevices[device.id];
             delete battery[device.id];
-            delete initialAccel[device.id];
-            delete startTimes[device.id];
-            delete calibrated[device.id];
-            delete trackerrotation[device.id];
-            delete trackeraccel[device.id];
             iframe.remove();
             ipc.send("disconnect", device.name);
             trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
