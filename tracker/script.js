@@ -503,9 +503,6 @@ function decodeIMUPacket(device, rawdata) {
 
     const elapsedTime = Date.now() - startTimes[deviceId];
 
-    const driftFactor = 0;
-    // calibrated[deviceId] == null ? Math.sin(Date.now() / 2000) * 2 : 0; //fake drift for testing purposes for now
-
     const rotation = {
         x: dataView.getInt16(0, true) / 180.0 * 0.01,
         y: dataView.getInt16(2, true) / 180.0 * 0.01,
@@ -514,11 +511,6 @@ function decodeIMUPacket(device, rawdata) {
     };
     trackerrotation[deviceId] = rotation;
 
-
-    rotation.x += driftFactor; // Adjust with your desired drift rate
-    rotation.y += driftFactor;
-    rotation.z -= driftFactor;
-    rotation.w -= driftFactor;
 
     const gravityRaw = {
         x: dataView.getInt16(8, true) / 256.0,
@@ -573,9 +565,9 @@ function decodeIMUPacket(device, rawdata) {
 
     if (elapsedTime >= DriftInterval && calibrated[deviceId]) {
         const driftCorrection = {
-            pitch: calibrated[deviceId].pitch * (elapsedTime / DriftInterval), // Convert milliseconds to seconds
-            roll: calibrated[deviceId].roll * (elapsedTime / DriftInterval), // Convert milliseconds to seconds
-            yaw: calibrated[deviceId].yaw * (elapsedTime / DriftInterval), // Convert milliseconds to seconds
+            pitch: calibrated[deviceId].pitch * (elapsedTime / DriftInterval),
+            roll: calibrated[deviceId].roll * (elapsedTime / DriftInterval),
+            yaw: calibrated[deviceId].yaw * (elapsedTime / DriftInterval), 
         };
 
         const rotQuat = new Quaternion([rotation.w, rotation.x,
@@ -584,17 +576,15 @@ function decodeIMUPacket(device, rawdata) {
         const rotEuler = rotQuat.toEuler("XYZ");
         const relativeToRot = rotateVector([driftCorrection.pitch, driftCorrection.roll, driftCorrection.yaw], rotEuler[0], rotEuler[1], rotEuler[2]);
 
-        // Apply the inverse rotation to the current rotation difference
+
         const rotationDifference = {
-            pitch: relativeToRot[0], // Convert radians to degrees
-            roll: relativeToRot[1], // Convert radians to degrees
-            yaw: relativeToRot[2] // Yaw remains unchanged
+            pitch: relativeToRot[0],
+            roll: relativeToRot[1], 
+            yaw: relativeToRot[2] 
         };
 
-        // Convert the Euler angles to a quaternion representing the rotation difference
         const rotationDifferenceQuat = Quaternion.fromEuler(rotationDifference.pitch, rotationDifference.roll, rotationDifference.yaw, "XYZ");
 
-        // Calculate the corrected rotation by multiplying the rotation quaternion with the inverse of the rotation difference quaternion
         const rotationDriftCorrected = rotQuat.mul(rotationDifferenceQuat.inverse());
 
 
