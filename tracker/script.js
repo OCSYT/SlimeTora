@@ -250,8 +250,6 @@ async function connectToDevice() {
         }
         console.log('Connected to device:', device.name);
 
-        trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
-
         const devicelist = document.getElementById("devicelist");
         const deviceelement = document.createElement("div");
         const iframe = document.createElement('iframe');
@@ -270,6 +268,9 @@ async function connectToDevice() {
 
         trackerdevices[device.id] = [device, null];
         battery[device.id] = 0;
+
+        
+        trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
 
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
         const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
