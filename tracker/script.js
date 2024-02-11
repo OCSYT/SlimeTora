@@ -552,7 +552,6 @@ function decodeIMUPacket(device, rawdata) {
             console.log(adjustedRotation);
         }
     }
-
     if (elapsedTime >= DriftInterval && calibrated[deviceId]) {
         const driftCorrection = {
             pitch: calibrated[deviceId].pitch * (elapsedTime / DriftInterval) % (2 * Math.PI),
@@ -561,28 +560,18 @@ function decodeIMUPacket(device, rawdata) {
         };
         
         const rotQuat = new Quaternion([rotation.w, rotation.x, rotation.y, rotation.z]);
-        
-        const rotEuler = rotQuat.toEuler("XYZ");
-        const relativeToRot = rotateVector([driftCorrection.pitch, driftCorrection.roll, driftCorrection.yaw], rotEuler[0], rotEuler[1], rotEuler[2]);
-        
-        const rotationDifference = {
-            pitch: relativeToRot[0] % (2 * Math.PI),
-            roll: relativeToRot[1] % (2 * Math.PI), 
-            yaw: relativeToRot[2] % (2 * Math.PI) 
-        };
-        
-        const rotationDifferenceQuat = Quaternion.fromEuler(rotationDifference.pitch, rotationDifference.roll, rotationDifference.yaw, "XYZ");
-
-        const rotationDriftCorrected = rotQuat.mul(rotationDifferenceQuat.inverse());
-
-
+    
+        // Apply drift correction to the rotation quaternion
+        const rotationDriftRaw = rotQuat.clone().rotateVector([driftCorrection.pitch, driftCorrection.roll, driftCorrection.yaw]);
+        const rotationDrift = Quaternion.fromEuler(rotationDriftRaw[0] % (2 * Math.PI), rotationDriftRaw[1] % (2 * Math.PI), rotationDriftRaw[2] % (2 * Math.PI), "XYZ");
+        const rotationDriftCorrected = rotQuat.mul(rotationDrift.inverse());
 
         console.log("Applied fix");
         console.log(rotation);
         console.log(rotationDriftCorrected);
+        
         return [device, rotationDriftCorrected, gravity];
     }
-
     // Return original rotation data
     return [device, rotation, gravity];
 }
@@ -596,50 +585,9 @@ function calculateRotationDifference(prevRotation, currentRotation) {
 }
 
 
-// Function to rotate a 3D vector by Euler angles (pitch, roll, yaw)
-function rotateVector(vector, pitch, roll, yaw) {
-    // Rotation matrices
-    const rotationX = [
-        [1, 0, 0],
-        [0, Math.cos(pitch), -Math.sin(pitch)],
-        [0, Math.sin(pitch), Math.cos(pitch)]
-    ];
-
-    const rotationY = [
-        [Math.cos(roll), 0, Math.sin(roll)],
-        [0, 1, 0],
-        [-Math.sin(roll), 0, Math.cos(roll)]
-    ];
-
-    const rotationZ = [
-        [Math.cos(yaw), -Math.sin(yaw), 0],
-        [Math.sin(yaw), Math.cos(yaw), 0],
-        [0, 0, 1]
-    ];
-
-    // Apply rotations
-    const rotatedX = multiplyMatrixVector(rotationX, vector);
-    const rotatedY = multiplyMatrixVector(rotationY, rotatedX);
-    const rotatedZ = multiplyMatrixVector(rotationZ, rotatedY);
-
-    return rotatedZ;
-}
-
-// Function to multiply a matrix by a vector
-function multiplyMatrixVector(matrix, vector) {
-    const result = [];
-    for (let i = 0; i < matrix.length; i++) {
-        let sum = 0;
-        for (let j = 0; j < vector.length; j++) {
-            sum += matrix[i][j] * vector[j];
-        }
-        result.push(sum);
-    }
-    return result;
-}
-
 
 function CalibrateDrift() {
+    console.log("Started calibration");
     const status = document.getElementById("calibratingstatus");
     status.innerHTML = "Status: Calibrating";
     for (const deviceId in trackerrotation) {
@@ -647,8 +595,7 @@ function CalibrateDrift() {
             delete calibrated[deviceId];
             initialRotations[deviceId] = trackerrotation[deviceId];
             startTimes[deviceId] = Date.now();
-            console.log(trackeraccel[deviceId]);
-            initialAccel[deviceId] = [trackeraccel[deviceId].x, trackeraccel[deviceId].y, trackeraccel[deviceId].z];
+            initialAccel[deviceId] = trackeraccel[deviceId];
         }
     }
     setTimeout(function() {
