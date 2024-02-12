@@ -643,7 +643,6 @@ function decodeIMUPacket(device, rawdata) {
 
         const rotQuat = new Quaternion([rotation.w, rotation.x, rotation.y, rotation.z]);
 
-        //returns x y z
         const rotationDriftCorrected = RotateAround(rotQuat, trackeraccel[deviceId], driftCorrection.yaw);
 
         console.log("Applied fix");
