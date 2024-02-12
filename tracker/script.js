@@ -545,8 +545,6 @@ function decodeIMUPacket(device, rawdata) {
     if (elapsedTime >= DriftInterval) {
         if (!calibrated[deviceId]) {
             calibrated[deviceId] = driftvalues[deviceId];
-
-            console.log(adjustedRotation);
         }
     }
 
