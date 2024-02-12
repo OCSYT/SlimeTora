@@ -36,7 +36,7 @@ function MagnetometerComponent() {
         parentElement.appendChild(container);
 
         return {
-            delete: function() {
+            delete: function () {
                 deleteComponent(container);
             }
         };
@@ -308,7 +308,7 @@ async function connectToDevice() {
 
         trackerdevices[device.id] = [device, null];
         battery[device.id] = 0;
-        
+
         const magcompoonent = new MagnetometerComponent();
         magnetometerelement = magcompoonent.create(devicelist, "magnetometer" + device.name, false);
 
@@ -606,7 +606,11 @@ function decodeIMUPacket(device, rawdata) {
 
     if (elapsedTime >= DriftInterval) {
         if (!calibrated[deviceId]) {
-            calibrated[deviceId] = driftvalues[deviceId];
+            calibrated[deviceId] = {
+                pitch: driftvalues[deviceId].pitch,
+                roll: driftvalues[deviceId].roll,
+                yaw: driftvalues[deviceId].yaw
+            }
         }
     }
 
@@ -614,21 +618,21 @@ function decodeIMUPacket(device, rawdata) {
         if (!driftvalues[deviceId]) {
             driftvalues[deviceId] = { pitch: 0, roll: 0, yaw: 0 };
         }
-    
+
         const rotationDifference = calculateRotationDifference(
             new Quaternion(initialRotations[deviceId].w, initialRotations[deviceId].x, initialRotations[deviceId].y, initialRotations[deviceId].z).toEuler("XYZ"),
             new Quaternion(rotation.w, rotation.x, rotation.y, rotation.z).toEuler("XYZ")
         );
-    
+
         const prevMagnitude = Math.sqrt(driftvalues[deviceId].pitch ** 2 + driftvalues[deviceId].roll ** 2 + driftvalues[deviceId].yaw ** 2);
         const currMagnitude = Math.sqrt(rotationDifference.pitch ** 2 + rotationDifference.roll ** 2 + rotationDifference.yaw ** 2);
-    
+
         if (currMagnitude > prevMagnitude) {
             driftvalues[deviceId] = rotationDifference;
             console.log(driftvalues[deviceId]);
         }
     }
-    
+
 
     if (elapsedTime >= DriftInterval && calibrated[deviceId]) {
         const driftCorrection = {
@@ -639,20 +643,41 @@ function decodeIMUPacket(device, rawdata) {
 
         const rotQuat = new Quaternion([rotation.w, rotation.x, rotation.y, rotation.z]);
 
-        // Apply drift correction to the rotation quaternion
-        const rotationDriftRaw = rotQuat.clone().rotateVector([driftCorrection.pitch, driftCorrection.roll, driftCorrection.yaw]);
-        const rotationDrift = Quaternion.fromEuler(rotationDriftRaw[0] % (2 * Math.PI), rotationDriftRaw[1] % (2 * Math.PI), rotationDriftRaw[2] % (2 * Math.PI), "XYZ");
-        const rotationDriftCorrected = rotQuat.mul(rotationDrift.inverse());
+        //returns x y z
+        const rotationDriftCorrected = RotateAround(rotQuat, trackeraccel[deviceId], driftCorrection.yaw);
 
         console.log("Applied fix");
         console.log(rotation);
-        console.log(rotationDriftCorrected);
+        console.log(rotationDriftCorrected,driftCorrection.yaw);
 
         return [device, rotationDriftCorrected, gravity];
     }
     // Return original rotation data
     return [device, rotation, gravity];
 }
+
+function RotateAround(quat, vector, angle) {
+    // Create a copy of the input quaternion
+    var initialQuaternion = new THREE.Quaternion(quat.x, quat.y, quat.z, quat.w);
+
+    var rotationAxis = new THREE.Vector3(vector.x, vector.y, vector.z); 
+
+    // Create a rotation quaternion
+    var rotationQuaternion = new THREE.Quaternion();
+    rotationQuaternion.setFromAxisAngle(rotationAxis.normalize(), angle);
+    // Apply the rotation to the copy of the input quaternion
+    initialQuaternion = initialQuaternion.multiply(rotationQuaternion).normalize();
+
+    // Return the resulting quaternion as a dictionary
+    return {
+        x: initialQuaternion.x,
+        y: initialQuaternion.y,
+        z: initialQuaternion.z,
+        w: initialQuaternion.w
+    };
+}
+
+
 
 function calculateRotationDifference(prevRotation, currentRotation) {
     const pitchDifferenceRad = currentRotation[0] - prevRotation[0];
