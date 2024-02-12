@@ -1,3 +1,59 @@
+function MagnetometerComponent() {
+    function create(parentElement, id, checked) {
+        // Create container div
+        const container = document.createElement("div");
+
+        // Create elements
+        const p = document.createElement("p");
+        p.textContent = "Magnetometer";
+        p.style.display = "inline";
+
+        const label = document.createElement("label");
+        label.className = "switch";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.id = id;
+        input.checked = checked;
+
+        const span = document.createElement("span");
+        span.className = "slider round";
+
+        const br1 = document.createElement("br");
+        const br2 = document.createElement("br");
+        const br3 = document.createElement("br");
+
+        // Append elements to container
+        label.appendChild(input);
+        label.appendChild(span);
+        container.appendChild(p);
+        container.appendChild(br1);
+        container.appendChild(label);
+        container.appendChild(br2);
+        container.appendChild(br3);
+
+        // Append container to parentElement
+        parentElement.appendChild(container);
+
+        return {
+            delete: function() {
+                deleteComponent(container);
+            }
+        };
+    }
+
+    function deleteComponent(container) {
+        // Remove the container
+        container.remove();
+    }
+
+    return {
+        create: create
+    };
+}
+
+
+
 const store = {
     // Send a message to the main process to get data from the store
     get: async (key) => await window.ipc.invoke('get-data', key),
@@ -11,7 +67,6 @@ const store = {
 
 
 var smooth_val = 0.5;
-var mag = false;
 
 document.addEventListener("DOMContentLoaded", async function () {
     var smoothingCheckbox = document.getElementById("smoothing");
@@ -20,14 +75,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     } else {
         smoothingCheckbox.checked = false;
     }
-
-    var magnetometerCheckbox = document.getElementById("magnetometer");
-    if (await store.has("magnetometer")) {
-        magnetometerCheckbox.checked = await store.get("magnetometer");
-    } else {
-        magnetometerCheckbox.checked = false;
-    }
-    mag = magnetometerCheckbox.checked;
 
     if (await store.has("smoothinput")) {
         smooth_val = await store.get("smoothinput");
@@ -48,10 +95,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             smooth_val = 1;
         }
-    });
-    magnetometerCheckbox.addEventListener("change", function () {
-        store.set("magnetometer", magnetometerCheckbox.checked);
-        mag = magnetometerCheckbox.checked;
     });
 });
 
@@ -180,6 +223,8 @@ function sleep(ms) {
 
 async function connectToDevice() {
     var device = null
+    var mag = false;
+    let magnetometerelement = null;
     try {
         const sensorServiceId = "00dbec3a-90aa-11ed-a1eb-0242ac120002";
         const settingId = "ef84369a-90a9-11ed-a1eb-0242ac120002";
@@ -263,6 +308,22 @@ async function connectToDevice() {
 
         trackerdevices[device.id] = [device, null];
         battery[device.id] = 0;
+        
+        const magcompoonent = new MagnetometerComponent();
+        magnetometerelement = magcompoonent.create(devicelist, "magnetometer" + device.name, false);
+
+
+        let magnetometerCheckbox = document.getElementById("magnetometer" + device.name);
+        if (await store.has(("magnetometer" + device.name))) {
+            magnetometerCheckbox.checked = await store.get("magnetometer" + device.name);
+        } else {
+            magnetometerCheckbox.checked = false;
+        }
+        mag = magnetometerCheckbox.checked;
+        magnetometerCheckbox.addEventListener("change", function () {
+            store.set("magnetometer" + device.name, magnetometerCheckbox.checked);
+            mag = magnetometerCheckbox.checked;
+        });
 
 
         trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
@@ -450,6 +511,7 @@ async function connectToDevice() {
             delete trackerdevices[device.id];
             delete battery[device.id];
             iframe.remove();
+            magnetometerelement.delete();
             ipc.send("disconnect", device.name);
             trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
         });
@@ -487,7 +549,7 @@ let calibrated = {};
 let driftvalues = {};
 let trackerrotation = {};
 let trackeraccel = {};
-const DriftInterval = 60000;
+const DriftInterval = 15000;
 function decodeIMUPacket(device, rawdata) {
     const deviceId = device.id;
     const dataView = new DataView(rawdata.buffer);

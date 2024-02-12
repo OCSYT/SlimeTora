@@ -1,5 +1,6 @@
 {
   "magnetometer": false,
   "smoothingEnabled": false,
-  "smoothinput": 0.5
+  "smoothinput": 0.5,
+  "magnetometerHaritoraXW-A30R71": true
 }
