@@ -486,7 +486,7 @@ let startTimes = {};
 let calibrated = {};
 let trackerrotation = {};
 let trackeraccel = {};
-const DriftInterval = 15000;
+const DriftInterval = 60000;
 function decodeIMUPacket(device, rawdata) {
     const deviceId = device.id;
     const dataView = new DataView(rawdata.buffer);
