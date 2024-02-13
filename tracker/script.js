@@ -297,8 +297,8 @@ async function connectToDevice() {
         // Set attributes for the iframe
         iframe.id = device.id + "threejs";
         iframe.src = './visualization.html';
-        iframe.width = '100px';
-        iframe.height = '100px';
+        iframe.width = '200px';
+        iframe.height = '200px';
 
         // Append the iframe to the body or any other container
         devicelist.appendChild(iframe);
@@ -717,3 +717,12 @@ function RemoveDriftOffsets() {
     }
     status.innerHTML = "Status: No Calibration set, using default rotation.";
 }
+
+
+
+
+
+window.onbeforeunload = function(event) {
+    ipc.send('connection', false);
+    disconnectAllDevices();
+};

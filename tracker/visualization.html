@@ -17,42 +17,124 @@
 </head>
 
 <body>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "../node_modules/three/build/three.module.js",
+            "OrbitControls": "/./node_modules/three/examples/jsm/controls/OrbitControls.js",
+            "FBXLoader": "../node_modules/three/examples/jsm/loaders/FBXLoader.js",
+            "Stats": "../node_modules/three/examples/jsm/libs/stats.module.js",
+            "EffectComposer": "../node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+            "OutlinePass": "../node_modules//three/examples/jsm/postprocessing/OutlinePass.js",
+            "RenderPass": "../node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+            "ShaderPass": "../node_modules/three/examples/jsm/postprocessing/ShaderPass.js",
+            "FXAAShader": "../node_modules/three/examples/jsm/shaders/FXAAShader.js"
+          }
+        }
+      </script>
     <script type="module">
-        import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+        import * as THREE from 'three'
+        import { FBXLoader } from 'FBXLoader'
+        import { EffectComposer } from "EffectComposer";
+        import { OutlinePass } from "OutlinePass";
+        import { RenderPass } from "RenderPass";
+        //Modules below are regarded to shader
+        import { ShaderPass } from "ShaderPass";
+        import { FXAAShader } from "FXAAShader";
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 5;
+
         const renderer = new THREE.WebGLRenderer({ alpha: true }); // Set alpha to true for a transparent background
+
+
+
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.ShaderMaterial({
-    vertexShader: `
-        varying vec3 vNormal;
-        void main() {
-            vNormal = normal;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    fragmentShader: `
-        varying vec3 vNormal;
-        void main() {
-            vec3 color = normalize(vNormal) * 0.5 + 0.5; // Use normal direction for color
-            gl_FragColor = vec4(color, 1.0);
-        }
-    `,
-});
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+        directionalLight.position.set(0, 1, 1);
+        scene.add(directionalLight);
 
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
+
+        let cube = null;
+        const textureLoader = new THREE.TextureLoader();
+
+        const axesHelper = new THREE.AxesHelper(5);
+        scene.add(axesHelper);
+        const fbxLoader = new FBXLoader();
+
+        fbxLoader.load(
+            './tracker.fbx',
+            (object) => {
+                object.scale.set(0.01, 0.01, 0.01);
+
+                // Load the texture
+                textureLoader.load(
+                    './trackertexture.png',
+                    (texture) => {
+                        // Apply the texture to the material of the FBX object
+                        object.traverse((child) => {
+                            if (child.isMesh) {
+                                // Create a PBR material
+                                const material = new THREE.MeshStandardMaterial({
+                                    map: texture, // Albedo (color) map
+                                    roughness: 0.5, // Roughness
+                                    metalness: 0, // Metalness (set to 0 for non-metallic surfaces)
+                                });
+                                child.material = material;
+                            }
+                        });
+                    },
+                    undefined,
+                    (error) => {
+                        console.error('An error occurred loading the texture:', error);
+                    }
+                );
+                cube = object;
+                scene.add(object);
+            },
+            (xhr) => {
+                console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
+            },
+            (error) => {
+                console.log(error);
+            }
+        );
+
+
+
+        const composer = new EffectComposer(renderer);
+
+        // Render Pass
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        // Outline Pass
+        const outlinePass = new OutlinePass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight), // Resolution parameter
+            scene,
+            camera
+        );
+        outlinePass.renderToScreen = true; // Render directly to the screen
+        outlinePass.edgeStrength = 10; // Adjust the strength of the outline
+        outlinePass.edgeGlow = 0; // Set edge glow to zero
+        outlinePass.edgeThickness = 0.5; // Adjust edge thickness
+        outlinePass.pulsePeriod = 0; // Disable pulsing effect
+        outlinePass.usePatternTexture = false; // Disable pattern texture
+        outlinePass.visibleEdgeColor.set("#ffffff"); // Set visible edge color to white
+        outlinePass.hiddenEdgeColor.set("#ffffff"); // Set hidden edge color to white
+        composer.addPass(outlinePass);
 
         const animate = () => {
             requestAnimationFrame(animate);
-
-            renderer.render(scene, camera);
+            if (cube != null) {
+                outlinePass.selectedObjects = [cube];
+            }
+            composer.render();
         };
+
 
         window.addEventListener('message', (event) => {
             if (event.data.type === 'rotate') {
