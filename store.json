@@ -1,3 +1,5 @@
 {
-  "magnetometerHaritoraXW-A3V564": false
+  "magnetometerHaritoraXW-A3V564": false,
+  "smoothingEnabled": false,
+  "smoothinput": 0.5
 }

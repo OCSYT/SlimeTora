@@ -136,6 +136,8 @@
         };
 
 
+        let gravityLine = null; // Variable to store the line representing the gravity vector
+
         window.addEventListener('message', (event) => {
             if (event.data.type === 'rotate') {
                 // Create a quaternion from the components
@@ -146,13 +148,49 @@
                     event.data.rotationW
                 );
 
-                // Normalize the quaternion (optional, depending on your use case)
+                const gravity = new THREE.Vector3(event.data.gravityX, event.data.gravityY, event.data.gravityZ);
+
                 quaternion.normalize();
 
                 // Apply the quaternion rotation to the cube
                 cube.quaternion.copy(quaternion);
+
+                // Update the length of the gravity line
+                if (gravityLine) {
+                    updateGravityLineLength(gravity, cube.quaternion);
+                } else {
+                    createGravityLine(gravity);
+                }
             }
         });
+
+        // Function to create or update the gravity line
+        function createGravityLine(gravity) {
+            // Create a line geometry to represent the gravity vector
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                gravity.clone()
+            ]);
+
+            // Create a basic material for the line
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffff00 });
+
+            // Create the line mesh
+            gravityLine = new THREE.Line(lineGeometry, lineMaterial);
+
+            // Add the line to the scene
+            scene.add(gravityLine);
+        }
+
+        // Function to update the length of the gravity line
+        function updateGravityLineLength(gravity, rot) {
+            const endPoint = gravity.clone().applyQuaternion(rot); // End point at the gravity vector's tip (multiplied by 10 for visualization)
+            const positions = gravityLine.geometry.attributes.position.array;
+            positions[3] = endPoint.x;
+            positions[4] = endPoint.y;
+            positions[5] = endPoint.z;
+            gravityLine.geometry.attributes.position.needsUpdate = true;
+        }
 
 
         window.addEventListener('resize', () => {

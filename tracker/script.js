@@ -120,6 +120,8 @@ function saveSmoothValue() {
 var allowconnection = true;
 var connecting = null;
 async function connectToTrackers() {
+    const status = document.getElementById("status");
+    status.innerHTML = "Status: Searching for trackers.";
     if (connecting == null) {
         connecting = setInterval(async () => {
             if (allowconnection) {
@@ -134,6 +136,8 @@ async function connectToTrackers() {
 
 async function disconnectAllDevices() {
     if (connecting) {
+        const status = document.getElementById("status");
+        status.innerHTML = "Status: Not searching.";
         const devicelist = document.getElementById("devicelist");
         trackercount.innerHTML = "Connected Trackers: " + 0;
         devicelist.innerHTML = "<br><h1>Trackers: </h1><br></br>";
@@ -468,7 +472,10 @@ async function connectToDevice() {
                     rotationX: postDataCurrent["rotation"].x,
                     rotationY: postDataCurrent["rotation"].y,
                     rotationZ: postDataCurrent["rotation"].z,
-                    rotationW: postDataCurrent["rotation"].w
+                    rotationW: postDataCurrent["rotation"].w,
+                    gravityX: IMUData[2].x,
+                    gravityY: IMUData[2].y,
+                    gravityZ: IMUData[2].z,
                 }, '*');
             }
 
