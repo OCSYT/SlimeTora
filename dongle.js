@@ -1,23 +1,9 @@
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline')
 
-class Rotation {
-    constructor(x, y, z, w) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
-    }
-}
-
-class Gravity {
-    constructor(x, y, z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-}
-
+/*
+*   Serial port setup
+*/
 
 const portName = 'COM4';
 const baudRate = 500000; // from the haritora_setting.json in HaritoraConfigurator
@@ -29,40 +15,39 @@ const port = new SerialPort({
 
 const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
-parser.on('data', (data) => {
-    processData(data);
-});
-
-port.on('error', (err) => {
-    console.error('Error:', err.message);
-});
+/*
+*   Data processing
+*/
 
 function processData(data) {
-    const parts = data.split(':', 2);
-    if (parts.length === 2) {
-        const [label, data] = parts;
+    const firstColonIndex = data.indexOf(':');
+    if (firstColonIndex !== -1) {
+        // Makes sure to only split the first colon found
+        const label = data.substring(0, firstColonIndex);
+        const dataContent = data.substring(firstColonIndex + 1);
         if (label.includes('X')) {
             // IMU tracker data
             const tracker_number = parseInt(label.split('X').pop(), 10);
-            processTrackerData(data, tracker_number);
+            processTrackerData(dataContent, tracker_number);
         } else if (label.includes('a')) {
             // Other tracker data
             const tracker_number = parseInt(label.split('a').pop(), 10);
-            processOtherTrackerData(data, tracker_number);
+            processOtherTrackerData(dataContent, tracker_number);
         } else if (label.includes('r')) {
             // Tracker button info
             const tracker_number = parseInt(label.split('r').pop(), 10);
-            processButtonData(data, tracker_number);
+            processButtonData(dataContent, tracker_number);
         } else if (label.includes('v')) {
             // Tracker battery info
             const tracker_number = parseInt(label.split('v').pop(), 10);
-            processBatteryData(data, tracker_number);
+            processBatteryData(dataContent, tracker_number);
         } else {
             console.log(`Unknown label: ${label}`);
-            console.log(`Unknown label's data: ${data}`);
+            console.log(`Unknown label's data: ${dataContent}`);
         }
     }
 }
+
 
 /*
 * Tracker data
@@ -200,32 +185,23 @@ function decodeIMUPacket(data) {
             throw new Error("Too few bytes to decode IMU packet");
         }
 
-        // Extract rotation values
-        let rotation_x = data.readInt16LE(0);
-        let rotation_y = data.readInt16LE(2);
-        let rotation_z = data.readInt16LE(4);
-        let rotation_w = data.readInt16LE(6);
+        const buffer = Buffer.from(data, 'base64');
+        const rotation_x = buffer.readInt16LE(0);
+        const rotation_y = buffer.readInt16LE(2);
+        const rotation_z = buffer.readInt16LE(4);
+        const rotation_w = buffer.readInt16LE(6);
+        const gravity_x = buffer.readInt16LE(8);
+        const gravity_y = buffer.readInt16LE(10);
+        const gravity_z = buffer.readInt16LE(12);
 
-        // Calculate rotation values
-        let rotation = {
+        const rotation = {
             x: rotation_x / 180.0 * 0.01,
             y: rotation_y / 180.0 * 0.01,
             z: rotation_z / 180.0 * 0.01 * -1.0,
             w: rotation_w / 180.0 * 0.01 * -1.0
         };
 
-        // Extract gravity values
-        let gravity_x, gravity_y, gravity_z;
-        if (data.length >= 20) {
-            gravity_x = data.readInt16LE(14);
-            gravity_y = data.readInt16LE(16);
-            gravity_z = data.readInt16LE(18);
-        } else {
-            gravity_x = gravity_y = gravity_z = 0.0;
-        }
-
-        // Calculate gravity values
-        let gravity = {
+        const gravity = {
             x: gravity_x / 256.0,
             y: gravity_y / 256.0,
             z: gravity_z / 256.0
@@ -237,3 +213,36 @@ function decodeIMUPacket(data) {
     }
 }
 
+
+/*
+*   Processing of data
+*/
+
+parser.on('data', (data) => {
+    processData(data);
+});
+
+port.on('error', (err) => {
+    console.error('Error:', err.message);
+});
+
+/*
+*   Rotation and gravity classes
+*/
+
+class Rotation {
+    constructor(x, y, z, w) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+}
+
+class Gravity {
+    constructor(x, y, z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+}
