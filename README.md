@@ -1,6 +1,6 @@
 # SlimeTora
-A program made to connect HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX(6/2) communication dongles*
-
+A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX(6/2) communication dongles*
+    
 \* **currently being worked on**
 
 # How to use
@@ -16,5 +16,4 @@ Make sure you connect all trackers before assigning the roles in SlimeVR, and go
 # Development
 - Clone the project - `git clone https://github.com/OCSYT/SlimeTora.git`
 - Install the dependencies - `npm i`
-- Install Electron globally - `npm i -g electron`
 - Start the dev environment - `npm start`
