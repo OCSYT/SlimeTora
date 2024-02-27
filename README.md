@@ -1,15 +1,20 @@
 # SlimeTora
-A program made to connect Haritora X wireless trackers to Slime VR server
+A program made to connect HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX(6/2) communication dongles*
+
+\* **currently being worked on**
 
 # How to use
-- Install the slime vr server https://docs.slimevr.dev/server/index.html
-- Extract the zip file and run "SlimeTora.exe"
-- Turn on your trackers and press "Connect to Trackers"
-- Assign your trackers in Slime VR and enjoy! :) 
-(make sure to go through the usual calibration steps)
-- Make sure you connect all trackers before assigning roles in Slime VR
+- Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)
+- Download the latest [SlimeTora](https://github.com/OCSYT/SlimeTora/releases/latest) release
+- Extract the zip file and run `SlimeTora.exe`
+- Turn on your trackers and press `Connect to trackers`
+- Assign your trackers in SlimeVR and enjoy! :)
+
+Make sure you connect all trackers before assigning the roles in SlimeVR, and go through the usual calibration steps in the SlimeVR software after.
 
 
 # Development
-- `run npm i`
-- run with `npm start`
+- Clone the project - `git clone https://github.com/OCSYT/SlimeTora.git`
+- Install the dependencies - `npm i`
+- Install Electron globally - `npm i -g electron`
+- Start the dev environment - `npm start`
