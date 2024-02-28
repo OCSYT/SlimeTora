@@ -1,3 +1,6 @@
+// This is an adaptation of my (JovannMC) python code which communicates with the GX6 dongle, into JavaScript for the SlimeTora project
+// https://github.com/JovannMC/haritora-gx6-poc/
+
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline')
 
@@ -9,6 +12,13 @@ let portNames = ['COM4', 'COM5', 'COM6']
 const baudRate = 500000; // from the haritora_setting.json in HaritoraConfigurator
 
 portNames.forEach( portName => {
+    /*
+    *   Settings
+    */
+    
+    const magnetometer = false;
+
+
     const port = new SerialPort({
         path: portName,
         baudRate: baudRate
@@ -27,23 +37,22 @@ portNames.forEach( portName => {
             const dataContent = data.substring(firstColonIndex + 1);
             if (label.includes('X')) {
                 // IMU tracker data
-                const tracker_number = parseInt(label.split('X').pop(), 10);
-                processTrackerData(dataContent, tracker_number);
+                const trackerNumber = parseInt(label.split('X').pop(), 10);
+                processTrackerData(dataContent, trackerNumber);
             } else if (label.includes('a')) {
                 // Other tracker data
-                const tracker_number = parseInt(label.split('a').pop(), 10);
-                processOtherTrackerData(dataContent, tracker_number);
+                const trackerNumber = parseInt(label.split('a').pop(), 10);
+                processOtherTrackerData(dataContent, trackerNumber);
             } else if (label.includes('r')) {
                 // Tracker button info
-                const tracker_number = parseInt(label.split('r').pop(), 10);
-                processButtonData(dataContent, tracker_number);
+                const trackerNumber = parseInt(label.split('r').pop(), 10);
+                processButtonData(dataContent, trackerNumber);
             } else if (label.includes('v')) {
                 // Tracker battery info
-                const tracker_number = parseInt(label.split('v').pop(), 10);
-                processBatteryData(dataContent, tracker_number);
+                const trackerNumber = parseInt(label.split('v').pop(), 10);
+                processBatteryData(dataContent, trackerNumber);
             } else {
-                console.log(`${portName} - Unknown label: ${label}`);
-                console.log(`${portName} - Unknown label's data: ${dataContent}`);
+                console.log(`${portName} - Unknown data received: ${data}`);
             }
         }
     }
@@ -186,30 +195,51 @@ portNames.forEach( portName => {
             }
 
             const buffer = Buffer.from(data, 'base64');
-            const rotation_x = buffer.readInt16LE(0);
-            const rotation_y = buffer.readInt16LE(2);
-            const rotation_z = buffer.readInt16LE(4);
-            const rotation_w = buffer.readInt16LE(6);
-            const gravity_x = buffer.readInt16LE(8);
-            const gravity_y = buffer.readInt16LE(10);
-            const gravity_z = buffer.readInt16LE(12);
+            const rotationX = buffer.readInt16LE(0);
+            const rotationY = buffer.readInt16LE(2);
+            const rotationZ = buffer.readInt16LE(4);
+            const rotationW = buffer.readInt16LE(6);
+            const gravityX = buffer.readInt16LE(8);
+            const gravityY = buffer.readInt16LE(10);
+            const gravityZ = buffer.readInt16LE(12);
 
             const rotation = {
-                x: rotation_x / 180.0 * 0.01,
-                y: rotation_y / 180.0 * 0.01,
-                z: rotation_z / 180.0 * 0.01 * -1.0,
-                w: rotation_w / 180.0 * 0.01 * -1.0
+                x: rotationX / 180.0 * 0.01,
+                y: rotationY / 180.0 * 0.01,
+                z: rotationZ / 180.0 * 0.01 * -1.0,
+                w: rotationW / 180.0 * 0.01 * -1.0
             };
 
             const gravity = {
-                x: gravity_x / 256.0,
-                y: gravity_y / 256.0,
-                z: gravity_z / 256.0
+                x: gravityX / 256.0,
+                y: gravityY / 256.0,
+                z: gravityZ / 256.0
             };
 
             return { rotation, gravity };
         } catch (error) {
             throw new Error("Error decoding IMU packet: " + error.message);
+        }
+    }
+
+    /*
+    *   Toggle magnetometer status
+    */
+
+    function toggleMagnetometer(serialPort, tracker) {
+        try {
+            const magValue = magnetometer ? 5 : 8;
+            const data = Buffer.from([magValue]);
+            serialPort.write(data, (err) => {
+                if (err) {
+                    console.error('Error writing data to serial port:', err.message);
+                } else {
+                    console.log('Data written to serial port:', data);
+                    console.log('Data written to serial port:', data.toString());
+                }
+            });
+        } catch (error) {
+            console.error('Error writing values:', error.message);
         }
     }
 
