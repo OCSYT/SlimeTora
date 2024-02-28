@@ -330,6 +330,23 @@ async function connectToDevice() {
         });
 
 
+        const getSensorValue = (() => {
+            let magValue = 0;
+
+            // Always enable accelerometer for sensor correction
+            magValue |= (1 << 11);
+
+            //ankle
+            magValue |= (0 << 14);
+
+            // Toggle mode 1 or 2 based on 'mag'
+            magValue |= (mag ? 0 : 1) << 7;
+
+            // Set frame rate to 100fps
+            magValue |= (1 << 8);
+            return magValue;
+        });
+
         trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
 
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
@@ -344,7 +361,8 @@ async function connectToDevice() {
         var fps_value = await fps_characteristic.readValue();
         var mode_value = await mode_characteristic.readValue();
 
-        var new_button_value = null;
+        var lastMagValue = null;
+
         var button_enabled = false;
         var postDataCurrent = null;
         var postData = null;
@@ -392,15 +410,19 @@ async function connectToDevice() {
         // Start the update loop
         updateValues();
 
-
         const writeValues = async () => {
             if (trackerdevices[device.id] == null) return;
             try {
-                const magvalue = new DataView(new ArrayBuffer(1));
-                magvalue.setUint8(0, mag ? 5 : 8);
-                mode_value = magvalue;
-                await mode_characteristic.writeValue(magvalue);
+                let magValue = getSensorValue();
 
+
+                if (magValue !== lastMagValue) {
+                    mode_value = new DataView(new ArrayBuffer(1));
+                    mode_value.setUint8(0, magValue);
+                    await mode_characteristic.writeValue(mode_value);
+                    lastMagValue = magValue;
+                    console.log(Number(magValue).toString(2));
+                }
 
                 new_button_value = (await button_characteristic.readValue()).getInt8(0);
                 if (button_value !== new_button_value) {
@@ -409,7 +431,7 @@ async function connectToDevice() {
                     button_enabled = false;
                 }
                 if (button_enabled) {
-                    console.log(button_enabled);
+                    console.log(new_button_value);
                 }
                 button_value = new_button_value;
                 if (connecting) {
@@ -419,6 +441,7 @@ async function connectToDevice() {
 
             }
         }
+
         writeValues();
 
         const trackercheck = setInterval(async () => {
@@ -509,10 +532,8 @@ async function connectToDevice() {
         trackerdevices[device.id][1] = trackercheck;
 
         device.addEventListener('gattserverdisconnected', async (event) => {
-            if (device) {
-                if (trackerdevices[device.id]) {
-                    clearInterval(trackerdevices[device.id][1]);
-                }
+            if (trackerdevices[device.id]) {
+                clearInterval(trackerdevices[device.id][1]);
             }
             deviceelement.remove();
             delete trackerdevices[device.id];
@@ -530,6 +551,7 @@ async function connectToDevice() {
             if (trackerdevices[device.id]) {
                 clearInterval(trackerdevices[device.id][1]);
             }
+            ipc.send("disconnect", device.name);
         }
         if (Object.values(trackerdevices).length == 0) {
             const devicelist = document.getElementById("devicelist");
@@ -543,6 +565,7 @@ battery = {};
 trackerdevices = {};
 
 function decodeBatteryPacket(device, data) {
+
     const dataView = new DataView(data.buffer);
     const batteryLevel = dataView.getInt8(0, true) / 100.0;
 
@@ -654,7 +677,7 @@ function decodeIMUPacket(device, rawdata) {
 
         console.log("Applied fix");
         console.log(rotation);
-        console.log(rotationDriftCorrected,driftCorrection.yaw);
+        console.log(rotationDriftCorrected, driftCorrection.yaw);
 
         return [device, rotationDriftCorrected, gravity];
     }
@@ -666,7 +689,7 @@ function RotateAround(quat, vector, angle) {
     // Create a copy of the input quaternion
     var initialQuaternion = new THREE.Quaternion(quat.x, quat.y, quat.z, quat.w);
 
-    var rotationAxis = new THREE.Vector3(vector.x, vector.y, vector.z); 
+    var rotationAxis = new THREE.Vector3(vector.x, vector.y, vector.z);
 
     // Create a rotation quaternion
     var rotationQuaternion = new THREE.Quaternion();
@@ -729,7 +752,7 @@ function RemoveDriftOffsets() {
 
 
 
-window.onbeforeunload = function(event) {
+window.onbeforeunload = function (event) {
     ipc.send('connection', false);
     disconnectAllDevices();
 };

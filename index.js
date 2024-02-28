@@ -297,7 +297,7 @@ function sendBatteryLevel(batteryLevel) {
     var view = new DataView(buffer);
     view.setInt32(0, 12);
     view.setBigInt64(4, BigInt(PACKET_COUNTER));
-    view.setFloat32(12, 0);
+    view.setFloat32(12, 5);
     view.setFloat32(16, batteryLevel);
     sendBuffer = new Uint8Array(buffer);
     sock.send(sendBuffer, 0, sendBuffer.length, SLIME_PORT, SLIME_IP, (err) => {
