@@ -220,13 +220,6 @@ portNames.forEach( portName => {
     *   Tracker settings
     */
 
-    /*
-    *   setTrackerSettings
-    *   fpsMode: 100 // 50
-    *   sensorMode: 1 // 2
-    *   sensorAutoCorrection: [Accel, Gyro, Mag]
-    *   ankleMotionDetection: true // false
-    */
     function setTrackerSettings(fpsMode, sensorMode, sensorAutoCorrection, ankleMotionDetection) {
         try {
             const sensorModeBit = sensorMode === 1 ? '1' : '0';
@@ -237,7 +230,7 @@ portNames.forEach( portName => {
             if (sensorAutoCorrection.includes("Mag")) sensorAutoCorrectionBit |= 0x04;
             const ankleMotionDetectionBit = ankleMotionDetection ? '1' : '0';
     
-            const hexValue = `00000${sensorModeBit}0${postureDataRateBit}0${sensorAutoCorrectionBit.toString(2).padStart(3, '0')}0${ankleMotionDetectionBit}`;
+            const hexValue = `00000${postureDataRateBit}${sensorModeBit}010${sensorAutoCorrectionBit}00${ankleMotionDetectionBit}`;
     
             const labelO0 = 'o0:';
             const labelO1 = 'o1:';
