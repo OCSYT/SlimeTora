@@ -340,10 +340,10 @@ async function connectToDevice() {
             magValue |= (0 << 14);
 
             // Toggle mode 1 or 2 based on 'mag'
-            magValue |= (mag ? 0 : 1) << 7;
+            magValue |= (mag ? 1 : 0) << 7;
 
             // Set frame rate to 100fps
-            magValue |= (1 << 8);
+            magValue |= (1 << 5);
             return magValue;
         });
 
