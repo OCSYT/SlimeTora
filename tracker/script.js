@@ -52,7 +52,7 @@ function MagnetometerComponent() {
     };
 }
 
-
+correction_value_target = 0;
 
 const store = {
     // Send a message to the main process to get data from the store
@@ -66,9 +66,55 @@ const store = {
 };
 
 
+document.getElementById('accel').addEventListener('change', function() {
+    store.set('accel', this.checked);
+    updateTargetValue();
+});
+
+document.getElementById('mag').addEventListener('change', function() {
+    store.set('mag', this.checked);
+    updateTargetValue();
+});
+
+document.getElementById('gyro').addEventListener('change', function() {
+    store.set('gyro', this.checked);
+    updateTargetValue();
+});
+
+// Function to load saved checkbox values
+async function loadCheckboxValues() {
+    const accel = await store.get('accel') || false;
+    const mag = await store.get('mag') || false;
+    const gyro = await store.get('gyro') || false;
+    
+    // Update checkbox states based on saved values
+    document.getElementById('accel').checked = accel;
+    document.getElementById('mag').checked = mag;
+    document.getElementById('gyro').checked = gyro;
+
+    updateTargetValue();
+}
+
+// Function to update the target value based on checkbox states
+function updateTargetValue() {
+    correction_value_target = 0;
+    const accel = document.getElementById('accel').checked;
+    const mag = document.getElementById('mag').checked;
+    const gyro = document.getElementById('gyro').checked;
+    if(accel){
+        correction_value_target += 1;
+    }
+    if(mag){
+        correction_value_target += 4;
+    }
+    if(gyro){
+        correction_value_target += 2;
+    }
+}
 var smooth_val = 0.5;
 
 document.addEventListener("DOMContentLoaded", async function () {
+    loadCheckboxValues();
     var smoothingCheckbox = document.getElementById("smoothing");
     if (await store.has("smoothingEnabled")) {
         smoothingCheckbox.checked = await store.get("smoothingEnabled");
@@ -330,23 +376,6 @@ async function connectToDevice() {
         });
 
 
-        const getSensorValue = (() => {
-            let magValue = 0;
-
-            // Always enable accelerometer for sensor correction
-            magValue |= (1 << 11);
-
-            //ankle
-            magValue |= (0 << 14);
-
-            // Toggle mode 1 or 2 based on 'mag'
-            magValue |= (mag ? 1 : 0) << 7;
-
-            // Set frame rate to 100fps
-            magValue |= (1 << 5);
-            return magValue;
-        });
-
         trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
 
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
@@ -354,15 +383,20 @@ async function connectToDevice() {
         const button_characteristic = await sensor_service.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
         const fps_characteristic = await sensor_service.getCharacteristic("00dbf1c6-90aa-11ed-a1eb-0242ac120002");
         const mode_characteristic = await setting_service.getCharacteristic("ef8445c2-90a9-11ed-a1eb-0242ac120002");
+        const correction_characteristic = await setting_service.getCharacteristic("ef84c305-90a9-11ed-a1eb-0242ac120002");
+        const tof_characteristic = await setting_service.getCharacteristic("ef8443f6-90a9-11ed-a1eb-0242ac120002");
 
         var sensor_value = await sensor_characteristic.readValue();
         var battery_value = await battery_characteristic.readValue();
         var button_value = (await button_characteristic.readValue()).getInt8(0);
         var fps_value = await fps_characteristic.readValue();
-        var mode_value = await mode_characteristic.readValue();
+        var mode_value = await mode_characteristic.readValue();      
+        var correction_value = await correction_characteristic.readValue();
+        var ankle_tof_value = await tof_characteristic.readValue();
+        console.log("originalval: " + correction_value.getInt8(0));
 
         var lastMagValue = null;
-
+        var last_target_value = null;
         var button_enabled = false;
         var postDataCurrent = null;
         var postData = null;
@@ -413,15 +447,26 @@ async function connectToDevice() {
         const writeValues = async () => {
             if (trackerdevices[device.id] == null) return;
             try {
-                let magValue = getSensorValue();
 
 
-                if (magValue !== lastMagValue) {
+                if (mag !== lastMagValue || correction_value_target !== last_target_value) {
                     mode_value = new DataView(new ArrayBuffer(1));
-                    mode_value.setUint8(0, magValue);
+                    mode_value.setUint8(0, mag ? 5 : 8);
                     await mode_characteristic.writeValue(mode_value);
-                    lastMagValue = magValue;
-                    console.log(Number(magValue).toString(2));
+                    lastMagValue = mag;
+
+
+                    //correctionvalues
+                    correction_value = new DataView(new ArrayBuffer(1));
+                    correction_value.setUint8(0,correction_value_target);
+                    await correction_characteristic.writeValue(correction_value);
+                    last_target_value = correction_value_target;
+                    console.log(correction_value_target);
+
+                    //ankle
+                    ankle_tof_value = new DataView(new ArrayBuffer(1));
+                    ankle_tof_value.setUint8(0,0);
+                    await tof_characteristic.writeValue(ankle_tof_value);
                 }
 
                 new_button_value = (await button_characteristic.readValue()).getInt8(0);
@@ -429,9 +474,6 @@ async function connectToDevice() {
                     button_enabled = true;
                 } else {
                     button_enabled = false;
-                }
-                if (button_enabled) {
-                    console.log(new_button_value);
                 }
                 button_value = new_button_value;
                 if (connecting) {
