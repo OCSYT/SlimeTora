@@ -32,6 +32,7 @@ portNames.forEach( portName => {
             // Makes sure to only split the first colon found
             const label = data.substring(0, firstColonIndex);
             const dataContent = data.substring(firstColonIndex + 1);
+            if (label.includes('X')) {
                 // IMU tracker data
                 const trackerNumber = parseInt(label.split('X').pop(), 10);
                 processTrackerData(dataContent, trackerNumber);
@@ -47,10 +48,18 @@ portNames.forEach( portName => {
                 // Tracker battery info
                 const trackerNumber = parseInt(label.split('v').pop(), 10);
                 processBatteryData(dataContent, trackerNumber);
+            } else if (label.includes('o')) {
+                const trackerNumber = parseInt(label.split('o').pop());
+                if (!isNaN(trackerNumber)) {
+                    processTrackerSettings(dataContent, trackerNumber)
+                } else {
+                    console.log(`${portName} - Unknown data received: ${data}`);
+                }
+            } else {
                 console.log(`${portName} - Unknown data received: ${data}`);
+            }
         }
     }
-
 
     /*
     * Tracker data

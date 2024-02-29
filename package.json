@@ -1,6 +1,6 @@
 {
   "name": "slimetora",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
   "main": "index.js",
   "scripts": {
