@@ -15,15 +15,14 @@ portNames.forEach( portName => {
     /*
     *   Settings
     */
-    
-    const magnetometer = false;
-
 
     const port = new SerialPort({
         path: portName,
         baudRate: baudRate
     });
     const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
+
+    //sendTrackerSettings();
 
     /*
     *   Data processing
@@ -35,7 +34,6 @@ portNames.forEach( portName => {
             // Makes sure to only split the first colon found
             const label = data.substring(0, firstColonIndex);
             const dataContent = data.substring(firstColonIndex + 1);
-            if (label.includes('X')) {
                 // IMU tracker data
                 const trackerNumber = parseInt(label.split('X').pop(), 10);
                 processTrackerData(dataContent, trackerNumber);
@@ -51,9 +49,7 @@ portNames.forEach( portName => {
                 // Tracker battery info
                 const trackerNumber = parseInt(label.split('v').pop(), 10);
                 processBatteryData(dataContent, trackerNumber);
-            } else {
                 console.log(`${portName} - Unknown data received: ${data}`);
-            }
         }
     }
 
@@ -223,24 +219,57 @@ portNames.forEach( portName => {
     }
 
     /*
-    *   Toggle magnetometer status
+    *   Tracker settings
     */
 
-    function toggleMagnetometer(serialPort, tracker) {
+    function sendTrackerSettings() {
         try {
-            const magValue = magnetometer ? 5 : 8;
-            const data = Buffer.from([magValue]);
-            serialPort.write(data, (err) => {
+            const labelO0 = 'o0:';
+            const labelO1 = 'o1:';
+            const modeValueHex = '00000110107001';
+            const modeValueBuffer = Buffer.from(labelO0 + modeValueHex + '\r\n' + labelO1 + modeValueHex, 'utf-8');
+            port.write(modeValueBuffer, (err) => {
                 if (err) {
                     console.error('Error writing data to serial port:', err.message);
                 } else {
-                    console.log('Data written to serial port:', data);
-                    console.log('Data written to serial port:', data.toString());
+                    console.log('Data written to serial port:', modeValueBuffer);
+                    console.log('Data written to serial port:', modeValueBuffer.toString());
                 }
             });
         } catch (error) {
-            console.error('Error writing values:', error.message);
+            console.error('Error sending tracker settings:', error.message);
         }
+    }
+
+    function processTrackerSettings(data, trackerNum) {
+        const sensorMode = parseInt(data[6]);
+        const postureDataRate = parseInt(data[5]);
+        const sensorAutoCorrection = parseInt(data[10]);
+        const ankleMotionDetection = parseInt(data[13]);
+
+        const sensorModeText = sensorMode === 0 ? "Mode 2" : "Mode 1";
+        const postureDataRateText = postureDataRate === 0 ? "50FPS" : "100FPS";
+        const ankleMotionDetectionText = ankleMotionDetection === 0 ? "Disabled" : "Enabled";
+
+        const sensorAutoCorrectionComponents = [];
+        if (sensorAutoCorrection & 1) {
+            sensorAutoCorrectionComponents.push("Accel");
+        }
+        if (sensorAutoCorrection & 2) {
+            sensorAutoCorrectionComponents.push("Gyro");
+        }
+        if (sensorAutoCorrection & 4) {
+            sensorAutoCorrectionComponents.push("Mag");
+        }
+
+        const sensorAutoCorrectionText = sensorAutoCorrectionComponents.join(', ');
+
+        console.log(`${portName} - Tracker ${trackerNum} settings:`);
+        console.log(`${portName} - Sensor Mode: ${sensorModeText}`);
+        console.log(`${portName} - Posture Data Transfer Rate: ${postureDataRateText}`);
+        console.log(`${portName} - Sensor Auto Correction: ${sensorAutoCorrectionText}`);
+        console.log(`${portName} - Ankle Motion Detection: ${ankleMotionDetectionText}`);
+        console.log(`${portName} - Raw data: ${data}`)
     }
 
     parser.on('data', (data) => {
