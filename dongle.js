@@ -22,8 +22,6 @@ portNames.forEach( portName => {
     });
     const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
-    //sendTrackerSettings();
-
     /*
     *   Data processing
     */
@@ -222,18 +220,41 @@ portNames.forEach( portName => {
     *   Tracker settings
     */
 
-    function sendTrackerSettings() {
+    /*
+    *   setTrackerSettings
+    *   fpsMode: 100 // 50
+    *   sensorMode: 1 // 2
+    *   sensorAutoCorrection: [Accel, Gyro, Mag]
+    *   ankleMotionDetection: true // false
+    */
+    function setTrackerSettings(fpsMode, sensorMode, sensorAutoCorrection, ankleMotionDetection) {
         try {
+            const sensorModeBit = sensorMode === 1 ? '1' : '0';
+            const postureDataRateBit = fpsMode === 100 ? '1' : '0';
+            let sensorAutoCorrectionBit = 0;
+            if (sensorAutoCorrection.includes("Accel")) sensorAutoCorrectionBit |= 0x01;
+            if (sensorAutoCorrection.includes("Gyro")) sensorAutoCorrectionBit |= 0x02;
+            if (sensorAutoCorrection.includes("Mag")) sensorAutoCorrectionBit |= 0x04;
+            const ankleMotionDetectionBit = ankleMotionDetection ? '1' : '0';
+    
+            const hexValue = `00000${sensorModeBit}0${postureDataRateBit}0${sensorAutoCorrectionBit.toString(2).padStart(3, '0')}0${ankleMotionDetectionBit}`;
+    
             const labelO0 = 'o0:';
             const labelO1 = 'o1:';
-            const modeValueHex = '00000110107001';
-            const modeValueBuffer = Buffer.from(labelO0 + modeValueHex + '\r\n' + labelO1 + modeValueHex, 'utf-8');
+            const modeValueBuffer = Buffer.from(labelO0 + hexValue + '\r\n' + labelO1 + hexValue, 'utf-8');
+
+            console.log(`${portName} - Setting the following settings onto the trackers:`)
+            console.log(`${portName} - FPS mode: ${fpsMode}`)
+            console.log(`${portName} - Sensor mode: ${sensorMode}`)
+            console.log(`${portName} - Sensor auto correction: ${sensorAutoCorrection}`)
+            console.log(`${portName} - Ankle motion detection: ${ankleMotionDetection}`)
+            console.log(`${portName} - Raw hex data calculated to be sent: ${hexValue}`)
+    
             port.write(modeValueBuffer, (err) => {
                 if (err) {
-                    console.error('Error writing data to serial port:', err.message);
+                    console.error(`${portName} - Error writing data to serial port: ${err.message}`);
                 } else {
-                    console.log('Data written to serial port:', modeValueBuffer);
-                    console.log('Data written to serial port:', modeValueBuffer.toString());
+                    console.log(`${portName} - Data written to serial port: ${modeValueBuffer.toString()}`);
                 }
             });
         } catch (error) {
