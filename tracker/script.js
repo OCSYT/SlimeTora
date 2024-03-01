@@ -76,10 +76,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         smoothingCheckbox.checked = false;
     }
 
-    if (await store.has("smoothinput")) {
-        smooth_val = await store.get("smoothinput");
+    if (await store.has("smoothInput")) {
+        smooth_val = await store.get("smoothInput");
     }
-    document.getElementById("smoothinput").value = smooth_val * 100;
+    document.getElementById("smoothInput").value = smooth_val * 100;
 
     var isSmoothingEnabled = smoothingCheckbox.checked;
     if (isSmoothingEnabled) {
@@ -109,8 +109,8 @@ function justNumbers(string) {
 }
 
 function saveSmoothValue() {
-    var userInputValue = justNumbers(document.getElementById("smoothinput").value) / 100;
-    store.set("smoothinput", userInputValue);
+    var userInputValue = justNumbers(document.getElementById("smoothInput").value) / 100;
+    store.set("smoothInput", userInputValue);
     smooth_val = userInputValue;
 }
 
