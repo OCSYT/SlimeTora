@@ -4,9 +4,9 @@
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline')
 
-let latestData = null
+let latestData = 'exampleData'
 
-let trackerMap = new Map([
+let trackerData = new Map([
     ['Tracker0', 'Tracker0-Data'], // COM4-Tracker0
     ['Tracker1', 'Tracker1-Data'], // COM4-Tracker1
     ['Tracker2', 'Tracker2-Data'], // COM5-Tracker0
@@ -15,11 +15,19 @@ let trackerMap = new Map([
     ['Tracker5', 'Tracker5-Data']  // COM6-Tracker1
 ]);
 
+let trackerSettings = new Map([
+    ['Tracker0', 'Tracker0-Setting'], // COM4-Tracker0
+    ['Tracker1', 'Tracker1-Setting'], // COM4-Tracker1
+    ['Tracker2', 'Tracker2-Setting'], // COM5-Tracker0
+    ['Tracker3', 'Tracker3-Setting'], // COM5-Tracker1
+    ['Tracker4', 'Tracker4-Setting'], // COM6-Tracker0
+    ['Tracker5', 'Tracker5-Setting']  // COM6-Tracker1
+]);
+
 /*
 *   Settings
 */
 
-const portNames = ['COM4', 'COM5', 'COM6']
 const baudRate = 500000; // from the haritora_setting.json in HaritoraConfigurator
 
 function startDongleCommunication() {
@@ -48,7 +56,6 @@ function startDongleCommunication() {
                     // IMU tracker data
                     const trackerNumber = parseInt(label.split('X').pop(), 10);
                     processTrackerData(dataContent, trackerNumber);
-                } else if (label.includes('a')) {
                     // Other tracker data
                     const trackerNumber = parseInt(label.split('a').pop(), 10);
                     processOtherTrackerData(dataContent, trackerNumber);
@@ -60,17 +67,13 @@ function startDongleCommunication() {
                     // Tracker battery info
                     const trackerNumber = parseInt(label.split('v').pop(), 10);
                     processBatteryData(dataContent, trackerNumber);
-                } else if (label.includes('o')) {
                     const trackerNumber = parseInt(label.split('o').pop());
                     if (!isNaN(trackerNumber)) {
                         processTrackerSettings(dataContent, trackerNumber)
                     } else {
                         console.log(`${portName} - Unknown data received: ${data}`);
                     }
-                } else {
                     console.log(`${portName} - Unknown data received: ${data}`);
-                }
-                latestData = data;
             }
         }
     
@@ -94,6 +97,7 @@ function startDongleCommunication() {
         }
     
         function processTrackerData(data, trackerNum) {
+            // Set raw tracker IMU data in map
             if (portName === 'COM4') {
                 trackerKey = `Tracker${trackerNum}`;
             } else if (portName === 'COM5') {
@@ -105,12 +109,13 @@ function startDongleCommunication() {
                 return;
             }
     
-            if (trackerMap.has(trackerKey)) {
-                trackerMap.set(trackerKey, data);
+            if (trackerData.has(trackerKey)) {
+                trackerData.set(trackerKey, data);
             } else {
                 console.log(`No data found for ${trackerKey}`);
             }
     
+            // Process raw tracker IMU data
             try {
                 if (data.endsWith('==') && data.length === 24) {
                     // Other trackers
@@ -295,6 +300,25 @@ function startDongleCommunication() {
         }
     
         function processTrackerSettings(data, trackerNum) {
+            // Set raw tracker settings data in map
+            if (portName === 'COM4') {
+                trackerKey = `Tracker${trackerNum}`;
+            } else if (portName === 'COM5') {
+                trackerKey = `Tracker${trackerNum + 2}`;
+            } else if (portName === 'COM6') {
+                trackerKey = `Tracker${trackerNum + 4}`;
+            } else {
+                console.log(`Invalid port name: ${portName}`);
+                return;
+            }
+
+            if (trackerSettings.has(trackerKey)) {
+                trackerSettings.set(trackerKey, data);
+            } else {
+                console.log(`No data found for ${trackerKey}`);
+            }
+
+            // Process tracker settings data
             const sensorMode = parseInt(data[6]);
             const postureDataRate = parseInt(data[5]);
             const sensorAutoCorrection = parseInt(data[10]);
@@ -333,27 +357,31 @@ function startDongleCommunication() {
         });
     
         parser.on('data', (data) => {
+            latestData = data;
             processData(data);
         });
     
         port.on('error', (err) => {
             console.error('Error:', err.message);
         });
-    
-        // Function to print the contents of the trackerMap
-        function printTrackerMap() {
-            console.log("Current contents of trackerMap:");
-            trackerMap.forEach((value, key) => {
-                console.log(`${key}: ${value}`);
-            });
-            console.log(`Current latestData: ${latestData}`)
-        }
-    
-        // Loop to print trackerMap every second
-        setInterval(printTrackerMap, 2000);
-        })
+    })
+}
+
+function getTrackerData() {
+    return trackerData
+}
+
+function getTrackerSettings() {
+    return trackerSettings
+}
+
+function getLatestData() {
+    return latestData
 }
 
 module.exports = {
-    startDongleCommunication: startDongleCommunication
+    startDongleCommunication: startDongleCommunication,
+    getTrackerData: getTrackerData,
+    getTrackerSettings: getTrackerSettings,
+    getLatestData: getLatestData
 };
