@@ -249,22 +249,22 @@ app.on('ready', createWindow);
 let lastTimestamp = Date.now();
 let tpsCounter = 0;
 ipcMain.on('sendData', (event, postData) => {
-    const deviceid = connectedDevices.indexOf(postData["deviceName"]);
-    buildAccelAndSend(postData["acceleration"], deviceid);
+    const deviceId = connectedDevices.indexOf(postData["deviceName"]);
+    buildAccelAndSend(postData["acceleration"], deviceId);
     PACKET_COUNTER += 1;
-    buildRotationAndSend(postData["rotation"], deviceid);
+    buildRotationAndSend(postData["rotation"], deviceId);
     PACKET_COUNTER += 1;
     if (postData["yawReset"] == true) {
         sendYawReset();
         PACKET_COUNTER += 1;
     }
-    if (deviceid == 0) {
+    if (deviceId == 0) {
         sendBatteryLevel(postData["battery"]);
         PACKET_COUNTER += 1;
     }
     const currentTimestamp = Date.now();
     const timeDifference = currentTimestamp - lastTimestamp;
-    if (deviceid == 0) {
+    if (deviceId == 0) {
         if (timeDifference >= 1000) {
             const tps = tpsCounter / (timeDifference / 1000);
             console.log(`TPS: ${tps}`);
