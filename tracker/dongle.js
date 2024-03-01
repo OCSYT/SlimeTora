@@ -24,23 +24,45 @@ let trackerSettings = new Map([
     ['Tracker5', 'Tracker5-Setting']  // COM6-Tracker1
 ]);
 
+let trackerBattery = new Map([
+    ['Tracker0', 'Tracker0-Battery'], // COM4-Tracker0
+    ['Tracker1', 'Tracker1-Battery'], // COM4-Tracker1
+    ['Tracker2', 'Tracker2-Battery'], // COM5-Tracker0
+    ['Tracker3', 'Tracker3-Battery'], // COM5-Tracker1
+    ['Tracker4', 'Tracker4-Battery'], // COM6-Tracker0
+    ['Tracker5', 'Tracker5-Battery']  // COM6-Tracker1
+]);
+
 /*
 *   Settings
 */
 
+const portNames = ['COM4', 'COM5', 'COM6'];
 const baudRate = 500000; // from the haritora_setting.json in HaritoraConfigurator
 
 function startDongleCommunication() {
-    portNames.forEach( portName => {
-        /*
-        *   Settings
-        */
-    
+    portNames.forEach(portName => {
         const port = new SerialPort({
             path: portName,
             baudRate: baudRate
         });
         const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
+
+        function getTrackerId(trackerNum, portName) {
+            if (portName === 'COM4') {
+                trackerKey = `Tracker${trackerNum}`;
+            } else if (portName === 'COM5') {
+                trackerKey = `Tracker${trackerNum + 2}`;
+            } else if (portName === 'COM6') {
+                trackerKey = `Tracker${trackerNum + 4}`;
+            } else {
+                console.log(`Invalid port name: ${portName}`);
+                return null;
+            }
+            return trackerKey;
+        }
+
+        setTrackerSettings(100, 1, ['Accel'], false)
     
         /*
         *   Data processing
@@ -63,10 +85,10 @@ function startDongleCommunication() {
                     // Tracker button info
                     const trackerNumber = parseInt(label.split('r').pop(), 10);
                     processButtonData(dataContent, trackerNumber);
-                } else if (label.includes('v')) {
                     // Tracker battery info
                     const trackerNumber = parseInt(label.split('v').pop(), 10);
                     processBatteryData(dataContent, trackerNumber);
+                } else if (label.includes('o')) {
                     const trackerNumber = parseInt(label.split('o').pop());
                     if (!isNaN(trackerNumber)) {
                         processTrackerSettings(dataContent, trackerNumber)
@@ -98,17 +120,7 @@ function startDongleCommunication() {
     
         function processTrackerData(data, trackerNum) {
             // Set raw tracker IMU data in map
-            if (portName === 'COM4') {
-                trackerKey = `Tracker${trackerNum}`;
-            } else if (portName === 'COM5') {
-                trackerKey = `Tracker${trackerNum + 2}`;
-            } else if (portName === 'COM6') {
-                trackerKey = `Tracker${trackerNum + 4}`;
-            } else {
-                console.log(`Invalid port name: ${portName}`);
-                return;
-            }
-    
+            trackerKey = getTrackerId(trackerNum, portName)
             if (trackerData.has(trackerKey)) {
                 trackerData.set(trackerKey, data);
             } else {
@@ -166,6 +178,28 @@ function startDongleCommunication() {
             }
         }
     
+        /*
+        * Tracker button data
+        * Here we're processing the button pressed, the 7th/10th character in the decoded data is the
+        * amount of times the main/sub buttons were pressed respectively.
+        */
+    
+        function processButtonData(data, trackerNum, prevMainButtonPressCount, prevSubButtonPressCount) {
+            if (trackerNum === 0) {
+                let mainButtonPressCount = parseInt(data[6], 16);  // 7th character (0-indexed)
+                let subButtonPressCount = parseInt(data[9], 16);  // 10th character (0-indexed)
+    
+                [prevMainButtonPressCount, prevSubButtonPressCount] = processButtonPress(trackerNum, mainButtonPressCount, subButtonPressCount, prevMainButtonPressCount, prevSubButtonPressCount);
+            } else if (trackerNum === 1) {
+                let mainButtonPressCount = parseInt(data[6], 16);  // 7th character (0-indexed)
+                let subButtonPressCount = parseInt(data[9], 16);  // 10th character (0-indexed)
+    
+                [prevMainButtonPressCount, prevSubButtonPressCount] = processButtonPress(trackerNum, mainButtonPressCount, subButtonPressCount, prevMainButtonPressCount, prevSubButtonPressCount);
+            }
+    
+            return [prevMainButtonPressCount, prevSubButtonPressCount];
+        }
+
         function processButtonPress(trackerNum, mainButtonPressCount, subButtonPressCount, prevMainButtonPressCount, prevSubButtonPressCount) {
             if (mainButtonPressCount !== prevMainButtonPressCount) {
                 console.log(`${portName} - Tracker ${trackerNum} main button pressed. Pressed ${mainButtonPressCount + 1} times.`);
@@ -179,37 +213,20 @@ function startDongleCommunication() {
         }
     
         /*
-        * Tracker button data
-        * Here we're processing the button pressed, the 7th/10th character in the decoded data is the
-        * amount of times the main/sub buttons were pressed respectively.
-        */
-    
-        function processButtonData(data, trackerNum, prevMainButtonPressCount, prevSubButtonPressCount) {
-            const decodedData = data;
-    
-            if (trackerNum === 0) {
-                let mainButtonPressCount = parseInt(decodedData[6], 16);  // 7th character (0-indexed)
-                let subButtonPressCount = parseInt(decodedData[9], 16);  // 10th character (0-indexed)
-    
-                [prevMainButtonPressCount, prevSubButtonPressCount] = processButtonPress(trackerNum, mainButtonPressCount, subButtonPressCount, prevMainButtonPressCount, prevSubButtonPressCount);
-    
-            } else if (trackerNum === 1) {
-                let mainButtonPressCount = parseInt(decodedData[6], 16);  // 7th character (0-indexed)
-                let subButtonPressCount = parseInt(decodedData[9], 16);  // 10th character (0-indexed)
-    
-                [prevMainButtonPressCount, prevSubButtonPressCount] = processButtonPress(trackerNum, mainButtonPressCount, subButtonPressCount, prevMainButtonPressCount, prevSubButtonPressCount);
-            }
-    
-            return [prevMainButtonPressCount, prevSubButtonPressCount];
-        }
-    
-        /*
         * Tracker battery info
-        * This contains the information about of the
+        * This contains the information about the battery, voltage, and charge status of the tracker.
         * Can be used to forward to other software such as SlimeVR's server!
         */
     
         function processBatteryData(data, trackerNum) {
+            // Set tracker battery data in map
+            trackerKey = getTrackerId(trackerNum, portName)
+            if (trackerBattery.has(trackerKey)) {
+                trackerBattery.set(trackerKey, data);
+            } else {
+                console.log(`No data found for ${trackerKey}`);
+            }
+
             try {
                 const batteryInfo = JSON.parse(data);
                 console.log(`${portName} - Tracker ${trackerNum} remaining: ${batteryInfo['battery remaining']}%`);
@@ -266,19 +283,16 @@ function startDongleCommunication() {
     
         function setTrackerSettings(fpsMode, sensorMode, sensorAutoCorrection, ankleMotionDetection) {
             try {
-                const sensorModeBit = sensorMode === 1 ? '1' : '0';
-                const postureDataRateBit = fpsMode === 100 ? '1' : '0';
+                const sensorModeBit = sensorMode === 1 ? '1' : '0'; // If a value other than 1, default to mode 2
+                const postureDataRateBit = fpsMode === 50 ? '0' : '1'; // If a value other than 1, default to 100FPS
+                const ankleMotionDetectionBit = ankleMotionDetection ? '1' : '0'; // If a value other than 1, default to disabled
                 let sensorAutoCorrectionBit = 0;
                 if (sensorAutoCorrection.includes("Accel")) sensorAutoCorrectionBit |= 0x01;
                 if (sensorAutoCorrection.includes("Gyro")) sensorAutoCorrectionBit |= 0x02;
                 if (sensorAutoCorrection.includes("Mag")) sensorAutoCorrectionBit |= 0x04;
-                const ankleMotionDetectionBit = ankleMotionDetection ? '1' : '0';
         
                 const hexValue = `00000${postureDataRateBit}${sensorModeBit}010${sensorAutoCorrectionBit}00${ankleMotionDetectionBit}`;
-        
-                const labelO0 = 'o0:';
-                const labelO1 = 'o1:';
-                const modeValueBuffer = Buffer.from(labelO0 + hexValue + '\r\n' + labelO1 + hexValue, 'utf-8');
+                const modeValueBuffer = Buffer.from("o0:" + hexValue + '\r\n' + "o1:" + hexValue, 'utf-8');
     
                 console.log(`${portName} - Setting the following settings onto the trackers:`)
                 console.log(`${portName} - FPS mode: ${fpsMode}`)
@@ -301,17 +315,7 @@ function startDongleCommunication() {
     
         function processTrackerSettings(data, trackerNum) {
             // Set raw tracker settings data in map
-            if (portName === 'COM4') {
-                trackerKey = `Tracker${trackerNum}`;
-            } else if (portName === 'COM5') {
-                trackerKey = `Tracker${trackerNum + 2}`;
-            } else if (portName === 'COM6') {
-                trackerKey = `Tracker${trackerNum + 4}`;
-            } else {
-                console.log(`Invalid port name: ${portName}`);
-                return;
-            }
-
+            trackerKey = getTrackerId(trackerNum, portName)
             if (trackerSettings.has(trackerKey)) {
                 trackerSettings.set(trackerKey, data);
             } else {
@@ -349,9 +353,6 @@ function startDongleCommunication() {
             console.log(`${portName} - Raw data: ${data}`)
         }
     
-        module.exports.setTrackerSettings = setTrackerSettings
-        module.exports.processTrackerSettings = processTrackerSettings
-    
         port.on('open', () => {
             
         });
@@ -364,6 +365,9 @@ function startDongleCommunication() {
         port.on('error', (err) => {
             console.error('Error:', err.message);
         });
+
+        module.exports.setTrackerSettings = setTrackerSettings
+        module.exports.processTrackerSettings = processTrackerSettings
     })
 }
 
@@ -375,6 +379,10 @@ function getTrackerSettings() {
     return trackerSettings
 }
 
+function getTrackerBattery() {
+    return trackerBattery
+}
+
 function getLatestData() {
     return latestData
 }
@@ -383,5 +391,6 @@ module.exports = {
     startDongleCommunication: startDongleCommunication,
     getTrackerData: getTrackerData,
     getTrackerSettings: getTrackerSettings,
+    getTrackerBattery: getTrackerBattery,
     getLatestData: getLatestData
 };
