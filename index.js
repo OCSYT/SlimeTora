@@ -36,13 +36,13 @@ ipcMain.handle('has-data', async (event, key) => {
 });
 
 
-var allow_connection = false;
+var allowConnection = false;
 ipcMain.on('connection', (event, value) => {
-    allow_connection = (value);
-    if (!allow_connection) {
+    allowConnection = (value);
+    if (!allowConnection) {
         console.log("devices:", connectedDevices);
         connectedDevices = [];
-        last_connected_device_id = "";
+        lastConnectedDeviceId = "";
     }
 });
 
@@ -158,7 +158,7 @@ function createWindow() {
 
     }
     //fake user gesture
-    var last_connected_device_id = "";
+    var lastConnectedDeviceId = "";
 
     if (mainWindow) {
         mainWindow.webContents.on('select-bluetooth-device', async (event, deviceList, callback) => {
@@ -168,16 +168,16 @@ function createWindow() {
                 device.deviceName.startsWith('HaritoraXW-') && !connectedDevices.includes(device.deviceName)
             );
 
-            if (!allow_connection) {
+            if (!allowConnection) {
                 return;
             }
 
             if (haritoraDevices[0] != null) {
                 const selectedDevice = haritoraDevices[0];
-                last_connected_device_id = selectedDevice.deviceId;
+                lastConnectedDeviceId = selectedDevice.deviceId;
                 console.log('Selected Haritora device:', selectedDevice.deviceName);
                 if (connectedDevices.length == 0) {
-                    const fw_string = "Haritora";
+                    const fwString = "Haritora";
 
                     function buildHandshake() {
                         var buffer = new ArrayBuffer(128);
@@ -200,10 +200,10 @@ function createWindow() {
                         }
                         view.setInt32(offset, 0);                       // Firmware build
                         offset += 4;
-                        view.setInt8(offset, fw_string.length);               // Length of fw string
+                        view.setInt8(offset, fwString.length);               // Length of fw string
                         offset += 1;
-                        for (var i = 0; i < fw_string.length; i++) {
-                            view.setInt8(offset, fw_string.charCodeAt(i));   // fw string
+                        for (var i = 0; i < fwString.length; i++) {
+                            view.setInt8(offset, fwString.charCodeAt(i));   // fw string
                             offset += 1;
                         }
                         var macAddress = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
@@ -342,13 +342,13 @@ function buildAccelAndSend(acceleration, trackerId) {
     });
 }
 
-function buildRotationPacket(qx, qy, qz, qw, tracker_id) {
+function buildRotationPacket(qx, qy, qz, qw, trackerId) {
     let buffer = new Uint8Array(128);
     let view = new DataView(buffer.buffer);
 
     view.setInt32(0, 17);
     view.setBigInt64(4, BigInt(PACKET_COUNTER));
-    view.setUint8(12, tracker_id);
+    view.setUint8(12, trackerId);
     view.setUint8(13, 1);
 
     view.setFloat32(14, qx);

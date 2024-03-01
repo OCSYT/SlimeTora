@@ -66,7 +66,7 @@ const store = {
 };
 
 
-var smooth_val = 0.5;
+var smoothVal = 0.5;
 
 document.addEventListener("DOMContentLoaded", async function () {
     var smoothingCheckbox = document.getElementById("smoothing");
@@ -77,15 +77,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     if (await store.has("smoothInput")) {
-        smooth_val = await store.get("smoothInput");
+        smoothVal = await store.get("smoothInput");
     }
-    document.getElementById("smoothInput").value = smooth_val * 100;
+    document.getElementById("smoothInput").value = smoothVal * 100;
 
     var isSmoothingEnabled = smoothingCheckbox.checked;
     if (isSmoothingEnabled) {
         saveSmoothValue();
     } else {
-        smooth_val = 1;
+        smoothVal = 1;
     }
 
     smoothingCheckbox.addEventListener("change", function () {
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (smoothingCheckbox.checked) {
             saveSmoothValue();
         } else {
-            smooth_val = 1;
+            smoothVal = 1;
         }
     });
 });
@@ -111,7 +111,7 @@ function justNumbers(string) {
 function saveSmoothValue() {
     var userInputValue = justNumbers(document.getElementById("smoothInput").value) / 100;
     store.set("smoothInput", userInputValue);
-    smooth_val = userInputValue;
+    smoothVal = userInputValue;
 }
 
 
@@ -278,11 +278,11 @@ async function connectToDevice() {
         if (trackerDevices[device.id]) return;
         const server = await device.gatt.connect();
 
-        const battery_service = await getService(server, batteryId);
-        const sensor_service = await getService(server, sensorServiceId);
-        const setting_service = await getService(server, settingId);
-        const device_service = await getService(server, deviceInfoId);
-        if (!battery_service || !sensorServiceId || !setting_service || !device_service) {
+        const batteryService = await getService(server, batteryId);
+        const sensorService = await getService(server, sensorServiceId);
+        const settingService = await getService(server, settingId);
+        const deviceService = await getService(server, deviceInfoId);
+        if (!batteryService || !sensorServiceId || !settingService || !deviceService) {
             await device.gatt.disconnect();
             allowConnection = true;
             if (device) {
@@ -332,20 +332,20 @@ async function connectToDevice() {
 
         trackerCount.innerHTML = "Connected Trackers: " + Object.values(trackerDevices).length;
 
-        const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
-        const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
-        const button_characteristic = await sensor_service.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
-        const fps_characteristic = await sensor_service.getCharacteristic("00dbf1c6-90aa-11ed-a1eb-0242ac120002");
-        const mode_characteristic = await setting_service.getCharacteristic("ef8445c2-90a9-11ed-a1eb-0242ac120002");
+        const sensorCharacteristic = await sensorService.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
+        const batteryCharacteristic = await batteryService.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
+        const buttonCharacteristic = await sensorService.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
+        const fpsCharacteristic = await sensorService.getCharacteristic("00dbf1c6-90aa-11ed-a1eb-0242ac120002");
+        const modeCharacteristic = await settingService.getCharacteristic("ef8445c2-90a9-11ed-a1eb-0242ac120002");
 
-        var sensor_value = await sensor_characteristic.readValue();
-        var battery_value = await battery_characteristic.readValue();
-        var button_value = (await button_characteristic.readValue()).getInt8(0);
-        var fps_value = await fps_characteristic.readValue();
-        var mode_value = await mode_characteristic.readValue();
+        var sensorValue = await sensorCharacteristic.readValue();
+        var batteryValue = await batteryCharacteristic.readValue();
+        var buttonValue = (await buttonCharacteristic.readValue()).getInt8(0);
+        var fpsValue = await fpsCharacteristic.readValue();
+        var modeValue = await modeCharacteristic.readValue();
 
-        var new_button_value = null;
-        var button_enabled = false;
+        var newButtonValue = null;
+        var buttonEnabled = false;
         var postDataCurrent = null;
         var postData = null;
         var allowYawReset = false;
@@ -354,13 +354,13 @@ async function connectToDevice() {
         var lastTimestamp = 0;
         const updateValues = async () => {
             // Enable notifications for the characteristic
-            await sensor_characteristic.startNotifications();
-            await battery_characteristic.startNotifications();
+            await sensorCharacteristic.startNotifications();
+            await batteryCharacteristic.startNotifications();
 
             // Handle notifications
-            sensor_characteristic.addEventListener('characteristicvaluechanged', (event) => {
+            sensorCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
                 // Handle sensor data
-                sensor_value = event.target.value;
+                sensorValue = event.target.value;
 
                 if (Date.now() - lastTimestamp >= 1000) {
                     const tps = tpsCounter / ((Date.now() - lastTimestamp) / 1000);
@@ -373,9 +373,9 @@ async function connectToDevice() {
 
             });
 
-            battery_characteristic.addEventListener('characteristicvaluechanged', (event) => {
+            batteryCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
                 // Handle battery data
-                battery_value = event.target.value;
+                batteryValue = event.target.value;
 
                 if (Date.now() - lastTimestamp >= 1000) {
                     const tps = tpsCounter / ((Date.now() - lastTimestamp) / 1000);
@@ -398,20 +398,20 @@ async function connectToDevice() {
             try {
                 const magValue = new DataView(new ArrayBuffer(1));
                 magValue.setUint8(0, mag ? 5 : 8);
-                mode_value = magValue;
-                await mode_characteristic.writeValue(magValue);
+                modeValue = magValue;
+                await modeCharacteristic.writeValue(magValue);
 
 
-                new_button_value = (await button_characteristic.readValue()).getInt8(0);
-                if (button_value !== new_button_value) {
-                    button_enabled = true;
+                newButtonValue = (await buttonCharacteristic.readValue()).getInt8(0);
+                if (buttonValue !== newButtonValue) {
+                    buttonEnabled = true;
                 } else {
-                    button_enabled = false;
+                    buttonEnabled = false;
                 }
-                if (button_enabled) {
-                    console.log(button_enabled);
+                if (buttonEnabled) {
+                    console.log(buttonEnabled);
                 }
-                button_value = new_button_value;
+                buttonValue = newButtonValue;
                 if (connecting) {
                     setTimeout(writeValues, 100);
                 }
@@ -424,20 +424,20 @@ async function connectToDevice() {
         const trackerCheck = setInterval(async () => {
 
             var yawReset = false;
-            if (button_enabled == true && allowYawReset == true) {
+            if (buttonEnabled == true && allowYawReset == true) {
                 allowYawReset = false;
                 yawReset = true;
             }
             else {
-                if (button_enabled == false) {
+                if (buttonEnabled == false) {
                     allowYawReset = true;
                 }
             }
 
-            battery[device.id] = decodeBatteryPacket(device, battery_value)[1];;
+            battery[device.id] = decodeBatteryPacket(device, batteryValue)[1];;
             const lowestBattery = Math.min(...Object.values(battery));
 
-            const IMUData = decodeIMUPacket(device, sensor_value);
+            const IMUData = decodeIMUPacket(device, sensorValue);
             const iframe = document.getElementById(device.id + "threejs");
 
             postData = {
@@ -462,7 +462,7 @@ async function connectToDevice() {
             if (postDataCurrent == null) {
                 postDataCurrent = postData;
             }
-            postDataCurrent = interpolateIMU(postDataCurrent, postData, smooth_val);
+            postDataCurrent = interpolateIMU(postDataCurrent, postData, smoothVal);
             //remove lag
 
             ipc.send('sendData', postDataCurrent);
@@ -481,18 +481,18 @@ async function connectToDevice() {
 
             // rotation is given in radians
             const rotation = new Quaternion([postDataCurrent["rotation"].w, postDataCurrent["rotation"].x, postDataCurrent["rotation"].y, postDataCurrent["rotation"].z]);
-            const rotation_Euler_raw = rotation.toEuler("XYZ");
+            const rotationEulerRaw = rotation.toEuler("XYZ");
 
             // Convert radians to degrees
-            const rotation_Euler = {
-                x: rotation_Euler_raw[0] * (180 / Math.PI),
-                y: rotation_Euler_raw[1] * (180 / Math.PI),
-                z: rotation_Euler_raw[2] * (180 / Math.PI)
+            const rotationEuler = {
+                x: rotationEulerRaw[0] * (180 / Math.PI),
+                y: rotationEulerRaw[1] * (180 / Math.PI),
+                z: rotationEulerRaw[2] * (180 / Math.PI)
             };
 
             const deviceName = postDataCurrent["deviceName"];
             const deviceId = postDataCurrent["deviceId"];
-            const { x: rotX, y: rotY, z: rotZ } = rotation_Euler;
+            const { x: rotX, y: rotY, z: rotZ } = rotationEuler;
             const { x: accelX, y: accelY, z: accelZ } = postDataCurrent["acceleration"];
             const batteryPercentage = (battery[device.id] * 100);
 
