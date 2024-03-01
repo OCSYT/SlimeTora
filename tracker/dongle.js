@@ -6,6 +6,17 @@ const { ReadlineParser } = require('@serialport/parser-readline')
 
 let latestData = 'exampleData'
 
+let ports = {};
+
+const trackerPort = new Map([
+    ['Tracker0', 'COM4'], // o0
+    ['Tracker1', 'COM4'], // o1
+    ['Tracker2', 'COM5'], // o0
+    ['Tracker3', 'COM5'], // o1
+    ['Tracker4', 'COM6'], // o0
+    ['Tracker5', 'COM6']  // o1
+]);
+
 let trackerData = new Map([
     ['Tracker0', 'Tracker0-Data'], // COM4-Tracker0
     ['Tracker1', 'Tracker1-Data'], // COM4-Tracker1
@@ -48,6 +59,8 @@ function startDongleCommunication() {
         });
         const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
+        ports[portName] = port;
+
         function getTrackerId(trackerNum, portName) {
             if (portName === 'COM4') {
                 trackerKey = `Tracker${trackerNum}`;
@@ -61,8 +74,6 @@ function startDongleCommunication() {
             }
             return trackerKey;
         }
-
-        setTrackerSettings(100, 1, ['Accel'], false)
     
         /*
         *   Data processing
@@ -88,7 +99,6 @@ function startDongleCommunication() {
                     // Tracker battery info
                     const trackerNumber = parseInt(label.split('v').pop(), 10);
                     processBatteryData(dataContent, trackerNumber);
-                } else if (label.includes('o')) {
                     const trackerNumber = parseInt(label.split('o').pop());
                     if (!isNaN(trackerNumber)) {
                         processTrackerSettings(dataContent, trackerNumber)
@@ -110,7 +120,6 @@ function startDongleCommunication() {
         function processAnkleMotionData(data) {
             // Process ankle motion data
             // TODO: see how to process the data, but we have it here
-            console.log(`${portName} - Received ankle motion data: ${data}`);
         }
     
         function logRotationAndGravity(trackerNum, rotation, gravity) {
@@ -281,33 +290,97 @@ function startDongleCommunication() {
         *   Tracker settings
         */
     
-        function setTrackerSettings(fpsMode, sensorMode, sensorAutoCorrection, ankleMotionDetection) {
+        function setTrackerSettings(trackerName, fpsMode, sensorMode, sensorAutoCorrection, ankleMotionDetection) {
+            console.log(`Setting tracker settings for ${trackerName}...`)
+            const sensorModeBit = sensorMode === 1 ? '1' : '0'; // If a value other than 1, default to mode 2
+            const postureDataRateBit = fpsMode === 50 ? '0' : '1'; // If a value other than 1, default to 100FPS
+            const ankleMotionDetectionBit = ankleMotionDetection ? '1' : '0'; // If a value other than 1, default to disabled
+            let sensorAutoCorrectionBit = 0;
+            if (sensorAutoCorrection.includes("Accel")) sensorAutoCorrectionBit |= 0x01;
+            if (sensorAutoCorrection.includes("Gyro")) sensorAutoCorrectionBit |= 0x02;
+            if (sensorAutoCorrection.includes("Mag")) sensorAutoCorrectionBit |= 0x04;
+
+            let hexValue = null;
+            let modeValueBuffer = null;
+            
+            if (trackerName === 'Tracker0' || trackerName === 'Tracker2' || trackerName === 'Tracker4') {
+                // o0
+                let number = Number(trackerName.match(/\d+/)[0]);
+                number += 1;
+                otherTrackerName = `Tracker${number}`;
+            
+                hexValue = `00000${postureDataRateBit}${sensorModeBit}010${sensorAutoCorrectionBit}00${ankleMotionDetectionBit}`;
+                modeValueBuffer = Buffer.from("o0:" + hexValue + '\r\n' + "o1:" + trackerSettings.get(otherTrackerName) + '\r\n', 'utf-8');
+                console.log(`${portName} - ${trackerName} aka o0 - Calculated hex value: ${hexValue}`);
+            } else if (trackerName === 'Tracker1' || trackerName === 'Tracker3' || trackerName === 'Tracker5') {
+                // o1
+                let number = Number(trackerName.match(/\d+/)[0]);
+                number -= 1;
+                otherTrackerName = `Tracker${number}`;
+            
+                hexValue = `00000${postureDataRateBit}${sensorModeBit}010${sensorAutoCorrectionBit}00${ankleMotionDetectionBit}`;
+                modeValueBuffer = Buffer.from("o0:" + trackerSettings.get(otherTrackerName) + '\r\n' + "o1:" + hexValue + '\r\n', 'utf-8');
+                console.log(`${portName} - ${trackerName} aka o1 - Calculated hex value: ${hexValue}`);
+            } else {
+                console.log(`Invalid tracker name: ${trackerName}`);
+                return;
+            }
+
+            console.log(`${portName} - Setting the following settings onto the trackers:`)
+            console.log(`${portName} - FPS mode: ${fpsMode}`)
+            console.log(`${portName} - Sensor mode: ${sensorMode}`)
+            console.log(`${portName} - Sensor auto correction: ${sensorAutoCorrection}`)
+            console.log(`${portName} - Ankle motion detection: ${ankleMotionDetection}`)
+            console.log(`${portName} - Raw hex data calculated to be sent: ${hexValue}`)
+
             try {
-                const sensorModeBit = sensorMode === 1 ? '1' : '0'; // If a value other than 1, default to mode 2
-                const postureDataRateBit = fpsMode === 50 ? '0' : '1'; // If a value other than 1, default to 100FPS
-                const ankleMotionDetectionBit = ankleMotionDetection ? '1' : '0'; // If a value other than 1, default to disabled
+                console.log(`${portName} - Sending tracker settings to ${trackerName} which is ${trackerPort.get(trackerName)}: ${modeValueBuffer.toString()}`);
+                ports[trackerPort.get(trackerName)].write(modeValueBuffer, (err) => {
+                    if (err) {
+                        console.error(`${trackerPort.get(trackerName)} - Error writing data to serial port: ${err.message}`);
+                    } else {
+                        trackerSettings.set(trackerName, hexValue);
+                        console.log(`${trackerPort.get(trackerName)} - Data written to serial port for tracker ${trackerName} on ${trackerPort.get(trackerName)}: ${modeValueBuffer.toString()}`);
+                    }
+                });
+            } catch (error) {
+                console.error('Error sending tracker settings:', error.message);
+            }
+        }
+
+        function setAllTrackerSettings(fpsMode, sensorMode, sensorAutoCorrection, ankleMotionDetection) {
+            try {
+                const sensorModeBit = sensorMode === 1 ? '1' : '0';
+                const postureDataRateBit = fpsMode === 100 ? '1' : '0';
                 let sensorAutoCorrectionBit = 0;
                 if (sensorAutoCorrection.includes("Accel")) sensorAutoCorrectionBit |= 0x01;
                 if (sensorAutoCorrection.includes("Gyro")) sensorAutoCorrectionBit |= 0x02;
                 if (sensorAutoCorrection.includes("Mag")) sensorAutoCorrectionBit |= 0x04;
+                const ankleMotionDetectionBit = ankleMotionDetection ? '1' : '0';
         
                 const hexValue = `00000${postureDataRateBit}${sensorModeBit}010${sensorAutoCorrectionBit}00${ankleMotionDetectionBit}`;
-                const modeValueBuffer = Buffer.from("o0:" + hexValue + '\r\n' + "o1:" + hexValue, 'utf-8');
+                const modeValueBuffer = Buffer.from('o0:' + hexValue + '\r\n' + 'o1:' + hexValue + '\r\n', 'utf-8');
     
-                console.log(`${portName} - Setting the following settings onto the trackers:`)
+                console.log(`${portName} - Setting the following settings onto all the trackers:`)
                 console.log(`${portName} - FPS mode: ${fpsMode}`)
                 console.log(`${portName} - Sensor mode: ${sensorMode}`)
                 console.log(`${portName} - Sensor auto correction: ${sensorAutoCorrection}`)
                 console.log(`${portName} - Ankle motion detection: ${ankleMotionDetection}`)
                 console.log(`${portName} - Raw hex data calculated to be sent: ${hexValue}`)
         
-                port.write(modeValueBuffer, (err) => {
-                    if (err) {
-                        console.error(`${portName} - Error writing data to serial port: ${err.message}`);
-                    } else {
-                        console.log(`${portName} - Data written to serial port: ${modeValueBuffer.toString()}`);
-                    }
-                });
+                for (let portName in ports) {
+                    let port = ports[portName];
+                    port.write(modeValueBuffer, (err) => {
+                        if (err) {
+                            console.error(`${portName} - Error writing data to serial port: ${err.message}`);
+                        } else {
+                            console.log(`${portName} - Data written to serial port: ${modeValueBuffer.toString()}`);
+                            trackerSettings.forEach((value, key) => {
+                                trackerSettings.set(key, hexValue);
+                            });
+                        }
+                    });
+                }
             } catch (error) {
                 console.error('Error sending tracker settings:', error.message);
             }
@@ -316,11 +389,7 @@ function startDongleCommunication() {
         function processTrackerSettings(data, trackerNum) {
             // Set raw tracker settings data in map
             trackerKey = getTrackerId(trackerNum, portName)
-            if (trackerSettings.has(trackerKey)) {
-                trackerSettings.set(trackerKey, data);
-            } else {
-                console.log(`No data found for ${trackerKey}`);
-            }
+            console.log(`Processing tracker settings for tracker ${trackerKey} aka ${trackerNum}...`)
 
             // Process tracker settings data
             const sensorMode = parseInt(data[6]);
@@ -345,12 +414,16 @@ function startDongleCommunication() {
     
             const sensorAutoCorrectionText = sensorAutoCorrectionComponents.join(', ');
     
-            console.log(`${portName} - Tracker ${trackerNum} settings:`);
+            console.log(`${portName} - Tracker ${trackerKey} aka ${trackerNum} settings:`);
             console.log(`${portName} - Sensor Mode: ${sensorModeText}`);
             console.log(`${portName} - Posture Data Transfer Rate: ${postureDataRateText}`);
             console.log(`${portName} - Sensor Auto Correction: ${sensorAutoCorrectionText}`);
             console.log(`${portName} - Ankle Motion Detection: ${ankleMotionDetectionText}`);
             console.log(`${portName} - Raw data: ${data}`)
+
+            if (trackerSettings.has(trackerKey) && trackerSettings.get(trackerKey).includes('Setting')) {
+                trackerSettings.set(trackerKey, data);
+            }
         }
     
         port.on('open', () => {
@@ -363,11 +436,12 @@ function startDongleCommunication() {
         });
     
         port.on('error', (err) => {
-            console.error('Error:', err.message);
+            console.error('Serial port error: ', err.message);
         });
 
-        module.exports.setTrackerSettings = setTrackerSettings
         module.exports.processTrackerSettings = processTrackerSettings
+        module.exports.setTrackerSettings = setTrackerSettings
+        module.exports.setAllTrackerSettings = setAllTrackerSettings
     })
 }
 
