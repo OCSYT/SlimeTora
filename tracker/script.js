@@ -117,15 +117,15 @@ function saveSmoothValue() {
 
 
 
-var allowconnection = true;
+var allowConnection = true;
 var connecting = null;
 async function connectToTrackers() {
     const status = document.getElementById("status");
     status.innerHTML = "Status: Searching for trackers.";
     if (connecting == null) {
         connecting = setInterval(async () => {
-            if (allowconnection) {
-                allowconnection = false;
+            if (allowConnection) {
+                allowConnection = false;
                 ipc.send('connection', true);
                 console.log("checking for connection");
                 await connectToDevice();
@@ -138,18 +138,18 @@ async function disconnectAllDevices() {
     if (connecting) {
         const status = document.getElementById("status");
         status.innerHTML = "Status: Not searching.";
-        const devicelist = document.getElementById("devicelist");
-        trackercount.innerHTML = "Connected Trackers: " + 0;
-        devicelist.innerHTML = "<br><h1>Trackers: </h1><br></br>";
+        const deviceList = document.getElementById("deviceList");
+        trackerCount.innerHTML = "Connected Trackers: " + 0;
+        deviceList.innerHTML = "<br><h1>Trackers: </h1><br></br>";
         ipc.send('connection', false);
         clearInterval(connecting);
     }
-    for (const deviceId in trackerdevices) {
-        const device = trackerdevices[deviceId][0];
+    for (const deviceId in trackerDevices) {
+        const device = trackerDevices[deviceId][0];
         await disconnectDevice(device);
     }
-    trackerdevices = {};
-    allowconnection = true;
+    trackerDevices = {};
+    allowConnection = true;
     connecting = null;
 
 }
@@ -158,10 +158,10 @@ async function disconnectAllDevices() {
 async function disconnectDevice(device) {
     try {
         if (device) {
-            if (trackerdevices[device.id]) {
-                clearInterval(trackerdevices[device.id][1]);
+            if (trackerDevices[device.id]) {
+                clearInterval(trackerDevices[device.id][1]);
             }
-            delete trackerdevices[device.id];
+            delete trackerDevices[device.id];
             delete battery[device.id];
             await device.gatt.disconnect();
             console.log("disconnected");
@@ -170,7 +170,7 @@ async function disconnectDevice(device) {
         console.error('Error disconnecting from Bluetooth device:', error);
     }
 }
-const trackercount = document.getElementById("trackercount");
+const trackerCount = document.getElementById("trackerCount");
 
 
 function lerp(start, end, amt) {
@@ -183,9 +183,9 @@ function interpolateIMU(currentData, newData, t) {
         return newData;
     }
 
-    const currentrot = new Quaternion(currentData["rotation"]);
-    const newrot = new Quaternion(newData["rotation"]);
-    const interpolatedQuaternion = currentrot.slerp(newrot)(t);
+    const currentRotation = new Quaternion(currentData["rotation"]);
+    const newRotation = new Quaternion(newData["rotation"]);
+    const interpolatedQuaternion = currentRotation.slerp(newRotation)(t);
     const interpolatedData = {
         deviceName: newData.deviceName,
         deviceId: newData.deviceId,
@@ -228,7 +228,7 @@ function sleep(ms) {
 async function connectToDevice() {
     var device = null
     var mag = false;
-    let magnetometerelement = null;
+    let magnetometerElement = null;
     try {
         const sensorServiceId = "00dbec3a-90aa-11ed-a1eb-0242ac120002";
         const settingId = "ef84369a-90a9-11ed-a1eb-0242ac120002";
@@ -249,10 +249,10 @@ async function connectToDevice() {
                             await device.gatt.disconnect();
                         }
                     }
-                    allowconnection = true;
+                    allowConnection = true;
                     if (device) {
-                        if (trackerdevices[device.id]) {
-                            clearInterval(trackerdevices[device.id][1]);
+                        if (trackerDevices[device.id]) {
+                            clearInterval(trackerDevices[device.id][1]);
                         }
                     }
                     return null;
@@ -267,15 +267,15 @@ async function connectToDevice() {
                     await device.gatt.disconnect();
                 }
             }
-            allowconnection = true;
+            allowConnection = true;
             if (device) {
-                if (trackerdevices[device.id]) {
-                    clearInterval(trackerdevices[device.id][1]);
+                if (trackerDevices[device.id]) {
+                    clearInterval(trackerDevices[device.id][1]);
                 }
             }
             return null;
         }
-        if (trackerdevices[device.id]) return;
+        if (trackerDevices[device.id]) return;
         const server = await device.gatt.connect();
 
         const battery_service = await getService(server, batteryId);
@@ -284,18 +284,18 @@ async function connectToDevice() {
         const device_service = await getService(server, deviceInfoId);
         if (!battery_service || !sensorServiceId || !setting_service || !device_service) {
             await device.gatt.disconnect();
-            allowconnection = true;
+            allowConnection = true;
             if (device) {
-                if (trackerdevices[device.id]) {
-                    clearInterval(trackerdevices[device.id]);
+                if (trackerDevices[device.id]) {
+                    clearInterval(trackerDevices[device.id]);
                 }
             }
             return null;
         }
         console.log('Connected to device:', device.name);
 
-        const devicelist = document.getElementById("devicelist");
-        const deviceelement = document.createElement("div");
+        const deviceList = document.getElementById("deviceList");
+        const deviceElement = document.createElement("div");
         const iframe = document.createElement('iframe');
 
         // Set attributes for the iframe
@@ -305,16 +305,16 @@ async function connectToDevice() {
         iframe.height = '200px';
 
         // Append the iframe to the body or any other container
-        devicelist.appendChild(iframe);
+        deviceList.appendChild(iframe);
 
-        deviceelement.id = device.name;
-        devicelist.appendChild(deviceelement);
+        deviceElement.id = device.name;
+        deviceList.appendChild(deviceElement);
 
-        trackerdevices[device.id] = [device, null];
+        trackerDevices[device.id] = [device, null];
         battery[device.id] = 0;
 
-        const magcompoonent = new MagnetometerComponent();
-        magnetometerelement = magcompoonent.create(devicelist, "magnetometer" + device.name, false);
+        const magComponent = new MagnetometerComponent();
+        magnetometerElement = magComponent.create(deviceList, "magnetometer" + device.name, false);
 
 
         let magnetometerCheckbox = document.getElementById("magnetometer" + device.name);
@@ -330,7 +330,7 @@ async function connectToDevice() {
         });
 
 
-        trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+        trackerCount.innerHTML = "Connected Trackers: " + Object.values(trackerDevices).length;
 
         const sensor_characteristic = await sensor_service.getCharacteristic('00dbf1c6-90aa-11ed-a1eb-0242ac120002');
         const battery_characteristic = await battery_service.getCharacteristic('00002a19-0000-1000-8000-00805f9b34fb');
@@ -348,7 +348,7 @@ async function connectToDevice() {
         var button_enabled = false;
         var postDataCurrent = null;
         var postData = null;
-        var allowyawreset = false;
+        var allowYawReset = false;
 
         var tpsCounter = 0;
         var lastTimestamp = 0;
@@ -394,12 +394,12 @@ async function connectToDevice() {
 
 
         const writeValues = async () => {
-            if (trackerdevices[device.id] == null) return;
+            if (trackerDevices[device.id] == null) return;
             try {
-                const magvalue = new DataView(new ArrayBuffer(1));
-                magvalue.setUint8(0, mag ? 5 : 8);
-                mode_value = magvalue;
-                await mode_characteristic.writeValue(magvalue);
+                const magValue = new DataView(new ArrayBuffer(1));
+                magValue.setUint8(0, mag ? 5 : 8);
+                mode_value = magValue;
+                await mode_characteristic.writeValue(magValue);
 
 
                 new_button_value = (await button_characteristic.readValue()).getInt8(0);
@@ -421,21 +421,21 @@ async function connectToDevice() {
         }
         writeValues();
 
-        const trackercheck = setInterval(async () => {
+        const trackerCheck = setInterval(async () => {
 
-            var yawreset = false;
-            if (button_enabled == true && allowyawreset == true) {
-                allowyawreset = false;
-                yawreset = true;
+            var yawReset = false;
+            if (button_enabled == true && allowYawReset == true) {
+                allowYawReset = false;
+                yawReset = true;
             }
             else {
                 if (button_enabled == false) {
-                    allowyawreset = true;
+                    allowYawReset = true;
                 }
             }
 
             battery[device.id] = decodeBatteryPacket(device, battery_value)[1];;
-            const lowestbattery = Math.min(...Object.values(battery));
+            const lowestBattery = Math.min(...Object.values(battery));
 
             const IMUData = decodeIMUPacket(device, sensor_value);
             const iframe = document.getElementById(device.id + "threejs");
@@ -454,8 +454,8 @@ async function connectToDevice() {
                     y: IMUData[2].y,
                     z: IMUData[2].z
                 },
-                battery: lowestbattery,
-                yawReset: yawreset
+                battery: lowestBattery,
+                yawReset: yawReset
             };
 
 
@@ -503,44 +503,44 @@ async function connectToDevice() {
                 "<strong>Rotation:</strong> X: " + rotX.toFixed(0) + ", Y: " + rotY.toFixed(0) + ", Z: " + rotZ.toFixed(0) + "<br>" +
                 "<strong>Acceleration:</strong> X: " + accelX.toFixed(0) + ", Y: " + accelY.toFixed(0) + ", Z: " + accelZ.toFixed(0) + "<br>" +
                 "<strong>Battery:</strong> " + batteryPercentage.toFixed(0) + "% <br><br>";
-            deviceelement.innerHTML = content;
+            deviceElement.innerHTML = content;
 
         }, 10);
-        trackerdevices[device.id][1] = trackercheck;
+        trackerDevices[device.id][1] = trackerCheck;
 
         device.addEventListener('gattserverdisconnected', async (event) => {
             if (device) {
-                if (trackerdevices[device.id]) {
-                    clearInterval(trackerdevices[device.id][1]);
+                if (trackerDevices[device.id]) {
+                    clearInterval(trackerDevices[device.id][1]);
                 }
             }
-            deviceelement.remove();
-            delete trackerdevices[device.id];
+            deviceElement.remove();
+            delete trackerDevices[device.id];
             delete battery[device.id];
             iframe.remove();
-            magnetometerelement.delete();
+            magnetometerElement.delete();
             ipc.send("disconnect", device.name);
-            trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
+            trackerCount.innerHTML = "Connected Trackers: " + Object.values(trackerDevices).length;
         });
-        allowconnection = true;
+        allowConnection = true;
     } catch (error) {
         console.log(error);
-        allowconnection = true;
+        allowConnection = true;
         if (device) {
-            if (trackerdevices[device.id]) {
-                clearInterval(trackerdevices[device.id][1]);
+            if (trackerDevices[device.id]) {
+                clearInterval(trackerDevices[device.id][1]);
             }
         }
-        if (Object.values(trackerdevices).length == 0) {
-            const devicelist = document.getElementById("devicelist");
-            trackercount.innerHTML = "Connected Trackers: " + Object.values(trackerdevices).length;
-            devicelist.innerHTML = "<br><h1>Trackers: </h1><br></br>";
+        if (Object.values(trackerDevices).length == 0) {
+            const deviceList = document.getElementById("deviceList");
+            trackerCount.innerHTML = "Connected Trackers: " + Object.values(trackerDevices).length;
+            deviceList.innerHTML = "<br><h1>Trackers: </h1><br></br>";
         }
     }
 }
 
 battery = {};
-trackerdevices = {};
+trackerDevices = {};
 
 function decodeBatteryPacket(device, data) {
     const dataView = new DataView(data.buffer);
@@ -553,13 +553,13 @@ let initialRotations = {};
 let initialAccel = {};
 let startTimes = {};
 let calibrated = {};
-let driftvalues = {};
-let trackerrotation = {};
-let trackeraccel = {};
+let driftValues = {};
+let trackerRotation = {};
+let trackerAccel = {};
 const DriftInterval = 15000;
-function decodeIMUPacket(device, rawdata) {
+function decodeIMUPacket(device, rawData) {
     const deviceId = device.id;
-    const dataView = new DataView(rawdata.buffer);
+    const dataView = new DataView(rawData.buffer);
 
     const elapsedTime = Date.now() - startTimes[deviceId];
 
@@ -569,7 +569,7 @@ function decodeIMUPacket(device, rawdata) {
         z: dataView.getInt16(4, true) / 180.0 * 0.01 * -1.0,
         w: dataView.getInt16(6, true) / 180.0 * 0.01 * -1.0,
     };
-    trackerrotation[deviceId] = rotation;
+    trackerRotation[deviceId] = rotation;
 
 
     const gravityRaw = {
@@ -584,7 +584,7 @@ function decodeIMUPacket(device, rawdata) {
         z: (dataView.getInt16(12, true) / 256.0) / 9.81,
     };
 
-    trackeraccel[deviceId] = gravityRaw;
+    trackerAccel[deviceId] = gravityRaw;
 
     const rc = [rotation.w, rotation.x, rotation.y, rotation.z];
     const r = [rc[0], -rc[1], -rc[2], -rc[3]];
@@ -597,7 +597,7 @@ function decodeIMUPacket(device, rawdata) {
         r[0] * p[3] + r[1] * p[2] - r[2] * p[1] + r[3] * p[0],
     ];
 
-    const hfinal = [
+    const hFinal = [
         hrp[0] * rc[0] - hrp[1] * rc[1] - hrp[2] * rc[2] - hrp[3] * rc[3],
         hrp[0] * rc[1] + hrp[1] * rc[0] + hrp[2] * rc[3] - hrp[3] * rc[2],
         hrp[0] * rc[2] - hrp[1] * rc[3] + hrp[2] * rc[0] + hrp[3] * rc[1],
@@ -605,25 +605,25 @@ function decodeIMUPacket(device, rawdata) {
     ];
 
     const gravity = {
-        x: gravityRaw.x - hfinal[1] * -1.2,
-        y: gravityRaw.y - hfinal[2] * -1.2,
-        z: gravityRaw.z - hfinal[3] * 1.2,
+        x: gravityRaw.x - hFinal[1] * -1.2,
+        y: gravityRaw.y - hFinal[2] * -1.2,
+        z: gravityRaw.z - hFinal[3] * 1.2,
     };
 
 
     if (elapsedTime >= DriftInterval) {
         if (!calibrated[deviceId]) {
             calibrated[deviceId] = {
-                pitch: driftvalues[deviceId].pitch,
-                roll: driftvalues[deviceId].roll,
-                yaw: driftvalues[deviceId].yaw
+                pitch: driftValues[deviceId].pitch,
+                roll: driftValues[deviceId].roll,
+                yaw: driftValues[deviceId].yaw
             }
         }
     }
 
     if (elapsedTime < DriftInterval) {
-        if (!driftvalues[deviceId]) {
-            driftvalues[deviceId] = { pitch: 0, roll: 0, yaw: 0 };
+        if (!driftValues[deviceId]) {
+            driftValues[deviceId] = { pitch: 0, roll: 0, yaw: 0 };
         }
 
         const rotationDifference = calculateRotationDifference(
@@ -631,12 +631,12 @@ function decodeIMUPacket(device, rawdata) {
             new Quaternion(rotation.w, rotation.x, rotation.y, rotation.z).toEuler("XYZ")
         );
 
-        const prevMagnitude = Math.sqrt(driftvalues[deviceId].pitch ** 2 + driftvalues[deviceId].roll ** 2 + driftvalues[deviceId].yaw ** 2);
+        const prevMagnitude = Math.sqrt(driftValues[deviceId].pitch ** 2 + driftValues[deviceId].roll ** 2 + driftValues[deviceId].yaw ** 2);
         const currMagnitude = Math.sqrt(rotationDifference.pitch ** 2 + rotationDifference.roll ** 2 + rotationDifference.yaw ** 2);
 
         if (currMagnitude > prevMagnitude) {
-            driftvalues[deviceId] = rotationDifference;
-            console.log(driftvalues[deviceId]);
+            driftValues[deviceId] = rotationDifference;
+            console.log(driftValues[deviceId]);
         }
     }
 
@@ -650,7 +650,7 @@ function decodeIMUPacket(device, rawdata) {
 
         const rotQuat = new Quaternion([rotation.w, rotation.x, rotation.y, rotation.z]);
 
-        const rotationDriftCorrected = RotateAround(rotQuat, trackeraccel[deviceId], driftCorrection.yaw);
+        const rotationDriftCorrected = RotateAround(rotQuat, trackerAccel[deviceId], driftCorrection.yaw);
 
         console.log("Applied fix");
         console.log(rotation);
@@ -699,13 +699,13 @@ function CalibrateDrift() {
     console.log("Started calibration");
     const status = document.getElementById("calibratingstatus");
     status.innerHTML = "Status: Calibrating";
-    for (const deviceId in trackerrotation) {
+    for (const deviceId in trackerRotation) {
         if (!initialRotations[deviceId]) {
             delete calibrated[deviceId];
-            delete driftvalues[deviceId];
-            initialRotations[deviceId] = trackerrotation[deviceId];
+            delete driftValues[deviceId];
+            initialRotations[deviceId] = trackerRotation[deviceId];
             startTimes[deviceId] = Date.now();
-            initialAccel[deviceId] = trackeraccel[deviceId];
+            initialAccel[deviceId] = trackerAccel[deviceId];
         }
     }
     setTimeout(function () {
@@ -715,12 +715,12 @@ function CalibrateDrift() {
 }
 function RemoveDriftOffsets() {
     const status = document.getElementById("calibratingstatus");
-    for (const deviceId in trackerrotation) {
+    for (const deviceId in trackerRotation) {
         delete calibrated[deviceId];
         delete initialRotations[deviceId];
         delete startTimes[deviceId];
         delete initialAccel[deviceId];
-        delete driftvalues[deviceId];
+        delete driftValues[deviceId];
     }
     status.innerHTML = "Status: No Calibration set, using default rotation.";
 }
