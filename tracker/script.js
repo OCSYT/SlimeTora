@@ -83,7 +83,7 @@ document.getElementById('gyro').addEventListener('change', function() {
 
 // Function to load saved checkbox values
 async function loadCheckboxValues() {
-    const accel = await store.get('accel') || false;
+    const accel = await store.get('accel') || true;
     const mag = await store.get('mag') || false;
     const gyro = await store.get('gyro') || false;
     
