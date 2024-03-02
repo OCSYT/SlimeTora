@@ -52,7 +52,7 @@ function MagnetometerComponent() {
     };
 }
 
-correction_value_target = 0;
+correctionValueTarget = 0;
 
 const store = {
     // Send a message to the main process to get data from the store
@@ -97,21 +97,21 @@ async function loadCheckboxValues() {
 
 // Function to update the target value based on checkbox states
 function updateTargetValue() {
-    correction_value_target = 0;
+    correctionValueTarget = 0;
     const accel = document.getElementById('accel').checked;
     const mag = document.getElementById('mag').checked;
     const gyro = document.getElementById('gyro').checked;
     if(accel){
-        correction_value_target += 1;
+        correctionValueTarget += 1;
     }
     if(mag){
-        correction_value_target += 4;
+        correctionValueTarget += 4;
     }
     if(gyro){
-        correction_value_target += 2;
+        correctionValueTarget += 2;
     }
 }
-var smooth_val = 0.5;
+var smoothVal = 0.5;
 
 document.addEventListener("DOMContentLoaded", async function () {
     loadCheckboxValues();
@@ -383,21 +383,21 @@ async function connectToDevice() {
         const buttonCharacteristic = await sensorService.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
         const fpsCharacteristic = await sensorService.getCharacteristic("00dbf1c6-90aa-11ed-a1eb-0242ac120002");
         const modeCharacteristic = await settingService.getCharacteristic("ef8445c2-90a9-11ed-a1eb-0242ac120002");
-        const correction_characteristic = await setting_service.getCharacteristic("ef84c305-90a9-11ed-a1eb-0242ac120002");
-        const tof_characteristic = await setting_service.getCharacteristic("ef8443f6-90a9-11ed-a1eb-0242ac120002");
+        const correctionCharacteristic = await settingService.getCharacteristic("ef84c305-90a9-11ed-a1eb-0242ac120002");
+        const tofCharacteristic = await settingService.getCharacteristic("ef8443f6-90a9-11ed-a1eb-0242ac120002");
 
         var sensorValue = await sensorCharacteristic.readValue();
         var batteryValue = await batteryCharacteristic.readValue();
         var buttonValue = (await buttonCharacteristic.readValue()).getInt8(0);
         var fpsValue = await fpsCharacteristic.readValue();
         var modeValue = await modeCharacteristic.readValue();      
-        var correction_value = await correction_characteristic.readValue();
-        var ankle_tof_value = await tof_characteristic.readValue();
-        console.log("originalval: " + correction_value.getInt8(0));
+        var correctionValue = await correctionCharacteristic.readValue();
+        var ankleTofValue = await tofCharacteristic.readValue();
+        console.log("originalVal: " + correctionValue.getInt8(0));
 
         var lastMagValue = null;
-        var last_target_value = null;
-        var button_enabled = false;
+        var lastTargetValue = null;
+        var buttonEnabled = false;
         var postDataCurrent = null;
         var postData = null;
         var allowYawReset = false;
@@ -449,24 +449,24 @@ async function connectToDevice() {
             try {
 
 
-                if (mag !== lastMagValue || correction_value_target !== last_target_value) {
-                    mode_value = new DataView(new ArrayBuffer(1));
-                    mode_value.setUint8(0, mag ? 5 : 8);
-                    await mode_characteristic.writeValue(mode_value);
+                if (mag !== lastMagValue || correctionValueTarget !== lastTargetValue) {
+                    modeValue = new DataView(new ArrayBuffer(1));
+                    modeValue.setUint8(0, mag ? 5 : 8);
+                    await modeCharacteristic.writeValue(modeValue);
                     lastMagValue = mag;
 
 
-                    //correctionvalues
-                    correction_value = new DataView(new ArrayBuffer(1));
-                    correction_value.setUint8(0,correction_value_target);
-                    await correction_characteristic.writeValue(correction_value);
-                    last_target_value = correction_value_target;
-                    console.log(correction_value_target);
+                    //correctionValues
+                    correctionValue = new DataView(new ArrayBuffer(1));
+                    correctionValue.setUint8(0,correctionValueTarget);
+                    await correctionCharacteristic.writeValue(correctionValue);
+                    lastTargetValue = correctionValueTarget;
+                    console.log(correctionValueTarget);
 
                     //ankle
-                    ankle_tof_value = new DataView(new ArrayBuffer(1));
-                    ankle_tof_value.setUint8(0,0);
-                    await tof_characteristic.writeValue(ankle_tof_value);
+                    ankleTofValue = new DataView(new ArrayBuffer(1));
+                    ankleTofValue.setUint8(0,0);
+                    await tofCharacteristic.writeValue(ankleTofValue);
                 }
 
                 newButtonValue = (await buttonCharacteristic.readValue()).getInt8(0);

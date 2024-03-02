@@ -85,27 +85,33 @@ function startDongleCommunication() {
                 // Makes sure to only split the first colon found
                 const label = data.substring(0, firstColonIndex);
                 const dataContent = data.substring(firstColonIndex + 1);
+                const trackerNumber = null;
                 if (label.includes('X')) {
                     // IMU tracker data
-                    const trackerNumber = parseInt(label.split('X').pop(), 10);
+                    trackerNumber = parseInt(label.split('X').pop(), 10);
                     processTrackerData(dataContent, trackerNumber);
+                } else if (label.includes('a')) {
                     // Other tracker data
-                    const trackerNumber = parseInt(label.split('a').pop(), 10);
+                    trackerNumber = parseInt(label.split('a').pop(), 10);
                     processOtherTrackerData(dataContent, trackerNumber);
                 } else if (label.includes('r')) {
                     // Tracker button info
-                    const trackerNumber = parseInt(label.split('r').pop(), 10);
+                    trackerNumber = parseInt(label.split('r').pop(), 10);
                     processButtonData(dataContent, trackerNumber);
+                } else if (label.includes('v')) {
                     // Tracker battery info
-                    const trackerNumber = parseInt(label.split('v').pop(), 10);
+                    trackerNumber = parseInt(label.split('v').pop(), 10);
                     processBatteryData(dataContent, trackerNumber);
-                    const trackerNumber = parseInt(label.split('o').pop());
+                } else if (label.includes('o')) {
+                    trackerNumber = parseInt(label.split('o').pop());
                     if (!isNaN(trackerNumber)) {
                         processTrackerSettings(dataContent, trackerNumber)
                     } else {
                         console.log(`${portName} - Unknown data received: ${data}`);
                     }
+                } else {
                     console.log(`${portName} - Unknown data received: ${data}`);
+                }
             }
         }
     
@@ -120,6 +126,7 @@ function startDongleCommunication() {
         function processAnkleMotionData(data) {
             // Process ankle motion data
             // TODO: see how to process the data, but we have it here
+            //console.log(`${portName} - Received ankle motion data: ${data}`);
         }
     
         function logRotationAndGravity(trackerNum, rotation, gravity) {
