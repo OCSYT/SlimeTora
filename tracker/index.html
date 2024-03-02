@@ -23,6 +23,58 @@
         <h1 id="trackercount">Connected Trackers: 0</h1>
         <br>
     </div>
+    <div id="devicelist">
+        <br>
+        <h1>Trackers: </h1>
+        <br>
+    </div>
+    <div class="content">
+        <br>
+        <h3>Settings</h3>
+
+        <h3>Tracker Auto Correction</h3>
+        <p style="display: inline;">Accelerometer</p>
+        <br>
+        <label class="switch">
+            <input id="accel" type="checkbox" checked>
+            <span class="slider round"></span>
+        </label>
+        <br>
+        <br>
+        <p style="display: inline;">Magnetometer</p>
+        <br>
+        <label class="switch">
+            <input id="mag" type="checkbox">
+            <span class="slider round"></span>
+        </label>
+        <br>
+        <br>
+        <p style="display: inline;">Gyroscope</p>
+        <br>
+        <label class="switch">
+            <input id="gyro" type="checkbox">
+            <span class="slider round"></span>
+        </label>
+        <br>
+        <br>
+
+        <h3>Interpolation</h3>
+        <p style="display: inline;">Smoothing</p>
+        <br>
+        <label class="switch">
+            <input id="smoothing" type="checkbox" checked>
+            <span class="slider round"></span>
+        </label>
+        <br>
+        <br>
+        <label for="smoothinput">Smoothing intensity:</label>
+        <br>
+        <input type="text" id="smoothinput">
+        <br>
+        <button onclick="saveSmoothValue()">Save</button>
+        <br>
+        <br>
+    </div>
     <div class="content">
         <br>
         <h1>Experimental</h1>
@@ -47,33 +99,9 @@
         <br>
         <br>
     </div>
-    <div id="devicelist">
-        <br>
-        <h1>Trackers: </h1>
-        <br>
-    </div>
     <div class="content">
         <br>
-        <h3>Settings</h3>
-        <p style="display: inline;">Smoothing</p>
-        <br>
-        <label class="switch">
-            <input id="smoothing" type="checkbox" checked>
-            <span class="slider round"></span>
-        </label>
-        <br>
-        <br>
-        <label for="smoothinput">Smoothing intensity:</label>
-        <br>
-        <input type="text" id="smoothinput">
-        <br>
-        <button onclick="saveSmoothValue()">Save</button>
-        <br>
-        <br>
-    </div>
-    <div class="content">
-        <br>
-        <h3>SlimeTora 0.1.1</h3>
+        <h3>SlimeTora 0.1.3</h3>
         <p>Developed by BracketProto</p>
         <p>https://bracketproto.com/</p>
         <p>https://github.com/OCSYT/SlimeTora</p>

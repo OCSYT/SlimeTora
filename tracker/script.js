@@ -52,7 +52,7 @@ function MagnetometerComponent() {
     };
 }
 
-
+correction_value_target = 0;
 
 const store = {
     // Send a message to the main process to get data from the store
@@ -66,9 +66,55 @@ const store = {
 };
 
 
-var smoothVal = 0.5;
+document.getElementById('accel').addEventListener('change', function() {
+    store.set('accel', this.checked);
+    updateTargetValue();
+});
+
+document.getElementById('mag').addEventListener('change', function() {
+    store.set('mag', this.checked);
+    updateTargetValue();
+});
+
+document.getElementById('gyro').addEventListener('change', function() {
+    store.set('gyro', this.checked);
+    updateTargetValue();
+});
+
+// Function to load saved checkbox values
+async function loadCheckboxValues() {
+    const accel = await store.get('accel') || true;
+    const mag = await store.get('mag') || false;
+    const gyro = await store.get('gyro') || false;
+    
+    // Update checkbox states based on saved values
+    document.getElementById('accel').checked = accel;
+    document.getElementById('mag').checked = mag;
+    document.getElementById('gyro').checked = gyro;
+
+    updateTargetValue();
+}
+
+// Function to update the target value based on checkbox states
+function updateTargetValue() {
+    correction_value_target = 0;
+    const accel = document.getElementById('accel').checked;
+    const mag = document.getElementById('mag').checked;
+    const gyro = document.getElementById('gyro').checked;
+    if(accel){
+        correction_value_target += 1;
+    }
+    if(mag){
+        correction_value_target += 4;
+    }
+    if(gyro){
+        correction_value_target += 2;
+    }
+}
+var smooth_val = 0.5;
 
 document.addEventListener("DOMContentLoaded", async function () {
+    loadCheckboxValues();
     var smoothingCheckbox = document.getElementById("smoothing");
     if (await store.has("smoothingEnabled")) {
         smoothingCheckbox.checked = await store.get("smoothingEnabled");
@@ -337,15 +383,21 @@ async function connectToDevice() {
         const buttonCharacteristic = await sensorService.getCharacteristic('00dbf450-90aa-11ed-a1eb-0242ac120002');
         const fpsCharacteristic = await sensorService.getCharacteristic("00dbf1c6-90aa-11ed-a1eb-0242ac120002");
         const modeCharacteristic = await settingService.getCharacteristic("ef8445c2-90a9-11ed-a1eb-0242ac120002");
+        const correction_characteristic = await setting_service.getCharacteristic("ef84c305-90a9-11ed-a1eb-0242ac120002");
+        const tof_characteristic = await setting_service.getCharacteristic("ef8443f6-90a9-11ed-a1eb-0242ac120002");
 
         var sensorValue = await sensorCharacteristic.readValue();
         var batteryValue = await batteryCharacteristic.readValue();
         var buttonValue = (await buttonCharacteristic.readValue()).getInt8(0);
         var fpsValue = await fpsCharacteristic.readValue();
-        var modeValue = await modeCharacteristic.readValue();
+        var modeValue = await modeCharacteristic.readValue();      
+        var correction_value = await correction_characteristic.readValue();
+        var ankle_tof_value = await tof_characteristic.readValue();
+        console.log("originalval: " + correction_value.getInt8(0));
 
-        var newButtonValue = null;
-        var buttonEnabled = false;
+        var lastMagValue = null;
+        var last_target_value = null;
+        var button_enabled = false;
         var postDataCurrent = null;
         var postData = null;
         var allowYawReset = false;
@@ -392,15 +444,30 @@ async function connectToDevice() {
         // Start the update loop
         updateValues();
 
-
         const writeValues = async () => {
             if (trackerDevices[device.id] == null) return;
             try {
-                const magValue = new DataView(new ArrayBuffer(1));
-                magValue.setUint8(0, mag ? 5 : 8);
-                modeValue = magValue;
-                await modeCharacteristic.writeValue(magValue);
 
+
+                if (mag !== lastMagValue || correction_value_target !== last_target_value) {
+                    mode_value = new DataView(new ArrayBuffer(1));
+                    mode_value.setUint8(0, mag ? 5 : 8);
+                    await mode_characteristic.writeValue(mode_value);
+                    lastMagValue = mag;
+
+
+                    //correctionvalues
+                    correction_value = new DataView(new ArrayBuffer(1));
+                    correction_value.setUint8(0,correction_value_target);
+                    await correction_characteristic.writeValue(correction_value);
+                    last_target_value = correction_value_target;
+                    console.log(correction_value_target);
+
+                    //ankle
+                    ankle_tof_value = new DataView(new ArrayBuffer(1));
+                    ankle_tof_value.setUint8(0,0);
+                    await tof_characteristic.writeValue(ankle_tof_value);
+                }
 
                 newButtonValue = (await buttonCharacteristic.readValue()).getInt8(0);
                 if (buttonValue !== newButtonValue) {
@@ -419,6 +486,7 @@ async function connectToDevice() {
 
             }
         }
+
         writeValues();
 
         const trackerCheck = setInterval(async () => {
@@ -509,10 +577,8 @@ async function connectToDevice() {
         trackerDevices[device.id][1] = trackerCheck;
 
         device.addEventListener('gattserverdisconnected', async (event) => {
-            if (device) {
-                if (trackerDevices[device.id]) {
-                    clearInterval(trackerDevices[device.id][1]);
-                }
+            if (trackerDevices[device.id]) {
+                clearInterval(trackerDevices[device.id][1]);
             }
             deviceElement.remove();
             delete trackerDevices[device.id];
@@ -530,6 +596,7 @@ async function connectToDevice() {
             if (trackerDevices[device.id]) {
                 clearInterval(trackerDevices[device.id][1]);
             }
+            ipc.send("disconnect", device.name);
         }
         if (Object.values(trackerDevices).length == 0) {
             const deviceList = document.getElementById("deviceList");
@@ -543,6 +610,7 @@ battery = {};
 trackerDevices = {};
 
 function decodeBatteryPacket(device, data) {
+
     const dataView = new DataView(data.buffer);
     const batteryLevel = dataView.getInt8(0, true) / 100.0;
 
@@ -654,7 +722,7 @@ function decodeIMUPacket(device, rawData) {
 
         console.log("Applied fix");
         console.log(rotation);
-        console.log(rotationDriftCorrected,driftCorrection.yaw);
+        console.log(rotationDriftCorrected, driftCorrection.yaw);
 
         return [device, rotationDriftCorrected, gravity];
     }
@@ -666,7 +734,7 @@ function RotateAround(quat, vector, angle) {
     // Create a copy of the input quaternion
     var initialQuaternion = new THREE.Quaternion(quat.x, quat.y, quat.z, quat.w);
 
-    var rotationAxis = new THREE.Vector3(vector.x, vector.y, vector.z); 
+    var rotationAxis = new THREE.Vector3(vector.x, vector.y, vector.z);
 
     // Create a rotation quaternion
     var rotationQuaternion = new THREE.Quaternion();
@@ -729,7 +797,7 @@ function RemoveDriftOffsets() {
 
 
 
-window.onbeforeunload = function(event) {
+window.onbeforeunload = function (event) {
     ipc.send('connection', false);
     disconnectAllDevices();
 };

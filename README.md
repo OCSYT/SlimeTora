@@ -1,7 +1,7 @@
 # SlimeTora
-A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX(6/2) communication dongles*
-    
-\* **currently being worked on**
+A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX6 communication dongle*
+
+\* **soon, currently being worked on**
 
 # How to use
 - Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)

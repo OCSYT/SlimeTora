@@ -70,18 +70,16 @@
             (object) => {
                 object.scale.set(0.01, 0.01, 0.01);
 
-                // Load the texture
                 textureLoader.load(
                     './trackertexture.png',
                     (texture) => {
-                        // Apply the texture to the material of the FBX object
                         object.traverse((child) => {
                             if (child.isMesh) {
                                 // Create a PBR material
                                 const material = new THREE.MeshStandardMaterial({
-                                    map: texture, // Albedo (color) map
-                                    roughness: 0.5, // Roughness
-                                    metalness: 0, // Metalness (set to 0 for non-metallic surfaces)
+                                    map: texture, 
+                                    roughness: 0.5, 
+                                    metalness: 0, 
                                 });
                                 child.material = material;
                             }
@@ -113,18 +111,18 @@
 
         // Outline Pass
         const outlinePass = new OutlinePass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight), // Resolution parameter
+            new THREE.Vector2(window.innerWidth, window.innerHeight), 
             scene,
             camera
         );
-        outlinePass.renderToScreen = true; // Render directly to the screen
-        outlinePass.edgeStrength = 10; // Adjust the strength of the outline
-        outlinePass.edgeGlow = 0; // Set edge glow to zero
-        outlinePass.edgeThickness = 0.5; // Adjust edge thickness
-        outlinePass.pulsePeriod = 0; // Disable pulsing effect
-        outlinePass.usePatternTexture = false; // Disable pattern texture
-        outlinePass.visibleEdgeColor.set("#ffffff"); // Set visible edge color to white
-        outlinePass.hiddenEdgeColor.set("#ffffff"); // Set hidden edge color to white
+        outlinePass.renderToScreen = true; 
+        outlinePass.edgeStrength = 10; 
+        outlinePass.edgeGlow = 0;
+        outlinePass.edgeThickness = 0.5;
+        outlinePass.pulsePeriod = 0; 
+        outlinePass.usePatternTexture = false; 
+        outlinePass.visibleEdgeColor.set("#ffffff"); 
+        outlinePass.hiddenEdgeColor.set("#ffffff"); 
         composer.addPass(outlinePass);
 
         const animate = () => {
@@ -136,9 +134,10 @@
         };
 
 
-        let gravityLine = null; // Variable to store the line representing the gravity vector
+        let gravityLine = null; 
 
         window.addEventListener('message', (event) => {
+            if(cube == null) return;
             if (event.data.type === 'rotate') {
                 // Create a quaternion from the components
                 const quaternion = new THREE.Quaternion(
