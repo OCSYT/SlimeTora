@@ -1,7 +1,7 @@
 # SlimeTora
 A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX6 communication dongle*
 
-\* **soon, currently being worked on**
+\* **use JovannMC's fork for GX6 support while waiting for the project rewrite: https://github.com/JovannMC/SlimeTora/**
 
 # How to use
 - Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)
@@ -11,7 +11,6 @@ A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](
 - Assign your trackers in SlimeVR and enjoy! :)
 
 Make sure you connect all trackers before assigning the roles in SlimeVR, and go through the usual calibration steps in the SlimeVR software after.
-
 
 # Development
 - Clone the project - `git clone https://github.com/OCSYT/SlimeTora.git`
