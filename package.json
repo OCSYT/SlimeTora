@@ -2,7 +2,7 @@
   "name": "slimetora",
   "productName": "slimetora",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
@@ -42,6 +42,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "bulma": "^1.0.0",
     "electron-squirrel-startup": "^1.0.0"
   }
 }
