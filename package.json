@@ -9,7 +9,8 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint --ext .ts,.tsx .",
+    "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.3.1",
@@ -43,6 +44,7 @@
   "license": "MIT",
   "dependencies": {
     "bulma": "^1.0.0",
-    "electron-squirrel-startup": "^1.0.0"
+    "electron-squirrel-startup": "^1.0.0",
+    "sass": "^1.72.0"
   }
 }
