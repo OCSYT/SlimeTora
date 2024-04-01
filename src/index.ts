@@ -16,6 +16,8 @@ const createWindow = (): void => {
   });
 
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+
+  mainWindow.webContents.send('version', app.getVersion());
 };
 
 ipcMain.on('start-connection', (event, arg) => {

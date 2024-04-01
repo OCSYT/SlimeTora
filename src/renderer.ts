@@ -48,6 +48,12 @@ function toggleVisualization() {
   // TODO implement visualization code for trackers
 }
 
+// Set version number
+window.ipc.on("version", (event, arg) => {
+  document.getElementById("version").innerHTML = arg;
+  console.log("Got app version: " + arg);
+});
+
 /*
  * Event listeners
  */
