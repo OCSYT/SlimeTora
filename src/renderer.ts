@@ -32,15 +32,27 @@ let bluetoothEnabled = false;
 let gx6Enabled = false;
 
 function startConnection() {
-  window.ipc.send("start-connection", "");
-  console.log("Starting connection");
-
+  console.log("Starting connection...");
   document.getElementById("status").innerHTML = "connected";
+  if (bluetoothEnabled && gx6Enabled) {
+    window.ipc.send("start-connection", ["bluetooth", "gx6"]);
+    console.log("Both Bluetooth and GX6 are enabled");
+   } else if (bluetoothEnabled) {
+     window.ipc.send("start-connection", "bluetooth");
+     console.log("Connecting via Bluetooth");
+   } else if (gx6Enabled) {
+     window.ipc.send("start-connection", "gx6");
+     console.log("Connecting via GX6");
+  } else {
+    console.log("No connection method selected");
+  }
 }
 
 function stopConnection() {
   window.ipc.send("stop-connection", "");
   console.log("Stopping connection");
+
+  document.getElementById("status").innerHTML = "N/A";
 }
 
 function toggleVisualization() {

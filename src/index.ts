@@ -17,11 +17,21 @@ const createWindow = (): void => {
 
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-  mainWindow.webContents.send('version', app.getVersion());
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('version', app.getVersion());
+  });
 };
 
+// TODO: actually handle both connection types (for GX6 trackers and bluetooth elbows for example)
 ipcMain.on('start-connection', (event, arg) => {
-  console.log('Starting connection');
+  console.log('Starting connection for ' + arg);
+  if (arg.includes('bluetooth')) {
+    connectBluetooth();
+  } else if (arg.includes('gx6')) {
+    connectGX6();
+  } else {
+    console.log('No connection method selected');
+  }
 });
 
 ipcMain.on('stop-connection', (event, arg) => {
