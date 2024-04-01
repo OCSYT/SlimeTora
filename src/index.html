@@ -10,18 +10,24 @@
     <div class="section">
       <div class="container">
         <h1 class="title is-1 has-text-centered is-centered">
-          SlimeTora v0.2.0
+          SlimeTora v<span id="version">0.2.0</span>
         </h1>
         <br />
-        <h3 class="subtitle has-text-centered">Connected trackers: 0</h3>
+        <h3 class="subtitle has-text-centered">
+          Connected trackers: <span id="tracker-count">0</span>
+        </h3>
         <br />
         <div class="buttons is-centered">
-          <button class="button is-primary">Start connection</button>
-          <button class="button is-danger">Stop connection</button>
+          <button class="button is-primary" onclick="startConnection()">
+            Start connection
+          </button>
+          <button class="button is-danger" onclick="stopConnection()">
+            Stop connection
+          </button>
         </div>
         <br />
         <h2 class="title is-2 has-text-centered has-text-weight-medium">
-          Status: N/A
+          Status: <span id="status">N/A</span>
         </h2>
       </div>
     </div>
@@ -30,16 +36,14 @@
 
     <div class="section">
       <div class="container">
-        <h1 class="title has-text-centered is-2">
-          Tracker information
-        </h1>
+        <h1 class="title has-text-centered is-2">Tracker information</h1>
         <br />
         <h2 class="subtitle has-text-centered">
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec
           iaculis mauris.
         </h2>
         <br />
-        <div class="buttons is-centered">
+        <div class="buttons is-centered" onclick="toggleVisualization()">
           <button class="button is-info">Toggle visualization</button>
         </div>
         <br />
@@ -48,18 +52,18 @@
             <div class="card">
               <header class="card-header">
                 <p class="card-header-title is-centered">
-                  Device Name:<span id="deviceName">Device 1</span>
+                  Device Name:<span id="device-name">Device 1</span>
                 </p>
               </header>
               <div class="card-content">
                 <div class="content">
-                  <p>Device ID: <span id="deviceId">123456</span></p>
+                  <p>Device ID: <span id="device-id">123456</span></p>
                   <p>
-                    Rotation Data: <span id="rotationData">90, 45, 30</span>
+                    Rotation Data: <span id="rotation-data">90, 45, 30</span>
                   </p>
                   <p>
                     Acceleration Data:
-                    <span id="accelerationData">0.5, 0.7, 0.9</span>
+                    <span id="acceleration-data">0.5, 0.7, 0.9</span>
                   </p>
                   <p>Battery: <span id="battery">80%</span></p>
                 </div>
@@ -67,13 +71,10 @@
               <footer class="card-footer">
                 <div class="card-footer-item">
                   <div class="switch-container">
-                    <label for="sensorSwitch">Enable Magnetometer</label>
+                    <label for="sensor-switch">Enable Magnetometer</label>
                     <div class="switch">
-                      <input type="checkbox" id="sensorSwitch" />
-                      <label
-                        for="sensorSwitch"
-                        class="slider round"
-                      ></label>
+                      <input type="checkbox" id="sensor-switch" />
+                      <label for="sensor-switch" class="slider round"></label>
                     </div>
                   </div>
                 </div>
@@ -84,18 +85,18 @@
             <div class="card">
               <header class="card-header">
                 <p class="card-header-title is-centered">
-                  Device Name:<span id="deviceName">Device 1</span>
+                  Device Name:<span id="device-name">Device 1</span>
                 </p>
               </header>
               <div class="card-content">
                 <div class="content">
-                  <p>Device ID: <span id="deviceId">123456</span></p>
+                  <p>Device ID: <span id="device-id">123456</span></p>
                   <p>
-                    Rotation Data: <span id="rotationData">90, 45, 30</span>
+                    Rotation Data: <span id="rotation-data">90, 45, 30</span>
                   </p>
                   <p>
                     Acceleration Data:
-                    <span id="accelerationData">0.5, 0.7, 0.9</span>
+                    <span id="acceleration-data">0.5, 0.7, 0.9</span>
                   </p>
                   <p>Battery: <span id="battery">80%</span></p>
                 </div>
@@ -103,13 +104,10 @@
               <footer class="card-footer">
                 <div class="card-footer-item">
                   <div class="switch-container">
-                    <label for="sensorSwitch">Enable Magnetometer</label>
+                    <label for="sensor-switch">Enable Magnetometer</label>
                     <div class="switch">
-                      <input type="checkbox" id="sensorSwitch" />
-                      <label
-                        for="sensorSwitch"
-                        class="slider round"
-                      ></label>
+                      <input type="checkbox" id="sensor-switch" />
+                      <label for="sensor-switch" class="slider round"></label>
                     </div>
                   </div>
                 </div>
@@ -120,18 +118,18 @@
             <div class="card">
               <header class="card-header">
                 <p class="card-header-title is-centered">
-                  Device Name:<span id="deviceName">Device 1</span>
+                  Device Name:<span id="device-name">Device 1</span>
                 </p>
               </header>
               <div class="card-content">
                 <div class="content">
-                  <p>Device ID: <span id="deviceId">123456</span></p>
+                  <p>Device ID: <span id="device-id">123456</span></p>
                   <p>
-                    Rotation Data: <span id="rotationData">90, 45, 30</span>
+                    Rotation Data: <span id="rotation-data">90, 45, 30</span>
                   </p>
                   <p>
                     Acceleration Data:
-                    <span id="accelerationData">0.5, 0.7, 0.9</span>
+                    <span id="acceleration-data">0.5, 0.7, 0.9</span>
                   </p>
                   <p>Battery: <span id="battery">80%</span></p>
                 </div>
@@ -139,13 +137,10 @@
               <footer class="card-footer">
                 <div class="card-footer-item">
                   <div class="switch-container">
-                    <label for="sensorSwitch">Enable Magnetometer</label>
+                    <label for="sensor-switch">Enable Magnetometer</label>
                     <div class="switch">
-                      <input type="checkbox" id="sensorSwitch" />
-                      <label
-                        for="sensorSwitch"
-                        class="slider round"
-                      ></label>
+                      <input type="checkbox" id="sensor-switch" />
+                      <label for="sensor-switch" class="slider round"></label>
                     </div>
                   </div>
                 </div>
@@ -168,17 +163,17 @@
             <div class="settings-container">
               <div class="switch-container">
                 <div class="switch">
-                  <input type="checkbox" id="bluetoothSwitch" />
-                  <label for="bluetoothSwitch" class="slider round"></label>
+                  <input type="checkbox" id="bluetooth-switch" />
+                  <label for="bluetooth-switch" class="slider round"></label>
                 </div>
-                <label for="bluetoothSwitch">Bluetooth</label>
+                <label for="bluetooth-switch">Bluetooth</label>
               </div>
               <div class="switch-container">
                 <div class="switch">
-                  <input type="checkbox" id="gx6Switch" />
-                  <label for="gx6Switch" class="slider round"></label>
+                  <input type="checkbox" id="gx6-switch" />
+                  <label for="gx6-switch" class="slider round"></label>
                 </div>
-                <label for="gx6Switch">GX6</label>
+                <label for="gx6-switch">GX6</label>
               </div>
             </div>
           </div>
@@ -188,17 +183,17 @@
             <div class="settings-container">
               <div class="switch-container">
                 <div class="switch">
-                  <input type="checkbox" id="exampleSwitch" />
-                  <label for="exampleSwitch" class="slider round"></label>
+                  <input type="checkbox" id="example-switch" />
+                  <label for="example-switch" class="slider round"></label>
                 </div>
-                <label for="exampleSwitch">GX0</label>
+                <label for="example-switch">GX0</label>
               </div>
               <div class="switch-container">
                 <div class="switch">
-                  <input type="checkbox" id="example2Switch" />
-                  <label for="example2Switch" class="slider round"></label>
+                  <input type="checkbox" id="example2-switch" />
+                  <label for="example2-switch"" class="slider round"></label>
                 </div>
-                <label for="example2Switch">GX0</label>
+                <label for="example2-switch"">GX0</label>
               </div>
             </div>
           </div>
@@ -208,28 +203,28 @@
             <div class="settings-container">
               <div class="switch-container">
                 <div class="switch">
-                  <input type="checkbox" id="accelerometerSwitch" />
-                  <label for="accelerometerSwitch" class="slider round"></label>
+                  <input type="checkbox" id="accelerometer-switch" />
+                  <label for="accelerometer-switch" class="slider round"></label>
                 </div>
-                <label for="accelerometerSwitch" style="min-width: 150px"
+                <label for="accelerometer-switch" style="min-width: 150px"
                   >Accelerometer</label
                 >
               </div>
               <div class="switch-container">
                 <div class="switch">
-                  <input type="checkbox" id="gyroscopeSwitch" />
-                  <label for="gyroscopeSwitch" class="slider round"></label>
+                  <input type="checkbox" id="gyroscope-switch" />
+                  <label for="gyroscope-switc" class="slider round"></label>
                 </div>
-                <label for="gyroscopeSwitch" style="min-width: 150px"
+                <label for="gyroscope-switc" style="min-width: 150px"
                   >Gyroscope</label
                 >
               </div>
               <div class="switch-container">
                 <div class="switch">
-                  <input type="checkbox" id="magnetometerSwitch" />
-                  <label for="magnetometerSwitch" class="slider round"></label>
+                  <input type="checkbox" id="magnetometer-switch" />
+                  <label for="magnetometer-switch" class="slider round"></label>
                 </div>
-                <label for="magnetometerSwitch" style="min-width: 150px"
+                <label for="magnetometer-switch" style="min-width: 150px"
                   >Magnetometer</label
                 >
               </div>
@@ -272,6 +267,11 @@
         <div>
           <h2 class="title is-3 has-text-centered">Credits</h2>
           <ul class="has-text-centered">
+            <li>
+              <a href="https://github.com/JovannMC/haritorax-interpreter"
+                >haritorax-interpreter</a
+              >
+            </li>
             <li>
               <a href="https://github.com/sim1222/haritorax-slimevr-bridge"
                 >Haritora SlimeVR Bridge</a

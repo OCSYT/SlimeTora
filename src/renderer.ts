@@ -26,6 +26,48 @@
  * ```
  */
 
-import './index.css';
+import "./index.css";
 
-console.log('👋 This message is being logged by "renderer.js", included via webpack');
+let bluetoothEnabled = false;
+let gx6Enabled = false;
+
+function startConnection() {
+  window.ipc.send("start-connection", "");
+  console.log("Starting connection");
+
+  document.getElementById("status").innerHTML = "connected";
+}
+
+function stopConnection() {
+  window.ipc.send("stop-connection", "");
+  console.log("Stopping connection");
+}
+
+function toggleVisualization() {
+  console.log("Toggling visualization");
+  // TODO implement visualization code for trackers
+}
+
+/*
+ * Event listeners
+ */
+
+document
+  .getElementById("bluetooth-switch")
+  .addEventListener("change", function () {
+    bluetoothEnabled = !bluetoothEnabled;
+    console.log("Bluetooth enabled: " + bluetoothEnabled);
+  });
+
+document.getElementById("gx6-switch").addEventListener("change", function () {
+  gx6Enabled = !gx6Enabled;
+  console.log("GX6 enabled: " + gx6Enabled);
+});
+
+/*
+ * IPC event listeners
+ */
+
+(window as any).startConnection = startConnection;
+(window as any).stopConnection = stopConnection;
+(window as any).toggleVisualization = toggleVisualization;
