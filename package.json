@@ -45,7 +45,7 @@
   "dependencies": {
     "bulma": "^1.0.0",
     "electron-squirrel-startup": "^1.0.0",
-    "haritorax-interpreter": "^1.4.3",
+    "haritorax-interpreter": "^1.4.4",
     "sass": "^1.72.0"
   }
 }
