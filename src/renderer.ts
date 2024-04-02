@@ -31,20 +31,22 @@ import "./index.css";
 let bluetoothEnabled = false;
 let gx6Enabled = false;
 
+document.addEventListener("DOMContentLoaded", async function () {
+  console.log("DOM loaded");
+});
+
 function startConnection() {
   console.log("Starting connection...");
-  document.getElementById("status").innerHTML = "connected";
+  setStatus("connecting...");
   if (bluetoothEnabled && gx6Enabled) {
-    window.ipc.send("start-connection", ["bluetooth", "gx6"]);
     console.log("Both Bluetooth and GX6 are enabled");
-   } else if (bluetoothEnabled) {
-     window.ipc.send("start-connection", "bluetooth");
-     console.log("Connecting via Bluetooth");
-   } else if (gx6Enabled) {
-     window.ipc.send("start-connection", "gx6");
-     console.log("Connecting via GX6");
+  } else if (bluetoothEnabled) {
+    window.ipc.send("start-connection", "bluetooth");
+  } else if (gx6Enabled) {
+    window.ipc.send("start-connection", "gx6");
   } else {
     console.log("No connection method selected");
+    setStatus("No connection method selected");
   }
 }
 
@@ -60,15 +62,28 @@ function toggleVisualization() {
   // TODO implement visualization code for trackers
 }
 
+function setStatus(status: string) {
+  document.getElementById("status").innerHTML = status;
+  console.log("Status: " + status);
+}
+
+/*
+ * Event listeners
+ */
+
+window.ipc.on("device-data", (event, arg) => {
+  console.log("Got device data: " + arg);
+});
+
+window.ipc.on("error-message", (event, arg) => {
+  setStatus(arg);
+});
+
 // Set version number
 window.ipc.on("version", (event, arg) => {
   document.getElementById("version").innerHTML = arg;
   console.log("Got app version: " + arg);
 });
-
-/*
- * Event listeners
- */
 
 document
   .getElementById("bluetooth-switch")

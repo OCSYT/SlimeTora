@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import { HaritoraXWireless } from 'haritorax-interpreter';
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
@@ -29,8 +30,6 @@ ipcMain.on('start-connection', (event, arg) => {
     connectBluetooth();
   } else if (arg.includes('gx6')) {
     connectGX6();
-  } else {
-    console.log('No connection method selected');
   }
 });
 
@@ -44,6 +43,7 @@ async function connectBluetooth() {
 
 async function connectGX6() {
   console.log("Connecting via GX6");
+  HaritoraXWireless.startConnection(3);
 }
 
 app.on('ready', createWindow);
