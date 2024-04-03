@@ -51,7 +51,12 @@ function startConnection() {
 }
 
 function stopConnection() {
-  window.ipc.send("stop-connection", "");
+  if (bluetoothEnabled) {
+    window.ipc.send("stop-connection", "bluetooth");
+  }
+  if (gx6Enabled) {
+    window.ipc.send("stop-connection", "gx6");
+  }
   console.log("Stopping connection");
 
   document.getElementById("status").innerHTML = "N/A";
