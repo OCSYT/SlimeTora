@@ -65,6 +65,8 @@ ipcMain.on("stop-connection", (event, arg) => {
   if (arg.includes("gx6")) {
     device.stopConnection("gx6");
   }
+
+  connectedDevices = [];
 });
 
 ipcMain.handle('get-com-ports', async () => {

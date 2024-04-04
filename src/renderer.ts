@@ -1,5 +1,7 @@
 import "./index.css";
 
+let isActive = false;
+
 let bluetoothEnabled = false;
 let gx6Enabled = false;
 const selectedComPorts: string[] = [];
@@ -76,9 +78,9 @@ function startConnection() {
   console.log("Starting connection...");
   setStatus("searching...");
   if (bluetoothEnabled && gx6Enabled) {
-    console.log("Both Bluetooth and GX6 are enabled");
+    console.log("Both Bluetooth and GX6 are enabled (we do nothing yet)");
   } else if (bluetoothEnabled) {
-    window.ipc.send("start-connection", "bluetooth");
+    window.ipc.send("start-connection", { type: "bluetooth" });
   } else if (gx6Enabled) {
     window.ipc.send("start-connection", { type: "gx6", ports: selectedComPorts });
     console.log("Starting GX6 connection with ports: ", selectedComPorts);
@@ -87,18 +89,25 @@ function startConnection() {
     setStatus("No connection method selected");
     return;
   }
+
+  isActive = true;
 }
 
 function stopConnection() {
+  console.log("Stopping connection");
+  isActive = false;
+
   if (bluetoothEnabled) {
     window.ipc.send("stop-connection", "bluetooth");
   }
   if (gx6Enabled) {
     window.ipc.send("stop-connection", "gx6");
   }
-  console.log("Stopping connection");
-
+  
+  document.getElementById("tracker-count").innerHTML = "0";
   document.getElementById("status").innerHTML = "N/A";
+  const deviceList = document.getElementById("device-list");
+  deviceList.innerHTML = "";  
 }
 
 function toggleVisualization() {
@@ -124,7 +133,7 @@ function addDeviceToList(deviceId: string) {
     <div class="card">
       <header class="card-header">
         <p class="card-header-title is-centered">
-          Device Name: <span id="device-name"> ${deviceId}</span>
+          Device Name:  <span id="device-name"> ${deviceId}</span>
         </p>
       </header>
       <div class="card-content">
@@ -183,9 +192,10 @@ let lastUpdate = Date.now();
 window.ipc.on(
   "device-data",
   (event, trackerID, rotationObject, gravityObject) => {
+    if (!isActive || !document.getElementById("device-list").querySelector(`#${trackerID}`)) return;
     const now = Date.now();
 
-    if (now - lastUpdate < 10) {
+    if (now - lastUpdate < 50) {
       return;
     }
 
@@ -208,6 +218,7 @@ window.ipc.on(
 );
 
 window.ipc.on("device-battery", (event, trackerID, battery) => {
+  if (!isActive) return;
   document.getElementById(trackerID).querySelector("#battery").innerHTML =
     battery;
 });
