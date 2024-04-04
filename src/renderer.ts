@@ -47,6 +47,7 @@ function startConnection() {
   } else {
     console.log("No connection method selected");
     setStatus("No connection method selected");
+    return;
   }
 }
 
@@ -72,22 +73,72 @@ function setStatus(status: string) {
   console.log("Status: " + status);
 }
 
+function addDeviceToList(deviceId: string) {
+  const deviceList = document.getElementById("device-list");
+
+  // Create a new div element
+  const newDevice = document.createElement("div");
+  newDevice.id = deviceId;
+  newDevice.className = "column";
+
+  // Fill the div with device data
+  newDevice.innerHTML = `
+    <div class="card">
+      <header class="card-header">
+        <p class="card-header-title is-centered">
+          Device Name: <span id="device-name"> ${deviceId}</span>
+        </p>
+      </header>
+      <div class="card-content">
+        <div class="content">
+          <p>Device ID: <span id="device-id">${deviceId}</span></p>
+          <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
+          <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
+          <p>Battery: <span id="battery">1%</span></p>
+        </div>
+      </div>
+      <footer class="card-footer">
+        <div class="card-footer-item">
+          <div class="switch-container">
+            <label for="sensor-switch">Enable Magnetometer</label>
+            <div class="switch">
+              <input type="checkbox" id="sensor-switch" />
+              <label for="sensor-switch" class="slider round"></label>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  `;
+
+  // Append the new device to the device list
+  deviceList.appendChild(newDevice);
+}
+
 /*
  * Event listeners
  */
 
-window.ipc.on("device-data", (event, arg) => {
-  console.log("Got device data: " + arg);
+window.ipc.on("connect", (event, trackerID) => {
+  console.log(`Connected to ${trackerID}`);
+  addDeviceToList(trackerID);
+  setStatus("connected");
 });
 
-window.ipc.on("error-message", (event, arg) => {
-  setStatus(arg);
+window.ipc.on("device-data", (event, trackerName, rotation, gravity) => {
+  console.log(
+    `Got device data: Tracker Name - ${trackerName}, Rotation - ${rotation}, Gravity - ${gravity}`
+  );
+});
+
+window.ipc.on("error-message", (event, msg) => {
+  setStatus(msg);
 });
 
 // Set version number
-window.ipc.on("version", (event, arg) => {
-  document.getElementById("version").innerHTML = arg;
-  console.log("Got app version: " + arg);
+window.ipc.on("version", (event, version) => {
+  document.getElementById("version").innerHTML = version;
+  console.log("Got app version: " + version);
 });
 
 document

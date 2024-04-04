@@ -157,20 +157,20 @@ function addIMU(trackerID: number) {
  * Interpreter event listeners
  */
 
-device.on("connect", (trackerName: string) => {
-  if (connectedDevices.includes(trackerName)) return;
+device.on("connect", (trackerID: string) => {
+  if (connectedDevices.includes(trackerID)) return;
   console.log(JSON.stringify(connectedDevices));
-  trackerQueue.push(trackerName);
+  trackerQueue.push(trackerID);
   handleNextTracker();
-  console.log(`Connected to tracker: ${trackerName}`);
-  mainWindow.webContents.send("connect", trackerName);
+  console.log(`Connected to tracker: ${trackerID}`);
+  mainWindow.webContents.send("connect", trackerID);
 });
 
-device.on("disconnect", (trackerName: string) => {
-  if (!connectedDevices.includes(trackerName)) return;
-  console.log(`Disconnected from tracker: ${trackerName}`);
-  mainWindow.webContents.send("disconnect", trackerName);
-  connectedDevices = connectedDevices.filter((name) => name !== trackerName);
+device.on("disconnect", (trackerID: string) => {
+  if (!connectedDevices.includes(trackerID)) return;
+  console.log(`Disconnected from tracker: ${trackerID}`);
+  mainWindow.webContents.send("disconnect", trackerID);
+  connectedDevices = connectedDevices.filter((name) => name !== trackerID);
 });
 
 device.on(
@@ -184,6 +184,7 @@ device.on(
     if (!connectedDevices.includes(trackerName) || (!rotation || !gravity)) return;
     sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
     sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
+    mainWindow.webContents.send("device-data", trackerName, rotation, gravity);
   }
 );
 
