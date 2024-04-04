@@ -78,7 +78,8 @@ function startConnection() {
   console.log("Starting connection...");
   setStatus("searching...");
   if (bluetoothEnabled && gx6Enabled) {
-    console.log("Both Bluetooth and GX6 are enabled (we do nothing yet)");
+    window.ipc.send("start-connection", { type: "bluetooth" });
+    window.ipc.send("start-connection", { type: "gx6", ports: selectedComPorts });
   } else if (bluetoothEnabled) {
     window.ipc.send("start-connection", { type: "bluetooth" });
   } else if (gx6Enabled) {

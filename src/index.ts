@@ -58,7 +58,7 @@ ipcMain.on("start-connection", (event, arg) => {
 });
 
 ipcMain.on("stop-connection", (event, arg) => {
-  console.log("Stopping connection");
+  console.log("Stopping connection for " + arg);
   if (arg.includes("bluetooth")) {
     device.stopConnection("bluetooth");
   }
