@@ -11,7 +11,8 @@
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
-    "rebuild": "electron-rebuild"
+    "rebuild": "electron-rebuild",
+    "build": "electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='dist/'"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.3.1",

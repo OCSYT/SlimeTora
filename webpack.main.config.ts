@@ -14,8 +14,9 @@ export const mainConfig: Configuration = {
     rules,
   },
   plugins,
-  externals: [],
+  externals: ["serialport"],
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },
+  node: { __dirname: true },
 };
