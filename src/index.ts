@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { HaritoraXWireless } from "haritorax-interpreter";
+import { SerialPort } from 'serialport';
 import dgram from "dgram";
 import Quaternion from "quaternion";
 import fs from "fs";
@@ -45,11 +46,14 @@ const createWindow = (): void => {
 
 // TODO: actually handle both connection types (for GX6 trackers and bluetooth elbows for example)
 ipcMain.on("start-connection", (event, arg) => {
-  console.log("Starting connection for " + arg);
-  if (arg.includes("bluetooth")) {
+  console.log(arg);
+  console.log(JSON.stringify(arg));
+  const { type, ports } = arg;
+  console.log("Starting connection for " + type);
+  if (type.includes("bluetooth")) {
     connectBluetooth();
-  } else if (arg.includes("gx6")) {
-    connectGX6();
+  } else if (type.includes("gx6") && ports) {
+    connectGX6(ports);
   }
 });
 
@@ -63,14 +67,19 @@ ipcMain.on("stop-connection", (event, arg) => {
   }
 });
 
+ipcMain.handle('get-com-ports', async () => {
+  const ports = await SerialPort.list();
+  return ports.map(port => port.path).sort();
+});
+
 async function connectBluetooth() {
   console.log("Connecting via Bluetooth");
   device.startConnection("bluetooth");
 }
 
-async function connectGX6() {
+async function connectGX6(ports: Array<string>) {
   console.log("Connecting via GX6");
-  device.startConnection("gx6", ["COM4", "COM5", "COM6"]);
+  device.startConnection("gx6", ports);
 }
 
 /*
@@ -208,7 +217,6 @@ device.on(
     trackerName: string,
     rotation: Rotation,
     gravity: Acceleration,
-    ankle: string
   ) => {
     if (!connectedDevices.includes(trackerName) || !rotation || !gravity)
       return;
@@ -279,7 +287,6 @@ device.on(
     trackerName: string,
     batteryRemaining: number,
     batteryVoltage: number,
-    chargeStatus: string
   ) => {
     sendBatteryLevel(
       batteryRemaining,

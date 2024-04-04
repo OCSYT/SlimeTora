@@ -14,7 +14,7 @@ export const mainConfig: Configuration = {
     rules,
   },
   plugins,
-  externals: ['haritorax-interpreter'],
+  externals: ['haritorax-interpreter', 'serialport'],
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
   },

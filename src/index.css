@@ -22522,6 +22522,21 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+input:disabled + .slider {
+  cursor: not-allowed;
+}
+
+input:disabled + .slider:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 34px;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
 }
