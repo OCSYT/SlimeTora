@@ -1,8 +1,7 @@
 @charset "utf-8";
 
 @use "../node_modules/bulma/sass/index" with (
-  $body-background-color: #00101c,
-  $card-background-color: #0b2941,
+  $card-background-color: #0b2941
 );
 
 body {
@@ -11,6 +10,7 @@ body {
   margin: auto;
   max-width: 100%;
   padding: 2rem;
+  background-color: #00101c;
 }
 
 .section {

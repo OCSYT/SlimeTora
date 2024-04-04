@@ -1,38 +1,42 @@
-/**
- * This file will automatically be loaded by webpack and run in the "renderer" context.
- * To learn more about the differences between the "main" and the "renderer" context in
- * Electron, visit:
- *
- * https://electronjs.org/docs/latest/tutorial/process-model
- *
- * By default, Node.js integration in this file is disabled. When enabling Node.js integration
- * in a renderer process, please be aware of potential security implications. You can read
- * more about security risks here:
- *
- * https://electronjs.org/docs/tutorial/security
- *
- * To enable Node.js integration in this file, open up `main.js` and enable the `nodeIntegration`
- * flag:
- *
- * ```
- *  // Create the browser window.
- *  mainWindow = new BrowserWindow({
- *    width: 800,
- *    height: 600,
- *    webPreferences: {
- *      nodeIntegration: true
- *    }
- *  });
- * ```
- */
-
 import "./index.css";
 
 let bluetoothEnabled = false;
 let gx6Enabled = false;
+let accelerometerEnabled = false;
+let gyroscopeEnabled = false;
+let magnetometerEnabled = false;
+let smoothingValue = 0;
 
 document.addEventListener("DOMContentLoaded", async function () {
   console.log("DOM loaded");
+
+  // Get settings from config file
+  const settings = await window.ipc.invoke("get-settings", null);
+  bluetoothEnabled = settings.bluetoothEnabled || false;
+  gx6Enabled = settings.gx6Enabled || false;
+  accelerometerEnabled = settings.accelerometerEnabled || false;
+  gyroscopeEnabled = settings.gyroscopeEnabled || false;
+  magnetometerEnabled = settings.magnetometerEnabled || false;
+  smoothingValue = settings.smoothingValue || 0;
+
+  // Get the checkbox elements
+  const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
+  const gx6Switch = document.getElementById("gx6-switch") as HTMLInputElement;
+  const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
+  const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
+  const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
+
+  // Set the checked property based on the settings
+  bluetoothSwitch.checked = bluetoothEnabled;
+  gx6Switch.checked = gx6Enabled;
+  accelerometerSwitch.checked = accelerometerEnabled;
+  gyroscopeSwitch.checked = gyroscopeEnabled;
+  magnetometerSwitch.checked = magnetometerEnabled;
+
+  // Set the smoothing input value
+  (document.getElementById("smoothing-input") as HTMLInputElement).value = smoothingValue.toString();
+
+  console.log("Settings loaded: ", settings);
 });
 
 function startConnection() {
@@ -136,29 +140,42 @@ window.ipc.on("disconnect", (event, trackerID) => {
     parseInt(document.getElementById("tracker-count").innerHTML) - 1
   ).toString();
 
-  if (document.getElementById("tracker-count").innerHTML === "0") setStatus("disconnected");
+  if (document.getElementById("tracker-count").innerHTML === "0")
+    setStatus("disconnected");
 });
 
 let lastUpdate = Date.now();
 
-window.ipc.on("device-data", (event, trackerID, rotationObject, gravityObject) => {
-  const now = Date.now();
-  
-  if (now - lastUpdate < 10) {
-    return;
+window.ipc.on(
+  "device-data",
+  (event, trackerID, rotationObject, gravityObject) => {
+    const now = Date.now();
+
+    if (now - lastUpdate < 10) {
+      return;
+    }
+
+    lastUpdate = now;
+
+    const rotation = `${rotationObject.x.toFixed(
+      0
+    )}, ${rotationObject.y.toFixed(0)}, ${rotationObject.z.toFixed(0)}`;
+    const gravity = `${gravityObject.x.toFixed(0)}, ${gravityObject.y.toFixed(
+      0
+    )}, ${gravityObject.z.toFixed(0)}`;
+
+    document
+      .getElementById(trackerID)
+      .querySelector("#rotation-data").innerHTML = rotation;
+    document
+      .getElementById(trackerID)
+      .querySelector("#acceleration-data").innerHTML = gravity;
   }
-  
-  lastUpdate = now;
-
-  const rotation = `${rotationObject.x.toFixed(0)}, ${rotationObject.y.toFixed(0)}, ${rotationObject.z.toFixed(0)}`;
-  const gravity = `${gravityObject.x.toFixed(0)}, ${gravityObject.y.toFixed(0)}, ${gravityObject.z.toFixed(0)}`;
-
-  document.getElementById(trackerID).querySelector("#rotation-data").innerHTML = rotation;
-  document.getElementById(trackerID).querySelector("#acceleration-data").innerHTML = gravity;
-});
+);
 
 window.ipc.on("device-battery", (event, trackerID, battery) => {
-  document.getElementById(trackerID).querySelector("#battery").innerHTML = battery;
+  document.getElementById(trackerID).querySelector("#battery").innerHTML =
+    battery;
 });
 
 window.ipc.on("error-message", (event, msg) => {
@@ -171,17 +188,61 @@ window.ipc.on("version", (event, version) => {
   console.log("Got app version: " + version);
 });
 
+/*
+ * Settings event listeners
+ */
+
 document
   .getElementById("bluetooth-switch")
   .addEventListener("change", function () {
     bluetoothEnabled = !bluetoothEnabled;
     console.log("Bluetooth enabled: " + bluetoothEnabled);
+    window.ipc.send("save-setting", { bluetoothEnabled: bluetoothEnabled });
   });
 
 document.getElementById("gx6-switch").addEventListener("change", function () {
   gx6Enabled = !gx6Enabled;
   console.log("GX6 enabled: " + gx6Enabled);
+  window.ipc.send("save-setting", { gx6Enabled: gx6Enabled });
 });
+
+document
+  .getElementById("accelerometer-switch")
+  .addEventListener("change", function () {
+    accelerometerEnabled = !accelerometerEnabled;
+    console.log("Accelerometer enabled: " + accelerometerEnabled);
+    window.ipc.send("save-setting", {
+      accelerometerEnabled: accelerometerEnabled,
+    });
+  });
+
+document
+  .getElementById("gyroscope-switch")
+  .addEventListener("change", function () {
+    gyroscopeEnabled = !gyroscopeEnabled;
+    console.log("Gyroscope enabled: " + gyroscopeEnabled);
+    window.ipc.send("save-setting", { gyroscopeEnabled: gyroscopeEnabled });
+  });
+
+document
+  .getElementById("magnetometer-switch")
+  .addEventListener("change", function () {
+    magnetometerEnabled = !magnetometerEnabled;
+    console.log("Magnetometer enabled: " + magnetometerEnabled);
+    window.ipc.send("save-setting", {
+      magnetometerEnabled: magnetometerEnabled,
+    });
+  });
+
+document
+  .getElementById("smoothing-save")
+  .addEventListener("click", function () {
+    smoothingValue = parseFloat(
+      (document.getElementById("smoothing-input") as HTMLInputElement).value
+    );
+    console.log("Smoothing value: " + smoothingValue);
+    window.ipc.send("save-setting", { smoothingValue: smoothingValue });
+  });
 
 /*
  * IPC event listeners

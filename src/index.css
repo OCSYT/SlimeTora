@@ -2895,7 +2895,7 @@ th:not([align]) {
 }
 
 :root {
-  --bulma-body-background-color: #00101c;
+  --bulma-body-background-color: var(--bulma-scheme-main);
   --bulma-body-size: 1em;
   --bulma-body-min-width: 300px;
   --bulma-body-rendering: optimizeLegibility;
@@ -22438,6 +22438,7 @@ body {
   margin: auto;
   max-width: 100%;
   padding: 2rem;
+  background-color: #00101c;
 }
 
 .section {

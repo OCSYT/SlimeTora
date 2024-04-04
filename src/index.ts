@@ -2,11 +2,17 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import { HaritoraXWireless } from "haritorax-interpreter";
 import dgram from "dgram";
 import Quaternion from "quaternion";
+import fs from "fs";
+import path from "path";
 const sock = dgram.createSocket("udp4");
 
 let mainWindow: BrowserWindow;
 const device = new HaritoraXWireless(0);
 let connectedDevices: Array<string> = [];
+
+const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
+
+const configPath = path.resolve(mainPath, "config.json");
 
 /*
  * Renderer
@@ -21,7 +27,6 @@ const createWindow = (): void => {
     height: 600,
     width: 800,
     webPreferences: {
-      nodeIntegration: true,
       contextIsolation: true,
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -33,10 +38,6 @@ const createWindow = (): void => {
     mainWindow.webContents.send("version", app.getVersion());
   });
 };
-
-setInterval(() => {
-  console.log("Connected devices: " + connectedDevices);
-}, 1000);
 
 /*
  * Renderer handlers
@@ -73,17 +74,47 @@ async function connectGX6() {
 }
 
 /*
+ * Config handlers
+ */
+
+ipcMain.handle("get-settings", () => {
+  if (fs.existsSync(configPath)) {
+    const data = fs.readFileSync(configPath);
+    return JSON.parse(data.toString());
+  } else {
+    fs.writeFileSync(configPath, "{}");
+    return {};
+  }
+});
+
+ipcMain.on("save-setting", (event, data) => {
+  const config = JSON.parse(fs.readFileSync(configPath).toString());
+
+  // Iterate over each property in the data object
+  for (const key in data) {
+    const value = data[key];
+    config[key] = value;
+    console.log(`Saved setting ${key} with value ${value}`);
+  }
+
+  fs.writeFileSync(configPath, JSON.stringify(config));
+});
+
+ipcMain.handle("has-setting", (event, name) => {
+  const config = JSON.parse(fs.readFileSync(configPath).toString());
+  return Object.prototype.hasOwnProperty.call(config, name);
+});
+
+/*
  * SlimeVR Forwarding
  */
 
 let slimeIP = "0.0.0.0";
 let slimePort = 6969;
-let foundSlimeVR = false;
 let packetCount = 0;
 
 sock.on("message", (data, src) => {
   if (data.toString("utf-8").includes("Hey OVR =D")) {
-    foundSlimeVR = true;
     slimeIP = src.address;
     slimePort = src.port;
     console.log("SlimeVR found at " + slimeIP + ":" + slimePort);
@@ -92,8 +123,6 @@ sock.on("message", (data, src) => {
 });
 
 let isHandlingTracker = false;
-
-// Create a queue of tracker names
 const trackerQueue: Array<string> = [];
 
 async function handleNextTracker() {
@@ -126,7 +155,6 @@ async function handleNextTracker() {
 
   isHandlingTracker = false;
 
-  // Handle the next tracker name in the queue
   handleNextTracker();
 }
 
@@ -182,13 +210,17 @@ device.on(
     gravity: Acceleration,
     ankle: string
   ) => {
-    if (!connectedDevices.includes(trackerName) || (!rotation || !gravity)) return;
+    if (!connectedDevices.includes(trackerName) || !rotation || !gravity)
+      return;
 
-    // Convert the rotation to a Quaternion
-    const quaternion = new Quaternion(rotation.w, rotation.x, rotation.y, rotation.z);
-
-    // Convert the Quaternion to Euler angles in radians
-    const eulerRadians = quaternion.toEuler('XYZ');
+    // Convert rotation to quaternion to euler angles in radians
+    const quaternion = new Quaternion(
+      rotation.w,
+      rotation.x,
+      rotation.y,
+      rotation.z
+    );
+    const eulerRadians = quaternion.toEuler("XYZ");
 
     // Convert the Euler angles to degrees
     const eulerDegrees = {
@@ -200,7 +232,12 @@ device.on(
     sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
     sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
 
-    mainWindow.webContents.send("device-data", trackerName, eulerDegrees, gravity);
+    mainWindow.webContents.send(
+      "device-data",
+      trackerName,
+      eulerDegrees,
+      gravity
+    );
   }
 );
 
@@ -249,11 +286,7 @@ device.on(
       batteryVoltage,
       connectedDevices.indexOf(trackerName)
     );
-    mainWindow.webContents.send(
-      "battery-data",
-      trackerName,
-      batteryRemaining
-    );
+    mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
   }
 );
 
