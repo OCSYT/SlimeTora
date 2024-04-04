@@ -44,7 +44,6 @@ const createWindow = (): void => {
  * Renderer handlers
  */
 
-// TODO: actually handle both connection types (for GX6 trackers and bluetooth elbows for example)
 ipcMain.on("start-connection", (event, arg) => {
   console.log(arg);
   console.log(JSON.stringify(arg));

@@ -1,7 +1,7 @@
 {
   "name": "slimetora",
   "productName": "slimetora",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha1",
   "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
   "main": ".webpack/main",
   "scripts": {
@@ -10,7 +10,8 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css"
+    "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
+    "rebuild": "electron-rebuild"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.3.1",
@@ -27,6 +28,7 @@
     "@vercel/webpack-asset-relocator-loader": "^1.7.3",
     "css-loader": "^6.10.0",
     "electron": "29.1.6",
+    "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.29.1",
     "fork-ts-checker-webpack-plugin": "^7.3.0",

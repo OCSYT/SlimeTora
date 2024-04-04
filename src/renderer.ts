@@ -1,3 +1,6 @@
+// !
+// TODO: Make tracker auto correction and smoothing work, and add feature to rename trackers
+
 import "./index.css";
 
 let isActive = false;
