@@ -156,6 +156,7 @@ async function handleNextTracker() {
     connectedDevices.sort();
   } else {
     if (connectedDevices.includes(trackerName)) return;
+    packetCount += 1;
     console.log(`Adding IMU for device ${connectedDevices.length}`);
     await addIMU(connectedDevices.length);
     connectedDevices.push(trackerName);
@@ -197,7 +198,7 @@ function addIMU(trackerID: number) {
 
 device.on("connect", (trackerID: string) => {
   if (connectedDevices.includes(trackerID)) return;
-  console.log(JSON.stringify(connectedDevices));
+  console.log("Connected devices: " + JSON.stringify(connectedDevices));
   trackerQueue.push(trackerID);
   handleNextTracker();
   console.log(`Connected to tracker: ${trackerID}`);
