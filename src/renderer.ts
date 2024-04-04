@@ -122,7 +122,21 @@ function addDeviceToList(deviceId: string) {
 window.ipc.on("connect", (event, trackerID) => {
   console.log(`Connected to ${trackerID}`);
   addDeviceToList(trackerID);
+  document.getElementById("tracker-count").innerHTML = (
+    parseInt(document.getElementById("tracker-count").innerHTML) + 1
+  ).toString();
+
   setStatus("connected");
+});
+
+window.ipc.on("disconnect", (event, trackerID) => {
+  console.log(`Disconnected from ${trackerID}`);
+  document.getElementById(trackerID).remove();
+  document.getElementById("tracker-count").innerHTML = (
+    parseInt(document.getElementById("tracker-count").innerHTML) - 1
+  ).toString();
+
+  if (document.getElementById("tracker-count").innerHTML === "0") setStatus("disconnected");
 });
 
 window.ipc.on("device-data", (event, trackerName, rotation, gravity) => {
