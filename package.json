@@ -46,6 +46,7 @@
     "bulma": "^1.0.0",
     "electron-squirrel-startup": "^1.0.0",
     "haritorax-interpreter": "^1.4.4",
+    "quaternion": "^1.5.1",
     "sass": "^1.72.0"
   }
 }

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { HaritoraXWireless } from "haritorax-interpreter";
 import dgram from "dgram";
+import Quaternion from "quaternion";
 const sock = dgram.createSocket("udp4");
 
 let mainWindow: BrowserWindow;
@@ -182,9 +183,24 @@ device.on(
     ankle: string
   ) => {
     if (!connectedDevices.includes(trackerName) || (!rotation || !gravity)) return;
+
+    // Convert the rotation to a Quaternion
+    const quaternion = new Quaternion(rotation.w, rotation.x, rotation.y, rotation.z);
+
+    // Convert the Quaternion to Euler angles in radians
+    const eulerRadians = quaternion.toEuler('XYZ');
+
+    // Convert the Euler angles to degrees
+    const eulerDegrees = {
+      x: eulerRadians[0] * (180 / Math.PI),
+      y: eulerRadians[1] * (180 / Math.PI),
+      z: eulerRadians[2] * (180 / Math.PI),
+    };
+
     sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
     sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
-    mainWindow.webContents.send("device-data", trackerName, rotation, gravity);
+
+    mainWindow.webContents.send("device-data", trackerName, eulerDegrees, gravity);
   }
 );
 
@@ -232,6 +248,11 @@ device.on(
       batteryRemaining,
       batteryVoltage,
       connectedDevices.indexOf(trackerName)
+    );
+    mainWindow.webContents.send(
+      "battery-data",
+      trackerName,
+      batteryRemaining
     );
   }
 );

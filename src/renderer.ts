@@ -94,7 +94,7 @@ function addDeviceToList(deviceId: string) {
           <p>Device ID: <span id="device-id">${deviceId}</span></p>
           <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
           <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
-          <p>Battery: <span id="battery">1%</span></p>
+          <p>Battery: <span id="battery">N/A</span></p>
         </div>
       </div>
       <footer class="card-footer">
@@ -139,10 +139,26 @@ window.ipc.on("disconnect", (event, trackerID) => {
   if (document.getElementById("tracker-count").innerHTML === "0") setStatus("disconnected");
 });
 
-window.ipc.on("device-data", (event, trackerName, rotation, gravity) => {
-  console.log(
-    `Got device data: Tracker Name - ${trackerName}, Rotation - ${rotation}, Gravity - ${gravity}`
-  );
+let lastUpdate = Date.now();
+
+window.ipc.on("device-data", (event, trackerID, rotationObject, gravityObject) => {
+  const now = Date.now();
+  
+  if (now - lastUpdate < 10) {
+    return;
+  }
+  
+  lastUpdate = now;
+
+  const rotation = `${rotationObject.x.toFixed(0)}, ${rotationObject.y.toFixed(0)}, ${rotationObject.z.toFixed(0)}`;
+  const gravity = `${gravityObject.x.toFixed(0)}, ${gravityObject.y.toFixed(0)}, ${gravityObject.z.toFixed(0)}`;
+
+  document.getElementById(trackerID).querySelector("#rotation-data").innerHTML = rotation;
+  document.getElementById(trackerID).querySelector("#acceleration-data").innerHTML = gravity;
+});
+
+window.ipc.on("device-battery", (event, trackerID, battery) => {
+  document.getElementById(trackerID).querySelector("#battery").innerHTML = battery;
 });
 
 window.ipc.on("error-message", (event, msg) => {
