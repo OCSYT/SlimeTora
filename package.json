@@ -6,20 +6,17 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "eslint **/*.js",
-    "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css"
+    "build": "electron-forge make",
+    "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
+    "lint": "eslint **/*.js"
   },
   "devDependencies": {
-    "electron": "29.1.6",
-    "electron-rebuild": "^3.2.9",
     "@electron-forge/cli": "^7.3.1",
-    "@electron-forge/maker-squirrel": "^7.3.1",
     "@electron-forge/maker-zip": "^7.3.1",
     "@electron-forge/plugin-auto-unpack-natives": "^7.3.1",
-    "@electron-forge/plugin-fuses": "^7.3.1", 
+    "@electron-forge/plugin-fuses": "^7.3.1",
+    "electron": "29.1.6",
+    "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.0"
   },
   "keywords": [],
