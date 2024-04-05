@@ -131,43 +131,65 @@ function setStatus(status) {
     console.log("Status: " + status);
 }
 
-function addDeviceToList(deviceId) {
+function addDeviceToList(deviceID) {
     const deviceList = document.getElementById("device-list");
 
     // Create a new div element
     const newDevice = document.createElement("div");
-    newDevice.id = deviceId;
+    newDevice.id = deviceID;
     newDevice.className = "column";
 
     // Fill the div with device data
     newDevice.innerHTML = `
     <div class="card">
-      <header class="card-header">
-        <p class="card-header-title is-centered">
-          Device Name:  <span id="device-name"> ${deviceId}</span>
-        </p>
-      </header>
-      <div class="card-content">
-        <div class="content">
-          <p>Device ID: <span id="device-id">${deviceId}</span></p>
-          <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
-          <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
-          <p>Battery: <span id="battery">N/A</span></p>
-        </div>
-      </div>
-      <footer class="card-footer">
-        <div class="card-footer-item">
-          <div class="switch-container">
-            <label for="sensor-switch">Enable Magnetometer</label>
-            <div class="switch">
-              <input type="checkbox" id="sensor-switch" />
-              <label for="sensor-switch" class="slider round"></label>
+        <header class="card-header">
+            <p class="card-header-title is-centered">
+            Device Name:  <span id="device-name"> ${deviceID}</span>
+            </p>
+        </header>
+        <div class="card-content">
+            <div class="content">
+            <p>Device ID: <span id="device-id">${deviceID}</span></p>
+            <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
+            <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
+            <p>Battery: <span id="battery">N/A</span></p>
             </div>
-          </div>
         </div>
-      </footer>
+        <footer class="card-footer">
+            <div class="card-footer-item">
+            <div class="switch-container">
+                <label for="sensor-switch-${deviceID}">Enable Magnetometer</label>
+                <div class="switch">
+                <input type="checkbox" id="sensor-switch-${deviceID}" />
+                <label for="sensor-switch-${deviceID}" class="slider round"></label>
+                </div>
+            </div>
+            </div>
+        </footer>
     </div>
-  `;
+    `;
+
+    // Disable sensor switch for BT devices
+    if (deviceID.startsWith("HaritoraXW-")) {
+        newDevice.querySelector(`#sensor-switch-${deviceID}`).disabled = true;
+        console.log(`Disabled sensor switch for ${deviceID} (BT device)`);
+    }
+
+    // Add event listener to sensor switch
+    newDevice.querySelector(`#sensor-switch-${deviceID}`).addEventListener("change", async () => {
+        const sensorSwitch = newDevice.querySelector(`#sensor-switch-${deviceID}`);
+        const sensorEnabled = sensorSwitch.checked;
+        console.log(`Sensor switch for ${deviceID} toggled: ${sensorEnabled}`);
+
+        const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
+        let sensorMode = settings.sensorMode;
+        const fpsMode = settings.fpsMode || 100;
+        const sensorAutoCorrection = settings.sensorAutoCorrection || [];
+
+        sensorMode = sensorEnabled ? 1 : 2;
+
+        window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
+    });
 
     // Append the new device to the device list
     deviceList.appendChild(newDevice);
@@ -177,19 +199,35 @@ function addDeviceToList(deviceId) {
  * Event listeners
  */
 
-window.ipc.on("connect", (event, trackerID) => {
-    console.log(`Connected to ${trackerID}`);
-    addDeviceToList(trackerID);
+window.ipc.on("connect", (event, deviceID) => {
+    console.log(`Connected to ${deviceID}`);
+    addDeviceToList(deviceID);
     document.getElementById("tracker-count").innerHTML = (
         parseInt(document.getElementById("tracker-count").innerHTML) + 1
     ).toString();
 
     setStatus("connected");
+
+    if (deviceID.startsWith("HaritoraXW-")) return;
+
+    // set sensorAutoCorrection settings
+    const settings = window.ipc.invoke("get-tracker-settings", deviceID);
+    const sensorMode = settings.sensorMode || 1;
+    const fpsMode = settings.fpsMode || 100;
+    let sensorAutoCorrection = settings.sensorAutoCorrection || [];
+
+    if (accelerometerEnabled) sensorAutoCorrection.push("accel");
+    if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
+    if (magnetometerEnabled) sensorAutoCorrection.push("mag");
+
+    console.log("Sensor auto correction: ", sensorAutoCorrection);
+
+    window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
 });
 
-window.ipc.on("disconnect", (event, trackerID) => {
-    console.log(`Disconnected from ${trackerID}`);
-    document.getElementById(trackerID).remove();
+window.ipc.on("disconnect", (event, deviceID) => {
+    console.log(`Disconnected from ${deviceID}`);
+    document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").innerHTML = (
         parseInt(document.getElementById("tracker-count").innerHTML) - 1
     ).toString();
@@ -202,12 +240,12 @@ let lastUpdate = Date.now();
 
 window.ipc.on(
     "device-data",
-    (event, trackerID, rotationObject, gravityObject) => {
+    (event, deviceID, rotationObject, gravityObject) => {
         if (
             !isActive ||
             !document
                 .getElementById("device-list")
-                .querySelector(`#${trackerID}`)
+                .querySelector(`#${deviceID}`)
         )
             return;
         const now = Date.now();
@@ -226,17 +264,17 @@ window.ipc.on(
         )}, ${gravityObject.y.toFixed(0)}, ${gravityObject.z.toFixed(0)}`;
 
         document
-            .getElementById(trackerID)
+            .getElementById(deviceID)
             .querySelector("#rotation-data").innerHTML = rotation;
         document
-            .getElementById(trackerID)
+            .getElementById(deviceID)
             .querySelector("#acceleration-data").innerHTML = gravity;
     }
 );
 
-window.ipc.on("device-battery", (event, trackerID, battery) => {
+window.ipc.on("device-battery", (event, deviceID, battery) => {
     if (!isActive) return;
-    document.getElementById(trackerID).querySelector("#battery").innerHTML =
+    document.getElementById(deviceID).querySelector("#battery").innerHTML =
         battery;
 });
 
@@ -275,31 +313,92 @@ function addEventListeners() {
 
     document
         .getElementById("accelerometer-switch")
-        .addEventListener("change", function () {
+        .addEventListener("change", async function () {
             accelerometerEnabled = !accelerometerEnabled;
             console.log("Accelerometer enabled: " + accelerometerEnabled);
             window.ipc.send("save-setting", {
                 accelerometerEnabled: accelerometerEnabled,
             });
+
+            const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
+            console.log("Active trackers: ", activeTrackers);
+
+            activeTrackers.forEach(async (deviceID) => {
+                if (deviceID.startsWith("HaritoraXW-")) return;
+                const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const sensorMode = settings.sensorMode;
+                const fpsMode = settings.fpsMode || 100;
+                let sensorAutoCorrection = settings.sensorAutoCorrection || [];
+
+                if (accelerometerEnabled) {
+                    sensorAutoCorrection.push("accel");
+                } else {
+                    sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "accel");
+                }
+
+                console.log("Sensor auto correction: ", sensorAutoCorrection);
+
+                window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
+            });
         });
 
     document
         .getElementById("gyroscope-switch")
-        .addEventListener("change", function () {
+        .addEventListener("change", async function () {
             gyroscopeEnabled = !gyroscopeEnabled;
             console.log("Gyroscope enabled: " + gyroscopeEnabled);
             window.ipc.send("save-setting", {
                 gyroscopeEnabled: gyroscopeEnabled,
             });
+
+            const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
+
+            activeTrackers.forEach(async (deviceID) => {
+                if (deviceID.startsWith("HaritoraXW-")) return;
+                const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const sensorMode = settings.sensorMode;
+                const fpsMode = settings.fpsMode || 100;
+                let sensorAutoCorrection = settings.sensorAutoCorrection || [];
+
+                if (gyroscopeEnabled) {
+                    sensorAutoCorrection.push("gyro");
+                } else {
+                    sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "gyro");
+                }
+
+                console.log("Sensor auto correction: ", sensorAutoCorrection);
+
+                window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
+            });
         });
 
     document
         .getElementById("magnetometer-switch")
-        .addEventListener("change", function () {
+        .addEventListener("change", async function () {
             magnetometerEnabled = !magnetometerEnabled;
             console.log("Magnetometer enabled: " + magnetometerEnabled);
             window.ipc.send("save-setting", {
                 magnetometerEnabled: magnetometerEnabled,
+            });
+
+            const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
+
+            activeTrackers.forEach(async (deviceID) => {
+                if (deviceID.startsWith("HaritoraXW-")) return;
+                const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const sensorMode = settings.sensorMode;
+                const fpsMode = settings.fpsMode || 100;
+                let sensorAutoCorrection = settings.sensorAutoCorrection || [];
+
+                if (magnetometerEnabled) {
+                    sensorAutoCorrection.push("mag");
+                } else {
+                    sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "mag");
+                }
+
+                console.log("Sensor auto correction: ", sensorAutoCorrection);
+
+                window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
             });
         });
 

@@ -71,6 +71,27 @@ ipcMain.handle("get-com-ports", async () => {
     return ports.map((port) => port.path).sort();
 });
 
+ipcMain.handle("get-tracker-settings", (event, arg) => {
+    return device.getTrackerSettings(arg);
+});
+
+ipcMain.handle("get-active-trackers", () => {
+    return connectedDevices;
+});
+
+ipcMain.on("set-tracker-settings", (event, arg) => {
+    const { deviceID, sensorMode, fpsMode, sensorAutoCorrection } = arg;
+    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
+        console.error("Invalid settings received: ", arg);
+        return;
+    }
+
+    console.log("Setting tracker settings for " + deviceID + " to:", arg);
+    console.log("Old tracker settings: ", device.getTrackerSettings(deviceID));
+    device.setTrackerSettings(deviceID, sensorMode, fpsMode, sensorAutoCorrection, false);
+    console.log("New tracker settings: ", device.getTrackerSettings(deviceID));
+});
+
 async function connectBluetooth() {
     console.log("Connecting via Bluetooth");
     device.startConnection("bluetooth");
@@ -167,13 +188,13 @@ async function handleNextTracker() {
     handleNextTracker();
 }
 
-function addIMU(trackerID) {
+function addIMU(deviceID) {
     return new Promise((resolve, reject) => {
         const buffer = new ArrayBuffer(128);
         const view = new DataView(buffer);
         view.setInt32(0, 15); // packet 15 header
         view.setBigInt64(4, BigInt(packetCount)); // packet counter
-        view.setInt8(12, trackerID); // tracker id (shown as IMU Tracker #x in SlimeVR)
+        view.setInt8(12, deviceID); // tracker id (shown as IMU Tracker #x in SlimeVR)
         view.setInt8(13, 0); // sensor status
         view.setInt8(14, 0); // imu type
         const imuBuffer = new Uint8Array(buffer);
@@ -183,7 +204,7 @@ function addIMU(trackerID) {
                 console.error("Error sending IMU packet:", err);
                 reject();
             } else {
-                console.log(`Add IMU: ${trackerID}`);
+                console.log(`Add IMU: ${deviceID}`);
                 packetCount += 1;
                 resolve();
             }
@@ -195,20 +216,20 @@ function addIMU(trackerID) {
  * Interpreter event listeners
  */
 
-device.on("connect", (trackerID) => {
-    if (connectedDevices.includes(trackerID)) return;
+device.on("connect", (deviceID) => {
+    if (connectedDevices.includes(deviceID)) return;
     console.log("Connected devices: " + JSON.stringify(connectedDevices));
-    trackerQueue.push(trackerID);
+    trackerQueue.push(deviceID);
     handleNextTracker();
-    console.log(`Connected to tracker: ${trackerID}`);
-    mainWindow.webContents.send("connect", trackerID);
+    console.log(`Connected to tracker: ${deviceID}`);
+    mainWindow.webContents.send("connect", deviceID);
 });
 
-device.on("disconnect", (trackerID) => {
-    if (!connectedDevices.includes(trackerID)) return;
-    console.log(`Disconnected from tracker: ${trackerID}`);
-    mainWindow.webContents.send("disconnect", trackerID);
-    connectedDevices = connectedDevices.filter((name) => name !== trackerID);
+device.on("disconnect", (deviceID) => {
+    if (!connectedDevices.includes(deviceID)) return;
+    console.log(`Disconnected from tracker: ${deviceID}`);
+    mainWindow.webContents.send("disconnect", deviceID);
+    connectedDevices = connectedDevices.filter((name) => name !== deviceID);
 });
 
 device.on("imu", (trackerName, rotation, gravity) => {
@@ -241,30 +262,6 @@ device.on("imu", (trackerName, rotation, gravity) => {
     );
 });
 
-device.on(
-    "settings",
-    (
-        trackerName,
-        sensorMode,
-        fpsMode,
-        sensorAutoCorrection,
-        ankleMotionDetection
-    ) => {
-        console.log("Settings received from " + trackerName);
-        console.log("Sensor mode: " + sensorMode);
-        console.log("FPS mode: " + fpsMode);
-        console.log("Sensor auto correction: " + sensorAutoCorrection);
-        console.log("Ankle motion detection: " + ankleMotionDetection);
-    }
-);
-
-device.on("button", (trackerName, mainButton, subButton, isOn) => {
-    console.log("Button data received from " + trackerName);
-    console.log("Main button: " + mainButton);
-    console.log("Sub button: " + subButton);
-    console.log("Is on: " + isOn);
-});
-
 device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
     sendBatteryLevel(
         batteryRemaining,
@@ -278,35 +275,35 @@ device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
  * Packet sending
  */
 
-function sendAccelPacket(acceleration, trackerID) {
+function sendAccelPacket(acceleration, deviceID) {
     packetCount += 1;
     const ax = acceleration["x"];
     const ay = acceleration["y"];
     const az = acceleration["z"];
-    const buffer = buildAccelPacket(ax, ay, az, trackerID);
+    const buffer = buildAccelPacket(ax, ay, az, deviceID);
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            console.error(`Error sending packet for sensor ${trackerID}:`, err);
+            console.error(`Error sending packet for sensor ${deviceID}:`, err);
     });
 }
 
-function sendRotationPacket(rotation, trackerID) {
+function sendRotationPacket(rotation, deviceID) {
     packetCount += 1;
     const x = rotation["x"];
     const y = rotation["y"];
     const z = rotation["z"];
     const w = rotation["w"];
-    const buffer = buildRotationPacket(x, y, z, w, trackerID);
+    const buffer = buildRotationPacket(x, y, z, w, deviceID);
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            console.error(`Error sending packet for sensor ${trackerID}:`, err);
+            console.error(`Error sending packet for sensor ${deviceID}:`, err);
     });
 }
 
 // TODO: fix voltage, figure out how to send battery per tracker
-function sendBatteryLevel(percentage, voltage, trackerID) {
+function sendBatteryLevel(percentage, voltage, deviceID) {
     const buffer = new ArrayBuffer(20);
     const view = new DataView(buffer);
     view.setInt32(0, 12);
@@ -316,7 +313,7 @@ function sendBatteryLevel(percentage, voltage, trackerID) {
     const sendBuffer = new Uint8Array(buffer);
     sock.send(sendBuffer, 0, sendBuffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            console.error(`Error sending packet for sensor ${trackerID}:`, err);
+            console.error(`Error sending packet for sensor ${deviceID}:`, err);
     });
 }
 
@@ -361,7 +358,7 @@ function buildHandshake() {
     return new Uint8Array(buffer);
 }
 
-function buildAccelPacket(ax, ay, az, trackerID) {
+function buildAccelPacket(ax, ay, az, deviceID) {
     const buffer = new Uint8Array(128);
     const view = new DataView(buffer.buffer);
 
@@ -370,17 +367,17 @@ function buildAccelPacket(ax, ay, az, trackerID) {
     view.setFloat32(12, ax);
     view.setFloat32(16, ay);
     view.setFloat32(20, az);
-    view.setUint8(24, trackerID); // tracker id
+    view.setUint8(24, deviceID); // tracker id
     return buffer;
 }
 
-function buildRotationPacket(qx, qy, qz, qw, trackerID) {
+function buildRotationPacket(qx, qy, qz, qw, deviceID) {
     const buffer = new Uint8Array(128);
     const view = new DataView(buffer.buffer);
 
     view.setInt32(0, 17);
     view.setBigInt64(4, BigInt(packetCount));
-    view.setUint8(12, trackerID);
+    view.setUint8(12, deviceID);
     view.setUint8(13, 1);
 
     view.setFloat32(14, qx);
