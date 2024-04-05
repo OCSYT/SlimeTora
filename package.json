@@ -9,14 +9,18 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx .",
-    "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
-    "rebuild": "electron-rebuild",
-    "build": "electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='dist/'"
+    "lint": "eslint **/*.js",
+    "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css"
   },
   "devDependencies": {
     "electron": "29.1.6",
-    "electron-rebuild": "^3.2.9"
+    "electron-rebuild": "^3.2.9",
+    "@electron-forge/cli": "^7.3.1",
+    "@electron-forge/maker-squirrel": "^7.3.1",
+    "@electron-forge/maker-zip": "^7.3.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.3.1",
+    "@electron-forge/plugin-fuses": "^7.3.1", 
+    "eslint": "^8.57.0"
   },
   "keywords": [],
   "author": {

@@ -1,17 +1,15 @@
-const { MakerSquirrel } = require('@electron-forge/maker-squirrel');
-const { MakerZIP } = require('@electron-forge/maker-zip');
-const { MakerDeb } = require('@electron-forge/maker-deb');
-const { MakerRpm } = require('@electron-forge/maker-rpm');
-const { AutoUnpackNativesPlugin } = require('@electron-forge/plugin-auto-unpack-natives');
-const { FusesPlugin } = require('@electron-forge/plugin-fuses');
-const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+const { MakerSquirrel } = require("@electron-forge/maker-squirrel");
+const { MakerZIP } = require("@electron-forge/maker-zip");
+const { AutoUnpackNativesPlugin } = require("@electron-forge/plugin-auto-unpack-natives");
+const { FusesPlugin } = require("@electron-forge/plugin-fuses");
+const { FuseV1Options, FuseVersion } = require("@electron/fuses");
 
 const config = {
     packagerConfig: {
         asar: true,
     },
     rebuildConfig: {},
-    makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
+    makers: [new MakerSquirrel({}), new MakerZIP({}, ["darwin"])],
     plugins: [
         new AutoUnpackNativesPlugin({}),
         new FusesPlugin({
