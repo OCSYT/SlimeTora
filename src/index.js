@@ -1,15 +1,15 @@
-import { app, BrowserWindow, ipcMain } from "electron";
-import { HaritoraXWireless } from "haritorax-interpreter";
-import { SerialPort } from 'serialport';
-import dgram from "dgram";
-import Quaternion from "quaternion";
-import fs from "fs";
-import path from "path";
+const { app, BrowserWindow, ipcMain } = require("electron");
+const { HaritoraXWireless } = require("haritorax-interpreter");
+const { SerialPort } = require("serialport");
+const dgram = require("dgram");
+const Quaternion = require("quaternion");
+const fs = require("fs");
+const path = require("path");
 const sock = dgram.createSocket("udp4");
 
-let mainWindow: BrowserWindow;
+let mainWindow;
 const device = new HaritoraXWireless(0);
-let connectedDevices: Array<string> = [];
+let connectedDevices = [];
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 
@@ -19,21 +19,19 @@ const configPath = path.resolve(mainPath, "config.json");
  * Renderer
  */
 
-declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
-declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
-
-const createWindow = (): void => {
+const createWindow = () => {
   mainWindow = new BrowserWindow({
     autoHideMenuBar: true,
     height: 600,
     width: 800,
     webPreferences: {
       contextIsolation: true,
-      preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      nodeIntegration: true,
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
-  mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+  mainWindow.loadURL(path.join(__dirname, "index.html"));
 
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.send("version", app.getVersion());
@@ -68,9 +66,9 @@ ipcMain.on("stop-connection", (event, arg) => {
   connectedDevices = [];
 });
 
-ipcMain.handle('get-com-ports', async () => {
+ipcMain.handle("get-com-ports", async () => {
   const ports = await SerialPort.list();
-  return ports.map(port => port.path).sort();
+  return ports.map((port) => port.path).sort();
 });
 
 async function connectBluetooth() {
@@ -78,7 +76,7 @@ async function connectBluetooth() {
   device.startConnection("bluetooth");
 }
 
-async function connectGX6(ports: Array<string>) {
+async function connectGX6(ports) {
   console.log("Connecting via GX6");
   device.startConnection("gx6", ports);
 }
@@ -133,7 +131,7 @@ sock.on("message", (data, src) => {
 });
 
 let isHandlingTracker = false;
-const trackerQueue: Array<string> = [];
+const trackerQueue = [];
 
 async function handleNextTracker() {
   if (trackerQueue.length === 0 || isHandlingTracker) return;
@@ -169,8 +167,8 @@ async function handleNextTracker() {
   handleNextTracker();
 }
 
-function addIMU(trackerID: number) {
-  return new Promise<void>((resolve, reject) => {
+function addIMU(trackerID) {
+  return new Promise((resolve, reject) => {
     const buffer = new ArrayBuffer(128);
     const view = new DataView(buffer);
     view.setInt32(0, 15); // packet 15 header
@@ -197,7 +195,7 @@ function addIMU(trackerID: number) {
  * Interpreter event listeners
  */
 
-device.on("connect", (trackerID: string) => {
+device.on("connect", (trackerID) => {
   if (connectedDevices.includes(trackerID)) return;
   console.log("Connected devices: " + JSON.stringify(connectedDevices));
   trackerQueue.push(trackerID);
@@ -206,59 +204,51 @@ device.on("connect", (trackerID: string) => {
   mainWindow.webContents.send("connect", trackerID);
 });
 
-device.on("disconnect", (trackerID: string) => {
+device.on("disconnect", (trackerID) => {
   if (!connectedDevices.includes(trackerID)) return;
   console.log(`Disconnected from tracker: ${trackerID}`);
   mainWindow.webContents.send("disconnect", trackerID);
   connectedDevices = connectedDevices.filter((name) => name !== trackerID);
 });
 
-device.on(
-  "imu",
-  (
-    trackerName: string,
-    rotation: Rotation,
-    gravity: Acceleration,
-  ) => {
-    if (!connectedDevices.includes(trackerName) || !rotation || !gravity)
-      return;
+device.on("imu", (trackerName, rotation, gravity) => {
+  if (!connectedDevices.includes(trackerName) || !rotation || !gravity) return;
 
-    // Convert rotation to quaternion to euler angles in radians
-    const quaternion = new Quaternion(
-      rotation.w,
-      rotation.x,
-      rotation.y,
-      rotation.z
-    );
-    const eulerRadians = quaternion.toEuler("XYZ");
+  // Convert rotation to quaternion to euler angles in radians
+  const quaternion = new Quaternion(
+    rotation.w,
+    rotation.x,
+    rotation.y,
+    rotation.z
+  );
+  const eulerRadians = quaternion.toEuler("XYZ");
 
-    // Convert the Euler angles to degrees
-    const eulerDegrees = {
-      x: eulerRadians[0] * (180 / Math.PI),
-      y: eulerRadians[1] * (180 / Math.PI),
-      z: eulerRadians[2] * (180 / Math.PI),
-    };
+  // Convert the Euler angles to degrees
+  const eulerDegrees = {
+    x: eulerRadians[0] * (180 / Math.PI),
+    y: eulerRadians[1] * (180 / Math.PI),
+    z: eulerRadians[2] * (180 / Math.PI),
+  };
 
-    sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
-    sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
+  sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
+  sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
 
-    mainWindow.webContents.send(
-      "device-data",
-      trackerName,
-      eulerDegrees,
-      gravity
-    );
-  }
-);
+  mainWindow.webContents.send(
+    "device-data",
+    trackerName,
+    eulerDegrees,
+    gravity
+  );
+});
 
 device.on(
   "settings",
   (
-    trackerName: string,
-    sensorMode: number,
-    fpsMode: number,
-    sensorAutoCorrection: Array<string>,
-    ankleMotionDetection: boolean
+    trackerName,
+    sensorMode,
+    fpsMode,
+    sensorAutoCorrection,
+    ankleMotionDetection
   ) => {
     console.log("Settings received from " + trackerName);
     console.log("Sensor mode: " + sensorMode);
@@ -268,42 +258,27 @@ device.on(
   }
 );
 
-device.on(
-  "button",
-  (
-    trackerName: string,
-    mainButton: number,
-    subButton: number,
-    isOn: boolean
-  ) => {
-    console.log("Button data received from " + trackerName);
-    console.log("Main button: " + mainButton);
-    console.log("Sub button: " + subButton);
-    console.log("Is on: " + isOn);
-  }
-);
+device.on("button", (trackerName, mainButton, subButton, isOn) => {
+  console.log("Button data received from " + trackerName);
+  console.log("Main button: " + mainButton);
+  console.log("Sub button: " + subButton);
+  console.log("Is on: " + isOn);
+});
 
-device.on(
-  "battery",
-  (
-    trackerName: string,
-    batteryRemaining: number,
-    batteryVoltage: number,
-  ) => {
-    sendBatteryLevel(
-      batteryRemaining,
-      batteryVoltage,
-      connectedDevices.indexOf(trackerName)
-    );
-    mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
-  }
-);
+device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
+  sendBatteryLevel(
+    batteryRemaining,
+    batteryVoltage,
+    connectedDevices.indexOf(trackerName)
+  );
+  mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
+});
 
 /*
  * Packet sending
  */
 
-function sendAccelPacket(acceleration: Acceleration, trackerID: number) {
+function sendAccelPacket(acceleration, trackerID) {
   packetCount += 1;
   const ax = acceleration["x"];
   const ay = acceleration["y"];
@@ -316,7 +291,7 @@ function sendAccelPacket(acceleration: Acceleration, trackerID: number) {
   });
 }
 
-function sendRotationPacket(rotation: Rotation, trackerID: number) {
+function sendRotationPacket(rotation, trackerID) {
   packetCount += 1;
   const x = rotation["x"];
   const y = rotation["y"];
@@ -331,11 +306,7 @@ function sendRotationPacket(rotation: Rotation, trackerID: number) {
 }
 
 // TODO: fix voltage, figure out how to send battery per tracker
-function sendBatteryLevel(
-  percentage: number,
-  voltage: number,
-  trackerID: number
-) {
+function sendBatteryLevel(percentage, voltage, trackerID) {
   const buffer = new ArrayBuffer(20);
   const view = new DataView(buffer);
   view.setInt32(0, 12);
@@ -390,12 +361,7 @@ function buildHandshake() {
   return new Uint8Array(buffer);
 }
 
-function buildAccelPacket(
-  ax: number,
-  ay: number,
-  az: number,
-  trackerID: number
-) {
+function buildAccelPacket(ax, ay, az, trackerID) {
   const buffer = new Uint8Array(128);
   const view = new DataView(buffer.buffer);
 
@@ -408,13 +374,7 @@ function buildAccelPacket(
   return buffer;
 }
 
-function buildRotationPacket(
-  qx: number,
-  qy: number,
-  qz: number,
-  qw: number,
-  trackerID: number
-) {
+function buildRotationPacket(qx, qy, qz, qw, trackerID) {
   const buffer = new Uint8Array(128);
   const view = new DataView(buffer.buffer);
 
@@ -431,23 +391,6 @@ function buildRotationPacket(
   view.setUint8(30, 0);
 
   return buffer;
-}
-
-/*
- * Interfaces
- */
-
-interface Rotation {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
-
-interface Acceleration {
-  x: number;
-  y: number;
-  z: number;
 }
 
 app.on("ready", createWindow);
