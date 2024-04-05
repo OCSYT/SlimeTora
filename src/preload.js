@@ -2,7 +2,6 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 const { contextBridge, ipcRenderer } = require("electron");
-const path = require("path");
 
 contextBridge.exposeInMainWorld("ipc", {
     send: (channel, data) => {
@@ -17,5 +16,4 @@ contextBridge.exposeInMainWorld("ipc", {
     invoke: (channel, data) => {
         return ipcRenderer.invoke(channel, data);
     },
-    path,
 });

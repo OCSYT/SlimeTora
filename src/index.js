@@ -1,396 +1,344 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
-const { HaritoraXWireless } = require("haritorax-interpreter");
-const { SerialPort } = require("serialport");
-const dgram = require("dgram");
-const Quaternion = require("quaternion");
-const fs = require("fs");
-const path = require("path");
-const sock = dgram.createSocket("udp4");
+// TODO: Make tracker auto correction and smoothing work, and add feature to rename trackers
+let isActive = false;
 
-let mainWindow;
-const device = new HaritoraXWireless(0);
-let connectedDevices = [];
+let bluetoothEnabled = false;
+let gx6Enabled = false;
+const selectedComPorts = [];
+let accelerometerEnabled = false;
+let gyroscopeEnabled = false;
+let magnetometerEnabled = false;
+let smoothingValue = 0;
 
-const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
+document.addEventListener("DOMContentLoaded", async function () {
+    console.log("DOM loaded");
 
-const configPath = path.resolve(mainPath, "config.json");
+    // Populate COM port switches
+    const comPortList = document.getElementById("com-ports");
+    const comPorts = await window.ipc.invoke("get-com-ports", null);
+    console.log("COM ports: ", comPorts);
 
-/*
- * Renderer
- */
+    comPorts.forEach((port) => {
+        const switchHTML = `
+        <div class="switch-container">
+            <div class="switch">
+            <input type="checkbox" id="${port}" />
+            <label for="${port}" class="slider round"></label>
+            </div>
+            <label for="${port}">${port}</label>
+        </div>
+        `;
 
-const createWindow = () => {
-    mainWindow = new BrowserWindow({
-        autoHideMenuBar: true,
-        height: 600,
-        width: 800,
-        webPreferences: {
-            contextIsolation: true,
-            nodeIntegration: true,
-            preload: path.join(__dirname, "preload.js"),
-        },
+        comPortList.innerHTML += switchHTML;
     });
 
-    mainWindow.loadURL(path.join(__dirname, "index.html"));
+    // Get settings from config file
+    const settings = await window.ipc.invoke("get-settings", null);
+    bluetoothEnabled = settings.bluetoothEnabled || false;
+    gx6Enabled = settings.gx6Enabled || false;
+    accelerometerEnabled = settings.accelerometerEnabled || false;
+    gyroscopeEnabled = settings.gyroscopeEnabled || false;
+    magnetometerEnabled = settings.magnetometerEnabled || false;
+    smoothingValue = settings.smoothingValue || 0;
 
-    mainWindow.webContents.on("did-finish-load", () => {
-        mainWindow.webContents.send("version", app.getVersion());
-    });
-};
+    // Get the checkbox elements
+    const bluetoothSwitch = document.getElementById("bluetooth-switch");
+    const gx6Switch = document.getElementById("gx6-switch");
+    const accelerometerSwitch = document.getElementById("accelerometer-switch");
+    const gyroscopeSwitch = document.getElementById("gyroscope-switch");
+    const magnetometerSwitch = document.getElementById("magnetometer-switch");
 
-/*
- * Renderer handlers
- */
+    // Set the checked property based on the settings
+    bluetoothSwitch.checked = bluetoothEnabled;
+    gx6Switch.checked = gx6Enabled;
+    accelerometerSwitch.checked = accelerometerEnabled;
+    gyroscopeSwitch.checked = gyroscopeEnabled;
+    magnetometerSwitch.checked = magnetometerEnabled;
 
-ipcMain.on("start-connection", (event, arg) => {
-    console.log(arg);
-    console.log(JSON.stringify(arg));
-    const { type, ports } = arg;
-    console.log("Starting connection for " + type);
-    if (type.includes("bluetooth")) {
-        connectBluetooth();
-    } else if (type.includes("gx6") && ports) {
-        connectGX6(ports);
-    }
-});
+    // Set the smoothing input value
+    document.getElementById("smoothing-input").value = smoothingValue.toString();
 
-ipcMain.on("stop-connection", (event, arg) => {
-    console.log("Stopping connection for " + arg);
-    if (arg.includes("bluetooth")) {
-        device.stopConnection("bluetooth");
-    }
-    if (arg.includes("gx6")) {
-        device.stopConnection("gx6");
-    }
-
-    connectedDevices = [];
-});
-
-ipcMain.handle("get-com-ports", async () => {
-    const ports = await SerialPort.list();
-    return ports.map((port) => port.path).sort();
-});
-
-async function connectBluetooth() {
-    console.log("Connecting via Bluetooth");
-    device.startConnection("bluetooth");
-}
-
-async function connectGX6(ports) {
-    console.log("Connecting via GX6");
-    device.startConnection("gx6", ports);
-}
-
-/*
- * Config handlers
- */
-
-ipcMain.handle("get-settings", () => {
-    if (fs.existsSync(configPath)) {
-        const data = fs.readFileSync(configPath);
-        return JSON.parse(data.toString());
-    } else {
-        fs.writeFileSync(configPath, "{}");
-        return {};
-    }
-});
-
-ipcMain.on("save-setting", (event, data) => {
-    const config = JSON.parse(fs.readFileSync(configPath).toString());
-
-    // Iterate over each property in the data object
-    for (const key in data) {
-        const value = data[key];
-        config[key] = value;
-        console.log(`Saved setting ${key} with value ${value}`);
-    }
-
-    fs.writeFileSync(configPath, JSON.stringify(config));
-});
-
-ipcMain.handle("has-setting", (event, name) => {
-    const config = JSON.parse(fs.readFileSync(configPath).toString());
-    return Object.prototype.hasOwnProperty.call(config, name);
-});
-
-/*
- * SlimeVR Forwarding
- */
-
-let slimeIP = "0.0.0.0";
-let slimePort = 6969;
-let packetCount = 0;
-
-sock.on("message", (data, src) => {
-    if (data.toString("utf-8").includes("Hey OVR =D")) {
-        slimeIP = src.address;
-        slimePort = src.port;
-        console.log("SlimeVR found at " + slimeIP + ":" + slimePort);
-        packetCount += 1;
-    }
-});
-
-let isHandlingTracker = false;
-const trackerQueue = [];
-
-async function handleNextTracker() {
-    if (trackerQueue.length === 0 || isHandlingTracker) return;
-    isHandlingTracker = true;
-    const trackerName = trackerQueue.shift();
-
-    if (connectedDevices.length == 0) {
-        console.log("Adding IMU for device 0 // Handshake");
-
-        const handshake = buildHandshake();
-        sock.send(handshake, 0, handshake.length, slimePort, slimeIP, (err) => {
-            if (err) {
-                console.error("Error sending handshake:", err);
-            } else {
-                console.log("Handshake sent successfully");
-                packetCount += 1;
-            }
-        });
-
-        connectedDevices.push(trackerName);
-        connectedDevices.sort();
-    } else {
-        if (connectedDevices.includes(trackerName)) return;
-        packetCount += 1;
-        console.log(`Adding IMU for device ${connectedDevices.length}`);
-        await addIMU(connectedDevices.length);
-        connectedDevices.push(trackerName);
-        connectedDevices.sort();
-    }
-
-    isHandlingTracker = false;
-
-    handleNextTracker();
-}
-
-function addIMU(trackerID) {
-    return new Promise((resolve, reject) => {
-        const buffer = new ArrayBuffer(128);
-        const view = new DataView(buffer);
-        view.setInt32(0, 15); // packet 15 header
-        view.setBigInt64(4, BigInt(packetCount)); // packet counter
-        view.setInt8(12, trackerID); // tracker id (shown as IMU Tracker #x in SlimeVR)
-        view.setInt8(13, 0); // sensor status
-        view.setInt8(14, 0); // imu type
-        const imuBuffer = new Uint8Array(buffer);
-
-        sock.send(imuBuffer, slimePort, slimeIP, (err) => {
-            if (err) {
-                console.error("Error sending IMU packet:", err);
-                reject();
-            } else {
-                console.log(`Add IMU: ${trackerID}`);
-                packetCount += 1;
-                resolve();
-            }
-        });
-    });
-}
-
-/*
- * Interpreter event listeners
- */
-
-device.on("connect", (trackerID) => {
-    if (connectedDevices.includes(trackerID)) return;
-    console.log("Connected devices: " + JSON.stringify(connectedDevices));
-    trackerQueue.push(trackerID);
-    handleNextTracker();
-    console.log(`Connected to tracker: ${trackerID}`);
-    mainWindow.webContents.send("connect", trackerID);
-});
-
-device.on("disconnect", (trackerID) => {
-    if (!connectedDevices.includes(trackerID)) return;
-    console.log(`Disconnected from tracker: ${trackerID}`);
-    mainWindow.webContents.send("disconnect", trackerID);
-    connectedDevices = connectedDevices.filter((name) => name !== trackerID);
-});
-
-device.on("imu", (trackerName, rotation, gravity) => {
-    if (!connectedDevices.includes(trackerName) || !rotation || !gravity) return;
-
-    // Convert rotation to quaternion to euler angles in radians
-    const quaternion = new Quaternion(
-        rotation.w,
-        rotation.x,
-        rotation.y,
-        rotation.z
+    // Set the selected COM ports
+    const comPortsSwitches = Array.from(
+        document.getElementById("com-ports").querySelectorAll("input")
     );
-    const eulerRadians = quaternion.toEuler("XYZ");
+    const selectedPorts = settings.comPorts || [];
 
-    // Convert the Euler angles to degrees
-    const eulerDegrees = {
-        x: eulerRadians[0] * (180 / Math.PI),
-        y: eulerRadians[1] * (180 / Math.PI),
-        z: eulerRadians[2] * (180 / Math.PI),
-    };
+    comPortsSwitches.forEach((port) => {
+        if (selectedPorts.includes(port.id)) {
+            port.checked = true;
+        }
+    });
 
-    sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
-    sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
+    selectedComPorts.push(...selectedPorts);
 
-    mainWindow.webContents.send(
-        "device-data",
-        trackerName,
-        eulerDegrees,
-        gravity
-    );
+    console.log("Settings loaded: ", settings);
+
+    addEventListeners();
 });
 
-device.on(
-    "settings",
-    (
-        trackerName,
-        sensorMode,
-        fpsMode,
-        sensorAutoCorrection,
-        ankleMotionDetection
-    ) => {
-        console.log("Settings received from " + trackerName);
-        console.log("Sensor mode: " + sensorMode);
-        console.log("FPS mode: " + fpsMode);
-        console.log("Sensor auto correction: " + sensorAutoCorrection);
-        console.log("Ankle motion detection: " + ankleMotionDetection);
+function startConnection() {
+    console.log("Starting connection...");
+    setStatus("searching...");
+    if (bluetoothEnabled && gx6Enabled) {
+        window.ipc.send("start-connection", { type: "bluetooth" });
+        window.ipc.send("start-connection", {
+            type: "gx6",
+            ports: selectedComPorts,
+        });
+    } else if (bluetoothEnabled) {
+        window.ipc.send("start-connection", { type: "bluetooth" });
+    } else if (gx6Enabled) {
+        window.ipc.send("start-connection", {
+            type: "gx6",
+            ports: selectedComPorts,
+        });
+        console.log("Starting GX6 connection with ports: ", selectedComPorts);
+    } else {
+        console.log("No connection method selected");
+        setStatus("No connection method selected");
+        return;
+    }
+
+    isActive = true;
+}
+
+function stopConnection() {
+    console.log("Stopping connection");
+    isActive = false;
+
+    if (bluetoothEnabled) {
+        window.ipc.send("stop-connection", "bluetooth");
+    }
+    if (gx6Enabled) {
+        window.ipc.send("stop-connection", "gx6");
+    }
+
+    document.getElementById("tracker-count").innerHTML = "0";
+    document.getElementById("status").innerHTML = "N/A";
+    const deviceList = document.getElementById("device-list");
+    deviceList.innerHTML = "";
+}
+
+function toggleVisualization() {
+    console.log("Toggling visualization");
+    // TODO implement visualization code for trackers
+}
+
+function setStatus(status) {
+    document.getElementById("status").innerHTML = status;
+    console.log("Status: " + status);
+}
+
+function addDeviceToList(deviceId) {
+    const deviceList = document.getElementById("device-list");
+
+    // Create a new div element
+    const newDevice = document.createElement("div");
+    newDevice.id = deviceId;
+    newDevice.className = "column";
+
+    // Fill the div with device data
+    newDevice.innerHTML = `
+    <div class="card">
+      <header class="card-header">
+        <p class="card-header-title is-centered">
+          Device Name:  <span id="device-name"> ${deviceId}</span>
+        </p>
+      </header>
+      <div class="card-content">
+        <div class="content">
+          <p>Device ID: <span id="device-id">${deviceId}</span></p>
+          <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
+          <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
+          <p>Battery: <span id="battery">N/A</span></p>
+        </div>
+      </div>
+      <footer class="card-footer">
+        <div class="card-footer-item">
+          <div class="switch-container">
+            <label for="sensor-switch">Enable Magnetometer</label>
+            <div class="switch">
+              <input type="checkbox" id="sensor-switch" />
+              <label for="sensor-switch" class="slider round"></label>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  `;
+
+    // Append the new device to the device list
+    deviceList.appendChild(newDevice);
+}
+
+/*
+ * Event listeners
+ */
+
+window.ipc.on("connect", (event, trackerID) => {
+    console.log(`Connected to ${trackerID}`);
+    addDeviceToList(trackerID);
+    document.getElementById("tracker-count").innerHTML = (
+        parseInt(document.getElementById("tracker-count").innerHTML) + 1
+    ).toString();
+
+    setStatus("connected");
+});
+
+window.ipc.on("disconnect", (event, trackerID) => {
+    console.log(`Disconnected from ${trackerID}`);
+    document.getElementById(trackerID).remove();
+    document.getElementById("tracker-count").innerHTML = (
+        parseInt(document.getElementById("tracker-count").innerHTML) - 1
+    ).toString();
+
+    if (document.getElementById("tracker-count").innerHTML === "0")
+        setStatus("disconnected");
+});
+
+let lastUpdate = Date.now();
+
+window.ipc.on(
+    "device-data",
+    (event, trackerID, rotationObject, gravityObject) => {
+        if (
+            !isActive ||
+      !document.getElementById("device-list").querySelector(`#${trackerID}`)
+        )
+            return;
+        const now = Date.now();
+
+        if (now - lastUpdate < 50) {
+            return;
+        }
+
+        lastUpdate = now;
+
+        const rotation = `${rotationObject.x.toFixed(
+            0
+        )}, ${rotationObject.y.toFixed(0)}, ${rotationObject.z.toFixed(0)}`;
+        const gravity = `${gravityObject.x.toFixed(0)}, ${gravityObject.y.toFixed(
+            0
+        )}, ${gravityObject.z.toFixed(0)}`;
+
+        document
+            .getElementById(trackerID)
+            .querySelector("#rotation-data").innerHTML = rotation;
+        document
+            .getElementById(trackerID)
+            .querySelector("#acceleration-data").innerHTML = gravity;
     }
 );
 
-device.on("button", (trackerName, mainButton, subButton, isOn) => {
-    console.log("Button data received from " + trackerName);
-    console.log("Main button: " + mainButton);
-    console.log("Sub button: " + subButton);
-    console.log("Is on: " + isOn);
+window.ipc.on("device-battery", (event, trackerID, battery) => {
+    if (!isActive) return;
+    document.getElementById(trackerID).querySelector("#battery").innerHTML =
+    battery;
 });
 
-device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
-    sendBatteryLevel(
-        batteryRemaining,
-        batteryVoltage,
-        connectedDevices.indexOf(trackerName)
-    );
-    mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
+window.ipc.on("error-message", (event, msg) => {
+    setStatus(msg);
 });
 
+// Set version number
+window.ipc.on("version", (event, version) => {
+    document.getElementById("version").innerHTML = version;
+    console.log("Got app version: " + version);
+});
+
+function addEventListeners() {
+    /*
+   * Settings event listeners
+   */
+
+    document
+        .getElementById("bluetooth-switch")
+        .addEventListener("change", function () {
+            bluetoothEnabled = !bluetoothEnabled;
+            console.log("Bluetooth enabled: " + bluetoothEnabled);
+            window.ipc.send("save-setting", { bluetoothEnabled: bluetoothEnabled });
+        });
+
+    document.getElementById("gx6-switch").addEventListener("change", function () {
+        gx6Enabled = !gx6Enabled;
+        console.log("GX6 enabled: " + gx6Enabled);
+        window.ipc.send("save-setting", { gx6Enabled: gx6Enabled });
+    });
+
+    document
+        .getElementById("accelerometer-switch")
+        .addEventListener("change", function () {
+            accelerometerEnabled = !accelerometerEnabled;
+            console.log("Accelerometer enabled: " + accelerometerEnabled);
+            window.ipc.send("save-setting", {
+                accelerometerEnabled: accelerometerEnabled,
+            });
+        });
+
+    document
+        .getElementById("gyroscope-switch")
+        .addEventListener("change", function () {
+            gyroscopeEnabled = !gyroscopeEnabled;
+            console.log("Gyroscope enabled: " + gyroscopeEnabled);
+            window.ipc.send("save-setting", { gyroscopeEnabled: gyroscopeEnabled });
+        });
+
+    document
+        .getElementById("magnetometer-switch")
+        .addEventListener("change", function () {
+            magnetometerEnabled = !magnetometerEnabled;
+            console.log("Magnetometer enabled: " + magnetometerEnabled);
+            window.ipc.send("save-setting", {
+                magnetometerEnabled: magnetometerEnabled,
+            });
+        });
+
+    document
+        .getElementById("smoothing-save")
+        .addEventListener("click", function () {
+            smoothingValue = parseFloat(
+                document.getElementById("smoothing-input").value
+            );
+            console.log("Smoothing value: " + smoothingValue);
+            window.ipc.send("save-setting", { smoothingValue: smoothingValue });
+        });
+
+    document.getElementById("com-ports").addEventListener("change", () => {
+        const comPorts = Array.from(
+            document.getElementById("com-ports").querySelectorAll("input")
+        );
+        const selectedPorts = [];
+
+        comPorts.forEach((port) => {
+            if (port.checked) {
+                selectedPorts.push(port.id);
+                if (!selectedComPorts.includes(port.id)) selectedComPorts.push(port.id);
+            }
+        });
+
+        console.log("Selected COM ports: ", selectedPorts);
+        window.ipc.send("save-setting", { comPorts: selectedPorts });
+
+        // If three ports are selected, disable the rest
+        if (selectedPorts.length >= 3) {
+            comPorts.forEach((port) => {
+                if (!port.checked) {
+                    port.disabled = true;
+                }
+            });
+        } else {
+            // If less than three ports are selected, enable all ports
+            comPorts.forEach((port) => {
+                port.disabled = false;
+            });
+        }
+    });
+}
+
 /*
- * Packet sending
+ * IPC event listeners
  */
 
-function sendAccelPacket(acceleration, trackerID) {
-    packetCount += 1;
-    const ax = acceleration["x"];
-    const ay = acceleration["y"];
-    const az = acceleration["z"];
-    const buffer = buildAccelPacket(ax, ay, az, trackerID);
-
-    sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-        if (err)
-            console.error(`Error sending packet for sensor ${trackerID}:`, err);
-    });
-}
-
-function sendRotationPacket(rotation, trackerID) {
-    packetCount += 1;
-    const x = rotation["x"];
-    const y = rotation["y"];
-    const z = rotation["z"];
-    const w = rotation["w"];
-    const buffer = buildRotationPacket(x, y, z, w, trackerID);
-
-    sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-        if (err)
-            console.error(`Error sending packet for sensor ${trackerID}:`, err);
-    });
-}
-
-// TODO: fix voltage, figure out how to send battery per tracker
-function sendBatteryLevel(percentage, voltage, trackerID) {
-    const buffer = new ArrayBuffer(20);
-    const view = new DataView(buffer);
-    view.setInt32(0, 12);
-    view.setBigInt64(4, BigInt(packetCount));
-    view.setFloat32(12, voltage / 100); // 0.0v-whateverv
-    view.setFloat32(16, percentage / 100); // 0.0-1.0
-    const sendBuffer = new Uint8Array(buffer);
-    sock.send(sendBuffer, 0, sendBuffer.length, slimePort, slimeIP, (err) => {
-        if (err)
-            console.error(`Error sending packet for sensor ${trackerID}:`, err);
-    });
-}
-
-/*
- * Packet building
- */
-
-function buildHandshake() {
-    const fw_string = "Haritora";
-    const buffer = new ArrayBuffer(128);
-    const view = new DataView(buffer);
-    let offset = 0;
-
-    view.setInt32(offset, 3); // packet 3 header
-    offset += 4;
-    view.setBigInt64(offset, BigInt(packetCount)); // packet counter
-    offset += 8;
-    view.setInt32(offset, 0); // Board type
-    offset += 4;
-    view.setInt32(offset, 0); // IMU type
-    offset += 4;
-    view.setInt32(offset, 0); // MCU type
-    offset += 4;
-    for (let i = 0; i < 3; i++) {
-        view.setInt32(offset, 0); // IMU info (unused)
-        offset += 4;
-    }
-    view.setInt32(offset, 0); // Firmware build
-    offset += 4;
-    view.setInt8(offset, fw_string.length); // Length of fw string
-    offset += 1;
-    for (let i = 0; i < fw_string.length; i++) {
-        view.setInt8(offset, fw_string.charCodeAt(i)); // fw string
-        offset += 1;
-    }
-    const macAddress = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
-    for (let i = 0; i < macAddress.length; i++) {
-        view.setInt8(offset, macAddress[i]); // MAC address
-        offset += 1;
-    }
-
-    return new Uint8Array(buffer);
-}
-
-function buildAccelPacket(ax, ay, az, trackerID) {
-    const buffer = new Uint8Array(128);
-    const view = new DataView(buffer.buffer);
-
-    view.setInt32(0, 4); // packet 4 header
-    view.setBigInt64(4, BigInt(packetCount)); // packet counter
-    view.setFloat32(12, ax);
-    view.setFloat32(16, ay);
-    view.setFloat32(20, az);
-    view.setUint8(24, trackerID); // tracker id
-    return buffer;
-}
-
-function buildRotationPacket(qx, qy, qz, qw, trackerID) {
-    const buffer = new Uint8Array(128);
-    const view = new DataView(buffer.buffer);
-
-    view.setInt32(0, 17);
-    view.setBigInt64(4, BigInt(packetCount));
-    view.setUint8(12, trackerID);
-    view.setUint8(13, 1);
-
-    view.setFloat32(14, qx);
-    view.setFloat32(18, qy);
-    view.setFloat32(22, qz);
-    view.setFloat32(26, qw);
-
-    view.setUint8(30, 0);
-
-    return buffer;
-}
-
-app.on("ready", createWindow);
+window.startConnection = startConnection;
+window.stopConnection = stopConnection;
+window.toggleVisualization = toggleVisualization;

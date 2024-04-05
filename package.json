@@ -3,7 +3,7 @@
   "productName": "slimetora",
   "version": "1.0.0-alpha1",
   "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
-  "main": "src/index.js",
+  "main": "src/main.js",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
