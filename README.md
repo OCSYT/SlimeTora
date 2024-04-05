@@ -14,9 +14,9 @@ This fork rewrites improves on the stability and performance of the app by rewri
 
 | SlimeTora connection page | SlimeTora tracker info page |
 |:-:|:-:|
-| ![SlimeTora connection page](slimetora_ss_1.png) | ![SlimeTora tracker info page](slimetora_ss_2.png) |
+| ![SlimeTora connection page](docs/slimetora_ss_1.png) | ![SlimeTora tracker info page](docs/slimetora_ss_2.png) |
 | SlimeTora settings page | SlimeTora about page |
-| ![SlimeTora settings page](slimetora_ss_3.png) | ![SlimeTora about page](slimetora_ss_4.png) |
+| ![SlimeTora settings page](docs/slimetora_ss_3.png) | ![SlimeTora about page](docs/slimetora_ss_4.png) |
 
 # New features
 + Entire frontend and backend rewrite (with [Bulma](https://bulma.io/) and [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter))
@@ -43,7 +43,7 @@ This fork rewrites improves on the stability and performance of the app by rewri
   - Usually, this is the first three (consecutive) available ports. `COM1`/`COM2` are usually already used by other devices, so the ports are likely `COM3`, `COM4`, and `COM5`
   - Check `Device Manager` to see what ports are being used by the trackers as `USB Serial Device`s
 
-    ![Image of Device Manager under the ports category](comports.png)
+    ![Image of Device Manager under the ports category](docs/comports.png)
 
 - Start the SlimeVR server
 - Turn on your trackers and press `Start connection`

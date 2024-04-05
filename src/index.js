@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Populate COM port switches
     const comPortList = document.getElementById("com-ports");
     const comPorts = await window.ipc.invoke("get-com-ports", null);
+
     console.log("COM ports: ", comPorts);
 
     comPorts.forEach((port) => {
@@ -55,7 +56,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     magnetometerSwitch.checked = magnetometerEnabled;
 
     // Set the smoothing input value
-    document.getElementById("smoothing-input").value = smoothingValue.toString();
+    document.getElementById("smoothing-input").value =
+        smoothingValue.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -203,7 +205,9 @@ window.ipc.on(
     (event, trackerID, rotationObject, gravityObject) => {
         if (
             !isActive ||
-      !document.getElementById("device-list").querySelector(`#${trackerID}`)
+            !document
+                .getElementById("device-list")
+                .querySelector(`#${trackerID}`)
         )
             return;
         const now = Date.now();
@@ -217,9 +221,9 @@ window.ipc.on(
         const rotation = `${rotationObject.x.toFixed(
             0
         )}, ${rotationObject.y.toFixed(0)}, ${rotationObject.z.toFixed(0)}`;
-        const gravity = `${gravityObject.x.toFixed(0)}, ${gravityObject.y.toFixed(
+        const gravity = `${gravityObject.x.toFixed(
             0
-        )}, ${gravityObject.z.toFixed(0)}`;
+        )}, ${gravityObject.y.toFixed(0)}, ${gravityObject.z.toFixed(0)}`;
 
         document
             .getElementById(trackerID)
@@ -233,7 +237,7 @@ window.ipc.on(
 window.ipc.on("device-battery", (event, trackerID, battery) => {
     if (!isActive) return;
     document.getElementById(trackerID).querySelector("#battery").innerHTML =
-    battery;
+        battery;
 });
 
 window.ipc.on("error-message", (event, msg) => {
@@ -248,22 +252,26 @@ window.ipc.on("version", (event, version) => {
 
 function addEventListeners() {
     /*
-   * Settings event listeners
-   */
+     * Settings event listeners
+     */
 
     document
         .getElementById("bluetooth-switch")
         .addEventListener("change", function () {
             bluetoothEnabled = !bluetoothEnabled;
             console.log("Bluetooth enabled: " + bluetoothEnabled);
-            window.ipc.send("save-setting", { bluetoothEnabled: bluetoothEnabled });
+            window.ipc.send("save-setting", {
+                bluetoothEnabled: bluetoothEnabled,
+            });
         });
 
-    document.getElementById("gx6-switch").addEventListener("change", function () {
-        gx6Enabled = !gx6Enabled;
-        console.log("GX6 enabled: " + gx6Enabled);
-        window.ipc.send("save-setting", { gx6Enabled: gx6Enabled });
-    });
+    document
+        .getElementById("gx6-switch")
+        .addEventListener("change", function () {
+            gx6Enabled = !gx6Enabled;
+            console.log("GX6 enabled: " + gx6Enabled);
+            window.ipc.send("save-setting", { gx6Enabled: gx6Enabled });
+        });
 
     document
         .getElementById("accelerometer-switch")
@@ -280,7 +288,9 @@ function addEventListeners() {
         .addEventListener("change", function () {
             gyroscopeEnabled = !gyroscopeEnabled;
             console.log("Gyroscope enabled: " + gyroscopeEnabled);
-            window.ipc.send("save-setting", { gyroscopeEnabled: gyroscopeEnabled });
+            window.ipc.send("save-setting", {
+                gyroscopeEnabled: gyroscopeEnabled,
+            });
         });
 
     document
@@ -312,7 +322,8 @@ function addEventListeners() {
         comPorts.forEach((port) => {
             if (port.checked) {
                 selectedPorts.push(port.id);
-                if (!selectedComPorts.includes(port.id)) selectedComPorts.push(port.id);
+                if (!selectedComPorts.includes(port.id))
+                    selectedComPorts.push(port.id);
             }
         });
 

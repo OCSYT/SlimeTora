@@ -3,6 +3,17 @@
   "productName": "slimetora",
   "version": "1.0.0-alpha1",
   "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
+  "author": {
+    "name": "BracketProto",
+    "url": "https://bracketproto.com"
+  },
+  "contributors": [
+    {
+      "name": "JovannMC",
+      "email": "jovannmc@femboyfurry.net",
+      "url": "https://femboyfurry.net"
+    }
+  ],
   "main": "src/main.js",
   "scripts": {
     "start": "electron-forge start",
@@ -10,6 +21,8 @@
     "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
     "lint": "eslint **/*.js"
   },
+  "keywords": [],
+  "license": "MIT",
   "devDependencies": {
     "@electron-forge/cli": "^7.3.1",
     "@electron-forge/maker-zip": "^7.3.1",
@@ -19,12 +32,6 @@
     "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.0"
   },
-  "keywords": [],
-  "author": {
-    "name": "JovannMC",
-    "email": "jovannmc@femboyfurry.net"
-  },
-  "license": "MIT",
   "dependencies": {
     "bulma": "^1.0.0",
     "electron-squirrel-startup": "^1.0.0",
