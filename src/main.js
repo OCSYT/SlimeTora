@@ -157,7 +157,7 @@ ipcMain.on("save-setting", (event, data) => {
         log(`Saved setting ${key} with value ${value}`);
     }
 
-    fs.writeFileSync(configPath, JSON.stringify(config));
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
 });
 
 ipcMain.handle("has-setting", (event, name) => {
