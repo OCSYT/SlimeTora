@@ -4,18 +4,26 @@ let isActive = false;
 let bluetoothEnabled = false;
 let gxEnabled = false;
 const selectedComPorts = [];
+
 let accelerometerEnabled = false;
 let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
 
+let logToFile = false;
+let skipSlimeVRCheck = false;
+
+/*
+ * Renderer functions
+*/
+
 document.addEventListener("DOMContentLoaded", async function () {
-    console.log("DOM loaded");
+    log("DOM loaded");
 
     // Populate COM port switches
     const comPortList = document.getElementById("com-ports");
     const comPorts = await window.ipc.invoke("get-com-ports", null);
 
-    console.log("COM ports: ", comPorts);
+    log(`COM ports: ${JSON.stringify(comPorts)}`);
 
     let rowHTML = "<div class=\"com-port-row\">";
     comPorts.forEach((port, index) => {
@@ -46,6 +54,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     accelerometerEnabled = settings.accelerometerEnabled || false;
     gyroscopeEnabled = settings.gyroscopeEnabled || false;
     magnetometerEnabled = settings.magnetometerEnabled || false;
+    logToFile = settings.logToFile || false;
+    skipSlimeVRCheck = settings.skipSlimeVRCheck || false;
 
     // Get the checkbox elements
     const bluetoothSwitch = document.getElementById("bluetooth-switch");
@@ -53,6 +63,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const accelerometerSwitch = document.getElementById("accelerometer-switch");
     const gyroscopeSwitch = document.getElementById("gyroscope-switch");
     const magnetometerSwitch = document.getElementById("magnetometer-switch");
+    const logToFileSwitch = document.getElementById("log-to-file-switch");
+    const skipSlimeVRSwitch = document.getElementById("skip-slimevr-switch");
 
     // Set the checked property based on the settings
     bluetoothSwitch.checked = bluetoothEnabled;
@@ -60,6 +72,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     accelerometerSwitch.checked = accelerometerEnabled;
     gyroscopeSwitch.checked = gyroscopeEnabled;
     magnetometerSwitch.checked = magnetometerEnabled;
+    logToFileSwitch.checked = logToFile;
+    skipSlimeVRSwitch.checked = skipSlimeVRCheck;
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -75,31 +89,44 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     selectedComPorts.push(...selectedPorts);
 
-    console.log("Settings loaded: ", settings);
+    log(`Settings loaded: ${JSON.stringify(settings)}`);
 
     addEventListeners();
 });
 
-function startConnection() {
-    console.log("Starting connection...");
-    setStatus("searching...");
+// TODO: fix bug with GX dongles where restarting connections doesn't work
+async function startConnection() {
+    log("Starting connection...");
+
+    if (!skipSlimeVRCheck) {
+        const slimeVRFound = await window.ipc.invoke("is-slimevr-connected", null);
+        if (!slimeVRFound) {
+            error("Tried to start connection while not connected to SlimeVR");
+            setStatus("SlimeVR not found");
+            return;
+        } else {
+            log("Skipped SlimeVR check");
+        }
+    }
+
     if (bluetoothEnabled && gxEnabled) {
         window.ipc.send("start-connection", { type: "bluetooth" });
         window.ipc.send("start-connection", {
             type: "gx",
             ports: selectedComPorts,
         });
-        console.log("Starting bluetooth and gx connection with ports: ", selectedComPorts);
+        log(`Starting bluetooth and gx connection with ports: ${selectedComPorts}`);
     } else if (bluetoothEnabled) {
         window.ipc.send("start-connection", { type: "bluetooth" });
+        log("Starting bluetooth connection");
     } else if (gxEnabled) {
         window.ipc.send("start-connection", {
             type: "gx",
             ports: selectedComPorts,
         });
-        console.log("Starting gx connection with ports: ", selectedComPorts);
+        log(`Starting gx connection with ports: ${selectedComPorts}`);
     } else {
-        console.log("No connection method selected");
+        error("No connection method selected");
         setStatus("No connection method selected");
         return;
     }
@@ -108,7 +135,7 @@ function startConnection() {
 }
 
 function stopConnection() {
-    console.log("Stopping connection");
+    log("Stopping connection(s)...");
     isActive = false;
 
     if (bluetoothEnabled) {
@@ -125,13 +152,22 @@ function stopConnection() {
 }
 
 function toggleVisualization() {
-    console.log("Toggling visualization");
+    log("Toggling visualization (not implemented)");
     // TODO implement visualization code for trackers
 }
 
+function openLogsFolder() {
+    log("Opening logs folder...");
+    window.ipc.send("open-logs-folder", null);
+}
+
+/*
+ * Renderer helper functions
+*/
+
 function setStatus(status) {
     document.getElementById("status").innerHTML = status;
-    console.log("Status: " + status);
+    log(`Status: ${status}`);
 }
 
 function addDeviceToList(deviceID) {
@@ -175,14 +211,19 @@ function addDeviceToList(deviceID) {
     // Disable sensor switch for BT devices
     if (deviceID.startsWith("HaritoraXW-")) {
         newDevice.querySelector(`#sensor-switch-${deviceID}`).disabled = true;
-        console.log(`Disabled sensor switch for ${deviceID} (BT device)`);
+        log(`Disabled sensor switch for ${deviceID} (BT device)`);
     }
+
+    // Check settings what sensorMode is set and set the switch accordingly
+    const settings = window.ipc.invoke("get-settings", null);
+    const sensorMode = settings[`${deviceID}Mode`] || 2;
+    newDevice.querySelector(`#sensor-switch-${deviceID}`).checked = sensorMode === 1;
 
     // Add event listener to sensor switch
     newDevice.querySelector(`#sensor-switch-${deviceID}`).addEventListener("change", async () => {
         const sensorSwitch = newDevice.querySelector(`#sensor-switch-${deviceID}`);
         const sensorEnabled = sensorSwitch.checked;
-        console.log(`Sensor switch for ${deviceID} toggled: ${sensorEnabled}`);
+        log(`Sensor switch for ${deviceID} toggled: ${sensorEnabled}`);
 
         const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
         let sensorMode = settings.sensorMode;
@@ -192,6 +233,7 @@ function addDeviceToList(deviceID) {
         sensorMode = sensorEnabled ? 1 : 2;
 
         window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
+        window.ipc.send("save-setting", { [`${deviceID}Mode`]: sensorMode });
     });
 
     // Append the new device to the device list
@@ -203,7 +245,7 @@ function addDeviceToList(deviceID) {
  */
 
 window.ipc.on("connect", (event, deviceID) => {
-    console.log(`Connected to ${deviceID}`);
+    log(`Connected to ${deviceID}`);
     addDeviceToList(deviceID);
     document.getElementById("tracker-count").innerHTML = (
         parseInt(document.getElementById("tracker-count").innerHTML) + 1
@@ -223,13 +265,13 @@ window.ipc.on("connect", (event, deviceID) => {
     if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
     if (magnetometerEnabled) sensorAutoCorrection.push("mag");
 
-    console.log("Sensor auto correction: ", sensorAutoCorrection);
+    log(`Sensor auto correction: ${sensorAutoCorrection}`);
 
     window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
 });
 
 window.ipc.on("disconnect", (event, deviceID) => {
-    console.log(`Disconnected from ${deviceID}`);
+    log(`Disconnected from ${deviceID}`);
     document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").innerHTML = (
         parseInt(document.getElementById("tracker-count").innerHTML) - 1
@@ -288,7 +330,7 @@ window.ipc.on("error-message", (event, msg) => {
 // Set version number
 window.ipc.on("version", (event, version) => {
     document.getElementById("version").innerHTML = version;
-    console.log("Got app version: " + version);
+    log(`Got app version: ${version}`);
 });
 
 function addEventListeners() {
@@ -300,7 +342,7 @@ function addEventListeners() {
         .getElementById("bluetooth-switch")
         .addEventListener("change", function () {
             bluetoothEnabled = !bluetoothEnabled;
-            console.log("Bluetooth enabled: " + bluetoothEnabled);
+            log(`Bluetooth enabled: ${bluetoothEnabled}`);
             window.ipc.send("save-setting", {
                 bluetoothEnabled: bluetoothEnabled,
             });
@@ -310,7 +352,7 @@ function addEventListeners() {
         .getElementById("gx-switch")
         .addEventListener("change", function () {
             gxEnabled = !gxEnabled;
-            console.log("gx enabled: " + gxEnabled);
+            log(`GX enabled: ${gxEnabled}`);
             window.ipc.send("save-setting", { gxEnabled: gxEnabled });
         });
 
@@ -318,13 +360,13 @@ function addEventListeners() {
         .getElementById("accelerometer-switch")
         .addEventListener("change", async function () {
             accelerometerEnabled = !accelerometerEnabled;
-            console.log("Accelerometer enabled: " + accelerometerEnabled);
+            log(`Accelerometer enabled: ${accelerometerEnabled}`);
             window.ipc.send("save-setting", {
                 accelerometerEnabled: accelerometerEnabled,
             });
 
             const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
-            console.log("Active trackers: ", activeTrackers);
+            log(`Active trackers: ${activeTrackers}`);
 
             activeTrackers.forEach(async (deviceID) => {
                 if (deviceID.startsWith("HaritoraXW-")) return;
@@ -339,7 +381,7 @@ function addEventListeners() {
                     sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "accel");
                 }
 
-                console.log("Sensor auto correction: ", sensorAutoCorrection);
+                log(`Sensor auto correction: ${sensorAutoCorrection}`);
 
                 window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
             });
@@ -349,7 +391,7 @@ function addEventListeners() {
         .getElementById("gyroscope-switch")
         .addEventListener("change", async function () {
             gyroscopeEnabled = !gyroscopeEnabled;
-            console.log("Gyroscope enabled: " + gyroscopeEnabled);
+            log(`Gyroscope enabled: ${gyroscopeEnabled}`);
             window.ipc.send("save-setting", {
                 gyroscopeEnabled: gyroscopeEnabled,
             });
@@ -369,7 +411,7 @@ function addEventListeners() {
                     sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "gyro");
                 }
 
-                console.log("Sensor auto correction: ", sensorAutoCorrection);
+                log(`Sensor auto correction: ${sensorAutoCorrection}`);
 
                 window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
             });
@@ -379,7 +421,7 @@ function addEventListeners() {
         .getElementById("magnetometer-switch")
         .addEventListener("change", async function () {
             magnetometerEnabled = !magnetometerEnabled;
-            console.log("Magnetometer enabled: " + magnetometerEnabled);
+            log(`Magnetometer enabled: ${magnetometerEnabled}`);
             window.ipc.send("save-setting", {
                 magnetometerEnabled: magnetometerEnabled,
             });
@@ -399,7 +441,7 @@ function addEventListeners() {
                     sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "mag");
                 }
 
-                console.log("Sensor auto correction: ", sensorAutoCorrection);
+                log(`Sensor auto correction: ${sensorAutoCorrection}`);
 
                 window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
             });
@@ -421,7 +463,7 @@ function addEventListeners() {
             }
         });
 
-        console.log("Selected COM ports: ", selectedPorts);
+        log(`Selected COM ports: ${selectedPorts}`);
         window.ipc.send("save-setting", { comPorts: selectedPorts });
 
         // If three ports are selected, disable the rest
@@ -438,6 +480,29 @@ function addEventListeners() {
             });
         }
     });
+
+    document.getElementById("log-to-file-switch").addEventListener("change", function () {
+        logToFile = !logToFile;
+        log(`Log to file: ${logToFile}`);
+        window.ipc.send("set-logging", logToFile);
+        window.ipc.send("save-setting", { logToFile: logToFile });
+    });
+
+    document.getElementById("skip-slimevr-switch").addEventListener("change", function () {
+        skipSlimeVRCheck = !skipSlimeVRCheck;
+        log(`Skip SlimeVR check: ${skipSlimeVRCheck}`);
+        window.ipc.send("save-setting", { skipSlimeVRCheck: skipSlimeVRCheck });
+    });
+}
+
+function log(message) {
+    window.ipc.send("log", message);
+    console.log(message);
+}
+
+function error(message) {
+    window.ipc.send("error", message);
+    console.error(message);
 }
 
 /*
@@ -447,3 +512,4 @@ function addEventListeners() {
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.toggleVisualization = toggleVisualization;
+window.openLogsFolder = openLogsFolder;

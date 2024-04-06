@@ -1,230 +1,271 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SlimeTora</title>
-    <link rel="stylesheet" href="index.css" />
-    <script src="index.js"></script>
-  </head>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>SlimeTora</title>
+        <link rel="stylesheet" href="index.css" />
+        <script src="index.js"></script>
+    </head>
 
-  <body>
-    <div class="section">
-      <div class="container">
-        <h1 class="title is-1 has-text-centered is-centered">
-          SlimeTora v<span id="version">0.0.0</span>
-        </h1>
-        <br />
-        <h3 class="subtitle has-text-centered">
-          Connected trackers: <span id="tracker-count">0</span>
-        </h3>
-        <br />
-        <div class="buttons is-centered">
-          <button class="button is-primary" onclick="startConnection()">
-            Start connection
-          </button>
-          <button class="button is-danger" onclick="stopConnection()">
-            Stop connection
-          </button>
-        </div>
-        <br />
-        <h2 class="title is-2 has-text-centered has-text-weight-medium">
-          Status: <span id="status">N/A</span>
-        </h2>
-      </div>
-    </div>
-
-    <br />
-
-    <div class="section">
-      <div class="container">
-        <h1 class="title has-text-centered is-2">Tracker information</h1>
-        <br />
-        <div class="buttons is-centered" onclick="toggleVisualization()">
-          <button class="button is-info">Toggle visualization</button>
-        </div>
-        <br />
-        <div class="columns is-multiline" id="device-list">
-          <!--<div class="column">
-            <div class="card">
-              <header class="card-header">
-                <p class="card-header-title is-centered">
-                  Device Name: <span id="device-name">Device 1</span>
-                </p>
-              </header>
-              <div class="card-content">
-                <div class="content">
-                  <p>Device ID: <span id="device-id">123456</span></p>
-                  <p>
-                    Rotation Data: <span id="rotation-data">90, 45, 30</span>
-                  </p>
-                  <p>
-                    Acceleration Data:
-                    <span id="acceleration-data">0.5, 0.7, 0.9</span>
-                  </p>
-                  <p>Battery: <span id="battery">80%</span></p>
+    <body>
+        <!-- Main section -->
+        <div class="section">
+            <div class="container">
+                <h1 class="title is-1 has-text-centered is-centered">
+                    SlimeTora v<span id="version">0.0.0</span>
+                </h1>
+                <br />
+                <h3 class="subtitle has-text-centered">
+                    Connected trackers: <span id="tracker-count">0</span>
+                </h3>
+                <br />
+                <div class="buttons is-centered">
+                    <button
+                        class="button is-primary"
+                        onclick="startConnection()"
+                    >
+                        Start connection
+                    </button>
+                    <button class="button is-danger" onclick="stopConnection()">
+                        Stop connection
+                    </button>
                 </div>
-              </div>
-              <footer class="card-footer">
-                <div class="card-footer-item">
-                  <div class="switch-container">
-                    <label for="sensor-switch">Enable Magnetometer</label>
-                    <div class="switch">
-                      <input type="checkbox" id="sensor-switch" />
-                      <label for="sensor-switch" class="slider round"></label>
+                <br />
+                <h2 class="title is-2 has-text-centered has-text-weight-medium">
+                    Status: <span id="status">N/A</span>
+                </h2>
+            </div>
+        </div>
+
+        <br />
+
+        <!-- Tracker info section -->
+        <div class="section">
+            <div class="container">
+                <h1 class="title has-text-centered is-2">
+                    Tracker information
+                </h1>
+                <br />
+                <div
+                    class="buttons is-centered"
+                    onclick="toggleVisualization()"
+                >
+                    <button class="button is-info">Toggle visualization</button>
+                </div>
+                <br />
+                <div class="columns is-multiline" id="device-list">
+                    <!-- Trackers get populated here -->
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <!-- Settings section -->
+        <div class="section">
+            <div class="container">
+                <h1 class="title has-text-centered is-2 is-spaced">Settings</h1>
+                <br />
+                <div class="columns is-multiline has-text-centered">
+                    <!-- Connection mode setting -->
+                    <div class="column is-6">
+                        <h3 class="title is-4">Connection Mode</h3>
+                        <div class="settings-container">
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="bluetooth-switch"
+                                    />
+                                    <label
+                                        for="bluetooth-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label for="bluetooth-switch">Bluetooth</label>
+                            </div>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input type="checkbox" id="gx-switch" />
+                                    <label
+                                        for="gx-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label for="gx-switch">GX(6/2)</label>
+                            </div>
+                        </div>
                     </div>
-                  </div>
+
+                    <!-- COM port section -->
+                    <div class="column is-6">
+                        <h3 class="title is-4 is-spaced">GX(6/2) COM ports</h3>
+                        <div class="settings-container" id="com-ports">
+                            <!-- COM ports get populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Tracker auto correction setting -->
+                    <div class="column is-6">
+                        <h3 class="title is-4">Tracker Auto Correction</h3>
+                        <div class="settings-container">
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="accelerometer-switch"
+                                    />
+                                    <label
+                                        for="accelerometer-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label
+                                    for="accelerometer-switch"
+                                    style="min-width: 150px"
+                                    >Accelerometer</label
+                                >
+                            </div>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="gyroscope-switch"
+                                    />
+                                    <label
+                                        for="gyroscope-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label
+                                    for="gyroscope-switch"
+                                    style="min-width: 150px"
+                                    >Gyroscope</label
+                                >
+                            </div>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="magnetometer-switch"
+                                    />
+                                    <label
+                                        for="magnetometer-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label
+                                    for="magnetometer-switch"
+                                    style="min-width: 150px"
+                                    >Magnetometer</label
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Debugging settings -->
+                    <div class="column is-6">
+                        <h3 class="title is-4 has-text-warning">Debugging</h3>
+                        <div class="settings-container">
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="log-to-file-switch"
+                                    />
+                                    <label
+                                        for="log-to-file-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label for="log-to-file-switch"
+                                    >Enable log files</label
+                                >
+                            </div>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="skip-slimevr-switch"
+                                    />
+                                    <label
+                                        for="skip-slimevr-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label for="skip-slimevr-switch"
+                                    >Skip SlimeVR check</label
+                                >
+                            </div>
+                            <br />
+                            <button
+                                class="button is-info"
+                                onclick="openLogsFolder()"
+                            >
+                                Open Logs Folder
+                            </button>
+                        </div>
+                    </div>
                 </div>
-              </footer>
             </div>
-          </div>!-->
         </div>
-      </div>
-    </div>
 
-    <br />
-
-    <div class="section">
-      <div class="container">
-        <h1 class="title has-text-centered is-2 is-spaced">Settings</h1>
-        <h2 class="subtitle has-text-centered">
-          Select the COM port to connect to (3 for GX6, 4 for GX6+GX2)
-        </h2>
         <br />
-        <div class="columns is-multiline has-text-centered">
-          <div class="column is-6">
-            <h3 class="title is-4">Connection Mode</h3>
-            <div class="settings-container">
-              <div class="switch-container">
-                <div class="switch">
-                  <input type="checkbox" id="bluetooth-switch" />
-                  <label for="bluetooth-switch" class="slider round"></label>
-                </div>
-                <label for="bluetooth-switch">Bluetooth</label>
-              </div>
-              <div class="switch-container">
-                <div class="switch">
-                  <input type="checkbox" id="gx-switch" />
-                  <label for="gx-switch" class="slider round"></label>
-                </div>
-                <label for="gx-switch">GX</label>
-              </div>
-            </div>
-          </div>
 
-          <div class="column is-6">
-            <h3 class="title is-4 is-spaced">COM port</h3>
-            <div class="settings-container" id="com-ports">
-              <!--<div class="switch-container">
-                <div class="switch">
-                  <input type="checkbox" id="example-switch" />
-                  <label for="example-switch" class="slider round"></label>
+        <!-- About section -->
+        <div class="section">
+            <div class="container">
+                <h1 class="title has-text-centered is-2 is-spaced">About</h1>
+                <h2 class="subtitle has-text-centered">
+                    The SlimeTora project is a project that allows you to
+                    connect the HaritoraX trackers to the SlimeVR server.
+                </h2>
+                <h2 class="subtitle has-text-centered">
+                    Made by
+                    <a href="https://bracketproto.com/">BracketProto</a> and
+                    <a href="https://femboyfurry.net">JovannMC</a>.
+                </h2>
+                <br />
+                <div>
+                    <h2 class="title is-3 has-text-centered">Credits</h2>
+                    <ul class="has-text-centered">
+                        <li>
+                            <a
+                                href="https://github.com/JovannMC/haritorax-interpreter"
+                                >haritorax-interpreter</a
+                            >
+                        </li>
+                        <li>
+                            <a
+                                href="https://github.com/sim1222/haritorax-slimevr-bridge"
+                                >HaritoraX SlimeVR Bridge</a
+                            >
+                        </li>
+                        <li>
+                            <a href="https://github.com/rawify/Quaternion.js"
+                                >Quaternion.js</a
+                            >
+                        </li>
+                        <li>
+                            <a
+                                href="https://github.com/SlimeVR/SlimeVR-Sender-Example/"
+                                >SlimeVR Sender Example</a
+                            >
+                        </li>
+                        <li>
+                            <a href="https://github.com/moslime/moslime/"
+                                >Moslime</a
+                            >
+                        </li>
+                        <li>
+                            <a href="https://discord.gg/SlimeVR"
+                                >SlimeVR Discord server</a
+                            >
+                        </li>
+                    </ul>
                 </div>
-                <label for="example-switch">COM0</label>
-              </div>-->
             </div>
-          </div>
-
-          <div class="column is-6">
-            <h3 class="title is-4">Tracker Auto Correction</h3>
-            <div class="settings-container">
-              <div class="switch-container">
-                <div class="switch">
-                  <input type="checkbox" id="accelerometer-switch" />
-                  <label
-                    for="accelerometer-switch"
-                    class="slider round"
-                  ></label>
-                </div>
-                <label for="accelerometer-switch" style="min-width: 150px"
-                  >Accelerometer</label
-                >
-              </div>
-              <div class="switch-container">
-                <div class="switch">
-                  <input type="checkbox" id="gyroscope-switch" />
-                  <label for="gyroscope-switch" class="slider round"></label>
-                </div>
-                <label for="gyroscope-switch" style="min-width: 150px"
-                  >Gyroscope</label
-                >
-              </div>
-              <div class="switch-container">
-                <div class="switch">
-                  <input type="checkbox" id="magnetometer-switch" />
-                  <label for="magnetometer-switch" class="slider round"></label>
-                </div>
-                <label for="magnetometer-switch" style="min-width: 150px"
-                  >Magnetometer</label
-                >
-              </div>
-            </div>
-          </div>
-
-          <!--<div class="column is-6">
-            <h3 class="title is-4">Smoothing</h3>
-            <div class="field has-addons" style="justify-content: center">
-              <div class="control">
-                <input
-                  class="input"
-                  type="text"
-                  placeholder="Smoothing value"
-                  id="smoothing-input"
-                />
-              </div>
-              <div class="control">
-                <button class="button is-info" id="smoothing-save">Save</button>
-              </div>
-            </div>
-          </div>-->
         </div>
-      </div>
-    </div>
-
-    <br />
-
-    <div class="section">
-      <div class="container">
-        <h1 class="title has-text-centered is-2 is-spaced">About</h1>
-        <h2 class="subtitle has-text-centered">
-          The SlimeTora project is a project that allows you to connect the
-          HaritoraX trackers to the SlimeVR server.
-        </h2>
-        <h2 class="subtitle has-text-centered">
-          Made by <a href="https://bracketproto.com/">BracketProto</a> and
-          <a href="https://femboyfurry.net">JovannMC</a>.
-        </h2>
-        <br />
-        <div>
-          <h2 class="title is-3 has-text-centered">Credits</h2>
-          <ul class="has-text-centered">
-            <li>
-              <a href="https://github.com/JovannMC/haritorax-interpreter"
-                >haritorax-interpreter</a
-              >
-            </li>
-            <li>
-              <a href="https://github.com/sim1222/haritorax-slimevr-bridge"
-                >HaritoraX SlimeVR Bridge</a
-              >
-            </li>
-            <li>
-              <a href="https://github.com/rawify/Quaternion.js"
-                >Quaternion.js</a
-              >
-            </li>
-            <li>
-              <a href="https://github.com/SlimeVR/SlimeVR-Sender-Example/"
-                >SlimeVR Sender Example</a
-              >
-            </li>
-            <li><a href="https://github.com/moslime/moslime/">Moslime</a></li>
-            <li>
-              <a href="https://discord.gg/SlimeVR">SlimeVR Discord server</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </body>
+    </body>
 </html>

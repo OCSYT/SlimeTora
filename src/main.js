@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const { HaritoraXWireless } = require("haritorax-interpreter");
 const { SerialPort } = require("serialport");
 const dgram = require("dgram");
@@ -8,11 +8,12 @@ const path = require("path");
 const sock = dgram.createSocket("udp4");
 
 let mainWindow;
-const device = new HaritoraXWireless(1);
+const device = new HaritoraXWireless(0);
 let connectedDevices = [];
+let logToFile = false;
+let foundSlimeVR = false;
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
-
 const configPath = path.resolve(mainPath, "config.json");
 
 /*
@@ -20,6 +21,15 @@ const configPath = path.resolve(mainPath, "config.json");
  */
 
 const createWindow = () => {
+    // check if logToFile is set in the config before creating the window
+    if (fs.existsSync(configPath)) {
+        const data = fs.readFileSync(configPath);
+        const config = JSON.parse(data.toString());
+        if (Object.prototype.hasOwnProperty.call(config, "logToFile")) {
+            logToFile = config.logToFile;
+        }
+    }
+
     mainWindow = new BrowserWindow({
         autoHideMenuBar: true,
         width: 800,
@@ -42,11 +52,17 @@ const createWindow = () => {
  * Renderer handlers
  */
 
+ipcMain.on("log", (event, arg) => {
+    log(arg, "renderer");
+});
+
+ipcMain.on("error", (event, arg) => {
+    error(arg, "renderer");
+});
+
 ipcMain.on("start-connection", (event, arg) => {
-    console.log(arg);
-    console.log(JSON.stringify(arg));
+    log(`Start connection with: ${JSON.stringify(arg)}`);
     const { type, ports } = arg;
-    console.log("Starting connection for " + type);
     if (type.includes("bluetooth")) {
         connectBluetooth();
     } else if (type.includes("gx") && ports) {
@@ -55,11 +71,10 @@ ipcMain.on("start-connection", (event, arg) => {
 });
 
 ipcMain.on("stop-connection", (event, arg) => {
-    console.log("Stopping connection for " + arg);
+    log(`Stop connection with: ${JSON.stringify(arg)}`);
     if (arg.includes("bluetooth")) {
         device.stopConnection("bluetooth");
-    }
-    if (arg.includes("gx")) {
+    } else if (arg.includes("gx")) {
         device.stopConnection("gx");
     }
 
@@ -79,26 +94,42 @@ ipcMain.handle("get-active-trackers", () => {
     return connectedDevices;
 });
 
+ipcMain.handle("is-slimevr-connected", () => {
+    return foundSlimeVR;
+});
+
 ipcMain.on("set-tracker-settings", (event, arg) => {
     const { deviceID, sensorMode, fpsMode, sensorAutoCorrection } = arg;
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
-        console.error("Invalid settings received: ", arg);
+        error(`Invalid settings received: ${arg}`);
         return;
     }
 
-    console.log("Setting tracker settings for " + deviceID + " to:", arg);
-    console.log("Old tracker settings: ", device.getTrackerSettings(deviceID));
+    log(`Setting tracker settings for ${deviceID} to: ${JSON.stringify(arg)}`);
+    log(`Old tracker settings: ${JSON.stringify(device.getTrackerSettings(deviceID))}`);
     device.setTrackerSettings(deviceID, sensorMode, fpsMode, sensorAutoCorrection, false);
-    console.log("New tracker settings: ", device.getTrackerSettings(deviceID));
+    log(`New tracker settings: ${JSON.stringify(device.getTrackerSettings(deviceID))}`);
+});
+
+ipcMain.on("set-logging", (event, arg) => {
+    logToFile = arg;
+    log(`Logging set to: ${arg}`);
+});
+
+ipcMain.on("open-logs-folder", () => {
+    const logDir = path.resolve(mainPath, "logs");
+    if (fs.existsSync(logDir)) {
+        shell.openPath(logDir);
+    }
 });
 
 async function connectBluetooth() {
-    console.log("Connecting via Bluetooth");
+    log("Connecting via bluetooth");
     device.startConnection("bluetooth");
 }
 
 async function connectGX(ports) {
-    console.log("Connecting via gx");
+    log(`Connecting via GX dongles with ports: ${ports}`);
     device.startConnection("gx", ports);
 }
 
@@ -123,7 +154,7 @@ ipcMain.on("save-setting", (event, data) => {
     for (const key in data) {
         const value = data[key];
         config[key] = value;
-        console.log(`Saved setting ${key} with value ${value}`);
+        log(`Saved setting ${key} with value ${value}`);
     }
 
     fs.writeFileSync(configPath, JSON.stringify(config));
@@ -146,8 +177,9 @@ sock.on("message", (data, src) => {
     if (data.toString("utf-8").includes("Hey OVR =D")) {
         slimeIP = src.address;
         slimePort = src.port;
-        console.log("SlimeVR found at " + slimeIP + ":" + slimePort);
+        log("SlimeVR found at " + slimeIP + ":" + slimePort);
         packetCount += 1;
+        foundSlimeVR = true;
     }
 });
 
@@ -160,14 +192,14 @@ async function handleNextTracker() {
     const trackerName = trackerQueue.shift();
 
     if (connectedDevices.length == 0) {
-        console.log("Adding IMU for device 0 // Handshake");
+        log("Adding IMU for device 0 // Handshake");
 
         const handshake = buildHandshake();
         sock.send(handshake, 0, handshake.length, slimePort, slimeIP, (err) => {
             if (err) {
-                console.error("Error sending handshake:", err);
+                error(`Error sending handshake: ${err}`);
             } else {
-                console.log("Handshake sent successfully");
+                log("Handshake sent successfully");
                 packetCount += 1;
             }
         });
@@ -177,7 +209,7 @@ async function handleNextTracker() {
     } else {
         if (connectedDevices.includes(trackerName)) return;
         packetCount += 1;
-        console.log(`Adding IMU for device ${connectedDevices.length}`);
+        log(`Adding IMU for device ${connectedDevices.length}`);
         await addIMU(connectedDevices.length);
         connectedDevices.push(trackerName);
         connectedDevices.sort();
@@ -201,10 +233,10 @@ function addIMU(deviceID) {
 
         sock.send(imuBuffer, slimePort, slimeIP, (err) => {
             if (err) {
-                console.error("Error sending IMU packet:", err);
+                error(`Error sending IMU packet for device ${deviceID}: ${err}`);
                 reject();
             } else {
-                console.log(`Add IMU: ${deviceID}`);
+                log(`Add IMU: ${deviceID}`);
                 packetCount += 1;
                 resolve();
             }
@@ -218,16 +250,16 @@ function addIMU(deviceID) {
 
 device.on("connect", (deviceID) => {
     if (connectedDevices.includes(deviceID)) return;
-    console.log("Connected devices: " + JSON.stringify(connectedDevices));
+    log("Connected devices: " + JSON.stringify(connectedDevices));
     trackerQueue.push(deviceID);
     handleNextTracker();
-    console.log(`Connected to tracker: ${deviceID}`);
+    log(`Connected to tracker: ${deviceID}`);
     mainWindow.webContents.send("connect", deviceID);
 });
 
 device.on("disconnect", (deviceID) => {
     if (!connectedDevices.includes(deviceID)) return;
-    console.log(`Disconnected from tracker: ${deviceID}`);
+    log(`Disconnected from tracker: ${deviceID}`);
     mainWindow.webContents.send("disconnect", deviceID);
     connectedDevices = connectedDevices.filter((name) => name !== deviceID);
 });
@@ -284,7 +316,7 @@ function sendAccelPacket(acceleration, deviceID) {
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            console.error(`Error sending packet for sensor ${deviceID}:`, err);
+            error(`Error sending packet for sensor ${deviceID}: ${err}`);
     });
 }
 
@@ -298,7 +330,7 @@ function sendRotationPacket(rotation, deviceID) {
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            console.error(`Error sending packet for sensor ${deviceID}:`, err);
+            error(`Error sending packet for sensor ${deviceID}: ${err}`);
     });
 }
 
@@ -313,7 +345,7 @@ function sendBatteryLevel(percentage, voltage, deviceID) {
     const sendBuffer = new Uint8Array(buffer);
     sock.send(sendBuffer, 0, sendBuffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            console.error(`Error sending packet for sensor ${deviceID}:`, err);
+            error(`Error sending packet for sensor ${deviceID}: ${err}`);
     });
 }
 
@@ -388,6 +420,48 @@ function buildRotationPacket(qx, qy, qz, qw, deviceID) {
     view.setUint8(30, 0);
 
     return buffer;
+}
+
+function log(msg, where = "main") {
+    if (logToFile) {
+        const date = new Date();
+        const logDir = path.resolve(mainPath, "logs");
+        const logPath = path.join(logDir, `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${("0" + date.getDate()).slice(-2)}.txt`);
+
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+        }
+
+        // Create the file if it doesn't exist
+        if (!fs.existsSync(logPath)) {
+            fs.writeFileSync(logPath, "");
+        }
+
+        fs.appendFileSync(logPath, `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`);
+    }
+    console.log(msg);
+}
+
+function error(msg, where = "main") {
+    if (logToFile) {
+        const date = new Date();
+        const logDir = path.resolve(mainPath, "logs");
+        const logPath = path.join(logDir, `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${("0" + date.getDate()).slice(-2)}.txt`);
+
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+        }
+
+        // Create the file if it doesn't exist
+        if (!fs.existsSync(logPath)) {
+            fs.writeFileSync(logPath, "");
+        }
+
+        fs.appendFileSync(logPath, `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`);
+    }
+    console.error(msg);
 }
 
 app.on("ready", createWindow);
