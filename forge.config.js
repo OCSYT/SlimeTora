@@ -6,11 +6,11 @@ const { FuseV1Options, FuseVersion } = require("@electron/fuses");
 const config = {
     packagerConfig: {
         asar: true,
-        icon: "src/icon.png"
+        icon: "src/icon.ico"
     },
     rebuildConfig: {},
     makers: [
-        new MakerZIP({icon: "src/icon.png"}, ["win32"])
+        new MakerZIP({icon: "src/icon.ico"}, ["win32"])
     ],
     plugins: [
         new AutoUnpackNativesPlugin({}),
