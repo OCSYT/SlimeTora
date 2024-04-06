@@ -31,7 +31,8 @@ This fork rewrites improves on the stability and performance of the app by rewri
 + ..and many more improvements coming soon!
 
 # Known issues
-- N/A
+- Tracker auto correction and magnetometer (sensor mode) settings do not work for BT
+  - Requires an update to [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter). Help appreciated!
 
 # How to use
 - Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)
@@ -40,12 +41,10 @@ This fork rewrites improves on the stability and performance of the app by rewri
 - (`GX(6/2)` dongles) Select up up to 4 COM ports that your trackers are on (3 if only using GX6, 4 if using GX6+GX2)
   - Usually, this is the first four (consecutive) available ports. `COM1`/`COM2` are usually already used by other devices, so the ports are likely `COM3`, `COM4`, `COM5` (and `COM6` for GX2)
   - Check `Device Manager` to see what ports are being used by the trackers as `USB Serial Device`s
-
     ![Image of Device Manager under the ports category](docs/comports.png)
-
 - Start the SlimeVR server
 - Turn on your trackers and press `Start connection`
-- Assign your trackers in SlimeVR and enjoy! :)
+- Assign your trackers in [SlimeVR server](https://docs.slimevr.dev/server/index.html) and enjoy! :)
 
 # Development
 - Clone the project - `git clone https://github.com/JovannMC/SlimeTora.git`
