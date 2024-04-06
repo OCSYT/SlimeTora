@@ -28,9 +28,17 @@ body {
   color: white;
 }
 
+.com-port-row {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
 .settings-container {
+  display: grid;
   margin: auto;
   width: fit-content;
+  height: fit-content;
 }
 
 .switch-container {

@@ -86,7 +86,10 @@
 
     <div class="section">
       <div class="container">
-        <h1 class="title has-text-centered is-2">Settings</h1>
+        <h1 class="title has-text-centered is-2 is-spaced">Settings</h1>
+        <h2 class="subtitle has-text-centered">
+          Select the COM port to connect to (3 for GX6, 4 for GX6+GX2)
+        </h2>
         <br />
         <div class="columns is-multiline has-text-centered">
           <div class="column is-6">
@@ -101,23 +104,16 @@
               </div>
               <div class="switch-container">
                 <div class="switch">
-                  <input type="checkbox" id="gx6-switch" />
-                  <label for="gx6-switch" class="slider round"></label>
+                  <input type="checkbox" id="gx-switch" />
+                  <label for="gx-switch" class="slider round"></label>
                 </div>
-                <label for="gx6-switch">GX6</label>
-              </div>
-              <div class="switch-container">
-                <div class="switch">
-                  <input type="checkbox" id="gx2-switch" disabled="true" />
-                  <label for="gx2-switch" class="slider round"></label>
-                </div>
-                <label for="gx2-switch">GX2</label>
+                <label for="gx-switch">GX</label>
               </div>
             </div>
           </div>
 
           <div class="column is-6">
-            <h3 class="title is-4">COM port</h3>
+            <h3 class="title is-4 is-spaced">COM port</h3>
             <div class="settings-container" id="com-ports">
               <!--<div class="switch-container">
                 <div class="switch">
@@ -165,7 +161,7 @@
             </div>
           </div>
 
-          <div class="column is-6">
+          <!--<div class="column is-6">
             <h3 class="title is-4">Smoothing</h3>
             <div class="field has-addons" style="justify-content: center">
               <div class="control">
@@ -180,7 +176,7 @@
                 <button class="button is-info" id="smoothing-save">Save</button>
               </div>
             </div>
-          </div>
+          </div>-->
         </div>
       </div>
     </div>

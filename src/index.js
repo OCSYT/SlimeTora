@@ -1,13 +1,12 @@
-// TODO: Make tracker auto correction and smoothing work, and add feature to rename trackers
+// TODO: Add feature to rename trackers
 let isActive = false;
 
 let bluetoothEnabled = false;
-let gx6Enabled = false;
+let gxEnabled = false;
 const selectedComPorts = [];
 let accelerometerEnabled = false;
 let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
-let smoothingValue = 0;
 
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM loaded");
@@ -18,7 +17,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     console.log("COM ports: ", comPorts);
 
-    comPorts.forEach((port) => {
+    let rowHTML = "<div class=\"com-port-row\">";
+    comPorts.forEach((port, index) => {
         const switchHTML = `
         <div class="switch-container">
             <div class="switch">
@@ -29,35 +29,37 @@ document.addEventListener("DOMContentLoaded", async function () {
         </div>
         `;
 
-        comPortList.innerHTML += switchHTML;
+        rowHTML += switchHTML;
+
+        // If there are two COM ports in the row or if this is the last COM port, add the row to the list
+        if ((index + 1) % 2 === 0 || index === comPorts.length - 1) {
+            rowHTML += "</div>";
+            comPortList.innerHTML += rowHTML;
+            rowHTML = "<div class=\"com-port-row\">";
+        }
     });
 
     // Get settings from config file
     const settings = await window.ipc.invoke("get-settings", null);
     bluetoothEnabled = settings.bluetoothEnabled || false;
-    gx6Enabled = settings.gx6Enabled || false;
+    gxEnabled = settings.gxEnabled || false;
     accelerometerEnabled = settings.accelerometerEnabled || false;
     gyroscopeEnabled = settings.gyroscopeEnabled || false;
     magnetometerEnabled = settings.magnetometerEnabled || false;
-    smoothingValue = settings.smoothingValue || 0;
 
     // Get the checkbox elements
     const bluetoothSwitch = document.getElementById("bluetooth-switch");
-    const gx6Switch = document.getElementById("gx6-switch");
+    const gxSwitch = document.getElementById("gx-switch");
     const accelerometerSwitch = document.getElementById("accelerometer-switch");
     const gyroscopeSwitch = document.getElementById("gyroscope-switch");
     const magnetometerSwitch = document.getElementById("magnetometer-switch");
 
     // Set the checked property based on the settings
     bluetoothSwitch.checked = bluetoothEnabled;
-    gx6Switch.checked = gx6Enabled;
+    gxSwitch.checked = gxEnabled;
     accelerometerSwitch.checked = accelerometerEnabled;
     gyroscopeSwitch.checked = gyroscopeEnabled;
     magnetometerSwitch.checked = magnetometerEnabled;
-
-    // Set the smoothing input value
-    document.getElementById("smoothing-input").value =
-        smoothingValue.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -81,20 +83,21 @@ document.addEventListener("DOMContentLoaded", async function () {
 function startConnection() {
     console.log("Starting connection...");
     setStatus("searching...");
-    if (bluetoothEnabled && gx6Enabled) {
+    if (bluetoothEnabled && gxEnabled) {
         window.ipc.send("start-connection", { type: "bluetooth" });
         window.ipc.send("start-connection", {
-            type: "gx6",
+            type: "gx",
             ports: selectedComPorts,
         });
+        console.log("Starting bluetooth and gx connection with ports: ", selectedComPorts);
     } else if (bluetoothEnabled) {
         window.ipc.send("start-connection", { type: "bluetooth" });
-    } else if (gx6Enabled) {
+    } else if (gxEnabled) {
         window.ipc.send("start-connection", {
-            type: "gx6",
+            type: "gx",
             ports: selectedComPorts,
         });
-        console.log("Starting GX6 connection with ports: ", selectedComPorts);
+        console.log("Starting gx connection with ports: ", selectedComPorts);
     } else {
         console.log("No connection method selected");
         setStatus("No connection method selected");
@@ -111,8 +114,8 @@ function stopConnection() {
     if (bluetoothEnabled) {
         window.ipc.send("stop-connection", "bluetooth");
     }
-    if (gx6Enabled) {
-        window.ipc.send("stop-connection", "gx6");
+    if (gxEnabled) {
+        window.ipc.send("stop-connection", "gx");
     }
 
     document.getElementById("tracker-count").innerHTML = "0";
@@ -304,11 +307,11 @@ function addEventListeners() {
         });
 
     document
-        .getElementById("gx6-switch")
+        .getElementById("gx-switch")
         .addEventListener("change", function () {
-            gx6Enabled = !gx6Enabled;
-            console.log("GX6 enabled: " + gx6Enabled);
-            window.ipc.send("save-setting", { gx6Enabled: gx6Enabled });
+            gxEnabled = !gxEnabled;
+            console.log("gx enabled: " + gxEnabled);
+            window.ipc.send("save-setting", { gxEnabled: gxEnabled });
         });
 
     document
@@ -402,16 +405,6 @@ function addEventListeners() {
             });
         });
 
-    document
-        .getElementById("smoothing-save")
-        .addEventListener("click", function () {
-            smoothingValue = parseFloat(
-                document.getElementById("smoothing-input").value
-            );
-            console.log("Smoothing value: " + smoothingValue);
-            window.ipc.send("save-setting", { smoothingValue: smoothingValue });
-        });
-
     document.getElementById("com-ports").addEventListener("change", () => {
         const comPorts = Array.from(
             document.getElementById("com-ports").querySelectorAll("input")
@@ -423,6 +416,8 @@ function addEventListeners() {
                 selectedPorts.push(port.id);
                 if (!selectedComPorts.includes(port.id))
                     selectedComPorts.push(port.id);
+            } else {
+                selectedComPorts.splice(selectedComPorts.indexOf(port.id), 1);
             }
         });
 
@@ -430,7 +425,7 @@ function addEventListeners() {
         window.ipc.send("save-setting", { comPorts: selectedPorts });
 
         // If three ports are selected, disable the rest
-        if (selectedPorts.length >= 3) {
+        if (selectedPorts.length >= 4) {
             comPorts.forEach((port) => {
                 if (!port.checked) {
                     port.disabled = true;

@@ -4,7 +4,7 @@
 
 
 # SlimeTora
-A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX6 communication dongle.
+A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX(6/2) communication dongles!.
 
 This fork rewrites improves on the stability and performance of the app by rewriting the entire program from scratch; frontend and backend.
 
@@ -23,7 +23,7 @@ This fork rewrites improves on the stability and performance of the app by rewri
   + The program now has a new UI, the code is cleaner and more maintainable, and should hopefully improve stability/performance.
 + Package app files with `asar`
   + No need to extract thousands of files anymore 😅
-+ Bluetooth and GX6 support (including at the same time), with GX2 soon
++ Bluetooth and GX(6/2) support (including all at the same time)
   + Welcome elbow tracker users!
 + New SlimeTora logo
 + Dynamically grab version number from package.json (instead of relying on manually changing it per release)
@@ -38,9 +38,9 @@ This fork rewrites improves on the stability and performance of the app by rewri
 # How to use
 - Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)
 - Download and run the latest [SlimeTora](https://github.com/JovannMC/SlimeTora/releases/latest) release
-- Select the mode to connect to the trackers (BT/GX6 or both)
-- (GX6) Select the 3 COM ports that your trackers are on
-  - Usually, this is the first three (consecutive) available ports. `COM1`/`COM2` are usually already used by other devices, so the ports are likely `COM3`, `COM4`, and `COM5`
+- Select the mode to connect to the trackers (BT/GX or both)
+- (GX dongles) Select up up to 4 COM ports that your trackers are on (3 if only using GX6, 4 if using GX6+GX2)
+  - Usually, this is the first four (consecutive) available ports. `COM1`/`COM2` are usually already used by other devices, so the ports are likely `COM3`, `COM4`, `COM5` (and `COM6` for GX2)
   - Check `Device Manager` to see what ports are being used by the trackers as `USB Serial Device`s
 
     ![Image of Device Manager under the ports category](docs/comports.png)

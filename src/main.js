@@ -8,7 +8,7 @@ const path = require("path");
 const sock = dgram.createSocket("udp4");
 
 let mainWindow;
-const device = new HaritoraXWireless(0);
+const device = new HaritoraXWireless(1);
 let connectedDevices = [];
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
@@ -49,8 +49,8 @@ ipcMain.on("start-connection", (event, arg) => {
     console.log("Starting connection for " + type);
     if (type.includes("bluetooth")) {
         connectBluetooth();
-    } else if (type.includes("gx6") && ports) {
-        connectGX6(ports);
+    } else if (type.includes("gx") && ports) {
+        connectGX(ports);
     }
 });
 
@@ -59,8 +59,8 @@ ipcMain.on("stop-connection", (event, arg) => {
     if (arg.includes("bluetooth")) {
         device.stopConnection("bluetooth");
     }
-    if (arg.includes("gx6")) {
-        device.stopConnection("gx6");
+    if (arg.includes("gx")) {
+        device.stopConnection("gx");
     }
 
     connectedDevices = [];
@@ -97,9 +97,9 @@ async function connectBluetooth() {
     device.startConnection("bluetooth");
 }
 
-async function connectGX6(ports) {
-    console.log("Connecting via GX6");
-    device.startConnection("gx6", ports);
+async function connectGX(ports) {
+    console.log("Connecting via gx");
+    device.startConnection("gx", ports);
 }
 
 /*
