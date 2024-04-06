@@ -113,7 +113,7 @@ ipcMain.on("set-tracker-settings", (event, arg) => {
 
 ipcMain.on("set-logging", (event, arg) => {
     logToFile = arg;
-    log(`Logging set to: ${arg}`);
+    log(`Logging to file set to: ${arg}`);
 });
 
 ipcMain.on("open-logs-folder", () => {

@@ -98,17 +98,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 async function startConnection() {
     log("Starting connection...");
 
-    if (!skipSlimeVRCheck) {
-        const slimeVRFound = await window.ipc.invoke("is-slimevr-connected", null);
-        if (!slimeVRFound) {
-            error("Tried to start connection while not connected to SlimeVR");
-            setStatus("SlimeVR not found");
-            return;
-        } else {
-            log("Skipped SlimeVR check");
-        }
+    const slimeVRFound = await window.ipc.invoke("is-slimevr-connected", null);
+    if (!slimeVRFound && !skipSlimeVRCheck) {
+        error("Tried to start connection while not connected to SlimeVR");
+        setStatus("SlimeVR not found");
+        return;
+    } else if (!slimeVRFound && skipSlimeVRCheck) {
+        log("SlimeVR check skipped");
     }
-
+    
     if (bluetoothEnabled && gxEnabled) {
         window.ipc.send("start-connection", { type: "bluetooth" });
         window.ipc.send("start-connection", {
@@ -126,8 +124,8 @@ async function startConnection() {
         });
         log(`Starting gx connection with ports: ${selectedComPorts}`);
     } else {
-        error("No connection method selected");
-        setStatus("No connection method selected");
+        error("No connection mode enabled");
+        setStatus("No connection mode enabled");
         return;
     }
 
@@ -167,10 +165,12 @@ function openLogsFolder() {
 
 function setStatus(status) {
     document.getElementById("status").innerHTML = status;
-    log(`Status: ${status}`);
+    log(`Set status to: ${status}`);
 }
 
 function addDeviceToList(deviceID) {
+    log(`Adding device to device list: ${deviceID}`);
+
     const deviceList = document.getElementById("device-list");
 
     // Create a new div element
@@ -209,7 +209,7 @@ function addDeviceToList(deviceID) {
     `;
 
     // Disable sensor switch for BT devices
-    if (deviceID.startsWith("HaritoraXW-")) {
+    if (deviceID.startsWith("HaritoraX")) {
         newDevice.querySelector(`#sensor-switch-${deviceID}`).disabled = true;
         log(`Disabled sensor switch for ${deviceID} (BT device)`);
     }
@@ -253,7 +253,7 @@ window.ipc.on("connect", (event, deviceID) => {
 
     setStatus("connected");
 
-    if (deviceID.startsWith("HaritoraXW-")) return;
+    if (deviceID.startsWith("HaritoraX")) return;
 
     // set sensorAutoCorrection settings
     const settings = window.ipc.invoke("get-tracker-settings", deviceID);
@@ -265,7 +265,7 @@ window.ipc.on("connect", (event, deviceID) => {
     if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
     if (magnetometerEnabled) sensorAutoCorrection.push("mag");
 
-    log(`Sensor auto correction: ${sensorAutoCorrection}`);
+    log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
 
     window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
 });
@@ -319,8 +319,8 @@ window.ipc.on(
 
 window.ipc.on("device-battery", (event, deviceID, battery) => {
     if (!isActive) return;
-    document.getElementById(deviceID).querySelector("#battery").innerHTML =
-        battery;
+    document.getElementById(deviceID).querySelector("#battery").innerHTML = battery;
+    log(`Received battery remaining for ${deviceID}: ${battery}`);
 });
 
 window.ipc.on("error-message", (event, msg) => {
@@ -342,7 +342,7 @@ function addEventListeners() {
         .getElementById("bluetooth-switch")
         .addEventListener("change", function () {
             bluetoothEnabled = !bluetoothEnabled;
-            log(`Bluetooth enabled: ${bluetoothEnabled}`);
+            log(`Switched bluetooth to: ${bluetoothEnabled}`);
             window.ipc.send("save-setting", {
                 bluetoothEnabled: bluetoothEnabled,
             });
@@ -352,7 +352,7 @@ function addEventListeners() {
         .getElementById("gx-switch")
         .addEventListener("change", function () {
             gxEnabled = !gxEnabled;
-            log(`GX enabled: ${gxEnabled}`);
+            log(`Switched GX to: ${gxEnabled}`);
             window.ipc.send("save-setting", { gxEnabled: gxEnabled });
         });
 
@@ -360,7 +360,7 @@ function addEventListeners() {
         .getElementById("accelerometer-switch")
         .addEventListener("change", async function () {
             accelerometerEnabled = !accelerometerEnabled;
-            log(`Accelerometer enabled: ${accelerometerEnabled}`);
+            log(`Switched accelerometer to: ${accelerometerEnabled}`);
             window.ipc.send("save-setting", {
                 accelerometerEnabled: accelerometerEnabled,
             });
@@ -369,7 +369,7 @@ function addEventListeners() {
             log(`Active trackers: ${activeTrackers}`);
 
             activeTrackers.forEach(async (deviceID) => {
-                if (deviceID.startsWith("HaritoraXW-")) return;
+                if (deviceID.startsWith("HaritoraX")) return;
                 const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
                 const sensorMode = settings.sensorMode;
                 const fpsMode = settings.fpsMode || 100;
@@ -381,7 +381,7 @@ function addEventListeners() {
                     sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "accel");
                 }
 
-                log(`Sensor auto correction: ${sensorAutoCorrection}`);
+                log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
 
                 window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
             });
@@ -397,9 +397,10 @@ function addEventListeners() {
             });
 
             const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
+            log(`Active trackers: ${activeTrackers}`);
 
             activeTrackers.forEach(async (deviceID) => {
-                if (deviceID.startsWith("HaritoraXW-")) return;
+                if (deviceID.startsWith("HaritoraX")) return;
                 const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
                 const sensorMode = settings.sensorMode;
                 const fpsMode = settings.fpsMode || 100;
@@ -411,7 +412,7 @@ function addEventListeners() {
                     sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "gyro");
                 }
 
-                log(`Sensor auto correction: ${sensorAutoCorrection}`);
+                log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
 
                 window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
             });
@@ -427,9 +428,10 @@ function addEventListeners() {
             });
 
             const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
+            log(`Active trackers: ${activeTrackers}`);
 
             activeTrackers.forEach(async (deviceID) => {
-                if (deviceID.startsWith("HaritoraXW-")) return;
+                if (deviceID.startsWith("HaritoraX")) return;
                 const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
                 const sensorMode = settings.sensorMode;
                 const fpsMode = settings.fpsMode || 100;
@@ -441,7 +443,7 @@ function addEventListeners() {
                     sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "mag");
                 }
 
-                log(`Sensor auto correction: ${sensorAutoCorrection}`);
+                log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
 
                 window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
             });
@@ -466,7 +468,7 @@ function addEventListeners() {
         log(`Selected COM ports: ${selectedPorts}`);
         window.ipc.send("save-setting", { comPorts: selectedPorts });
 
-        // If three ports are selected, disable the rest
+        // If four ports are selected, disable the rest
         if (selectedPorts.length >= 4) {
             comPorts.forEach((port) => {
                 if (!port.checked) {
@@ -474,7 +476,7 @@ function addEventListeners() {
                 }
             });
         } else {
-            // If less than three ports are selected, enable all ports
+            // If less than four ports are selected, enable all ports
             comPorts.forEach((port) => {
                 port.disabled = false;
             });
