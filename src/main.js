@@ -340,7 +340,7 @@ function sendBatteryLevel(percentage, voltage, deviceID) {
     const view = new DataView(buffer);
     view.setInt32(0, 12);
     view.setBigInt64(4, BigInt(packetCount));
-    view.setFloat32(12, voltage / 100); // 0.0v-whateverv
+    view.setFloat32(12, voltage / 1000); // voltage is in mV, convert to V
     view.setFloat32(16, percentage / 100); // 0.0-1.0
     const sendBuffer = new Uint8Array(buffer);
     sock.send(sendBuffer, 0, sendBuffer.length, slimePort, slimeIP, (err) => {
