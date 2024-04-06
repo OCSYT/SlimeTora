@@ -4,7 +4,7 @@
 
 
 # SlimeTora
-A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting Bluetooth and the GX(6/2) communication dongles!.
+A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting `Bluetooth` and the `GX(6/2)` communication dongles.
 
 This fork rewrites improves on the stability and performance of the app by rewriting the entire program from scratch; frontend and backend.
 
@@ -23,23 +23,21 @@ This fork rewrites improves on the stability and performance of the app by rewri
   + The program now has a new UI, the code is cleaner and more maintainable, and should hopefully improve stability/performance.
 + Package app files with `asar`
   + No need to extract thousands of files anymore 😅
-+ Bluetooth and GX(6/2) support (including all at the same time)
++ `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
   + Welcome elbow tracker users!
++ New debugging options
 + New SlimeTora logo
 + Dynamically grab version number from package.json (instead of relying on manually changing it per release)
-+ and many more improvements coming soon!
++ ..and many more improvements coming soon!
 
 # Known issues
-- `GX2` connection mode option disabled
-  - This is coming in the future!
-- Tracker auto correction/smoothing/toggle visualization does nothing
-  - `v1.0.0-alpha1` does not currently support these options and are coming in the future
+- N/A
 
 # How to use
 - Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)
 - Download and run the latest [SlimeTora](https://github.com/JovannMC/SlimeTora/releases/latest) release
 - Select the mode to connect to the trackers (BT/GX or both)
-- (GX dongles) Select up up to 4 COM ports that your trackers are on (3 if only using GX6, 4 if using GX6+GX2)
+- (`GX(6/2)` dongles) Select up up to 4 COM ports that your trackers are on (3 if only using GX6, 4 if using GX6+GX2)
   - Usually, this is the first four (consecutive) available ports. `COM1`/`COM2` are usually already used by other devices, so the ports are likely `COM3`, `COM4`, `COM5` (and `COM6` for GX2)
   - Check `Device Manager` to see what ports are being used by the trackers as `USB Serial Device`s
 
@@ -48,8 +46,6 @@ This fork rewrites improves on the stability and performance of the app by rewri
 - Start the SlimeVR server
 - Turn on your trackers and press `Start connection`
 - Assign your trackers in SlimeVR and enjoy! :)
-
-Make sure you connect all trackers before assigning the roles in SlimeVR, and go through the usual calibration steps in the SlimeVR software after.
 
 # Development
 - Clone the project - `git clone https://github.com/JovannMC/SlimeTora.git`
