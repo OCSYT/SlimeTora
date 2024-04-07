@@ -1,4 +1,3 @@
-//
 // TODO: Add feature to rename trackers
 let isActive = false;
 

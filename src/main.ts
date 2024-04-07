@@ -8,7 +8,7 @@ import * as path from "path";
 
 const sock = dgram.createSocket("udp4");
 
-// ! fix data being sent to slimevr sometimes going from 100 to 50 fps
+// TODO: investigate data being sent to SlimeVR server sometimes going from 100fps to 50 fps and vice versa, unknown what's causing it
 
 const {
     BoardType,
@@ -26,7 +26,7 @@ const {
 let mainWindow: BrowserWindow | null = null;
 const device = new HaritoraXWireless(0);
 let connectedDevices: string[] = [];
-let logToFile = false;
+let canLogToFile = false;
 let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
 
@@ -42,8 +42,8 @@ const createWindow = () => {
     if (fs.existsSync(configPath)) {
         const data = fs.readFileSync(configPath);
         const config = JSON.parse(data.toString());
-        if (Object.prototype.hasOwnProperty.call(config, "logToFile")) {
-            logToFile = config.logToFile;
+        if (Object.prototype.hasOwnProperty.call(config, "canLogToFile")) {
+            canLogToFile = config.canLogToFile;
         }
     }
 
@@ -143,7 +143,7 @@ ipcMain.on("set-tracker-settings", (event, arg) => {
 });
 
 ipcMain.on("set-logging", (event, arg) => {
-    logToFile = arg;
+    canLogToFile = arg;
     log(`Logging to file set to: ${arg}`);
 });
 
@@ -278,7 +278,7 @@ device.on(
 );
 
 function log(msg: string, where = "main") {
-    if (logToFile) {
+    if (canLogToFile) {
         const date = new Date();
         const logDir = path.resolve(mainPath, "logs");
         const logPath = path.join(
@@ -307,7 +307,7 @@ function log(msg: string, where = "main") {
 }
 
 function error(msg: string, where = "main") {
-    if (logToFile) {
+    if (canLogToFile) {
         const date = new Date();
         const logDir = path.resolve(mainPath, "logs");
         const logPath = path.join(
