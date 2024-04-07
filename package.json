@@ -14,28 +14,30 @@
       "url": "https://femboyfurry.net"
     }
   ],
-  "main": "src/main.js",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "electron-forge start",
-    "build": "electron-forge make",
+    "start": "npm run preload && electron .",
+    "build": "npm run preload && electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='build/' --icon=src/icon.ico --asar",
+    "preload": "del-cli dist/ && tsc && npm run copy-files",
+    "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" dist/",
     "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
     "lint": "eslint **/*.js"
   },
   "keywords": [],
   "license": "MIT",
   "devDependencies": {
-    "@electron-forge/cli": "^7.3.1",
-    "@electron-forge/maker-zip": "^7.3.1",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.3.1",
-    "@electron-forge/plugin-fuses": "^7.3.1",
+    "@electron/packager": "^18.3.2",
+    "@types/node": "^20.12.5",
+    "copyfiles": "^2.4.1",
+    "del-cli": "^5.1.0",
     "electron": "29.1.6",
     "electron-rebuild": "^3.2.9",
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.4"
   },
   "dependencies": {
     "@slimevr/firmware-protocol": "^0.4.1",
     "bulma": "^1.0.0",
-    "electron-squirrel-startup": "^1.0.0",
     "haritorax-interpreter": "^1.5.0",
     "quaternion": "^1.5.1",
     "sass": "^1.72.0"

@@ -1,6 +1,6 @@
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
-<img src="src/icon.png" width="128px">
+<img src="docs/icon.png" width="128px">
 
 
 # SlimeTora

@@ -88,9 +88,10 @@ typings/
 # Vite
 .vite/
 
-# Electron-Forge
-out/
+dist/
 
 src/config.json
 
-logs/
+build/
+
+out/

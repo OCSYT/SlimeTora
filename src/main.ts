@@ -1,10 +1,11 @@
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
-const { HaritoraXWireless } = require("haritorax-interpreter");
-const { SerialPort } = require("serialport");
-const dgram = require("dgram");
-const Quaternion = require("quaternion");
-const fs = require("fs");
-const path = require("path");
+import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { HaritoraXWireless } from "haritorax-interpreter";
+import { SerialPort } from "serialport";
+import * as dgram from "dgram";
+import Quaternion from "quaternion";
+import * as fs from "fs";
+import * as path from "path";
+
 const sock = dgram.createSocket("udp4");
 
 // ! fix data being sent to slimevr sometimes going from 100 to 50 fps
@@ -22,9 +23,9 @@ const {
     ServerBoundSensorInfoPacket,
 } = require("@slimevr/firmware-protocol");
 
-let mainWindow;
+let mainWindow: BrowserWindow | null = null;
 const device = new HaritoraXWireless(0);
-let connectedDevices = [];
+let connectedDevices: string[] = [];
 let logToFile = false;
 let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
@@ -158,7 +159,7 @@ async function connectBluetooth() {
     device.startConnection("bluetooth");
 }
 
-async function connectGX(ports) {
+async function connectGX(ports: string[]) {
     log(`Connecting via GX dongles with ports: ${ports}`);
     device.startConnection("gx", ports);
 }
@@ -199,7 +200,7 @@ ipcMain.handle("has-setting", (event, name) => {
  * Interpreter event listeners
  */
 
-device.on("connect", (deviceID) => {
+device.on("connect", (deviceID: string) => {
     if (connectedDevices.includes(deviceID)) return;
     trackerQueue.push(deviceID);
     handleNextTracker();
@@ -208,7 +209,7 @@ device.on("connect", (deviceID) => {
     log("Connected devices: " + JSON.stringify(connectedDevices));
 });
 
-device.on("disconnect", (deviceID) => {
+device.on("disconnect", (deviceID: string) => {
     if (!connectedDevices.includes(deviceID)) return;
     log(`Disconnected from tracker: ${deviceID}`);
     mainWindow.webContents.send("disconnect", deviceID);
@@ -216,48 +217,67 @@ device.on("disconnect", (deviceID) => {
     log("Connected devices: " + JSON.stringify(connectedDevices));
 });
 
-device.on("imu", (trackerName, rotation, gravity) => {
-    if (!connectedDevices.includes(trackerName) || !rotation || !gravity)
-        return;
+device.on(
+    "imu",
+    (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
+        if (!connectedDevices.includes(trackerName) || !rawRotation || !rawGravity)
+            return;
 
-    // Convert rotation to quaternion to euler angles in radians
-    const quaternion = new Quaternion(
-        rotation.w,
-        rotation.x,
-        rotation.y,
-        rotation.z
-    );
-    const eulerRadians = quaternion.toEuler("XYZ");
+        // Convert rotation to quaternion to euler angles in radians
+        const quaternion = new Quaternion(
+            rawRotation.w,
+            rawRotation.x,
+            rawRotation.y,
+            rawRotation.z
+        );
+        const eulerRadians = quaternion.toEuler("XYZ");
 
-    // Convert the Euler angles to degrees
-    const eulerDegrees = {
-        x: eulerRadians[0] * (180 / Math.PI),
-        y: eulerRadians[1] * (180 / Math.PI),
-        z: eulerRadians[2] * (180 / Math.PI),
-    };
+        // Convert the Euler angles to degrees
+        const rotation = {
+            x: eulerRadians[0] * (180 / Math.PI),
+            y: eulerRadians[1] * (180 / Math.PI),
+            z: eulerRadians[2] * (180 / Math.PI),
+        };
 
-    sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
-    sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
+        const gravity = {
+            x: rawGravity.x,
+            y: rawGravity.y,
+            z: rawGravity.z,
+        };
 
-    mainWindow.webContents.send(
-        "device-data",
-        trackerName,
-        eulerDegrees,
-        gravity
-    );
-});
+        sendRotationPacket(rawRotation, connectedDevices.indexOf(trackerName));
+        sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
 
-device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
-    sendBatteryLevel(
-        batteryRemaining,
-        batteryVoltage,
-        connectedDevices.indexOf(trackerName)
-    );
-    mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
-    log(`Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltage / 1000}V)`);
-});
+        mainWindow.webContents.send("device-data", {
+            trackerName,
+            rotation,
+            gravity,
+        });
+    }
+);
 
-function log(msg, where = "main") {
+device.on(
+    "battery",
+    (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
+        sendBatteryLevel(
+            batteryRemaining,
+            batteryVoltage,
+            connectedDevices.indexOf(trackerName)
+        );
+        mainWindow.webContents.send(
+            "battery-data",
+            trackerName,
+            batteryRemaining
+        );
+        log(
+            `Received battery data for ${trackerName}: ${batteryRemaining}% (${
+                batteryVoltage / 1000
+            }V)`
+        );
+    }
+);
+
+function log(msg: string, where = "main") {
     if (logToFile) {
         const date = new Date();
         const logDir = path.resolve(mainPath, "logs");
@@ -286,7 +306,7 @@ function log(msg, where = "main") {
     console.log(msg);
 }
 
-function error(msg, where = "main") {
+function error(msg: string, where = "main") {
     if (logToFile) {
         const date = new Date();
         const logDir = path.resolve(mainPath, "logs");
@@ -334,7 +354,7 @@ sock.on("message", (data, src) => {
 });
 
 let isHandlingTracker = false;
-const trackerQueue = [];
+const trackerQueue: string[] = [];
 
 async function handleNextTracker() {
     if (trackerQueue.length === 0 || isHandlingTracker) return;
@@ -354,7 +374,6 @@ async function handleNextTracker() {
             connectedDevices.push(trackerName);
             connectedDevices.sort();
         }
-        
     }
 
     isHandlingTracker = false;
@@ -367,7 +386,7 @@ async function handleNextTracker() {
  */
 
 // Sends a handshake packet to SlimeVR Server (first IMU tracker)
-async function sendHandshakePacket(trackerName) {
+async function sendHandshakePacket(trackerName: string) {
     return new Promise((resolve, reject) => {
         packetCount += 1;
 
@@ -385,7 +404,9 @@ async function sendHandshakePacket(trackerName) {
                 error(`Error sending handshake: ${err}`);
                 reject(false);
             } else {
-                log(`Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length} // Handshake`);
+                log(
+                    `Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length} // Handshake`
+                );
                 resolve(true);
             }
         });
@@ -393,7 +414,7 @@ async function sendHandshakePacket(trackerName) {
 }
 
 // Adds a new IMU tracker to SlimeVR Server
-async function sendSensorInfoPacket(trackerName) {
+async function sendSensorInfoPacket(trackerName: string) {
     return new Promise((resolve, reject) => {
         packetCount += 1;
 
@@ -401,7 +422,7 @@ async function sendSensorInfoPacket(trackerName) {
             BigInt(packetCount),
             connectedDevices.length,
             SensorStatus.OK,
-            SensorType.UNKNOWN,
+            SensorType.UNKNOWN
         );
 
         sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
@@ -409,24 +430,25 @@ async function sendSensorInfoPacket(trackerName) {
                 error(`Error sending sensor info packet: ${err}`);
                 reject(false);
             } else {
-                log(`Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length}`);
+                log(
+                    `Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length}`
+                );
                 resolve(true);
                 packetCount += 1;
             }
         });
     });
-    
 }
 
-function sendAccelPacket(acceleration, deviceID) {
+function sendAccelPacket(acceleration: Gravity, deviceID: number) {
     packetCount += 1;
 
     // turn acceleration object into array with 3 values
-    acceleration = [acceleration.x, acceleration.y, acceleration.z];
+    let accelerationArray = [acceleration.x, acceleration.y, acceleration.z];
     const buffer = ServerBoundAccelPacket.encode(
         BigInt(packetCount),
         deviceID,
-        acceleration
+        accelerationArray
     );
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
@@ -437,16 +459,16 @@ function sendAccelPacket(acceleration, deviceID) {
     });
 }
 
-function sendRotationPacket(rotation, deviceID) {
+function sendRotationPacket(rotation: Rotation, deviceID: number) {
     packetCount += 1;
-    
+
     // turn rotation object into array with 4 values
-    rotation = [rotation.x, rotation.y, rotation.z, rotation.w];
+    let rotationArray = [rotation.x, rotation.y, rotation.z, rotation.w];
     const buffer = ServerBoundRotationDataPacket.encode(
         BigInt(packetCount),
         deviceID,
         RotationDataType.NORMAL,
-        rotation,
+        rotationArray,
         0
     );
 
@@ -458,13 +480,22 @@ function sendRotationPacket(rotation, deviceID) {
     });
 }
 
-function sendBatteryLevel(percentage, voltage, deviceID) {
+function sendBatteryLevel(
+    percentage: number,
+    voltage: number,
+    deviceID: number
+) {
     // Send lowest battery data to SlimeVR server (cannot send battery data for individual sensors)
-    if (percentage < lowestBatteryData.percentage || voltage < lowestBatteryData.voltage) {
+    if (
+        percentage < lowestBatteryData.percentage ||
+        voltage < lowestBatteryData.voltage
+    ) {
         lowestBatteryData.percentage = percentage;
         lowestBatteryData.voltage = voltage;
         log(
-            `Set lowest battery data: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage / 1000}V)`
+            `Set lowest battery data: ${lowestBatteryData.percentage}% (${
+                lowestBatteryData.voltage / 1000
+            }V)`
         );
     }
 
@@ -472,9 +503,9 @@ function sendBatteryLevel(percentage, voltage, deviceID) {
     const buffer = ServerBoundBatteryLevelPacket.encode(
         BigInt(packetCount),
         lowestBatteryData.voltage / 1000,
-        lowestBatteryData.percentage,
+        lowestBatteryData.percentage
     );
-    
+
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err) {
             error(
@@ -482,9 +513,10 @@ function sendBatteryLevel(percentage, voltage, deviceID) {
             );
         } else {
             log(
-                `Sent battery data to SlimeVR server: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage / 1000}V)`
+                `Sent battery data to SlimeVR server: ${
+                    lowestBatteryData.percentage
+                }% (${lowestBatteryData.voltage / 1000}V)`
             );
-        
         }
     });
 }
@@ -496,3 +528,20 @@ app.on("window-all-closed", () => {
     device.stopConnection("gx");
     app.quit();
 });
+
+/*
+ * TypeScript declarations
+ */
+
+interface Rotation {
+    x: number;
+    y: number;
+    z: number;
+    w: number;
+}
+
+interface Gravity {
+    x: number;
+    y: number;
+    z: number;
+}

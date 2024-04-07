@@ -1,20 +1,21 @@
+//
 // TODO: Add feature to rename trackers
 let isActive = false;
 
 let bluetoothEnabled = false;
 let gxEnabled = false;
-const selectedComPorts = [];
+const selectedComPorts: string[] = [];
 
 let accelerometerEnabled = false;
 let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
 
-let logToFile = false;
+let canLogToFile = false;
 let skipSlimeVRCheck = false;
 
 /*
  * Renderer functions
-*/
+ */
 
 document.addEventListener("DOMContentLoaded", async function () {
     log("DOM loaded");
@@ -25,8 +26,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     log(`COM ports: ${JSON.stringify(comPorts)}`);
 
-    let rowHTML = "<div class=\"com-port-row\">";
-    comPorts.forEach((port, index) => {
+    let rowHTML = '<div class="com-port-row">';
+    comPorts.forEach((port: string, index: number) => {
         const switchHTML = `
         <div class="switch-container">
             <div class="switch">
@@ -43,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if ((index + 1) % 2 === 0 || index === comPorts.length - 1) {
             rowHTML += "</div>";
             comPortList.innerHTML += rowHTML;
-            rowHTML = "<div class=\"com-port-row\">";
+            rowHTML = '<div class="com-port-row">';
         }
     });
 
@@ -54,17 +55,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     accelerometerEnabled = settings.accelerometerEnabled || false;
     gyroscopeEnabled = settings.gyroscopeEnabled || false;
     magnetometerEnabled = settings.magnetometerEnabled || false;
-    logToFile = settings.logToFile || false;
+    canLogToFile = settings.canLogToFile || false;
     skipSlimeVRCheck = settings.skipSlimeVRCheck || false;
 
     // Get the checkbox elements
-    const bluetoothSwitch = document.getElementById("bluetooth-switch");
-    const gxSwitch = document.getElementById("gx-switch");
-    const accelerometerSwitch = document.getElementById("accelerometer-switch");
-    const gyroscopeSwitch = document.getElementById("gyroscope-switch");
-    const magnetometerSwitch = document.getElementById("magnetometer-switch");
-    const logToFileSwitch = document.getElementById("log-to-file-switch");
-    const skipSlimeVRSwitch = document.getElementById("skip-slimevr-switch");
+    const bluetoothSwitch = document.getElementById(
+        "bluetooth-switch"
+    ) as HTMLInputElement;
+    const gxSwitch = document.getElementById("gx-switch") as HTMLInputElement;
+    const accelerometerSwitch = document.getElementById(
+        "accelerometer-switch"
+    ) as HTMLInputElement;
+    const gyroscopeSwitch = document.getElementById(
+        "gyroscope-switch"
+    ) as HTMLInputElement;
+    const magnetometerSwitch = document.getElementById(
+        "magnetometer-switch"
+    ) as HTMLInputElement;
+    const logToFileSwitch = document.getElementById(
+        "log-to-file-switch"
+    ) as HTMLInputElement;
+    const skipSlimeVRSwitch = document.getElementById(
+        "skip-slimevr-switch"
+    ) as HTMLInputElement;
 
     // Set the checked property based on the settings
     bluetoothSwitch.checked = bluetoothEnabled;
@@ -72,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     accelerometerSwitch.checked = accelerometerEnabled;
     gyroscopeSwitch.checked = gyroscopeEnabled;
     magnetometerSwitch.checked = magnetometerEnabled;
-    logToFileSwitch.checked = logToFile;
+    logToFileSwitch.checked = canLogToFile;
     skipSlimeVRSwitch.checked = skipSlimeVRCheck;
 
     // Set the selected COM ports
@@ -106,14 +119,16 @@ async function startConnection() {
     } else if (!slimeVRFound && skipSlimeVRCheck) {
         log("SlimeVR check skipped");
     }
-    
+
     if (bluetoothEnabled && gxEnabled) {
         window.ipc.send("start-connection", { type: "bluetooth" });
         window.ipc.send("start-connection", {
             type: "gx",
             ports: selectedComPorts,
         });
-        log(`Starting bluetooth and gx connection with ports: ${selectedComPorts}`);
+        log(
+            `Starting bluetooth and gx connection with ports: ${selectedComPorts}`
+        );
     } else if (bluetoothEnabled) {
         window.ipc.send("start-connection", { type: "bluetooth" });
         log("Starting bluetooth connection");
@@ -161,14 +176,14 @@ function openLogsFolder() {
 
 /*
  * Renderer helper functions
-*/
+ */
 
-function setStatus(status) {
+function setStatus(status: string) {
     document.getElementById("status").innerHTML = status;
     log(`Set status to: ${status}`);
 }
 
-function addDeviceToList(deviceID) {
+async function addDeviceToList(deviceID: string) {
     log(`Adding device to device list: ${deviceID}`);
 
     const deviceList = document.getElementById("device-list");
@@ -210,31 +225,53 @@ function addDeviceToList(deviceID) {
 
     // Disable sensor switch for BT devices
     if (deviceID.startsWith("HaritoraX")) {
-        newDevice.querySelector(`#sensor-switch-${deviceID}`).disabled = true;
+        (
+            newDevice.querySelector(
+                `#sensor-switch-${deviceID}`
+            ) as HTMLInputElement
+        ).disabled = true;
         log(`Disabled sensor switch for ${deviceID} (BT device)`);
     }
 
     // Check settings what sensorMode is set and set the switch accordingly
-    const settings = window.ipc.invoke("get-settings", null);
+    const settings = await window.ipc.invoke("get-settings", null);
     const sensorMode = settings[`${deviceID}Mode`] || 2;
-    newDevice.querySelector(`#sensor-switch-${deviceID}`).checked = sensorMode === 1;
+    (
+        newDevice.querySelector(
+            `#sensor-switch-${deviceID}`
+        ) as HTMLInputElement
+    ).checked = sensorMode === 1;
 
     // Add event listener to sensor switch
-    newDevice.querySelector(`#sensor-switch-${deviceID}`).addEventListener("change", async () => {
-        const sensorSwitch = newDevice.querySelector(`#sensor-switch-${deviceID}`);
-        const sensorEnabled = sensorSwitch.checked;
-        log(`Sensor switch for ${deviceID} toggled: ${sensorEnabled}`);
+    newDevice
+        .querySelector(`#sensor-switch-${deviceID}`)
+        .addEventListener("change", async () => {
+            const sensorSwitch = newDevice.querySelector(
+                `#sensor-switch-${deviceID}`
+            );
+            const sensorEnabled = (sensorSwitch as HTMLInputElement).checked;
+            log(`Sensor switch for ${deviceID} toggled: ${sensorEnabled}`);
 
-        const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
-        let sensorMode = settings.sensorMode;
-        const fpsMode = settings.fpsMode || 100;
-        const sensorAutoCorrection = settings.sensorAutoCorrection || [];
+            const settings = await window.ipc.invoke(
+                "get-tracker-settings",
+                deviceID
+            );
+            let sensorMode = settings.sensorMode;
+            const fpsMode = settings.fpsMode || 100;
+            const sensorAutoCorrection = settings.sensorAutoCorrection || [];
 
-        sensorMode = sensorEnabled ? 1 : 2;
+            sensorMode = sensorEnabled ? 1 : 2;
 
-        window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
-        window.ipc.send("save-setting", { [`${deviceID}Mode`]: sensorMode });
-    });
+            window.ipc.send("set-tracker-settings", {
+                deviceID,
+                sensorMode,
+                fpsMode,
+                sensorAutoCorrection,
+            });
+            window.ipc.send("save-setting", {
+                [`${deviceID}Mode`]: sensorMode,
+            });
+        });
 
     // Append the new device to the device list
     deviceList.appendChild(newDevice);
@@ -244,7 +281,7 @@ function addDeviceToList(deviceID) {
  * Event listeners
  */
 
-window.ipc.on("connect", (event, deviceID) => {
+window.ipc.on("connect", async (_event, deviceID) => {
     log(`Connected to ${deviceID}`);
     addDeviceToList(deviceID);
     document.getElementById("tracker-count").innerHTML = (
@@ -256,7 +293,7 @@ window.ipc.on("connect", (event, deviceID) => {
     if (deviceID.startsWith("HaritoraX")) return;
 
     // set sensorAutoCorrection settings
-    const settings = window.ipc.invoke("get-tracker-settings", deviceID);
+    const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
     const sensorMode = settings.sensorMode || 1;
     const fpsMode = settings.fpsMode || 100;
     let sensorAutoCorrection = settings.sensorAutoCorrection || [];
@@ -265,12 +302,19 @@ window.ipc.on("connect", (event, deviceID) => {
     if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
     if (magnetometerEnabled) sensorAutoCorrection.push("mag");
 
-    log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
+    log(
+        `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
+    );
 
-    window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
+    window.ipc.send("set-tracker-settings", {
+        deviceID,
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection,
+    });
 });
 
-window.ipc.on("disconnect", (event, deviceID) => {
+window.ipc.on("disconnect", (_event, deviceID) => {
     log(`Disconnected from ${deviceID}`);
     document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").innerHTML = (
@@ -283,52 +327,56 @@ window.ipc.on("disconnect", (event, deviceID) => {
 
 let lastUpdate = Date.now();
 
-window.ipc.on(
-    "device-data",
-    (event, deviceID, rotationObject, gravityObject) => {
-        if (
-            !isActive ||
-            !document
-                .getElementById("device-list")
-                .querySelector(`#${deviceID}`)
-        )
-            return;
-        const now = Date.now();
+window.ipc.on("device-data", (_event: any, arg) => {
+    const { trackerName, rotation, gravity } = arg;
+    console.log(arg);
+    console.log(
+        `trackerName: ${trackerName}, rotationObject: ${rotation}, gravityObject: ${gravity}`
+    );
 
-        if (now - lastUpdate < 50) {
-            return;
-        }
+    if (
+        !isActive ||
+        !document.getElementById("device-list").querySelector(`#${trackerName}`)
+    )
+        return;
+    const now = Date.now();
 
-        lastUpdate = now;
-
-        const rotation = `${rotationObject.x.toFixed(
-            0
-        )}, ${rotationObject.y.toFixed(0)}, ${rotationObject.z.toFixed(0)}`;
-        const gravity = `${gravityObject.x.toFixed(
-            0
-        )}, ${gravityObject.y.toFixed(0)}, ${gravityObject.z.toFixed(0)}`;
-
-        document
-            .getElementById(deviceID)
-            .querySelector("#rotation-data").innerHTML = rotation;
-        document
-            .getElementById(deviceID)
-            .querySelector("#acceleration-data").innerHTML = gravity;
+    // Limit updates to every 50ms
+    if (now - lastUpdate < 50) {
+        return;
     }
-);
 
-window.ipc.on("device-battery", (event, deviceID, battery) => {
+    lastUpdate = now;
+
+    const rotationText = `${rotation.x.toFixed(
+        0
+    )}, ${rotation.y.toFixed(0)}, ${rotation.z.toFixed(0)}`;
+    const gravityText = `${gravity.x.toFixed(0)}, ${gravity.y.toFixed(
+        0
+    )}, ${gravity.z.toFixed(0)}`;
+
+    document
+        .getElementById(trackerName)
+        .querySelector("#rotation-data").innerHTML = rotationText;
+    document
+        .getElementById(trackerName)
+        .querySelector("#acceleration-data").innerHTML = gravityText;
+});
+
+window.ipc.on("device-battery", (_event, arg) => {
+    const { deviceID, battery } = arg;
     if (!isActive) return;
-    document.getElementById(deviceID).querySelector("#battery").innerHTML = battery;
+    document.getElementById(deviceID).querySelector("#battery").innerHTML =
+        battery;
     log(`Received battery remaining for ${deviceID}: ${battery}`);
 });
 
-window.ipc.on("error-message", (event, msg) => {
+window.ipc.on("error-message", (_event, msg) => {
     setStatus(msg);
 });
 
 // Set version number
-window.ipc.on("version", (event, version) => {
+window.ipc.on("version", (_event, version) => {
     document.getElementById("version").innerHTML = version;
     log(`Got app version: ${version}`);
 });
@@ -365,12 +413,18 @@ function addEventListeners() {
                 accelerometerEnabled: accelerometerEnabled,
             });
 
-            const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
+            const activeTrackers = await window.ipc.invoke(
+                "get-active-trackers",
+                null
+            );
             log(`Active trackers: ${activeTrackers}`);
 
-            activeTrackers.forEach(async (deviceID) => {
+            activeTrackers.forEach(async (deviceID: string) => {
                 if (deviceID.startsWith("HaritoraX")) return;
-                const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const settings = await window.ipc.invoke(
+                    "get-tracker-settings",
+                    deviceID
+                );
                 const sensorMode = settings.sensorMode;
                 const fpsMode = settings.fpsMode || 100;
                 let sensorAutoCorrection = settings.sensorAutoCorrection || [];
@@ -378,12 +432,21 @@ function addEventListeners() {
                 if (accelerometerEnabled) {
                     sensorAutoCorrection.push("accel");
                 } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "accel");
+                    sensorAutoCorrection = sensorAutoCorrection.filter(
+                        (sensor: string) => sensor !== "accel"
+                    );
                 }
 
-                log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
+                log(
+                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
+                );
 
-                window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
+                window.ipc.send("set-tracker-settings", {
+                    deviceID,
+                    sensorMode,
+                    fpsMode,
+                    sensorAutoCorrection,
+                });
             });
         });
 
@@ -396,12 +459,18 @@ function addEventListeners() {
                 gyroscopeEnabled: gyroscopeEnabled,
             });
 
-            const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
+            const activeTrackers = await window.ipc.invoke(
+                "get-active-trackers",
+                null
+            );
             log(`Active trackers: ${activeTrackers}`);
 
-            activeTrackers.forEach(async (deviceID) => {
+            activeTrackers.forEach(async (deviceID: string) => {
                 if (deviceID.startsWith("HaritoraX")) return;
-                const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const settings = await window.ipc.invoke(
+                    "get-tracker-settings",
+                    deviceID
+                );
                 const sensorMode = settings.sensorMode;
                 const fpsMode = settings.fpsMode || 100;
                 let sensorAutoCorrection = settings.sensorAutoCorrection || [];
@@ -409,12 +478,21 @@ function addEventListeners() {
                 if (gyroscopeEnabled) {
                     sensorAutoCorrection.push("gyro");
                 } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "gyro");
+                    sensorAutoCorrection = sensorAutoCorrection.filter(
+                        (sensor: string) => sensor !== "gyro"
+                    );
                 }
 
-                log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
+                log(
+                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
+                );
 
-                window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
+                window.ipc.send("set-tracker-settings", {
+                    deviceID,
+                    sensorMode,
+                    fpsMode,
+                    sensorAutoCorrection,
+                });
             });
         });
 
@@ -427,12 +505,18 @@ function addEventListeners() {
                 magnetometerEnabled: magnetometerEnabled,
             });
 
-            const activeTrackers = await window.ipc.invoke("get-active-trackers", null);
+            const activeTrackers = await window.ipc.invoke(
+                "get-active-trackers",
+                null
+            );
             log(`Active trackers: ${activeTrackers}`);
 
-            activeTrackers.forEach(async (deviceID) => {
+            activeTrackers.forEach(async (deviceID: string) => {
                 if (deviceID.startsWith("HaritoraX")) return;
-                const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const settings = await window.ipc.invoke(
+                    "get-tracker-settings",
+                    deviceID
+                );
                 const sensorMode = settings.sensorMode;
                 const fpsMode = settings.fpsMode || 100;
                 let sensorAutoCorrection = settings.sensorAutoCorrection || [];
@@ -440,12 +524,21 @@ function addEventListeners() {
                 if (magnetometerEnabled) {
                     sensorAutoCorrection.push("mag");
                 } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter((sensor) => sensor !== "mag");
+                    sensorAutoCorrection = sensorAutoCorrection.filter(
+                        (sensor: string) => sensor !== "mag"
+                    );
                 }
 
-                log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
+                log(
+                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
+                );
 
-                window.ipc.send("set-tracker-settings", { deviceID, sensorMode, fpsMode, sensorAutoCorrection });
+                window.ipc.send("set-tracker-settings", {
+                    deviceID,
+                    sensorMode,
+                    fpsMode,
+                    sensorAutoCorrection,
+                });
             });
         });
 
@@ -453,7 +546,7 @@ function addEventListeners() {
         const comPorts = Array.from(
             document.getElementById("com-ports").querySelectorAll("input")
         );
-        const selectedPorts = [];
+        const selectedPorts: string[] = [];
 
         comPorts.forEach((port) => {
             if (port.checked) {
@@ -483,35 +576,70 @@ function addEventListeners() {
         }
     });
 
-    document.getElementById("log-to-file-switch").addEventListener("change", function () {
-        logToFile = !logToFile;
-        log(`Log to file: ${logToFile}`);
-        window.ipc.send("set-logging", logToFile);
-        window.ipc.send("save-setting", { logToFile: logToFile });
-    });
+    document
+        .getElementById("log-to-file-switch")
+        .addEventListener("change", function () {
+            canLogToFile = !canLogToFile;
+            log(`Log to file: ${canLogToFile}`);
+            window.ipc.send("set-logging", canLogToFile);
+            window.ipc.send("save-setting", { canLogToFile: canLogToFile });
+        });
 
-    document.getElementById("skip-slimevr-switch").addEventListener("change", function () {
-        skipSlimeVRCheck = !skipSlimeVRCheck;
-        log(`Skip SlimeVR check: ${skipSlimeVRCheck}`);
-        window.ipc.send("save-setting", { skipSlimeVRCheck: skipSlimeVRCheck });
-    });
+    document
+        .getElementById("skip-slimevr-switch")
+        .addEventListener("change", function () {
+            skipSlimeVRCheck = !skipSlimeVRCheck;
+            log(`Skip SlimeVR check: ${skipSlimeVRCheck}`);
+            window.ipc.send("save-setting", {
+                skipSlimeVRCheck: skipSlimeVRCheck,
+            });
+        });
 }
 
-function log(message) {
+function log(message: string) {
     window.ipc.send("log", message);
     console.log(message);
 }
 
-function error(message) {
+function error(message: string) {
     window.ipc.send("error", message);
     console.error(message);
 }
-
-/*
- * IPC event listeners
- */
 
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.toggleVisualization = toggleVisualization;
 window.openLogsFolder = openLogsFolder;
+
+/*
+ * TypeScript declarations
+ */
+
+interface Window {
+    startConnection: () => void;
+    stopConnection: () => void;
+    openLogsFolder: () => void;
+    toggleVisualization: () => void;
+
+    ipc: {
+        invoke: (channel: string, args: any) => Promise<any>;
+        send: (channel: string, args: any) => void;
+        on: (
+            channel: string,
+            listener: (_event: any, args: any) => void
+        ) => void;
+    };
+}
+
+interface Rotation {
+    x: number;
+    y: number;
+    z: number;
+    w: number;
+}
+
+interface Gravity {
+    x: number;
+    y: number;
+    z: number;
+}
