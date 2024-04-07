@@ -17,7 +17,8 @@
   "main": "dist/main.js",
   "scripts": {
     "start": "npm run preload && electron .",
-    "build": "npm run preload && electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='build/' --icon=src/icon.ico --asar",
+    "build": "npm run preload && electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='build/' --icon=src/icon.ico --asar && npm run zip",
+    "zip": "cd build/SlimeTora-win32-x64/ && bestzip ../SlimeTora-win32-x64.zip *",
     "preload": "del-cli dist/ && tsc && npm run copy-files",
     "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" dist/",
     "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@electron/packager": "^18.3.2",
     "@types/node": "^20.12.5",
+    "bestzip": "^2.2.1",
     "copyfiles": "^2.4.1",
     "del-cli": "^5.1.0",
     "electron": "29.1.6",
