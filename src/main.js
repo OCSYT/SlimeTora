@@ -14,6 +14,7 @@ const {
     MCUType,
     RotationDataType,
     SensorType,
+    SensorStatus,
     ServerBoundAccelPacket,
     ServerBoundBatteryLevelPacket,
     ServerBoundHandshakePacket,
@@ -204,7 +205,6 @@ device.on("connect", (deviceID) => {
     handleNextTracker();
     log(`Connected to tracker: ${deviceID}`);
     mainWindow.webContents.send("connect", deviceID);
-    
 });
 
 device.on("disconnect", (deviceID) => {
@@ -252,7 +252,11 @@ device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
         connectedDevices.indexOf(trackerName)
     );
     mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
-    log(`Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltage / 1000}V)`);
+    log(
+        `Received battery data for ${trackerName}: ${batteryRemaining}% (${
+            batteryVoltage / 1000
+        }V)`
+    );
 });
 
 function log(msg, where = "main") {
@@ -339,28 +343,20 @@ async function handleNextTracker() {
     isHandlingTracker = true;
     const trackerName = trackerQueue.shift();
 
-    if (connectedDevices.length == 0) {
-        log("Adding IMU for device 0 // Handshake");
-
-        const handshake = ServerBoundHandshakePacket.encode(BigInt(packetCount), BoardType.CUSTOM, SensorType.UNKNOWN, MCUType.UNKNOWN, 1.022, "HaritoraX", [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
-        sock.send(handshake, 0, handshake.length, slimePort, slimeIP, (err) => {
-            if (err) {
-                error(`Error sending handshake: ${err}`);
-            } else {
-                log("Handshake sent successfully");
-                packetCount += 1;
-            }
-        });
-
-        connectedDevices.push(trackerName);
-        connectedDevices.sort();
+    if (connectedDevices.length === 0) {
+        const sent = await sendHandshakePacket(trackerName);
+        if (sent) {
+            connectedDevices.push(trackerName);
+            connectedDevices.sort();
+        }
     } else {
         if (connectedDevices.includes(trackerName)) return;
-        packetCount += 1;
-        log(`Adding IMU for device ${connectedDevices.length}`);
-        await addIMU(connectedDevices.length);
-        connectedDevices.push(trackerName);
-        connectedDevices.sort();
+        const sent = await sendSensorInfoPacket(trackerName);
+        if (sent) {
+            connectedDevices.push(trackerName);
+            connectedDevices.sort();
+        }
+        
     }
 
     isHandlingTracker = false;
@@ -368,38 +364,65 @@ async function handleNextTracker() {
     handleNextTracker();
 }
 
-function addIMU(deviceID) {
-    return new Promise((resolve, reject) => {
-        const buffer = new ArrayBuffer(128);
-        const view = new DataView(buffer);
-        view.setInt32(0, 15); // packet 15 header
-        view.setBigInt64(4, BigInt(packetCount)); // packet counter
-        view.setInt8(12, deviceID); // tracker id (shown as IMU Tracker #x in SlimeVR)
-        view.setInt8(13, 0); // sensor status
-        view.setInt8(14, 0); // imu type
-        const imuBuffer = new Uint8Array(buffer);
+/*
+ * Packet sending
+ */
 
-        sock.send(imuBuffer, slimePort, slimeIP, (err) => {
+// Sends a handshake packet to SlimeVR Server (first IMU tracker)
+async function sendHandshakePacket(trackerName) {
+    return new Promise((resolve, reject) => {
+        packetCount += 1;
+
+        const handshake = ServerBoundHandshakePacket.encode(
+            BigInt(packetCount),
+            BoardType.CUSTOM,
+            SensorType.UNKNOWN,
+            MCUType.UNKNOWN,
+            1.022,
+            "HaritoraX",
+            [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]
+        );
+        sock.send(handshake, 0, handshake.length, slimePort, slimeIP, (err) => {
             if (err) {
-                error(
-                    `Error sending IMU packet for device ${deviceID}: ${err}`
-                );
-                reject();
+                error(`Error sending handshake: ${err}`);
+                reject(false);
             } else {
-                log(`Add IMU: ${deviceID}`);
-                packetCount += 1;
-                resolve();
+                log(`Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length} // Handshake`);
+                resolve(true);
             }
         });
     });
 }
 
-/*
- * Packet sending
- */
+// Adds a new IMU tracker to SlimeVR Server
+async function sendSensorInfoPacket(trackerName) {
+    return new Promise((resolve, reject) => {
+        packetCount += 1;
+
+        const buffer = ServerBoundSensorInfoPacket.encode(
+            BigInt(packetCount),
+            connectedDevices.length,
+            SensorStatus.OK,
+            SensorType.UNKNOWN,
+        );
+
+        sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
+            if (err) {
+                error(`Error sending sensor info packet: ${err}`);
+                reject(false);
+            } else {
+                log(`Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length}`);
+                resolve(true);
+                packetCount += 1;
+            }
+        });
+    });
+    
+}
 
 function sendAccelPacket(acceleration, deviceID) {
     packetCount += 1;
+
     // turn acceleration object into array with 3 values
     acceleration = [acceleration.x, acceleration.y, acceleration.z];
     const buffer = ServerBoundAccelPacket.encode(
@@ -418,6 +441,7 @@ function sendAccelPacket(acceleration, deviceID) {
 
 function sendRotationPacket(rotation, deviceID) {
     packetCount += 1;
+    
     // turn rotation object into array with 4 values
     rotation = [rotation.x, rotation.y, rotation.z, rotation.w];
     const buffer = ServerBoundRotationDataPacket.encode(
@@ -444,6 +468,7 @@ function sendBatteryLevel(percentage, voltage, deviceID) {
         voltage / 1000,
         percentage
     );
+    
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err)
             error(
@@ -453,3 +478,9 @@ function sendBatteryLevel(percentage, voltage, deviceID) {
 }
 
 app.on("ready", createWindow);
+
+app.on("window-all-closed", () => {
+    device.stopConnection("bluetooth");
+    device.stopConnection("gx");
+    app.quit();
+});
