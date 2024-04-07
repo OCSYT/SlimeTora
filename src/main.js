@@ -7,6 +7,20 @@ const fs = require("fs");
 const path = require("path");
 const sock = dgram.createSocket("udp4");
 
+// ! fix data being sent to slimevr sometimes going from 100 to 50 fps
+
+const {
+    BoardType,
+    MCUType,
+    RotationDataType,
+    SensorType,
+    ServerBoundAccelPacket,
+    ServerBoundBatteryLevelPacket,
+    ServerBoundHandshakePacket,
+    ServerBoundRotationDataPacket,
+    ServerBoundSensorInfoPacket,
+} = require("@slimevr/firmware-protocol");
+
 let mainWindow;
 const device = new HaritoraXWireless(0);
 let connectedDevices = [];
@@ -106,9 +120,23 @@ ipcMain.on("set-tracker-settings", (event, arg) => {
     }
 
     log(`Setting tracker settings for ${deviceID} to: ${JSON.stringify(arg)}`);
-    log(`Old tracker settings: ${JSON.stringify(device.getTrackerSettings(deviceID))}`);
-    device.setTrackerSettings(deviceID, sensorMode, fpsMode, sensorAutoCorrection, false);
-    log(`New tracker settings: ${JSON.stringify(device.getTrackerSettings(deviceID))}`);
+    log(
+        `Old tracker settings: ${JSON.stringify(
+            device.getTrackerSettings(deviceID)
+        )}`
+    );
+    device.setTrackerSettings(
+        deviceID,
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection,
+        false
+    );
+    log(
+        `New tracker settings: ${JSON.stringify(
+            device.getTrackerSettings(deviceID)
+        )}`
+    );
 });
 
 ipcMain.on("set-logging", (event, arg) => {
@@ -166,6 +194,126 @@ ipcMain.handle("has-setting", (event, name) => {
 });
 
 /*
+ * Interpreter event listeners
+ */
+
+device.on("connect", (deviceID) => {
+    if (connectedDevices.includes(deviceID)) return;
+    log("Connected devices: " + JSON.stringify(connectedDevices));
+    trackerQueue.push(deviceID);
+    handleNextTracker();
+    log(`Connected to tracker: ${deviceID}`);
+    mainWindow.webContents.send("connect", deviceID);
+    
+});
+
+device.on("disconnect", (deviceID) => {
+    if (!connectedDevices.includes(deviceID)) return;
+    log(`Disconnected from tracker: ${deviceID}`);
+    mainWindow.webContents.send("disconnect", deviceID);
+    connectedDevices = connectedDevices.filter((name) => name !== deviceID);
+});
+
+device.on("imu", (trackerName, rotation, gravity) => {
+    if (!connectedDevices.includes(trackerName) || !rotation || !gravity)
+        return;
+
+    // Convert rotation to quaternion to euler angles in radians
+    const quaternion = new Quaternion(
+        rotation.w,
+        rotation.x,
+        rotation.y,
+        rotation.z
+    );
+    const eulerRadians = quaternion.toEuler("XYZ");
+
+    // Convert the Euler angles to degrees
+    const eulerDegrees = {
+        x: eulerRadians[0] * (180 / Math.PI),
+        y: eulerRadians[1] * (180 / Math.PI),
+        z: eulerRadians[2] * (180 / Math.PI),
+    };
+
+    sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
+    sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
+
+    mainWindow.webContents.send(
+        "device-data",
+        trackerName,
+        eulerDegrees,
+        gravity
+    );
+});
+
+device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
+    sendBatteryLevel(
+        batteryRemaining,
+        batteryVoltage,
+        connectedDevices.indexOf(trackerName)
+    );
+    mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
+    log(`Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltage / 1000}V)`);
+});
+
+function log(msg, where = "main") {
+    if (logToFile) {
+        const date = new Date();
+        const logDir = path.resolve(mainPath, "logs");
+        const logPath = path.join(
+            logDir,
+            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(
+                -2
+            )}${("0" + date.getDate()).slice(-2)}.txt`
+        );
+
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+        }
+
+        // Create the file if it doesn't exist
+        if (!fs.existsSync(logPath)) {
+            fs.writeFileSync(logPath, "");
+        }
+
+        fs.appendFileSync(
+            logPath,
+            `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
+        );
+    }
+    console.log(msg);
+}
+
+function error(msg, where = "main") {
+    if (logToFile) {
+        const date = new Date();
+        const logDir = path.resolve(mainPath, "logs");
+        const logPath = path.join(
+            logDir,
+            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(
+                -2
+            )}${("0" + date.getDate()).slice(-2)}.txt`
+        );
+
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+        }
+
+        // Create the file if it doesn't exist
+        if (!fs.existsSync(logPath)) {
+            fs.writeFileSync(logPath, "");
+        }
+
+        fs.appendFileSync(
+            logPath,
+            `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`
+        );
+    }
+    console.error(msg);
+}
+
+/*
  * SlimeVR Forwarding
  */
 
@@ -194,7 +342,7 @@ async function handleNextTracker() {
     if (connectedDevices.length == 0) {
         log("Adding IMU for device 0 // Handshake");
 
-        const handshake = buildHandshake();
+        const handshake = ServerBoundHandshakePacket.encode(BigInt(packetCount), BoardType.CUSTOM, SensorType.UNKNOWN, MCUType.UNKNOWN, 1.022, "HaritoraX", [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
         sock.send(handshake, 0, handshake.length, slimePort, slimeIP, (err) => {
             if (err) {
                 error(`Error sending handshake: ${err}`);
@@ -233,7 +381,9 @@ function addIMU(deviceID) {
 
         sock.send(imuBuffer, slimePort, slimeIP, (err) => {
             if (err) {
-                error(`Error sending IMU packet for device ${deviceID}: ${err}`);
+                error(
+                    `Error sending IMU packet for device ${deviceID}: ${err}`
+                );
                 reject();
             } else {
                 log(`Add IMU: ${deviceID}`);
@@ -245,223 +395,61 @@ function addIMU(deviceID) {
 }
 
 /*
- * Interpreter event listeners
- */
-
-device.on("connect", (deviceID) => {
-    if (connectedDevices.includes(deviceID)) return;
-    log("Connected devices: " + JSON.stringify(connectedDevices));
-    trackerQueue.push(deviceID);
-    handleNextTracker();
-    log(`Connected to tracker: ${deviceID}`);
-    mainWindow.webContents.send("connect", deviceID);
-});
-
-device.on("disconnect", (deviceID) => {
-    if (!connectedDevices.includes(deviceID)) return;
-    log(`Disconnected from tracker: ${deviceID}`);
-    mainWindow.webContents.send("disconnect", deviceID);
-    connectedDevices = connectedDevices.filter((name) => name !== deviceID);
-});
-
-device.on("imu", (trackerName, rotation, gravity) => {
-    if (!connectedDevices.includes(trackerName) || !rotation || !gravity) return;
-
-    // Convert rotation to quaternion to euler angles in radians
-    const quaternion = new Quaternion(
-        rotation.w,
-        rotation.x,
-        rotation.y,
-        rotation.z
-    );
-    const eulerRadians = quaternion.toEuler("XYZ");
-
-    // Convert the Euler angles to degrees
-    const eulerDegrees = {
-        x: eulerRadians[0] * (180 / Math.PI),
-        y: eulerRadians[1] * (180 / Math.PI),
-        z: eulerRadians[2] * (180 / Math.PI),
-    };
-
-    sendRotationPacket(rotation, connectedDevices.indexOf(trackerName));
-    sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
-
-    mainWindow.webContents.send(
-        "device-data",
-        trackerName,
-        eulerDegrees,
-        gravity
-    );
-});
-
-device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
-    sendBatteryLevel(
-        batteryRemaining,
-        batteryVoltage,
-        connectedDevices.indexOf(trackerName)
-    );
-    mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
-});
-
-/*
  * Packet sending
  */
 
 function sendAccelPacket(acceleration, deviceID) {
     packetCount += 1;
-    const ax = acceleration["x"];
-    const ay = acceleration["y"];
-    const az = acceleration["z"];
-    const buffer = buildAccelPacket(ax, ay, az, deviceID);
+    // turn acceleration object into array with 3 values
+    acceleration = [acceleration.x, acceleration.y, acceleration.z];
+    const buffer = ServerBoundAccelPacket.encode(
+        BigInt(packetCount),
+        deviceID,
+        acceleration
+    );
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            error(`Error sending packet for sensor ${deviceID}: ${err}`);
+            error(
+                `Error sending acceleration packet for sensor ${deviceID}: ${err}`
+            );
     });
 }
 
 function sendRotationPacket(rotation, deviceID) {
     packetCount += 1;
-    const x = rotation["x"];
-    const y = rotation["y"];
-    const z = rotation["z"];
-    const w = rotation["w"];
-    const buffer = buildRotationPacket(x, y, z, w, deviceID);
+    // turn rotation object into array with 4 values
+    rotation = [rotation.x, rotation.y, rotation.z, rotation.w];
+    const buffer = ServerBoundRotationDataPacket.encode(
+        BigInt(packetCount),
+        deviceID,
+        RotationDataType.NORMAL,
+        rotation,
+        0
+    );
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            error(`Error sending packet for sensor ${deviceID}: ${err}`);
+            error(
+                `Error sending rotation packet for sensor ${deviceID}: ${err}`
+            );
     });
 }
 
-// TODO: fix voltage, figure out how to send battery per tracker
+// TODO: send lowest battery level
 function sendBatteryLevel(percentage, voltage, deviceID) {
-    const buffer = new ArrayBuffer(20);
-    const view = new DataView(buffer);
-    view.setInt32(0, 12);
-    view.setBigInt64(4, BigInt(packetCount));
-    view.setFloat32(12, voltage / 1000); // voltage is in mV, convert to V
-    view.setFloat32(16, percentage / 100); // 0.0-1.0
-    const sendBuffer = new Uint8Array(buffer);
-    sock.send(sendBuffer, 0, sendBuffer.length, slimePort, slimeIP, (err) => {
+    packetCount += 1;
+    const buffer = ServerBoundBatteryLevelPacket.encode(
+        BigInt(packetCount),
+        voltage / 1000,
+        percentage
+    );
+    sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err)
-            error(`Error sending packet for sensor ${deviceID}: ${err}`);
+            error(
+                `Error sending battery level packet for sensor ${deviceID}: ${err}`
+            );
     });
-}
-
-/*
- * Packet building
- */
-
-function buildHandshake() {
-    const fw_string = "Haritora";
-    const buffer = new ArrayBuffer(128);
-    const view = new DataView(buffer);
-    let offset = 0;
-
-    view.setInt32(offset, 3); // packet 3 header
-    offset += 4;
-    view.setBigInt64(offset, BigInt(packetCount)); // packet counter
-    offset += 8;
-    view.setInt32(offset, 0); // Board type
-    offset += 4;
-    view.setInt32(offset, 0); // IMU type
-    offset += 4;
-    view.setInt32(offset, 0); // MCU type
-    offset += 4;
-    for (let i = 0; i < 3; i++) {
-        view.setInt32(offset, 0); // IMU info (unused)
-        offset += 4;
-    }
-    view.setInt32(offset, 0); // Firmware build
-    offset += 4;
-    view.setInt8(offset, fw_string.length); // Length of fw string
-    offset += 1;
-    for (let i = 0; i < fw_string.length; i++) {
-        view.setInt8(offset, fw_string.charCodeAt(i)); // fw string
-        offset += 1;
-    }
-    const macAddress = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
-    for (let i = 0; i < macAddress.length; i++) {
-        view.setInt8(offset, macAddress[i]); // MAC address
-        offset += 1;
-    }
-
-    return new Uint8Array(buffer);
-}
-
-function buildAccelPacket(ax, ay, az, deviceID) {
-    const buffer = new Uint8Array(128);
-    const view = new DataView(buffer.buffer);
-
-    view.setInt32(0, 4); // packet 4 header
-    view.setBigInt64(4, BigInt(packetCount)); // packet counter
-    view.setFloat32(12, ax);
-    view.setFloat32(16, ay);
-    view.setFloat32(20, az);
-    view.setUint8(24, deviceID); // tracker id
-    return buffer;
-}
-
-function buildRotationPacket(qx, qy, qz, qw, deviceID) {
-    const buffer = new Uint8Array(128);
-    const view = new DataView(buffer.buffer);
-
-    view.setInt32(0, 17);
-    view.setBigInt64(4, BigInt(packetCount));
-    view.setUint8(12, deviceID);
-    view.setUint8(13, 1);
-
-    view.setFloat32(14, qx);
-    view.setFloat32(18, qy);
-    view.setFloat32(22, qz);
-    view.setFloat32(26, qw);
-
-    view.setUint8(30, 0);
-
-    return buffer;
-}
-
-function log(msg, where = "main") {
-    if (logToFile) {
-        const date = new Date();
-        const logDir = path.resolve(mainPath, "logs");
-        const logPath = path.join(logDir, `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${("0" + date.getDate()).slice(-2)}.txt`);
-
-        // Create the directory if it doesn't exist
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
-        }
-
-        // Create the file if it doesn't exist
-        if (!fs.existsSync(logPath)) {
-            fs.writeFileSync(logPath, "");
-        }
-
-        fs.appendFileSync(logPath, `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`);
-    }
-    console.log(msg);
-}
-
-function error(msg, where = "main") {
-    if (logToFile) {
-        const date = new Date();
-        const logDir = path.resolve(mainPath, "logs");
-        const logPath = path.join(logDir, `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${("0" + date.getDate()).slice(-2)}.txt`);
-
-        // Create the directory if it doesn't exist
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
-        }
-
-        // Create the file if it doesn't exist
-        if (!fs.existsSync(logPath)) {
-            fs.writeFileSync(logPath, "");
-        }
-
-        fs.appendFileSync(logPath, `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`);
-    }
-    console.error(msg);
 }
 
 app.on("ready", createWindow);
