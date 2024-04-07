@@ -69,33 +69,48 @@ const createWindow = () => {
  * Renderer handlers
  */
 
-ipcMain.on("log", (event, arg) => {
+ipcMain.on("log", (_event, arg) => {
     log(arg, "renderer");
 });
 
-ipcMain.on("error", (event, arg) => {
+ipcMain.on("error", (_event, arg) => {
     error(arg, "renderer");
 });
 
-ipcMain.on("start-connection", (event, arg) => {
-    log(`Start connection with: ${JSON.stringify(arg)}`);
+ipcMain.on("start-connection", (_event, arg) => {
     const { type, ports } = arg;
+    log(`Start connection with: ${JSON.stringify(arg)}`);
+
     if (type.includes("bluetooth")) {
         connectBluetooth();
     } else if (type.includes("gx") && ports) {
         connectGX(ports);
     }
+
+    const activeTrackers = device.getActiveTrackers();
+    if (!activeTrackers || activeTrackers.length === 0) return;
+    activeTrackers.forEach((trackerName) => {
+        trackerQueue.push(trackerName);
+        handleNextTracker();
+        log(`Connected to tracker: ${trackerName}`);
+        mainWindow.webContents.send("connect", trackerName);
+        log("Connected devices: " + JSON.stringify(trackerName));
+    });
 });
 
-ipcMain.on("stop-connection", (event, arg) => {
-    log(`Stop connection with: ${JSON.stringify(arg)}`);
+ipcMain.on("stop-connection", (_event, arg: string) => {
     if (arg.includes("bluetooth")) {
         device.stopConnection("bluetooth");
+        log("Stopped bluetooth connection");
     } else if (arg.includes("gx")) {
         device.stopConnection("gx");
+        log("Stopped GX connection");
     }
-
     connectedDevices = [];
+});
+
+ipcMain.on("get-battery", (_event, arg: string) => {
+    device.getBatteryInfo(arg);
 });
 
 ipcMain.handle("get-com-ports", async () => {
@@ -103,7 +118,7 @@ ipcMain.handle("get-com-ports", async () => {
     return ports.map((port) => port.path).sort();
 });
 
-ipcMain.handle("get-tracker-settings", (event, arg) => {
+ipcMain.handle("get-tracker-settings", (_event, arg) => {
     return device.getTrackerSettings(arg);
 });
 
@@ -115,7 +130,7 @@ ipcMain.handle("is-slimevr-connected", () => {
     return foundSlimeVR;
 });
 
-ipcMain.on("set-tracker-settings", (event, arg) => {
+ipcMain.on("set-tracker-settings", (_event, arg) => {
     const { deviceID, sensorMode, fpsMode, sensorAutoCorrection } = arg;
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
         error(`Invalid settings received: ${arg}`);
@@ -142,7 +157,7 @@ ipcMain.on("set-tracker-settings", (event, arg) => {
     );
 });
 
-ipcMain.on("set-logging", (event, arg) => {
+ipcMain.on("set-logging", (_event, arg) => {
     canLogToFile = arg;
     log(`Logging to file set to: ${arg}`);
 });
@@ -178,7 +193,7 @@ ipcMain.handle("get-settings", () => {
     }
 });
 
-ipcMain.on("save-setting", (event, data) => {
+ipcMain.on("save-setting", (_event, data) => {
     const config = JSON.parse(fs.readFileSync(configPath).toString());
 
     // Iterate over each property in the data object
@@ -191,7 +206,7 @@ ipcMain.on("save-setting", (event, data) => {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
 });
 
-ipcMain.handle("has-setting", (event, name) => {
+ipcMain.handle("has-setting", (_event, name) => {
     const config = JSON.parse(fs.readFileSync(configPath).toString());
     return Object.prototype.hasOwnProperty.call(config, name);
 });
@@ -220,7 +235,11 @@ device.on("disconnect", (deviceID: string) => {
 device.on(
     "imu",
     (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
-        if (!connectedDevices.includes(trackerName) || !rawRotation || !rawGravity)
+        if (
+            !connectedDevices.includes(trackerName) ||
+            !rawRotation ||
+            !rawGravity
+        )
             return;
 
         // Convert rotation to quaternion to euler angles in radians
@@ -259,16 +278,17 @@ device.on(
 device.on(
     "battery",
     (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
+        if (!connectedDevices.includes(trackerName)) return;
         sendBatteryLevel(
             batteryRemaining,
             batteryVoltage,
             connectedDevices.indexOf(trackerName)
         );
-        mainWindow.webContents.send(
-            "battery-data",
+        mainWindow.webContents.send("device-battery", {
             trackerName,
-            batteryRemaining
-        );
+            batteryRemaining,
+            batteryVoltage,
+        });
         log(
             `Received battery data for ${trackerName}: ${batteryRemaining}% (${
                 batteryVoltage / 1000

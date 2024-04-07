@@ -106,7 +106,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     addEventListeners();
 });
 
-// TODO: fix bug with GX dongles where restarting connections doesn't work
 async function startConnection() {
     log("Starting connection...");
 
@@ -150,13 +149,8 @@ function stopConnection() {
     log("Stopping connection(s)...");
     isActive = false;
 
-    if (bluetoothEnabled) {
-        window.ipc.send("stop-connection", "bluetooth");
-    }
-    if (gxEnabled) {
-        window.ipc.send("stop-connection", "gx");
-    }
-
+    if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
+    if (gxEnabled) window.ipc.send("stop-connection", "gx");
     document.getElementById("tracker-count").innerHTML = "0";
     document.getElementById("status").innerHTML = "N/A";
     const deviceList = document.getElementById("device-list");
@@ -274,6 +268,9 @@ async function addDeviceToList(deviceID: string) {
 
     // Append the new device to the device list
     deviceList.appendChild(newDevice);
+
+    // Trigger battery event
+    window.ipc.send("get-battery", deviceID);
 }
 
 /*
@@ -328,10 +325,6 @@ let lastUpdate = Date.now();
 
 window.ipc.on("device-data", (_event: any, arg) => {
     const { trackerName, rotation, gravity } = arg;
-    console.log(arg);
-    console.log(
-        `trackerName: ${trackerName}, rotationObject: ${rotation}, gravityObject: ${gravity}`
-    );
 
     if (
         !isActive ||
@@ -347,9 +340,9 @@ window.ipc.on("device-data", (_event: any, arg) => {
 
     lastUpdate = now;
 
-    const rotationText = `${rotation.x.toFixed(
+    const rotationText = `${rotation.x.toFixed(0)}, ${rotation.y.toFixed(
         0
-    )}, ${rotation.y.toFixed(0)}, ${rotation.z.toFixed(0)}`;
+    )}, ${rotation.z.toFixed(0)}`;
     const gravityText = `${gravity.x.toFixed(0)}, ${gravity.y.toFixed(
         0
     )}, ${gravity.z.toFixed(0)}`;
@@ -363,11 +356,18 @@ window.ipc.on("device-data", (_event: any, arg) => {
 });
 
 window.ipc.on("device-battery", (_event, arg) => {
-    const { deviceID, battery } = arg;
-    if (!isActive) return;
-    document.getElementById(deviceID).querySelector("#battery").innerHTML =
-        battery;
-    log(`Received battery remaining for ${deviceID}: ${battery}`);
+    const { trackerName, batteryRemaining, batteryVoltage } = arg;
+    if (!isActive || !trackerName) return;
+    const batteryText = document
+        .getElementById(trackerName)
+        .querySelector("#battery");
+    if (batteryText === null) return;
+    batteryText.innerHTML = `${batteryRemaining}% (${batteryVoltage / 1000}V)`;
+    log(
+        `Battery for ${trackerName}: ${batteryRemaining}% (${
+            batteryVoltage / 1000
+        }V)`
+    );
 });
 
 window.ipc.on("error-message", (_event, msg) => {
