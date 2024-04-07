@@ -27,6 +27,7 @@ const device = new HaritoraXWireless(0);
 let connectedDevices = [];
 let logToFile = false;
 let foundSlimeVR = false;
+let lowestBatteryData = { percentage: 100, voltage: 0 };
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
@@ -200,11 +201,11 @@ ipcMain.handle("has-setting", (event, name) => {
 
 device.on("connect", (deviceID) => {
     if (connectedDevices.includes(deviceID)) return;
-    log("Connected devices: " + JSON.stringify(connectedDevices));
     trackerQueue.push(deviceID);
     handleNextTracker();
     log(`Connected to tracker: ${deviceID}`);
     mainWindow.webContents.send("connect", deviceID);
+    log("Connected devices: " + JSON.stringify(connectedDevices));
 });
 
 device.on("disconnect", (deviceID) => {
@@ -212,6 +213,7 @@ device.on("disconnect", (deviceID) => {
     log(`Disconnected from tracker: ${deviceID}`);
     mainWindow.webContents.send("disconnect", deviceID);
     connectedDevices = connectedDevices.filter((name) => name !== deviceID);
+    log("Connected devices: " + JSON.stringify(connectedDevices));
 });
 
 device.on("imu", (trackerName, rotation, gravity) => {
@@ -252,11 +254,7 @@ device.on("battery", (trackerName, batteryRemaining, batteryVoltage) => {
         connectedDevices.indexOf(trackerName)
     );
     mainWindow.webContents.send("battery-data", trackerName, batteryRemaining);
-    log(
-        `Received battery data for ${trackerName}: ${batteryRemaining}% (${
-            batteryVoltage / 1000
-        }V)`
-    );
+    log(`Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltage / 1000}V)`);
 });
 
 function log(msg, where = "main") {
@@ -460,20 +458,34 @@ function sendRotationPacket(rotation, deviceID) {
     });
 }
 
-// TODO: send lowest battery level
 function sendBatteryLevel(percentage, voltage, deviceID) {
+    // Send lowest battery data to SlimeVR server (cannot send battery data for individual sensors)
+    if (percentage < lowestBatteryData.percentage || voltage < lowestBatteryData.voltage) {
+        lowestBatteryData.percentage = percentage;
+        lowestBatteryData.voltage = voltage;
+        log(
+            `Set lowest battery data: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage / 1000}V)`
+        );
+    }
+
     packetCount += 1;
     const buffer = ServerBoundBatteryLevelPacket.encode(
         BigInt(packetCount),
-        voltage / 1000,
-        percentage
+        lowestBatteryData.voltage / 1000,
+        lowestBatteryData.percentage,
     );
     
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-        if (err)
+        if (err) {
             error(
                 `Error sending battery level packet for sensor ${deviceID}: ${err}`
             );
+        } else {
+            log(
+                `Sent battery data to SlimeVR server: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage / 1000}V)`
+            );
+        
+        }
     });
 }
 
