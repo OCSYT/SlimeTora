@@ -1,47 +1,48 @@
 {
-  "name": "slimetora",
-  "productName": "slimetora",
-  "version": "1.0.0-alpha2",
-  "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
-  "author": {
-    "name": "BracketProto",
-    "url": "https://bracketproto.com"
-  },
-  "contributors": [
-    {
-      "name": "JovannMC",
-      "email": "jovannmc@femboyfurry.net",
-      "url": "https://femboyfurry.net"
+    "name": "slimetora",
+    "productName": "slimetora",
+    "version": "1.0.0-alpha3",
+    "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
+    "private": true,
+    "author": {
+        "name": "BracketProto",
+        "url": "https://bracketproto.com"
+    },
+    "contributors": [
+        {
+            "name": "JovannMC",
+            "email": "jovannmc@femboyfurry.net",
+            "url": "https://femboyfurry.net"
+        }
+    ],
+    "main": "dist/main.js",
+    "scripts": {
+        "start": "npm run preload && electron .",
+        "build": "npm run preload && electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='build/' --icon=src/icon.ico --asar && npm run zip",
+        "zip": "cd build/SlimeTora-win32-x64/ && bestzip ../SlimeTora-win32-x64.zip *",
+        "preload": "del-cli dist/ && tsc && npm run copy-files",
+        "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" dist/",
+        "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
+        "lint": "eslint **/*.js"
+    },
+    "keywords": [],
+    "license": "MIT",
+    "devDependencies": {
+        "@electron/packager": "^18.3.2",
+        "@types/node": "^20.12.5",
+        "bestzip": "^2.2.1",
+        "copyfiles": "^2.4.1",
+        "del-cli": "^5.1.0",
+        "electron": "29.1.6",
+        "electron-rebuild": "^3.2.9",
+        "eslint": "^8.57.0",
+        "typescript": "^5.4.4"
+    },
+    "dependencies": {
+        "@slimevr/firmware-protocol": "^0.4.1",
+        "bulma": "^1.0.0",
+        "haritorax-interpreter": "^1.5.0",
+        "quaternion": "^1.5.1",
+        "sass": "^1.72.0"
     }
-  ],
-  "main": "dist/main.js",
-  "scripts": {
-    "start": "npm run preload && electron .",
-    "build": "npm run preload && electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='build/' --icon=src/icon.ico --asar && npm run zip",
-    "zip": "cd build/SlimeTora-win32-x64/ && bestzip ../SlimeTora-win32-x64.zip *",
-    "preload": "del-cli dist/ && tsc && npm run copy-files",
-    "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" dist/",
-    "build-bulma": "npx sass --watch ./src/index.scss ./src/index.css",
-    "lint": "eslint **/*.js"
-  },
-  "keywords": [],
-  "license": "MIT",
-  "devDependencies": {
-    "@electron/packager": "^18.3.2",
-    "@types/node": "^20.12.5",
-    "bestzip": "^2.2.1",
-    "copyfiles": "^2.4.1",
-    "del-cli": "^5.1.0",
-    "electron": "29.1.6",
-    "electron-rebuild": "^3.2.9",
-    "eslint": "^8.57.0",
-    "typescript": "^5.4.4"
-  },
-  "dependencies": {
-    "@slimevr/firmware-protocol": "^0.4.1",
-    "bulma": "^1.0.0",
-    "haritorax-interpreter": "^1.5.0",
-    "quaternion": "^1.5.1",
-    "sass": "^1.72.0"
-  }
 }

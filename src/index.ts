@@ -189,6 +189,7 @@ async function addDeviceToList(deviceID: string) {
 
     // Check if device has a user-specified name
     const deviceName = settings[deviceID] || deviceID;
+    if (deviceName !== deviceID) log(`Got user-specified name for ${deviceID}: ${deviceName}`);
 
     // Fill the div with device data
     newDevice.innerHTML = `
@@ -203,10 +204,10 @@ async function addDeviceToList(deviceID: string) {
         </header>
         <div class="card-content">
             <div class="content">
-            <p>Device ID: <span id="device-id">${deviceID}</span></p>
-            <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
-            <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
-            <p>Battery: <span id="battery">N/A</span></p>
+                <p>Device ID: <span id="device-id">${deviceID}</span></p>
+                <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
+                <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
+                <p>Battery: <span id="battery">N/A</span></p>
             </div>
         </div>
         <footer class="card-footer">
@@ -214,8 +215,8 @@ async function addDeviceToList(deviceID: string) {
             <div class="switch-container">
                 <label for="sensor-switch-${deviceID}">Enable Magnetometer</label>
                 <div class="switch">
-                <input type="checkbox" id="sensor-switch-${deviceID}" />
-                <label for="sensor-switch-${deviceID}" class="slider round"></label>
+                    <input type="checkbox" id="sensor-switch-${deviceID}" />
+                    <label for="sensor-switch-${deviceID}" class="slider round"></label>
                 </div>
             </div>
             </div>
