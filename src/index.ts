@@ -179,6 +179,7 @@ function setStatus(status: string) {
 async function addDeviceToList(deviceID: string) {
     log(`Adding device to device list: ${deviceID}`);
 
+    const settings = await window.ipc.invoke("get-settings", null);
     const deviceList = document.getElementById("device-list");
 
     // Create a new div element
@@ -186,13 +187,19 @@ async function addDeviceToList(deviceID: string) {
     newDevice.id = deviceID;
     newDevice.className = "column";
 
+    // Check if device has a user-specified name
+    const deviceName = settings[deviceID] || deviceID;
+
     // Fill the div with device data
     newDevice.innerHTML = `
     <div class="card">
         <header class="card-header">
             <p class="card-header-title is-centered">
-            Device Name:  <span id="device-name"> ${deviceID}</span>
+                Device Name:&nbsp;<span id="device-name">${deviceName}</span>
             </p>
+            <div class="edit-button-container">
+                <button id="edit-button" class="button is-info">Edit</button>
+            </div>
         </header>
         <div class="card-content">
             <div class="content">
@@ -227,7 +234,6 @@ async function addDeviceToList(deviceID: string) {
     }
 
     // Check settings what sensorMode is set and set the switch accordingly
-    const settings = await window.ipc.invoke("get-settings", null);
     const sensorMode = settings[`${deviceID}Mode`] || 2;
     (
         newDevice.querySelector(
@@ -261,10 +267,50 @@ async function addDeviceToList(deviceID: string) {
                 fpsMode,
                 sensorAutoCorrection,
             });
+
             window.ipc.send("save-setting", {
                 [`${deviceID}Mode`]: sensorMode,
             });
         });
+
+    const deviceNameElement = newDevice.querySelector("#device-name");
+    const editButton = newDevice.querySelector("#edit-button");
+
+    function startEditing() {
+        const originalName = deviceNameElement.textContent;
+
+        const inputElement = document.createElement("input");
+        inputElement.type = "text";
+        inputElement.value = originalName;
+        inputElement.id = "device-name-input";
+
+        deviceNameElement.replaceWith(inputElement);
+
+        inputElement.focus();
+
+        // Add event listeners to handle when the input loses focus or the enter key is pressed
+        inputElement.addEventListener("blur", handleNameChange);
+        inputElement.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                handleNameChange();
+            }
+        });
+
+        function handleNameChange() {
+            inputElement.replaceWith(deviceNameElement);
+
+            const newName = inputElement.value;
+            deviceNameElement.textContent = newName;
+
+            inputElement.removeEventListener("blur", handleNameChange);
+            inputElement.removeEventListener("keydown", handleNameChange);
+
+            window.ipc.send("save-setting", { [deviceID]: newName });
+        }
+    }
+
+    editButton.addEventListener("click", startEditing);
+    deviceNameElement.addEventListener("click", startEditing);
 
     // Append the new device to the device list
     deviceList.appendChild(newDevice);

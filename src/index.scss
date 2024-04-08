@@ -20,6 +20,19 @@ body {
   padding: 3rem;
 }
 
+.edit-button-container {
+  padding: 0.5rem 1rem;
+}
+
+#device-name-input {
+  background-color: #081e30;
+  border: 1px solid #3a3a3a;
+  border-radius: 0.25rem;
+  color: white;
+  padding: 0.5rem;
+  outline: none;
+}
+
 .card-content span {
   color: white;
 }
