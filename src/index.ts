@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Populate COM port switches
     const comPortList = document.getElementById("com-ports");
-    const comPorts = await window.ipc.invoke("get-com-ports", null);
+    const comPorts: string[] = await window.ipc.invoke("get-com-ports", null);
 
     log(`COM ports: ${JSON.stringify(comPorts)}`);
 
@@ -48,7 +48,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // Get settings from config file
-    const settings = await window.ipc.invoke("get-settings", null);
+    const settings: { [key: string]: any } = await window.ipc.invoke(
+        "get-settings",
+        null
+    );
     bluetoothEnabled = settings.bluetoothEnabled || false;
     gxEnabled = settings.gxEnabled || false;
     accelerometerEnabled = settings.accelerometerEnabled || false;
@@ -91,7 +94,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const comPortsSwitches = Array.from(
         document.getElementById("com-ports").querySelectorAll("input")
     );
-    const selectedPorts = settings.comPorts || [];
+    const selectedPorts: string[] = settings.comPorts || [];
 
     comPortsSwitches.forEach((port) => {
         if (selectedPorts.includes(port.id)) {
@@ -109,7 +112,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 async function startConnection() {
     log("Starting connection...");
 
-    const slimeVRFound = await window.ipc.invoke("is-slimevr-connected", null);
+    const slimeVRFound: boolean = await window.ipc.invoke(
+        "is-slimevr-connected",
+        null
+    );
     if (!slimeVRFound && !skipSlimeVRCheck) {
         error("Tried to start connection while not connected to SlimeVR");
         setStatus("SlimeVR not found");
@@ -179,7 +185,10 @@ function setStatus(status: string) {
 async function addDeviceToList(deviceID: string) {
     log(`Adding device to device list: ${deviceID}`);
 
-    const settings = await window.ipc.invoke("get-settings", null);
+    const settings: { [key: string]: any } = await window.ipc.invoke(
+        "get-settings",
+        null
+    );
     const deviceList = document.getElementById("device-list");
 
     // Create a new div element
@@ -188,8 +197,9 @@ async function addDeviceToList(deviceID: string) {
     newDevice.className = "column";
 
     // Check if device has a user-specified name
-    const deviceName = settings[deviceID] || deviceID;
-    if (deviceName !== deviceID) log(`Got user-specified name for ${deviceID}: ${deviceName}`);
+    const deviceName: string = settings[deviceID] || deviceID;
+    if (deviceName !== deviceID)
+        log(`Got user-specified name for ${deviceID}: ${deviceName}`);
 
     // Fill the div with device data
     newDevice.innerHTML = `
@@ -235,7 +245,7 @@ async function addDeviceToList(deviceID: string) {
     }
 
     // Check settings what sensorMode is set and set the switch accordingly
-    const sensorMode = settings[`${deviceID}Mode`] || 2;
+    const sensorMode: number = settings[`${deviceID}Mode`] || 2;
     (
         newDevice.querySelector(
             `#sensor-switch-${deviceID}`
@@ -246,19 +256,22 @@ async function addDeviceToList(deviceID: string) {
     newDevice
         .querySelector(`#sensor-switch-${deviceID}`)
         .addEventListener("change", async () => {
-            const sensorSwitch = newDevice.querySelector(
+            const sensorSwitch: HTMLInputElement = newDevice.querySelector(
                 `#sensor-switch-${deviceID}`
             );
-            const sensorEnabled = (sensorSwitch as HTMLInputElement).checked;
+            const sensorEnabled: boolean = sensorSwitch
+                .checked;
             log(`Sensor switch for ${deviceID} toggled: ${sensorEnabled}`);
 
-            const settings = await window.ipc.invoke(
-                "get-tracker-settings",
-                deviceID
-            );
-            let sensorMode = settings.sensorMode;
-            const fpsMode = settings.fpsMode || 100;
-            const sensorAutoCorrection = settings.sensorAutoCorrection || [];
+            const trackerSettings: {
+                sensorMode: number;
+                fpsMode: number;
+                sensorAutoCorrection: string[];
+            } = await window.ipc.invoke("get-tracker-settings", deviceID);
+            let sensorMode: number = trackerSettings.sensorMode;
+            const fpsMode: number = trackerSettings.fpsMode || 50;
+            const sensorAutoCorrection: string[] =
+                trackerSettings.sensorAutoCorrection || [];
 
             sensorMode = sensorEnabled ? 1 : 2;
 
@@ -336,10 +349,15 @@ window.ipc.on("connect", async (_event, deviceID) => {
     if (deviceID.startsWith("HaritoraX")) return;
 
     // set sensorAutoCorrection settings
-    const settings = await window.ipc.invoke("get-tracker-settings", deviceID);
-    const sensorMode = settings.sensorMode || 1;
-    const fpsMode = settings.fpsMode || 100;
-    let sensorAutoCorrection = settings.sensorAutoCorrection || [];
+    const trackerSettings: {
+        sensorMode: number;
+        fpsMode: number;
+        sensorAutoCorrection: string[];
+    } = await window.ipc.invoke("get-tracker-settings", deviceID);
+    const sensorMode: number = trackerSettings.sensorMode || 1;
+    const fpsMode: number = trackerSettings.fpsMode || 50;
+    let sensorAutoCorrection: string[] =
+        trackerSettings.sensorAutoCorrection || [];
 
     if (accelerometerEnabled) sensorAutoCorrection.push("accel");
     if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
@@ -371,7 +389,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
 let lastUpdate = Date.now();
 
 window.ipc.on("device-data", (_event: any, arg) => {
-    const { trackerName, rotation, gravity } = arg;
+    const { trackerName, rotation, gravity }: { trackerName: string, rotation: Rotation, gravity: Gravity } = arg;
 
     if (
         !isActive ||
@@ -403,9 +421,9 @@ window.ipc.on("device-data", (_event: any, arg) => {
 });
 
 window.ipc.on("device-battery", (_event, arg) => {
-    const { trackerName, batteryRemaining, batteryVoltage } = arg;
+    const { trackerName, batteryRemaining, batteryVoltage }: { trackerName: string, batteryRemaining: number, batteryVoltage: number } = arg;
     if (!isActive || !trackerName) return;
-    const batteryText = document
+    const batteryText: HTMLElement = document
         .getElementById(trackerName)
         .querySelector("#battery");
     if (batteryText === null) return;
@@ -459,7 +477,7 @@ function addEventListeners() {
                 accelerometerEnabled: accelerometerEnabled,
             });
 
-            const activeTrackers = await window.ipc.invoke(
+            const activeTrackers: string[] = await window.ipc.invoke(
                 "get-active-trackers",
                 null
             );
@@ -467,13 +485,11 @@ function addEventListeners() {
 
             activeTrackers.forEach(async (deviceID: string) => {
                 if (deviceID.startsWith("HaritoraX")) return;
-                const settings = await window.ipc.invoke(
-                    "get-tracker-settings",
-                    deviceID
-                );
-                const sensorMode = settings.sensorMode;
-                const fpsMode = settings.fpsMode || 100;
-                let sensorAutoCorrection = settings.sensorAutoCorrection || [];
+                const trackerSettings: TrackerSettings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const sensorMode: number = trackerSettings.sensorMode;
+                const fpsMode: number = trackerSettings.fpsMode || 100;
+                let sensorAutoCorrection: string[] =
+                    trackerSettings.sensorAutoCorrection || [];
 
                 if (accelerometerEnabled) {
                     sensorAutoCorrection.push("accel");
@@ -505,7 +521,7 @@ function addEventListeners() {
                 gyroscopeEnabled: gyroscopeEnabled,
             });
 
-            const activeTrackers = await window.ipc.invoke(
+            const activeTrackers: string[] = await window.ipc.invoke(
                 "get-active-trackers",
                 null
             );
@@ -513,13 +529,11 @@ function addEventListeners() {
 
             activeTrackers.forEach(async (deviceID: string) => {
                 if (deviceID.startsWith("HaritoraX")) return;
-                const settings = await window.ipc.invoke(
-                    "get-tracker-settings",
-                    deviceID
-                );
-                const sensorMode = settings.sensorMode;
-                const fpsMode = settings.fpsMode || 100;
-                let sensorAutoCorrection = settings.sensorAutoCorrection || [];
+                const trackerSettings: TrackerSettings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const sensorMode: number = trackerSettings.sensorMode;
+                const fpsMode: number = trackerSettings.fpsMode || 50;
+                let sensorAutoCorrection: string[] =
+                    trackerSettings.sensorAutoCorrection || [];
 
                 if (gyroscopeEnabled) {
                     sensorAutoCorrection.push("gyro");
@@ -551,7 +565,7 @@ function addEventListeners() {
                 magnetometerEnabled: magnetometerEnabled,
             });
 
-            const activeTrackers = await window.ipc.invoke(
+            const activeTrackers: string[] = await window.ipc.invoke(
                 "get-active-trackers",
                 null
             );
@@ -559,13 +573,11 @@ function addEventListeners() {
 
             activeTrackers.forEach(async (deviceID: string) => {
                 if (deviceID.startsWith("HaritoraX")) return;
-                const settings = await window.ipc.invoke(
-                    "get-tracker-settings",
-                    deviceID
-                );
-                const sensorMode = settings.sensorMode;
-                const fpsMode = settings.fpsMode || 100;
-                let sensorAutoCorrection = settings.sensorAutoCorrection || [];
+                const trackerSettings: TrackerSettings = await window.ipc.invoke("get-tracker-settings", deviceID);
+                const sensorMode: number = trackerSettings.sensorMode;
+                const fpsMode: number = trackerSettings.fpsMode || 100;
+                let sensorAutoCorrection: string[] =
+                    trackerSettings.sensorAutoCorrection || [];
 
                 if (magnetometerEnabled) {
                     sensorAutoCorrection.push("mag");
@@ -589,7 +601,7 @@ function addEventListeners() {
         });
 
     document.getElementById("com-ports").addEventListener("change", () => {
-        const comPorts = Array.from(
+        const comPorts: HTMLInputElement[] = Array.from(
             document.getElementById("com-ports").querySelectorAll("input")
         );
         const selectedPorts: string[] = [];
@@ -688,4 +700,11 @@ interface Gravity {
     x: number;
     y: number;
     z: number;
+}
+
+interface TrackerSettings {
+    sensorMode: number;
+    fpsMode: number;
+    sensorAutoCorrection: string[];
+    ankleMotionDetection: boolean;
 }

@@ -8,9 +8,9 @@ import * as path from "path";
 
 const sock = dgram.createSocket("udp4");
 
-// TODO: investigate data being sent to SlimeVR server sometimes going from 100fps to 50 fps and vice versa, unknown what's causing it
+// TODO test program
 
-const {
+import {
     BoardType,
     MCUType,
     RotationDataType,
@@ -21,7 +21,7 @@ const {
     ServerBoundHandshakePacket,
     ServerBoundRotationDataPacket,
     ServerBoundSensorInfoPacket,
-} = require("@slimevr/firmware-protocol");
+} from "@slimevr/firmware-protocol";
 
 let mainWindow: BrowserWindow | null = null;
 const device = new HaritoraXWireless(0);
@@ -41,7 +41,7 @@ const createWindow = () => {
     // check if logToFile is set in the config before creating the window
     if (fs.existsSync(configPath)) {
         const data = fs.readFileSync(configPath);
-        const config = JSON.parse(data.toString());
+        const config: { [key: string]: any } = JSON.parse(data.toString());
         if (Object.prototype.hasOwnProperty.call(config, "canLogToFile")) {
             canLogToFile = config.canLogToFile;
         }
@@ -78,7 +78,7 @@ ipcMain.on("error", (_event, arg) => {
 });
 
 ipcMain.on("start-connection", (_event, arg) => {
-    const { type, ports } = arg;
+    const { type, ports }: { type: string, ports: string[] }= arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (type.includes("bluetooth")) {
@@ -87,7 +87,7 @@ ipcMain.on("start-connection", (_event, arg) => {
         connectGX(ports);
     }
 
-    const activeTrackers = device.getActiveTrackers();
+    const activeTrackers: string[] = device.getActiveTrackers();
     if (!activeTrackers || activeTrackers.length === 0) return;
     activeTrackers.forEach((trackerName) => {
         trackerQueue.push(trackerName);
@@ -131,7 +131,7 @@ ipcMain.handle("is-slimevr-connected", () => {
 });
 
 ipcMain.on("set-tracker-settings", (_event, arg) => {
-    const { deviceID, sensorMode, fpsMode, sensorAutoCorrection } = arg;
+    const { deviceID, sensorMode, fpsMode, sensorAutoCorrection }: { deviceID: string, sensorMode: number, fpsMode: number, sensorAutoCorrection: string[] } = arg;
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
         error(`Invalid settings received: ${arg}`);
         return;
@@ -194,7 +194,7 @@ ipcMain.handle("get-settings", () => {
 });
 
 ipcMain.on("save-setting", (_event, data) => {
-    const config = JSON.parse(fs.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     // Iterate over each property in the data object
     for (const key in data) {
@@ -207,7 +207,7 @@ ipcMain.on("save-setting", (_event, data) => {
 });
 
 ipcMain.handle("has-setting", (_event, name) => {
-    const config = JSON.parse(fs.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
     return Object.prototype.hasOwnProperty.call(config, name);
 });
 
@@ -382,17 +382,21 @@ async function handleNextTracker() {
     const trackerName = trackerQueue.shift();
 
     if (connectedDevices.length === 0) {
-        const sent = await sendHandshakePacket(trackerName);
+        const sent = await sendHandshakePacket(trackerName) as boolean;
         if (sent) {
             connectedDevices.push(trackerName);
             connectedDevices.sort();
+        } else {
+            error(`Failed to send handshake for ${trackerName}, not adding to connected devices`);
         }
     } else {
         if (connectedDevices.includes(trackerName)) return;
-        const sent = await sendSensorInfoPacket(trackerName);
+        const sent = await sendSensorInfoPacket(trackerName) as boolean;
         if (sent) {
             connectedDevices.push(trackerName);
             connectedDevices.sort();
+        } else {
+            error(`Failed to send sensor info packet for ${trackerName}, not adding to connected devices`)
         }
     }
 
@@ -464,11 +468,10 @@ function sendAccelPacket(acceleration: Gravity, deviceID: number) {
     packetCount += 1;
 
     // turn acceleration object into array with 3 values
-    let accelerationArray = [acceleration.x, acceleration.y, acceleration.z];
     const buffer = ServerBoundAccelPacket.encode(
         BigInt(packetCount),
         deviceID,
-        accelerationArray
+        acceleration
     );
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
@@ -482,13 +485,11 @@ function sendAccelPacket(acceleration: Gravity, deviceID: number) {
 function sendRotationPacket(rotation: Rotation, deviceID: number) {
     packetCount += 1;
 
-    // turn rotation object into array with 4 values
-    let rotationArray = [rotation.x, rotation.y, rotation.z, rotation.w];
     const buffer = ServerBoundRotationDataPacket.encode(
         BigInt(packetCount),
         deviceID,
         RotationDataType.NORMAL,
-        rotationArray,
+        rotation,
         0
     );
 
