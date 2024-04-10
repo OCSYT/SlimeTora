@@ -222,13 +222,7 @@ async function addDeviceToList(deviceID: string) {
         </div>
         <footer class="card-footer">
             <div class="card-footer-item">
-            <div class="switch-container">
-                <label for="sensor-switch-${deviceID}">Enable Magnetometer</label>
-                <div class="switch">
-                    <input type="checkbox" id="sensor-switch-${deviceID}" />
-                    <label for="sensor-switch-${deviceID}" class="slider round"></label>
-                </div>
-            </div>
+                <button id="${deviceID}-setting-button" class="button is-info">Override tracker settings</button>
             </div>
         </footer>
     </div>

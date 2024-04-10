@@ -62,15 +62,25 @@
 
         <br />
 
-        <!-- Settings section -->
+        <!-- Global settings section -->
         <div class="section">
             <div class="container">
-                <h1 class="title has-text-centered is-2 is-spaced">Settings</h1>
+                <h1 class="title has-text-centered is-2 is-spaced">
+                    Global settings
+                </h1>
                 <br />
                 <div class="columns is-multiline has-text-centered">
                     <!-- Connection mode setting -->
                     <div class="column is-6">
-                        <h3 class="title is-4">Connection Mode</h3>
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            Connection Mode
+                            <span class="tooltip-container">
+                                <div class="icon" style="margin-left: 12px; margin-top: 6px;">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the connection mode for the trackers. Both can be used at the same time (e.g. GX6 for the 6 main trackers and BT for the 2 elbows)</span>
+                            </span>
+                        </h3>
                         <div class="settings-container">
                             <div class="switch-container">
                                 <div class="switch">
@@ -100,15 +110,73 @@
 
                     <!-- COM port section -->
                     <div class="column is-6">
-                        <h3 class="title is-4 is-spaced">GX(6/2) COM ports</h3>
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            GX(6/2 COM ports)
+                            <span class="tooltip-container">
+                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the COM ports your GX(6/2) dongles are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2).</span>
+                            </span>
+                        </h3>
                         <div class="settings-container" id="com-ports">
                             <!-- COM ports get populated here -->
                         </div>
                     </div>
 
+                    <!-- FPS settings -->
+                    <div class="column is-6">
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            FPS transfer rate
+                            <span class="tooltip-container">
+                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.</span>
+                            </span>
+                        </h3>
+                        <div class="settings-container">
+                            <div class="select is-info">
+                                <select id="fps-rate">
+                                    <option value="50">50 FPS</option>
+                                    <option value="100">100 FPS</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sensor mode setting -->
+                    <div class="column is-6">
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            Sensor mode
+                            <span class="tooltip-container">
+                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment.</span>
+                            </span>
+                        </h3>
+                        <div class="settings-container">
+                            <div class="select is-info">
+                                <select id="fps-rate">
+                                    <option value="1">Mode 1</option>
+                                    <option value="2">Mode 2</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tracker auto correction setting -->
                     <div class="column is-6">
-                        <h3 class="title is-4">Tracker Auto Correction</h3>
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            Tracker Auto Correction
+                            <span class="tooltip-container">
+                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Enable or disable tracker auto correction features. Usually not needed to be changed.</span>
+                            </span>
+                        </h3>
                         <div class="settings-container">
                             <div class="switch-container">
                                 <div class="switch">
@@ -166,7 +234,15 @@
 
                     <!-- Debugging settings -->
                     <div class="column is-6">
-                        <h3 class="title is-4 has-text-warning">Debugging</h3>
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            Debugging
+                            <span class="tooltip-container">
+                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Enable or disable debugging features for the program.</span>
+                            </span>
+                        </h3>
                         <div class="settings-container">
                             <div class="switch-container">
                                 <div class="switch">

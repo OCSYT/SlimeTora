@@ -47,13 +47,13 @@ const createWindow = () => {
 
     mainWindow = new BrowserWindow({
         autoHideMenuBar: true,
-        width: 800,
-        height: 600,
+        width: 900,
+        height: 700,
         webPreferences: {
             contextIsolation: true,
             preload: path.join(__dirname, "preload.js"),
         },
-        icon: path.join(__dirname, "icon.ico"),
+        icon: path.join(__dirname, "icons/icon.ico"),
     });
 
     mainWindow.loadURL(path.join(__dirname, "index.html"));

@@ -22441,6 +22441,49 @@ body {
   background-color: #00101c;
 }
 
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 240px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 100;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -120px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  padding: 0.5rem;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.icon {
+  width: 26px;
+  height: 26px;
+}
+
+.icon img {
+  width: 26px;
+  height: 26px;
+  filter: invert(100%) sepia(2%) saturate(6692%) hue-rotate(194deg) brightness(125%) contrast(97%);
+}
+
+.icon:hover img {
+  filter: invert(80%) sepia(24%) saturate(2320%) hue-rotate(169deg) brightness(100%) contrast(102%);
+}
+
 .section {
   background-color: #081e30;
   border-radius: 0.5rem;
