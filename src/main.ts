@@ -8,8 +8,6 @@ import * as path from "path";
 
 const sock = dgram.createSocket("udp4");
 
-// TODO test program
-
 import {
     BoardType,
     MCUType,
