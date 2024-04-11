@@ -3,7 +3,6 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>SlimeTora</title>
         <link rel="stylesheet" href="index.css" />
         <script src="index.js"></script>
     </head>
@@ -47,13 +46,6 @@
                     Tracker information
                 </h1>
                 <br />
-                <!--<div
-                    class="buttons is-centered"
-                    onclick="toggleVisualization()"
-                >
-                    <button class="button is-info">Toggle visualization</button>
-                </div>
-                <br />-->
                 <div class="columns is-multiline" id="device-list">
                     <!-- Trackers get populated here -->
                 </div>
@@ -75,7 +67,7 @@
                         <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
                             Connection Mode
                             <span class="tooltip-container">
-                                <div class="icon" style="margin-left: 12px; margin-top: 6px;">
+                                <div class="icon">
                                     <img src="./icons/help.svg" alt="Help icon" />
                                 </div>
                                 <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the connection mode for the trackers. Both can be used at the same time (e.g. GX6 for the 6 main trackers and BT for the 2 elbows)</span>
@@ -113,7 +105,7 @@
                         <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
                             GX(6/2 COM ports)
                             <span class="tooltip-container">
-                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                <div class="icon">
                                     <img src="./icons/help.svg" alt="Help icon" />
                                 </div>
                                 <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the COM ports your GX(6/2) dongles are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2).</span>
@@ -129,7 +121,7 @@
                         <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
                             FPS transfer rate
                             <span class="tooltip-container">
-                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                <div class="icon">
                                     <img src="./icons/help.svg" alt="Help icon" />
                                 </div>
                                 <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.</span>
@@ -137,7 +129,7 @@
                         </h3>
                         <div class="settings-container">
                             <div class="select is-info">
-                                <select id="fps-rate">
+                                <select id="fps-mode-select">
                                     <option value="50">50 FPS</option>
                                     <option value="100">100 FPS</option>
                                 </select>
@@ -150,15 +142,15 @@
                         <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
                             Sensor mode
                             <span class="tooltip-container">
-                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                <div class="icon">
                                     <img src="./icons/help.svg" alt="Help icon" />
                                 </div>
                                 <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment.</span>
                             </span>
                         </h3>
                         <div class="settings-container">
-                            <div class="select is-info">
-                                <select id="fps-rate">
+                            <div class="select">
+                                <select id="sensor-mode-select">
                                     <option value="1">Mode 1</option>
                                     <option value="2">Mode 2</option>
                                 </select>
@@ -166,15 +158,15 @@
                         </div>
                     </div>
 
-                    <!-- Tracker auto correction setting -->
+                    <!-- Sensor correction setting -->
                     <div class="column is-6">
                         <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
-                            Tracker Auto Correction
+                            Sensor correction
                             <span class="tooltip-container">
-                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                <div class="icon">
                                     <img src="./icons/help.svg" alt="Help icon" />
                                 </div>
-                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Enable or disable tracker auto correction features. Usually not needed to be changed.</span>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Enable or disable sensor auto correction features. Usually not needed to be changed.</span>
                             </span>
                         </h3>
                         <div class="settings-container">
@@ -234,10 +226,10 @@
 
                     <!-- Debugging settings -->
                     <div class="column is-6">
-                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                        <h3 class="title is-4 is-spaced has-text-warning" style="display: flex; align-items: center; justify-content: center;">
                             Debugging
                             <span class="tooltip-container">
-                                <div class="icon" style="margin-left: 12px; margin-top: 4px;">
+                                <div class="icon">
                                     <img src="./icons/help.svg" alt="Help icon" />
                                 </div>
                                 <span class="tooltip-text subtitle is-6 has-text-weight-normal">Enable or disable debugging features for the program.</span>
@@ -310,28 +302,28 @@
                             <a
                                 href="https://github.com/JovannMC/haritorax-interpreter"
                                 >haritorax-interpreter</a
-                            >
-                        </li>
-                        <li>
-                            <a href="https://github.com/SlimeVR/slimevr-node"
-                                >slimevr-node</a
-                            >
+                            > by JovannMC
                         </li>
                         <li>
                             <a
                                 href="https://github.com/sim1222/haritorax-slimevr-bridge"
                                 >HaritoraX SlimeVR Bridge</a
-                            >
+                            > by sim1222
+                        </li>
+                        <li>
+                            <a href="https://github.com/SlimeVR/slimevr-node"
+                                >slimevr-node</a
+                            > by SlimeVR
                         </li>
                         <li>
                             <a
                                 href="https://github.com/SlimeVR/SlimeVR-Sender-Example/"
                                 >SlimeVR Sender Example</a
-                            >
+                            > by SlimeVR
                         </li>
                         <li>
                             <a href="https://github.com/moslime/moslime/"
-                                >Moslime</a
+                                >MoSlime</a
                             >
                         </li>
                         <li>

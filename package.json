@@ -19,7 +19,7 @@
     "scripts": {
         "start": "npm run preload && electron .",
         "dev": "tsc && npm run copy-files && electron .",
-        "build": "npm run preload && electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='build/' --icon=src/icon.ico --asar && npm run zip",
+        "build": "npm run preload && electron-packager . SlimeTora --platform=win32 --arch=x64 --overwrite --out='build/' --icon=src/icons/icon.ico --asar && npm run zip",
         "zip": "cd build/SlimeTora-win32-x64/ && bestzip ../SlimeTora-win32-x64.zip *",
         "preload": "del-cli dist/ && tsc && npm run copy-files",
         "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.svg\" dist/",
@@ -43,6 +43,7 @@
         "@slimevr/firmware-protocol": "^0.5.1",
         "bulma": "^1.0.0",
         "haritorax-interpreter": "^1.5.1",
+        "lodash": "^4.17.21",
         "quaternion": "^1.5.1",
         "sass": "^1.72.0"
     }

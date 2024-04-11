@@ -22433,17 +22433,22 @@ has-background-danger.is-hoverable:active {
   pointer-events: all !important;
 }
 
+html {
+  background-color: #00101c;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: auto;
   max-width: 100%;
   padding: 2rem;
-  background-color: #00101c;
 }
 
 .tooltip-container {
   position: relative;
   display: inline-block;
+  margin-left: 18px;
+  margin-top: 4px;
 }
 
 .tooltip-text {
@@ -22467,6 +22472,12 @@ body {
 .tooltip-container:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
+}
+
+.select select {
+  background: #081f2f;
+  color: #fff;
+  font-weight: 500;
 }
 
 .icon {
@@ -22555,7 +22566,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
+  background-color: #aaa;
   transition: 0.4s;
 }
 
@@ -22566,12 +22577,12 @@ body {
   width: 26px;
   left: 4px;
   bottom: 4px;
-  background-color: white;
+  background-color: #fff;
   transition: 0.4s;
 }
 
 input:checked + .slider {
-  background-color: #2196f3;
+  background-color: #1490f5;
 }
 
 input:checked + .slider:before {

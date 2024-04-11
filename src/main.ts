@@ -1,10 +1,11 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import { HaritoraXWireless } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import * as dgram from "dgram";
 import Quaternion from "quaternion";
 import * as fs from "fs";
 import * as path from "path";
+const _ = require("lodash");
 
 const sock = dgram.createSocket("udp4");
 
@@ -46,6 +47,7 @@ const createWindow = () => {
     }
 
     mainWindow = new BrowserWindow({
+        title: "SlimeTora",
         autoHideMenuBar: true,
         width: 900,
         height: 700,
@@ -67,16 +69,16 @@ const createWindow = () => {
  * Renderer handlers
  */
 
-ipcMain.on("log", (_event, arg) => {
+ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
 });
 
-ipcMain.on("error", (_event, arg) => {
+ipcMain.on("error", (_event, arg: string) => {
     error(arg, "renderer");
 });
 
 ipcMain.on("start-connection", (_event, arg) => {
-    const { type, ports }: { type: string, ports: string[] }= arg;
+    const { type, ports }: { type: string; ports: string[] } = arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (type.includes("bluetooth")) {
@@ -129,7 +131,17 @@ ipcMain.handle("is-slimevr-connected", () => {
 });
 
 ipcMain.on("set-tracker-settings", (_event, arg) => {
-    const { deviceID, sensorMode, fpsMode, sensorAutoCorrection }: { deviceID: string, sensorMode: number, fpsMode: number, sensorAutoCorrection: string[] } = arg;
+    const {
+        deviceID,
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection,
+    }: {
+        deviceID: string;
+        sensorMode: number;
+        fpsMode: number;
+        sensorAutoCorrection: string[];
+    } = arg;
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
         error(`Invalid settings received: ${arg}`);
         return;
@@ -164,7 +176,33 @@ ipcMain.on("open-logs-folder", () => {
     const logDir = path.resolve(mainPath, "logs");
     if (fs.existsSync(logDir)) {
         shell.openPath(logDir);
+    } else {
+        error("Logs directory does not exist");
+        dialog.showErrorBox(
+            "No logs!",
+            "You should probably enable debug logging first."
+        );
     }
+});
+
+ipcMain.on("open-tracker-settings", (_event, arg: string) => {
+    let trackerSettingsWindow = new BrowserWindow({
+        title: `${arg} settings`,
+        autoHideMenuBar: true,
+        width: 800,
+        height: 620,
+        webPreferences: {
+            contextIsolation: true,
+            preload: path.join(__dirname, "preload.js"),
+        },
+        icon: path.join(__dirname, "icons/icon.ico"),
+    });
+
+    trackerSettingsWindow.loadURL(path.join(__dirname, "settings.html"));
+
+    trackerSettingsWindow.webContents.on("did-finish-load", () => {
+        trackerSettingsWindow.webContents.send("trackerName", arg);
+    });
 });
 
 async function connectBluetooth() {
@@ -192,20 +230,28 @@ ipcMain.handle("get-settings", () => {
 });
 
 ipcMain.on("save-setting", (_event, data) => {
-    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(
+        fs.readFileSync(configPath).toString()
+    );
 
-    // Iterate over each property in the data object
-    for (const key in data) {
-        const value = data[key];
-        config[key] = value;
-        log(`Saved setting ${key} with value ${value}`);
-    }
+    // Use lodash's mergeWith to merge the new data with the existing config (not merge as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
+    const mergedConfig = _.mergeWith(
+        config,
+        data,
+        (objValue: any, srcValue: any) => {
+            if (_.isArray(objValue)) {
+                return srcValue;
+            }
+        }
+    );
 
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+    fs.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 4));
 });
 
 ipcMain.handle("has-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(
+        fs.readFileSync(configPath).toString()
+    );
     return Object.prototype.hasOwnProperty.call(config, name);
 });
 
@@ -296,8 +342,9 @@ device.on(
 );
 
 function log(msg: string, where = "main") {
+    const date = new Date();
+
     if (canLogToFile) {
-        const date = new Date();
         const logDir = path.resolve(mainPath, "logs");
         const logPath = path.join(
             logDir,
@@ -321,12 +368,12 @@ function log(msg: string, where = "main") {
             `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
         );
     }
-    console.log(msg);
+    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
 }
 
 function error(msg: string, where = "main") {
+    const date = new Date();
     if (canLogToFile) {
-        const date = new Date();
         const logDir = path.resolve(mainPath, "logs");
         const logPath = path.join(
             logDir,
@@ -350,12 +397,14 @@ function error(msg: string, where = "main") {
             `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`
         );
     }
-    console.error(msg);
+    console.error(`${date.toTimeString()} -- ERROR -- (${where}): ${msg}`);
 }
 
 /*
  * SlimeVR Forwarding
  */
+
+// TODO: change how the SlimeVR server is found
 
 let slimeIP = "0.0.0.0";
 let slimePort = 6969;
@@ -380,21 +429,25 @@ async function handleNextTracker() {
     const trackerName = trackerQueue.shift();
 
     if (connectedDevices.length === 0) {
-        const sent = await sendHandshakePacket(trackerName) as boolean;
+        const sent = (await sendHandshakePacket(trackerName)) as boolean;
         if (sent) {
             connectedDevices.push(trackerName);
             connectedDevices.sort();
         } else {
-            error(`Failed to send handshake for ${trackerName}, not adding to connected devices`);
+            error(
+                `Failed to send handshake for ${trackerName}, not adding to connected devices`
+            );
         }
     } else {
         if (connectedDevices.includes(trackerName)) return;
-        const sent = await sendSensorInfoPacket(trackerName) as boolean;
+        const sent = (await sendSensorInfoPacket(trackerName)) as boolean;
         if (sent) {
             connectedDevices.push(trackerName);
             connectedDevices.sort();
         } else {
-            error(`Failed to send sensor info packet for ${trackerName}, not adding to connected devices`)
+            error(
+                `Failed to send sensor info packet for ${trackerName}, not adding to connected devices`
+            );
         }
     }
 

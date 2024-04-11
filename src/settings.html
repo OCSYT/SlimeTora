@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="index.css" />
+        <script src="settings.js"></script>
+    </head>
+
+    <body>
+        <!-- Tracker settings section -->
+        <div class="section">
+            <div class="container">
+                <h1 class="title has-text-centered is-2 is-spaced">
+                    <span id="tracker-name">N/A</span> settings
+                </h1>
+                <br />
+                <div class="columns is-multiline has-text-centered">
+                    <!-- FPS settings -->
+                    <div class="column is-6">
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            FPS transfer rate
+                            <span class="tooltip-container">
+                                <div class="icon">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.</span>
+                            </span>
+                        </h3>
+                        <div class="settings-container">
+                            <div class="select is-info">
+                                <select id="fps-mode-select">
+                                    <option value="50">50 FPS</option>
+                                    <option value="100">100 FPS</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sensor mode setting -->
+                    <div class="column is-6">
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            Sensor mode
+                            <span class="tooltip-container">
+                                <div class="icon">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment.</span>
+                            </span>
+                        </h3>
+                        <div class="settings-container">
+                            <div class="select">
+                                <select id="sensor-mode-select">
+                                    <option value="1">Mode 1</option>
+                                    <option value="2">Mode 2</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sensor correction setting -->
+                    <div class="column is-6">
+                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                            Sensor correction
+                            <span class="tooltip-container">
+                                <div class="icon">
+                                    <img src="./icons/help.svg" alt="Help icon" />
+                                </div>
+                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Enable or disable sensor auto correction features. Usually not needed to be changed.</span>
+                            </span>
+                        </h3>
+                        <div class="settings-container">
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="accelerometer-switch"
+                                    />
+                                    <label
+                                        for="accelerometer-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label
+                                    for="accelerometer-switch"
+                                    style="min-width: 150px"
+                                    >Accelerometer</label
+                                >
+                            </div>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="gyroscope-switch"
+                                    />
+                                    <label
+                                        for="gyroscope-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label
+                                    for="gyroscope-switch"
+                                    style="min-width: 150px"
+                                    >Gyroscope</label
+                                >
+                            </div>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input
+                                        type="checkbox"
+                                        id="magnetometer-switch"
+                                    />
+                                    <label
+                                        for="magnetometer-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label
+                                    for="magnetometer-switch"
+                                    style="min-width: 150px"
+                                    >Magnetometer</label
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
