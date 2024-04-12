@@ -81,6 +81,18 @@ ipcMain.on("start-connection", (_event, arg) => {
     const { type, ports }: { type: string; ports: string[] } = arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
+    if (
+        device.getConnectionModeActive("bluetooth") ||
+        device.getConnectionModeActive("gx")
+    ) {
+        log("Tried to start connection while already active");
+        dialog.showErrorBox(
+            "Connection already active",
+            "Please stop the current connection before starting a new one."
+        );
+        return false;
+    }
+
     if (type.includes("bluetooth")) {
         connectBluetooth();
     } else if (type.includes("gx") && ports) {
@@ -118,7 +130,7 @@ ipcMain.handle("get-com-ports", async () => {
     return ports.map((port) => port.path).sort();
 });
 
-ipcMain.handle("get-tracker-settings", (_event, arg) => {
+ipcMain.handle("get-tracker-settings", (_event, arg: string) => {
     return device.getTrackerSettings(arg);
 });
 
@@ -252,7 +264,36 @@ ipcMain.handle("has-setting", (_event, name) => {
     const config: { [key: string]: any } = JSON.parse(
         fs.readFileSync(configPath).toString()
     );
-    return Object.prototype.hasOwnProperty.call(config, name);
+
+    const properties = name.split(".");
+    let current = config;
+
+    for (const property of properties) {
+        if (!current.hasOwnProperty(property)) {
+            return false;
+        }
+        current = current[property];
+    }
+
+    return true;
+});
+
+ipcMain.handle("get-setting", (_event, name) => {
+    const config: { [key: string]: any } = JSON.parse(
+        fs.readFileSync(configPath).toString()
+    );
+
+    const properties = name.split(".");
+    let current = config;
+
+    for (const property of properties) {
+        if (!current.hasOwnProperty(property)) {
+            return null;
+        }
+        current = current[property];
+    }
+
+    return current;
 });
 
 /*

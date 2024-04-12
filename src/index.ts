@@ -12,6 +12,7 @@ var magnetometerEnabled = false;
 
 let canLogToFile = false;
 let skipSlimeVRCheck = false;
+let bypassCOMPortLimit = false;
 
 /*
  * Renderer functions
@@ -56,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     bluetoothEnabled =
         settings.global?.connectionMode?.bluetoothEnabled || false;
     gxEnabled = settings.global?.connectionMode?.gxEnabled || false;
-    fpsMode = settings.global?.trackers?.fpsRode || 50;
+    fpsMode = settings.global?.trackers?.fpsMode || 50;
     sensorMode = settings.global?.trackers?.sensorMode || 2;
     accelerometerEnabled =
         settings.global?.trackers?.accelerometerEnabled || false;
@@ -65,6 +66,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         settings.global?.trackers?.magnetometerEnabled || false;
     canLogToFile = settings.global?.debug?.canLogToFile || false;
     skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck || false;
+    bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit || false;
 
     // Get the checkbox elements
     const bluetoothSwitch = document.getElementById(
@@ -86,6 +88,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const skipSlimeVRSwitch = document.getElementById(
         "skip-slimevr-switch"
     ) as HTMLInputElement;
+    const bypassCOMPortLimitSwitch = document.getElementById(
+        "bypass-com-limit-switch"
+    ) as HTMLInputElement;
 
     // Set the checked property based on the settings
     bluetoothSwitch.checked = bluetoothEnabled;
@@ -95,6 +100,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     magnetometerSwitch.checked = magnetometerEnabled;
     logToFileSwitch.checked = canLogToFile;
     skipSlimeVRSwitch.checked = skipSlimeVRCheck;
+    bypassCOMPortLimitSwitch.checked = bypassCOMPortLimit;
 
     // Get the select elements
     const fpsSelect = document.getElementById(
@@ -136,7 +142,9 @@ async function startConnection() {
         null
     );
     if (!slimeVRFound && !skipSlimeVRCheck) {
-        window.error("Tried to start connection while not connected to SlimeVR");
+        window.error(
+            "Tried to start connection while not connected to SlimeVR"
+        );
         setStatus("SlimeVR not found");
         return;
     } else if (!slimeVRFound && skipSlimeVRCheck) {
@@ -319,9 +327,18 @@ window.ipc.on("connect", async (_event, deviceID) => {
     let sensorAutoCorrection: string[] =
         trackerSettings.sensorAutoCorrection || [];
 
-    if (accelerometerEnabled) sensorAutoCorrection.push("accel");
-    if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
-    if (magnetometerEnabled) sensorAutoCorrection.push("mag");
+    if (accelerometerEnabled) {
+        sensorAutoCorrection.push("accel");
+        window.log("Added accel to sensor auto correction");
+    }
+    if (gyroscopeEnabled) {
+        sensorAutoCorrection.push("gyro");
+        window.log("Added gyro to sensor auto correction");
+    }
+    if (magnetometerEnabled) {
+        sensorAutoCorrection.push("mag");
+        window.log("Added mag to sensor auto correction");
+    }
 
     window.log(
         `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
@@ -471,19 +488,22 @@ function addEventListeners() {
 
             activeTrackers.forEach(async (deviceID: string) => {
                 if (deviceID.startsWith("HaritoraX")) return;
+
                 const trackerSettings: TrackerSettings =
                     await window.ipc.invoke("get-tracker-settings", deviceID);
                 const sensorMode: number = trackerSettings.sensorMode;
-                const fpsMode: number = trackerSettings.fpsMode || 100;
+                const fpsMode: number = trackerSettings.fpsMode || 50;
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
                 if (accelerometerEnabled) {
                     sensorAutoCorrection.push("accel");
+                    window.log("Added accel to sensor auto correction");
                 } else {
                     sensorAutoCorrection = sensorAutoCorrection.filter(
                         (sensor: string) => sensor !== "accel"
                     );
+                    window.log("Removed accel from sensor auto correction");
                 }
 
                 window.log(
@@ -522,17 +542,19 @@ function addEventListeners() {
                 if (deviceID.startsWith("HaritoraX")) return;
                 const trackerSettings: TrackerSettings =
                     await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number = trackerSettings.sensorMode;
+                const sensorMode: number = trackerSettings.sensorMode || 2;
                 const fpsMode: number = trackerSettings.fpsMode || 50;
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
                 if (gyroscopeEnabled) {
                     sensorAutoCorrection.push("gyro");
+                    window.log("Added gyro to sensor auto correction");
                 } else {
                     sensorAutoCorrection = sensorAutoCorrection.filter(
                         (sensor: string) => sensor !== "gyro"
                     );
+                    window.log("Removed gyro from sensor auto correction");
                 }
 
                 window.log(
@@ -572,16 +594,18 @@ function addEventListeners() {
                 const trackerSettings: TrackerSettings =
                     await window.ipc.invoke("get-tracker-settings", deviceID);
                 const sensorMode: number = trackerSettings.sensorMode;
-                const fpsMode: number = trackerSettings.fpsMode || 100;
+                const fpsMode: number = trackerSettings.fpsMode || 50;
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
                 if (magnetometerEnabled) {
                     sensorAutoCorrection.push("mag");
+                    window.log(`Added mag to sensor auto correction`);
                 } else {
                     sensorAutoCorrection = sensorAutoCorrection.filter(
                         (sensor: string) => sensor !== "mag"
                     );
+                    window.log(`Removed mag from sensor auto correction`);
                 }
 
                 window.log(
@@ -623,7 +647,7 @@ function addEventListeners() {
         });
 
         // If four ports are selected, disable the rest
-        if (selectedPorts.length >= 4) {
+        if (selectedPorts.length >= 4 && !bypassCOMPortLimit) {
             comPorts.forEach((port) => {
                 if (!port.checked) {
                     port.disabled = true;
@@ -665,6 +689,38 @@ function addEventListeners() {
                 },
             });
         });
+    
+    document
+        .getElementById("bypass-com-limit-switch")
+        .addEventListener("change", function () {
+            bypassCOMPortLimit = !bypassCOMPortLimit;
+            window.log(`Bypass COM port limit: ${bypassCOMPortLimit}`);
+            window.ipc.send("save-setting", {
+                global: {
+                    debug: {
+                        bypassCOMPortLimit: bypassCOMPortLimit,
+                    },
+                },
+            });
+
+            const comPorts: HTMLInputElement[] = Array.from(
+                document.getElementById("com-ports").querySelectorAll("input")
+            );
+
+            if (bypassCOMPortLimit) {
+                comPorts.forEach((port) => {
+                    port.disabled = false;
+                });
+            } else {
+                if (selectedComPorts.length >= 4) {
+                    comPorts.forEach((port) => {
+                        if (!port.checked) {
+                            port.disabled = true;
+                        }
+                    });
+                }
+            }
+        });
 
     document
         .getElementById("fps-mode-select")
@@ -698,9 +754,7 @@ function addEventListeners() {
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
-                window.log(
-                    `Set FPS mode for ${deviceID} to: ${fpsMode}`
-                );
+                window.log(`Set FPS mode for ${deviceID} to: ${fpsMode}`);
 
                 window.ipc.send("set-tracker-settings", {
                     deviceID,
@@ -743,9 +797,7 @@ function addEventListeners() {
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
-                window.log(
-                    `Set sensor mode for ${deviceID} to: ${sensorMode}`
-                );
+                window.log(`Set sensor mode for ${deviceID} to: ${sensorMode}`);
 
                 window.ipc.send("set-tracker-settings", {
                     deviceID,

@@ -18,13 +18,28 @@
                 <div class="columns is-multiline has-text-centered">
                     <!-- FPS settings -->
                     <div class="column is-6">
-                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                        <h3
+                            class="title is-4 is-spaced"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            "
+                        >
                             FPS transfer rate
                             <span class="tooltip-container">
                                 <div class="icon">
-                                    <img src="./icons/help.svg" alt="Help icon" />
+                                    <img
+                                        src="./icons/help.svg"
+                                        alt="Help icon"
+                                    />
                                 </div>
-                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.</span>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    >Select the FPS transfer rate for the
+                                    trackers. If using Bluetooth, 50FPS may be
+                                    more stable.</span
+                                >
                             </span>
                         </h3>
                         <div class="settings-container">
@@ -39,13 +54,29 @@
 
                     <!-- Sensor mode setting -->
                     <div class="column is-6">
-                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                        <h3
+                            class="title is-4 is-spaced"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            "
+                        >
                             Sensor mode
                             <span class="tooltip-container">
                                 <div class="icon">
-                                    <img src="./icons/help.svg" alt="Help icon" />
+                                    <img
+                                        src="./icons/help.svg"
+                                        alt="Help icon"
+                                    />
                                 </div>
-                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment.</span>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    >Select the sensor mode for the trackers.
+                                    Mode 1 enables the magnetometer which is
+                                    best if you have a stable geomagnetic
+                                    environment.</span
+                                >
                             </span>
                         </h3>
                         <div class="settings-container">
@@ -60,13 +91,28 @@
 
                     <!-- Sensor correction setting -->
                     <div class="column is-6">
-                        <h3 class="title is-4 is-spaced" style="display: flex; align-items: center; justify-content: center;">
+                        <h3
+                            class="title is-4 is-spaced"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            "
+                        >
                             Sensor correction
                             <span class="tooltip-container">
                                 <div class="icon">
-                                    <img src="./icons/help.svg" alt="Help icon" />
+                                    <img
+                                        src="./icons/help.svg"
+                                        alt="Help icon"
+                                    />
                                 </div>
-                                <span class="tooltip-text subtitle is-6 has-text-weight-normal">Enable or disable sensor auto correction features. Usually not needed to be changed.</span>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    >Enable or disable sensor auto correction
+                                    features. Usually not needed to be
+                                    changed.</span
+                                >
                             </span>
                         </h3>
                         <div class="settings-container">
@@ -121,6 +167,40 @@
                                     >Magnetometer</label
                                 >
                             </div>
+                        </div>
+                    </div>
+                    <!-- Reset settings -->
+                    <div class="column is-6">
+                        <h3
+                            class="title is-4 is-spaced"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            "
+                        >
+                            Reset
+                            <span class="tooltip-container">
+                                <div class="icon">
+                                    <img
+                                        src="./icons/help.svg"
+                                        alt="Help icon"
+                                    />
+                                </div>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    >Resets the tracker settings back to
+                                    defaults</span
+                                >
+                            </span>
+                        </h3>
+                        <div class="settings-container">
+                            <button
+                                class="button is-info"
+                                onclick="resetSettings()"
+                            >
+                                Reset settings
+                            </button>
                         </div>
                     </div>
                 </div>
