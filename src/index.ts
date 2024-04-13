@@ -13,6 +13,7 @@ var magnetometerEnabled = false;
 let canLogToFile = false;
 let skipSlimeVRCheck = false;
 let bypassCOMPortLimit = false;
+let debugTrackerConnections = false;
 
 /*
  * Renderer functions
@@ -67,6 +68,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     canLogToFile = settings.global?.debug?.canLogToFile || false;
     skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck || false;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit || false;
+    debugTrackerConnections =
+        settings.global?.debug?.debugTrackerConnections || false;
 
     // Get the checkbox elements
     const bluetoothSwitch = document.getElementById(
@@ -91,6 +94,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const bypassCOMPortLimitSwitch = document.getElementById(
         "bypass-com-limit-switch"
     ) as HTMLInputElement;
+    const debugTrackerConnectionsSwitch = document.getElementById(
+        "debug-tracker-connections-switch"
+    ) as HTMLInputElement;
 
     // Set the checked property based on the settings
     bluetoothSwitch.checked = bluetoothEnabled;
@@ -101,6 +107,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     logToFileSwitch.checked = canLogToFile;
     skipSlimeVRSwitch.checked = skipSlimeVRCheck;
     bypassCOMPortLimitSwitch.checked = bypassCOMPortLimit;
+    debugTrackerConnectionsSwitch.checked = debugTrackerConnections;
 
     // Get the select elements
     const fpsSelect = document.getElementById(
@@ -126,6 +133,27 @@ document.addEventListener("DOMContentLoaded", async function () {
             port.checked = true;
         }
     });
+
+    // Check if the selected COM ports are still available
+    let isMissingPorts = false;
+    selectedPorts.forEach((port) => {
+        if (!comPorts.includes(port)) {
+            window.log(
+                `COM port ${port} in config was not found in user's available COM ports`
+            );
+            selectedPorts.splice(selectedPorts.indexOf(port), 1);
+            isMissingPorts = true;
+        }
+    });
+
+    if (isMissingPorts) {
+        setStatus("COM ports missing");
+        window.ipc.send("show-error", {
+            title: "COM ports missing",
+            message:
+                "Some COM ports set in the config were not found, please make sure your dongle(s) are connected.",
+        });
+    }
 
     selectedComPorts.push(...selectedPorts);
 
@@ -172,10 +200,11 @@ async function startConnection() {
     } else {
         window.error("No connection mode enabled");
         setStatus("No connection mode enabled");
-        return;
+        return false;
     }
 
     isActive = true;
+    setStatus("searching");
 }
 
 function stopConnection() {
@@ -360,7 +389,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
     ).toString();
 
     if (document.getElementById("tracker-count").innerHTML === "0")
-        setStatus("disconnected");
+        setStatus("searching");
 });
 
 let lastUpdate = Date.now();
@@ -424,7 +453,7 @@ window.ipc.on("device-battery", (_event, arg) => {
     );
 });
 
-window.ipc.on("error-message", (_event, msg) => {
+window.ipc.on("set-status", (_event, msg) => {
     setStatus(msg);
 });
 
@@ -689,7 +718,7 @@ function addEventListeners() {
                 },
             });
         });
-    
+
     document
         .getElementById("bypass-com-limit-switch")
         .addEventListener("change", function () {
@@ -720,6 +749,24 @@ function addEventListeners() {
                     });
                 }
             }
+        });
+
+    document
+        .getElementById("debug-tracker-connections-switch")
+        .addEventListener("change", function () {
+            debugTrackerConnections = !debugTrackerConnections;
+            window.log(`Debug tracker connections: ${debugTrackerConnections}`);
+            window.ipc.send(
+                "set-debug-tracker-connections",
+                debugTrackerConnections
+            );
+            window.ipc.send("save-setting", {
+                global: {
+                    debug: {
+                        debugTrackerConnections: debugTrackerConnections,
+                    },
+                },
+            });
         });
 
     document

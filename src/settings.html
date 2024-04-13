@@ -172,14 +172,14 @@
                     <!-- Reset settings -->
                     <div class="column is-6">
                         <h3
-                            class="title is-4 is-spaced"
+                            class="title is-4 is-spaced has-text-warning"
                             style="
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
                             "
                         >
-                            Reset
+                            Debugging
                             <span class="tooltip-container">
                                 <div class="icon">
                                     <img
@@ -200,6 +200,14 @@
                                 onclick="resetSettings()"
                             >
                                 Reset settings
+                            </button>
+                        </div>
+                        <div class="settings-container">
+                            <button
+                                class="button is-info"
+                                onclick="getSettings()"
+                            >
+                                Get tracker settings
                             </button>
                         </div>
                     </div>

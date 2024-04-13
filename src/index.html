@@ -58,7 +58,17 @@
         <div class="section">
             <div class="container">
                 <h1 class="title has-text-centered is-2 is-spaced">
-                    Global settings
+                    Global settings<span class="tooltip-container">
+                        <div class="icon">
+                            <img src="./icons/help.svg" alt="Help icon" />
+                        </div>
+                        <span
+                            class="tooltip-text subtitle is-6 has-text-weight-normal"
+                            >Set the global settings for the trackers or the
+                            program. An option with yellow text requires a
+                            restart of the program to fully apply.</span
+                        >
+                    </span>
                 </h1>
                 <br />
                 <div class="columns is-multiline has-text-centered">
@@ -220,8 +230,8 @@
                         </div>
                     </div>
 
-                    <!-- Sensor correction setting -->
-                    <div class="column is-6">
+                    <!-- Sensor auto correction setting -->
+                    <div class="column is-12">
                         <h3
                             class="title is-4 is-spaced"
                             style="
@@ -230,7 +240,7 @@
                                 justify-content: center;
                             "
                         >
-                            Sensor correction
+                            Sensor auto correction
                             <span class="tooltip-container">
                                 <div class="icon">
                                     <img
@@ -300,89 +310,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Debugging settings -->
-                    <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced has-text-warning"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            Debugging
-                            <span class="tooltip-container">
-                                <div class="icon">
-                                    <img
-                                        src="./icons/help.svg"
-                                        alt="Help icon"
-                                    />
-                                </div>
-                                <span
-                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    >Enable or disable debugging features for
-                                    the program. Enabling tracker connection
-                                    debugging will cause log files to be huge,
-                                    only use if requested!</span
-                                >
-                            </span>
-                        </h3>
-                        <div class="settings-container">
-                            <div class="switch-container">
-                                <div class="switch">
-                                    <input
-                                        type="checkbox"
-                                        id="log-to-file-switch"
-                                    />
-                                    <label
-                                        for="log-to-file-switch"
-                                        class="slider round"
-                                    ></label>
-                                </div>
-                                <label for="log-to-file-switch"
-                                    >Enable log files</label
-                                >
-                            </div>
-                            <div class="switch-container">
-                                <div class="switch">
-                                    <input
-                                        type="checkbox"
-                                        id="skip-slimevr-switch"
-                                    />
-                                    <label
-                                        for="skip-slimevr-switch"
-                                        class="slider round"
-                                    ></label>
-                                </div>
-                                <label for="skip-slimevr-switch"
-                                    >Skip SlimeVR check</label
-                                >
-                            </div>
-                            < class="switch-container">
-                                <div class="switch">
-                                    <input
-                                        type="checkbox"
-                                        id="bypass-com-limit-switch"
-                                    />
-                                    <label
-                                        for="bypass-com-limit-switch"
-                                        class="slider round"
-                                    ></label>
-                                </div>
-                                <label for="bypass-com-limit-switch"
-                                    >Bypass COM port limit</label
-                                >
-                            </div>
-                            <br />
-                            <button
-                                class="button is-info"
-                                onclick="openLogsFolder()"
-                            >
-                                Open Logs Folder
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -449,6 +376,107 @@
                             >
                         </li>
                     </ul>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="section">
+            <div class="container">
+                <h1
+                    class="title has-text-centered is-2 is-spaced has-text-danger"
+                >
+                    Debugging<span class="tooltip-container">
+                        <div class="icon">
+                            <img src="./icons/help.svg" alt="Help icon" />
+                        </div>
+                        <span
+                            class="tooltip-text subtitle is-6 has-text-weight-normal"
+                            >An option with yellow text requires a restart of
+                            the program to fully apply.</span
+                        >
+                    </span>
+                </h1>
+                <h2 class="subtitle has-text-centered">
+                    Enable or disable debugging features for the program.
+                    Debugging tracker data will make log files huge,
+                    <b>only use if requested or if you have tracker issues!</b>
+                </h2>
+                <div class="column is-12">
+                    <div class="debugging-container">
+                        <div class="switch-container">
+                            <div class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="log-to-file-switch"
+                                />
+                                <label
+                                    for="log-to-file-switch"
+                                    class="slider round"
+                                ></label>
+                            </div>
+                            <label for="log-to-file-switch"
+                                >Write to log files</label
+                            >
+                        </div>
+                        <div class="switch-container">
+                            <div class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="skip-slimevr-switch"
+                                />
+                                <label
+                                    for="skip-slimevr-switch"
+                                    class="slider round"
+                                ></label>
+                            </div>
+                            <label for="skip-slimevr-switch"
+                                >Skip SlimeVR check</label
+                            >
+                        </div>
+                        <div class="switch-container">
+                            <div class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="bypass-com-limit-switch"
+                                />
+                                <label
+                                    for="bypass-com-limit-switch"
+                                    class="slider round"
+                                ></label>
+                            </div>
+                            <label for="bypass-com-limit-switch"
+                                >Bypass port limit</label
+                            >
+                        </div>
+                        <div class="switch-container">
+                            <div class="switch">
+                                <input
+                                    type="checkbox"
+                                    id="debug-tracker-connections-switch"
+                                />
+                                <label
+                                    for="debug-tracker-connections-switch"
+                                    class="slider round"
+                                ></label>
+                            </div>
+                            <label
+                                for="debug-tracker-connections-switch"
+                                class="has-text-warning"
+                                >Debug tracker data</label
+                            >
+                        </div>
+                    </div>
+                    <br />
+                    <div class="logs-folder-container">
+                        <button
+                            class="button is-info"
+                            onclick="openLogsFolder()"
+                        >
+                            Open logs folder
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

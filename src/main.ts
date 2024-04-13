@@ -23,9 +23,10 @@ import {
 } from "@slimevr/firmware-protocol";
 
 let mainWindow: BrowserWindow | null = null;
-const device = new HaritoraXWireless(0);
+let device: HaritoraXWireless = undefined;
 let connectedDevices: string[] = [];
 let canLogToFile = false;
+let debugTrackerConnections = false;
 let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
 
@@ -41,9 +42,9 @@ const createWindow = () => {
     if (fs.existsSync(configPath)) {
         const data = fs.readFileSync(configPath);
         const config: { [key: string]: any } = JSON.parse(data.toString());
-        if (Object.prototype.hasOwnProperty.call(config, "canLogToFile")) {
-            canLogToFile = config.canLogToFile;
-        }
+        canLogToFile = config.global?.debug?.canLogToFile || false;
+        debugTrackerConnections =
+            config.global?.debug?.debugTrackerConnections || false;
     }
 
     mainWindow = new BrowserWindow({
@@ -80,6 +81,15 @@ ipcMain.on("error", (_event, arg: string) => {
 ipcMain.on("start-connection", (_event, arg) => {
     const { type, ports }: { type: string; ports: string[] } = arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
+
+    if (!device) {
+        log(
+            "Creating new HaritoraXWireless instance with debugTrackerConnections: " +
+                debugTrackerConnections
+        );
+        device = new HaritoraXWireless(debugTrackerConnections ? 2 : 0);
+        startDeviceListeners();
+    }
 
     if (
         device.getConnectionModeActive("bluetooth") ||
@@ -184,6 +194,11 @@ ipcMain.on("set-logging", (_event, arg) => {
     log(`Logging to file set to: ${arg}`);
 });
 
+ipcMain.on("set-debug-tracker-connections", (_event, arg) => {
+    debugTrackerConnections = arg;
+    log(`Debug tracker connections set to: ${arg}`);
+});
+
 ipcMain.on("open-logs-folder", () => {
     const logDir = path.resolve(mainPath, "logs");
     if (fs.existsSync(logDir)) {
@@ -219,12 +234,20 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
 
 async function connectBluetooth() {
     log("Connecting via bluetooth");
-    device.startConnection("bluetooth");
+    let connected = await device.startConnection("bluetooth");
+    if (!connected) {
+        error("Error connecting via bluetooth");
+        mainWindow.webContents.send("set-status", "connection failed");
+    }
 }
 
 async function connectGX(ports: string[]) {
     log(`Connecting via GX dongles with ports: ${ports}`);
-    device.startConnection("gx", ports);
+    let connected = await device.startConnection("gx", ports);
+    if (!connected) {
+        error("Error connecting via GX dongles");
+        mainWindow.webContents.send("set-status", "connection failed");
+    }
 }
 
 /*
@@ -296,91 +319,113 @@ ipcMain.handle("get-setting", (_event, name) => {
     return current;
 });
 
+ipcMain.on("show-error", (_event, arg) => {
+    const { title, message }: { title: string; message: string } = arg;
+    dialog.showErrorBox(title, message);
+});
+
 /*
  * Interpreter event listeners
  */
 
-device.on("connect", (deviceID: string) => {
-    if (connectedDevices.includes(deviceID)) return;
-    trackerQueue.push(deviceID);
-    handleNextTracker();
-    log(`Connected to tracker: ${deviceID}`);
-    mainWindow.webContents.send("connect", deviceID);
-    log("Connected devices: " + JSON.stringify(connectedDevices));
-});
+function startDeviceListeners() {
+    device.on("connect", (deviceID: string) => {
+        if (connectedDevices.includes(deviceID)) return;
+        trackerQueue.push(deviceID);
+        handleNextTracker();
+        log(`Connected to tracker: ${deviceID}`);
+        mainWindow.webContents.send("connect", deviceID);
+        log("Connected devices: " + JSON.stringify(connectedDevices));
+    });
 
-device.on("disconnect", (deviceID: string) => {
-    if (!connectedDevices.includes(deviceID)) return;
-    log(`Disconnected from tracker: ${deviceID}`);
-    mainWindow.webContents.send("disconnect", deviceID);
-    connectedDevices = connectedDevices.filter((name) => name !== deviceID);
-    log("Connected devices: " + JSON.stringify(connectedDevices));
-});
+    device.on("disconnect", (deviceID: string) => {
+        if (!connectedDevices.includes(deviceID)) return;
+        log(`Disconnected from tracker: ${deviceID}`);
+        mainWindow.webContents.send("disconnect", deviceID);
+        connectedDevices = connectedDevices.filter((name) => name !== deviceID);
+        log("Connected devices: " + JSON.stringify(connectedDevices));
+    });
 
-device.on(
-    "imu",
-    (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
-        if (
-            !connectedDevices.includes(trackerName) ||
-            !rawRotation ||
-            !rawGravity
-        )
-            return;
+    device.on(
+        "imu",
+        (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
+            if (
+                !connectedDevices.includes(trackerName) ||
+                !rawRotation ||
+                !rawGravity
+            )
+                return;
 
-        // Convert rotation to quaternion to euler angles in radians
-        const quaternion = new Quaternion(
-            rawRotation.w,
-            rawRotation.x,
-            rawRotation.y,
-            rawRotation.z
-        );
-        const eulerRadians = quaternion.toEuler("XYZ");
+            // Convert rotation to quaternion to euler angles in radians
+            const quaternion = new Quaternion(
+                rawRotation.w,
+                rawRotation.x,
+                rawRotation.y,
+                rawRotation.z
+            );
+            const eulerRadians = quaternion.toEuler("XYZ");
 
-        // Convert the Euler angles to degrees
-        const rotation = {
-            x: eulerRadians[0] * (180 / Math.PI),
-            y: eulerRadians[1] * (180 / Math.PI),
-            z: eulerRadians[2] * (180 / Math.PI),
-        };
+            // Convert the Euler angles to degrees
+            const rotation = {
+                x: eulerRadians[0] * (180 / Math.PI),
+                y: eulerRadians[1] * (180 / Math.PI),
+                z: eulerRadians[2] * (180 / Math.PI),
+            };
 
-        const gravity = {
-            x: rawGravity.x,
-            y: rawGravity.y,
-            z: rawGravity.z,
-        };
+            const gravity = {
+                x: rawGravity.x,
+                y: rawGravity.y,
+                z: rawGravity.z,
+            };
 
-        sendRotationPacket(rawRotation, connectedDevices.indexOf(trackerName));
-        sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
+            sendRotationPacket(
+                rawRotation,
+                connectedDevices.indexOf(trackerName)
+            );
+            sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
 
-        mainWindow.webContents.send("device-data", {
-            trackerName,
-            rotation,
-            gravity,
-        });
-    }
-);
+            mainWindow.webContents.send("device-data", {
+                trackerName,
+                rotation,
+                gravity,
+            });
+        }
+    );
 
-device.on(
-    "battery",
-    (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
-        if (!connectedDevices.includes(trackerName)) return;
-        sendBatteryLevel(
-            batteryRemaining,
-            batteryVoltage,
-            connectedDevices.indexOf(trackerName)
-        );
-        mainWindow.webContents.send("device-battery", {
-            trackerName,
-            batteryRemaining,
-            batteryVoltage,
-        });
-        log(
-            `Received battery data for ${trackerName}: ${batteryRemaining}% (${
-                batteryVoltage / 1000
-            }V)`
-        );
-    }
-);
+    device.on(
+        "battery",
+        (
+            trackerName: string,
+            batteryRemaining: number,
+            batteryVoltage: number
+        ) => {
+            if (!connectedDevices.includes(trackerName)) return;
+            sendBatteryLevel(
+                batteryRemaining,
+                batteryVoltage,
+                connectedDevices.indexOf(trackerName)
+            );
+            mainWindow.webContents.send("device-battery", {
+                trackerName,
+                batteryRemaining,
+                batteryVoltage,
+            });
+            log(
+                `Received battery data for ${trackerName}: ${batteryRemaining}% (${
+                    batteryVoltage / 1000
+                }V)`
+            );
+        }
+    );
+
+    device.on("log", (msg: string) => {
+        log(msg, "main");
+    });
+
+    device.on("error", (msg: string) => {
+        error(msg, "main");
+    });
+}
 
 function log(msg: string, where = "main") {
     const date = new Date();
@@ -403,6 +448,8 @@ function log(msg: string, where = "main") {
         if (!fs.existsSync(logPath)) {
             fs.writeFileSync(logPath, "");
         }
+
+        if (msg.startsWith("(haritorax-interpreter)") && !debugTrackerConnections) return;
 
         fs.appendFileSync(
             logPath,
@@ -432,6 +479,8 @@ function error(msg: string, where = "main") {
         if (!fs.existsSync(logPath)) {
             fs.writeFileSync(logPath, "");
         }
+
+        if (where === "interpreter" && !debugTrackerConnections) return;
 
         fs.appendFileSync(
             logPath,
@@ -637,8 +686,8 @@ function sendBatteryLevel(
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
-    device.stopConnection("bluetooth");
-    device.stopConnection("gx");
+    if (device && bluetoothEnabled) device.stopConnection("bluetooth");
+    if (device && gxEnabled) device.stopConnection("gx");
     app.quit();
 });
 

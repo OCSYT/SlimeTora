@@ -22546,6 +22546,21 @@ body {
   gap: 1rem;
 }
 
+.debugging-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.debugging-container .switch-container {
+  flex: 1 0 50%;
+}
+
+.logs-folder-container {
+  display: flex;
+  justify-content: center;
+}
+
 .switch {
   position: relative;
   display: inline-block;

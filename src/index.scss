@@ -1,204 +1,221 @@
 @charset "utf-8";
 
 @use "../node_modules/bulma/sass/index" with (
-  $card-background-color: #0b2941
+    $card-background-color: #0b2941
 );
 
 html {
-  background-color: #00101c;
+    background-color: #00101c;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
-  margin: auto;
-  max-width: 100%;
-  padding: 2rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+    margin: auto;
+    max-width: 100%;
+    padding: 2rem;
 }
 
 .tooltip-container {
-  position: relative;
-  display: inline-block;
-  margin-left: 18px;
-  margin-top: 4px;
+    position: relative;
+    display: inline-block;
+    margin-left: 18px;
+    margin-top: 4px;
 }
 
 .tooltip-text {
-  visibility: hidden;
-  width: 240px;
-  background-color: #555;
-  color: #fff;
-  text-align: center;
-  padding: 5px 0;
-  border-radius: 6px;
-  position: absolute;
-  z-index: 100;
-  bottom: 125%;
-  left: 50%;
-  margin-left: -120px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  padding: 0.5rem;
+    visibility: hidden;
+    width: 240px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 100;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -120px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    padding: 0.5rem;
 }
 
 .tooltip-container:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
+    visibility: visible;
+    opacity: 1;
 }
 
 .select select {
-  background: #081f2f;
-  color: #fff;
-  font-weight: 500;
+    background: #081f2f;
+    color: #fff;
+    font-weight: 500;
 }
 
 .icon {
-  width: 26px;
-  height: 26px;
+    width: 26px;
+    height: 26px;
 }
 
 .icon img {
-  width: 26px;
-  height: 26px;
-  filter: invert(100%) sepia(2%) saturate(6692%) hue-rotate(194deg) brightness(125%) contrast(97%);
+    width: 26px;
+    height: 26px;
+    filter: invert(100%) sepia(2%) saturate(6692%) hue-rotate(194deg)
+        brightness(125%) contrast(97%);
 }
 
 .icon:hover img {
-  filter: invert(80%) sepia(24%) saturate(2320%) hue-rotate(169deg) brightness(100%) contrast(102%);
+    filter: invert(80%) sepia(24%) saturate(2320%) hue-rotate(169deg)
+        brightness(100%) contrast(102%);
 }
 
 .section {
-  background-color: #081e30;
-  border-radius: 0.5rem;
-  color: white;
-  padding: 3rem;
+    background-color: #081e30;
+    border-radius: 0.5rem;
+    color: white;
+    padding: 3rem;
 }
 
 .edit-button-container {
-  padding: 0.5rem 1rem;
+    padding: 0.5rem 1rem;
 }
 
 #device-name-input {
-  background-color: #081e30;
-  border: 1px solid #3a3a3a;
-  border-radius: 0.25rem;
-  color: white;
-  padding: 0.5rem;
-  outline: none;
+    background-color: #081e30;
+    border: 1px solid #3a3a3a;
+    border-radius: 0.25rem;
+    color: white;
+    padding: 0.5rem;
+    outline: none;
 }
 
 .card-content span {
-  color: white;
+    color: white;
 }
 
 .card-footer {
-  color: white;
+    color: white;
 }
 
 .com-port-row {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
 }
 
 .settings-container {
-  display: grid;
-  margin: auto;
-  width: fit-content;
-  height: fit-content;
+    display: grid;
+    margin: auto;
+    width: fit-content;
+    height: fit-content;
 }
 
 .switch-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: start;
+    width: fit-content;
+    padding: 0.5rem;
+    gap: 1rem;
+}
+
+.debugging-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.debugging-container .switch-container {
+  flex: 1 0 50%;
+}
+
+.logs-folder-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  text-align: start;
-  width: fit-content;
-  padding: 0.5rem;
-  gap: 1rem;
 }
 
 .switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
 }
 
 .switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
 .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #aaa;
-  transition: 0.4s;
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #aaa;
+    transition: 0.4s;
 }
 
 .slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: #fff;
-  transition: 0.4s;
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: #fff;
+    transition: 0.4s;
 }
 
 input:checked + .slider {
-  background-color: #1490f5;
+    background-color: #1490f5;
 }
 
 input:checked + .slider:before {
-  transform: translateX(26px);
+    transform: translateX(26px);
 }
 
 .slider.round {
-  border-radius: 34px;
+    border-radius: 34px;
 }
 
 .slider.round:before {
-  border-radius: 50%;
+    border-radius: 50%;
 }
 
 input:disabled + .slider {
-  cursor: not-allowed;
+    cursor: not-allowed;
 }
 
 input:disabled + .slider:after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 34px;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 34px;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
+    width: 10px;
 }
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #00080f;
+    background: #00080f;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background-color: #0a253b;
+    background-color: #0a253b;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #071a2a;
+    background-color: #071a2a;
 }
