@@ -4,11 +4,11 @@ let bluetoothEnabled = false;
 let gxEnabled = false;
 const selectedComPorts: string[] = [];
 
-var fpsMode = 50;
-var sensorMode = 2;
-var accelerometerEnabled = false;
-var gyroscopeEnabled = false;
-var magnetometerEnabled = false;
+let fpsMode = 50;
+let sensorMode = 2;
+let accelerometerEnabled = false;
+let gyroscopeEnabled = false;
+let magnetometerEnabled = false;
 
 let canLogToFile = false;
 let skipSlimeVRCheck = false;
@@ -224,6 +224,126 @@ function openLogsFolder() {
     window.ipc.send("open-logs-folder", null);
 }
 
+// Save settings
+// TODO: figure out why settings need to be saved twice to take effect on all trackers.. only seems to apply on half at a time
+function saveSettings() {
+    window.log("Saving settings...");
+
+    const comPorts: HTMLInputElement[] = Array.from(
+        document.getElementById("com-ports").querySelectorAll("input")
+    );
+    const selectedPorts: string[] = [];
+
+    comPorts.forEach((port) => {
+        if (port.checked) {
+            selectedPorts.push(port.id);
+        }
+    });
+
+    window.log(`Selected COM ports: ${selectedPorts}`);
+
+    window.ipc.send("save-setting", {
+        global: {
+            connectionMode: {
+                bluetoothEnabled: bluetoothEnabled,
+                gxEnabled: gxEnabled,
+                comPorts: selectedPorts,
+            },
+            trackers: {
+                fpsMode: fpsMode,
+                sensorMode: sensorMode,
+                accelerometerEnabled: accelerometerEnabled,
+                gyroscopeEnabled: gyroscopeEnabled,
+                magnetometerEnabled: magnetometerEnabled,
+            },
+            debug: {
+                canLogToFile: canLogToFile,
+                skipSlimeVRCheck: skipSlimeVRCheck,
+                bypassCOMPortLimit: bypassCOMPortLimit,
+                debugTrackerConnections: debugTrackerConnections,
+            },
+        },
+    });
+
+    window.ipc.invoke("get-active-trackers", null).then((activeTrackers) => {
+        activeTrackers.forEach(async (deviceID: string) => {
+            if (deviceID.startsWith("HaritoraX")) return;
+
+            const trackerSettings: TrackerSettings = await window.ipc.invoke(
+                "get-tracker-settings",
+                deviceID
+            );
+            let sensorMode: number =
+                trackerSettings.sensorMode !== -1
+                    ? trackerSettings.sensorMode
+                    : 2;
+            let fpsMode: number =
+                trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;
+            let sensorAutoCorrection: string[] =
+                trackerSettings.sensorAutoCorrection || [];
+
+            if (accelerometerEnabled) {
+                sensorAutoCorrection.push("accel");
+                window.log("Added accel to sensor auto correction");
+            }
+            if (gyroscopeEnabled) {
+                sensorAutoCorrection.push("gyro");
+                window.log("Added gyro to sensor auto correction");
+            }
+            if (magnetometerEnabled) {
+                sensorAutoCorrection.push("mag");
+                window.log("Added mag to sensor auto correction");
+            }
+
+            window.log(
+                `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
+            );
+
+            const settings: { [key: string]: any } = await window.ipc.invoke(
+                "get-settings",
+                null
+            );
+
+            // Check if tracker has user-specified settings
+            const exists = settings.trackers?.[deviceID] !== undefined;
+            if (exists) {
+                // use the per-tracker settings instead of the global settings
+                const configTrackerSettings = settings.trackers[deviceID];
+                sensorMode =
+                    configTrackerSettings.sensorMode &&
+                    configTrackerSettings.sensorMode !== -1
+                        ? configTrackerSettings.sensorMode
+                        : 2;
+                fpsMode =
+                    configTrackerSettings.fpsMode &&
+                    configTrackerSettings.fpsMode !== -1
+                        ? configTrackerSettings.fpsMode
+                        : 50;
+                sensorAutoCorrection =
+                    configTrackerSettings.sensorAutoCorrection || [];
+
+                window.ipc.send(
+                    "log",
+                    `Using per-tracker settings for ${deviceID} instead:
+                    sensorMode: ${sensorMode},
+                    fpsMode: ${fpsMode},
+                    sensorAutoCorrection: ${sensorAutoCorrection}
+                    `
+                );
+            }
+
+            window.ipc.send("set-tracker-settings", {
+                deviceID,
+                sensorMode,
+                fpsMode,
+                sensorAutoCorrection,
+            });
+        });
+    });
+
+    window.log("Settings saved");
+}
+
 /*
  * Renderer helper functions
  */
@@ -345,16 +465,17 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     if (deviceID.startsWith("HaritoraX")) return;
 
-    // set sensorAutoCorrection settings
-    const trackerSettings: {
-        sensorMode: number;
-        fpsMode: number;
-        sensorAutoCorrection: string[];
-    } = await window.ipc.invoke("get-tracker-settings", deviceID);
-    const sensorMode: number = trackerSettings.sensorMode || 1;
-    const fpsMode: number = trackerSettings.fpsMode || 50;
-    let sensorAutoCorrection: string[] =
-        trackerSettings.sensorAutoCorrection || [];
+    const settings = await window.ipc.invoke("get-settings", null);
+    const exists = settings.trackers?.[deviceID] !== undefined;
+
+    const trackerSettings = exists ? settings.trackers[deviceID] : await window.ipc.invoke("get-tracker-settings", deviceID);
+    setTrackerSettings(deviceID, trackerSettings);
+});
+
+function setTrackerSettings(deviceID: string, trackerSettings: any) {
+    const sensorMode: number = trackerSettings.sensorMode !== -1 ? trackerSettings.sensorMode : 2;
+    const fpsMode: number = trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;
+    let sensorAutoCorrection: string[] = trackerSettings.sensorAutoCorrection || [];
 
     if (accelerometerEnabled) {
         sensorAutoCorrection.push("accel");
@@ -369,9 +490,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
         window.log("Added mag to sensor auto correction");
     }
 
-    window.log(
-        `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-    );
+    window.log(`Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`);
 
     window.ipc.send("set-tracker-settings", {
         deviceID,
@@ -379,7 +498,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
         fpsMode,
         sensorAutoCorrection,
     });
-});
+}
 
 window.ipc.on("disconnect", (_event, deviceID) => {
     window.log(`Disconnected from ${deviceID}`);
@@ -520,8 +639,14 @@ function addEventListeners() {
 
                 const trackerSettings: TrackerSettings =
                     await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number = trackerSettings.sensorMode;
-                const fpsMode: number = trackerSettings.fpsMode || 50;
+                const sensorMode: number =
+                    trackerSettings.sensorMode !== -1
+                        ? trackerSettings.sensorMode
+                        : 2;
+                const fpsMode: number =
+                    trackerSettings.fpsMode !== -1
+                        ? trackerSettings.fpsMode
+                        : 50;
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
@@ -571,8 +696,14 @@ function addEventListeners() {
                 if (deviceID.startsWith("HaritoraX")) return;
                 const trackerSettings: TrackerSettings =
                     await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number = trackerSettings.sensorMode || 2;
-                const fpsMode: number = trackerSettings.fpsMode || 50;
+                const sensorMode: number =
+                    trackerSettings.sensorMode !== -1
+                        ? trackerSettings.sensorMode
+                        : 2;
+                const fpsMode: number =
+                    trackerSettings.fpsMode !== -1
+                        ? trackerSettings.fpsMode
+                        : 50;
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
@@ -622,8 +753,14 @@ function addEventListeners() {
                 if (deviceID.startsWith("HaritoraX")) return;
                 const trackerSettings: TrackerSettings =
                     await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number = trackerSettings.sensorMode;
-                const fpsMode: number = trackerSettings.fpsMode || 50;
+                const sensorMode: number =
+                    trackerSettings.sensorMode !== -1
+                        ? trackerSettings.sensorMode
+                        : 2;
+                const fpsMode: number =
+                    trackerSettings.fpsMode !== -1
+                        ? trackerSettings.fpsMode
+                        : 50;
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
@@ -797,7 +934,10 @@ function addEventListeners() {
                 if (deviceID.startsWith("HaritoraX")) return;
                 const trackerSettings: TrackerSettings =
                     await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number = trackerSettings.sensorMode;
+                const sensorMode: number =
+                    trackerSettings.sensorMode !== -1
+                        ? trackerSettings.sensorMode
+                        : 2;
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
@@ -840,7 +980,10 @@ function addEventListeners() {
                 if (deviceID.startsWith("HaritoraX")) return;
                 const trackerSettings: TrackerSettings =
                     await window.ipc.invoke("get-tracker-settings", deviceID);
-                const fpsMode: number = trackerSettings.fpsMode || 50;
+                const fpsMode: number =
+                    trackerSettings.fpsMode !== -1
+                        ? trackerSettings.fpsMode
+                        : 50;
                 let sensorAutoCorrection: string[] =
                     trackerSettings.sensorAutoCorrection || [];
 
@@ -859,6 +1002,7 @@ function addEventListeners() {
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.openLogsFolder = openLogsFolder;
+window.saveSettings = saveSettings;
 window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for ${deviceID}`);
     window.ipc.send("open-tracker-settings", deviceID);

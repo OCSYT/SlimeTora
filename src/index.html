@@ -231,7 +231,7 @@
                     </div>
 
                     <!-- Sensor auto correction setting -->
-                    <div class="column is-12">
+                    <div class="column is-6">
                         <h3
                             class="title is-4 is-spaced"
                             style="
@@ -307,6 +307,45 @@
                                     style="min-width: 150px"
                                     >Magnetometer</label
                                 >
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save button -->
+                    <div class="column is-6">
+                        <h3
+                            class="title is-4 is-spaced"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            "
+                        >
+                            Manual save
+                            <span class="tooltip-container">
+                                <div class="icon">
+                                    <img
+                                        src="./icons/help.svg"
+                                        alt="Help icon"
+                                    />
+                                </div>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    >Sometimes your settings may not save
+                                    properly (or you just want to make sure
+                                    they're saved), so here's a nice little
+                                    button for you lol</span
+                                >
+                            </span>
+                        </h3>
+                        <div class="settings-container">
+                            <div class="buttons is-centered">
+                                <button
+                                    class="button is-info"
+                                    onclick="saveSettings()"
+                                >
+                                    Save settings
+                                </button>
                             </div>
                         </div>
                     </div>

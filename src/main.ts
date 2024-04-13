@@ -152,42 +152,70 @@ ipcMain.handle("is-slimevr-connected", () => {
     return foundSlimeVR;
 });
 
-ipcMain.on("set-tracker-settings", (_event, arg) => {
-    const {
-        deviceID,
-        sensorMode,
-        fpsMode,
-        sensorAutoCorrection,
-    }: {
-        deviceID: string;
-        sensorMode: number;
-        fpsMode: number;
-        sensorAutoCorrection: string[];
-    } = arg;
-    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
-        error(`Invalid settings received: ${arg}`);
-        return;
+class AsyncQueue {
+    private queue: Promise<any>;
+
+    constructor() {
+        this.queue = Promise.resolve();
     }
 
-    log(`Setting tracker settings for ${deviceID} to: ${JSON.stringify(arg)}`);
-    log(
-        `Old tracker settings: ${JSON.stringify(
-            device.getTrackerSettings(deviceID)
-        )}`
-    );
-    device.setTrackerSettings(
+    enqueue(fn: () => Promise<any>) {
+        let result = Promise.resolve();
+        this.queue = this.queue.then(() => {
+            result = fn();
+            return result;
+        });
+        return result;
+    }
+}
+
+const trackerSettingsQueue = new AsyncQueue();
+
+ipcMain.on("set-tracker-settings", (_event, arg) => {
+    trackerSettingsQueue.enqueue(async () => {
+        const {
+            deviceID,
+            sensorMode,
+            fpsMode,
+            sensorAutoCorrection,
+        }: {
+            deviceID: string;
+            sensorMode: number;
+            fpsMode: number;
+            sensorAutoCorrection: string[];
+        } = arg;
+        if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
+            error(`Invalid settings received: ${JSON.stringify(arg)}`);
+            return;
+        }
+
+        log(`Setting tracker settings for ${deviceID} to: ${JSON.stringify(arg)}`);
+        log(
+            `Old tracker settings: ${JSON.stringify(
+                device.getTrackerSettings(deviceID)
+            )}`
+        );
+
+        // Save the settings
+        await setTrackerSettings(deviceID, sensorMode, fpsMode, sensorAutoCorrection);
+
+        log(
+            `New tracker settings: ${JSON.stringify(
+                device.getTrackerSettings(deviceID)
+            )}`
+        );
+    });
+});
+
+async function setTrackerSettings(deviceID: string, sensorMode: number, fpsMode: number, sensorAutoCorrection: string[]) {
+    await device.setTrackerSettings(
         deviceID,
         sensorMode,
         fpsMode,
         sensorAutoCorrection,
         false
     );
-    log(
-        `New tracker settings: ${JSON.stringify(
-            device.getTrackerSettings(deviceID)
-        )}`
-    );
-});
+}
 
 ipcMain.on("set-logging", (_event, arg) => {
     canLogToFile = arg;
@@ -317,6 +345,11 @@ ipcMain.handle("get-setting", (_event, name) => {
     }
 
     return current;
+});
+
+ipcMain.on("show-message", (_event, arg) => {
+    const { title, message }: { title: string; message: string } = arg;
+    dialog.showMessageBox({ title, message });
 });
 
 ipcMain.on("show-error", (_event, arg) => {
@@ -450,13 +483,24 @@ function log(msg: string, where = "main") {
         }
 
         if (msg.startsWith("(haritorax-interpreter)") && !debugTrackerConnections) return;
+        if (msg.includes("gravity") || msg.includes("rotation") || msg.includes("other data")) {
+            console.log(`not logging`);
+            
+        } else {
+            fs.appendFileSync(
+                logPath,
+                `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
+            );
+        }
 
-        fs.appendFileSync(
-            logPath,
-            `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
-        );
+        
     }
-    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
+    if (msg.includes("gravity") || msg.includes("rotation") || msg.includes("other data")) {
+        console.log(`not logging`);
+    } else {
+        console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
+    }
+    
 }
 
 function error(msg: string, where = "main") {

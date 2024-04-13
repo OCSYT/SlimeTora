@@ -169,7 +169,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Reset settings -->
+                    <!-- Debugging settings -->
                     <div class="column is-6">
                         <h3
                             class="title is-4 is-spaced has-text-warning"
@@ -189,11 +189,20 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    >Resets the tracker settings back to
-                                    defaults</span
+                                    >Some debugging options for the individual
+                                    tracker</span
                                 >
                             </span>
                         </h3>
+                        <div class="settings-container">
+                            <button
+                                class="button is-info"
+                                onclick="saveTrackerSettings()"
+                            >
+                                Save settings
+                            </button>
+                        </div>
+                        <br />
                         <div class="settings-container">
                             <button
                                 class="button is-info"
@@ -202,6 +211,7 @@
                                 Reset settings
                             </button>
                         </div>
+                        <br />
                         <div class="settings-container">
                             <button
                                 class="button is-info"
