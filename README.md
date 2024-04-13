@@ -25,9 +25,10 @@ This fork rewrites improves on the stability and performance of the app by rewri
   + No need to extract thousands of files anymore 😅
 + `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
   + Welcome elbow tracker users!
-+ New debugging options
-+ New SlimeTora logo
++ Set any settings per-tracker
 + Dynamically grab version number from package.json (instead of relying on manually changing it per release)
++ Many new ways to debug the program
++ New SlimeTora logo
 + ..and many more improvements coming soon!
 
 # Known issues

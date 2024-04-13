@@ -494,21 +494,51 @@ function error(msg: string, where = "main") {
  * SlimeVR Forwarding
  */
 
-// TODO: change how the SlimeVR server is found
-
 let slimeIP = "0.0.0.0";
 let slimePort = 6969;
 let packetCount = 0;
 
-sock.on("message", (data, src) => {
-    if (data.toString("utf-8").includes("Hey OVR =D")) {
-        slimeIP = src.address;
-        slimePort = src.port;
-        log("SlimeVR found at " + slimeIP + ":" + slimePort);
-        packetCount += 1;
-        foundSlimeVR = true;
-    }
-});
+const connectToServer = () => {
+    return new Promise<void>((resolve) => {
+        if (foundSlimeVR) {
+            throw new Error('Already connected to SlimeVR');
+        }
+
+        log('Connecting to SlimeVR server...');
+
+        const searchForServerInterval = setInterval(() => {
+            if (foundSlimeVR) {
+                clearInterval(searchForServerInterval);
+                return;
+            }
+
+            log('Searching for SlimeVR server...');
+
+            sendHandshakePacket("SEARCHING");
+        }, 1000);
+
+        sock.on("message", (data, src) => {
+            if (foundSlimeVR) {
+                return;
+            }
+
+            log(`Got message from SlimeVR server: ${data.toString('hex')}`);
+
+            clearInterval(searchForServerInterval);
+
+            log('Connected to SlimeVR server!');
+
+            slimeIP = src.address;
+            slimePort = src.port;
+            packetCount += 1;
+            foundSlimeVR = true;
+
+            resolve();
+        });
+    });
+};
+
+connectToServer();
 
 let isHandlingTracker = false;
 const trackerQueue: string[] = [];
