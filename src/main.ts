@@ -686,8 +686,8 @@ function sendBatteryLevel(
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
-    if (device && bluetoothEnabled) device.stopConnection("bluetooth");
-    if (device && gxEnabled) device.stopConnection("gx");
+    if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
+    if (device && device.getConnectionModeActive("gx")) device.stopConnection("gx");
     app.quit();
 });
 
