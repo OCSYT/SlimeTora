@@ -56,10 +56,10 @@ const createWindow = () => {
             contextIsolation: true,
             preload: path.join(__dirname, "preload.js"),
         },
-        icon: path.join(__dirname, "icons/icon.ico"),
+        icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    mainWindow.loadURL(path.join(__dirname, "index.html"));
+    mainWindow.loadURL(path.join(__dirname, "static/html/index.html"));
 
     mainWindow.webContents.on("did-finish-load", () => {
         mainWindow.webContents.send("version", app.getVersion());
@@ -266,10 +266,10 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
             contextIsolation: true,
             preload: path.join(__dirname, "preload.js"),
         },
-        icon: path.join(__dirname, "icons/icon.ico"),
+        icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    trackerSettingsWindow.loadURL(path.join(__dirname, "settings.html"));
+    trackerSettingsWindow.loadURL(path.join(__dirname, "static/html/settings.html"));
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
         trackerSettingsWindow.webContents.send("trackerName", arg);
