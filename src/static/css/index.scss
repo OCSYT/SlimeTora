@@ -20,6 +20,10 @@ br {
     user-select: none;
 }
 
+.inline-block {
+    display: inline-block;
+}
+
 .with-tooltip {
     display: flex;
     justify-content: center;
@@ -146,6 +150,7 @@ br {
     display: flex;
     justify-content: center;
 }
+
 
 .switch {
     position: relative;
