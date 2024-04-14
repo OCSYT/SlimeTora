@@ -34,6 +34,41 @@ const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
 
 /*
+ * Translations (i18next)
+ */
+async function loadTranslations() {
+    const localesDir = path.join(mainPath, "locales");
+
+    if (!fs.existsSync(localesDir)) {
+        fs.mkdirSync(localesDir);
+    }
+
+    const srcLocalesDir = path.join(__dirname, "static", "locales");
+    const srcFiles = fs.readdirSync(srcLocalesDir);
+
+    for (const file of srcFiles) {
+        fs.copyFileSync(
+            path.join(srcLocalesDir, file),
+            path.join(localesDir, file)
+        );
+    }
+
+    const files = fs.readdirSync(localesDir);
+    const resources: any = {};
+
+    for (const file of files) {
+        const lang = path.basename(file, ".json");
+        const translations = JSON.parse(
+            fs.readFileSync(path.join(localesDir, file), "utf-8")
+        );
+
+        resources[lang] = { translation: translations };
+    }
+
+    return resources;
+}
+
+/*
  * Renderer
  */
 
@@ -54,6 +89,7 @@ const createWindow = () => {
         height: 700,
         webPreferences: {
             contextIsolation: true,
+            nodeIntegration: true,
             preload: path.join(__dirname, "preload.js"),
         },
         icon: path.join(__dirname, "static/images/icon.ico"),
@@ -61,7 +97,8 @@ const createWindow = () => {
 
     mainWindow.loadURL(path.join(__dirname, "static/html/index.html"));
 
-    mainWindow.webContents.on("did-finish-load", () => {
+    mainWindow.webContents.on("did-finish-load", async () => {
+        mainWindow.webContents.send("localize", await loadTranslations());
         mainWindow.webContents.send("version", app.getVersion());
     });
 };
@@ -121,7 +158,10 @@ ipcMain.on("start-connection", (_event, arg) => {
 });
 
 ipcMain.on("stop-connection", (_event, arg: string) => {
-    if (arg.includes("bluetooth") && device.getConnectionModeActive("bluetooth")) {
+    if (
+        arg.includes("bluetooth") &&
+        device.getConnectionModeActive("bluetooth")
+    ) {
         device.stopConnection("bluetooth");
         log("Stopped bluetooth connection");
     } else if (arg.includes("gx") && device.getConnectionModeActive("gx")) {
@@ -261,15 +301,18 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         title: `${arg} settings`,
         autoHideMenuBar: true,
         width: 800,
-        height: 620,
+        height: 635,
         webPreferences: {
             contextIsolation: true,
+            nodeIntegration: true,
             preload: path.join(__dirname, "preload.js"),
         },
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    trackerSettingsWindow.loadURL(path.join(__dirname, "static/html/settings.html"));
+    trackerSettingsWindow.loadURL(
+        path.join(__dirname, "static/html/settings.html")
+    );
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
         trackerSettingsWindow.webContents.send("trackerName", arg);
@@ -498,33 +541,12 @@ function log(msg: string, where = "main") {
             fs.writeFileSync(logPath, "");
         }
 
-        if (
-            msg.startsWith("(haritorax-interpreter)") &&
-            !debugTrackerConnections
-        )
-            return;
-        if (
-            msg.includes("gravity") ||
-            msg.includes("rotation") ||
-            msg.includes("other data")
-        ) {
-            console.log(`not logging`);
-        } else {
-            fs.appendFileSync(
-                logPath,
-                `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
-            );
-        }
+        fs.appendFileSync(
+            logPath,
+            `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
+        );
     }
-    if (
-        msg.includes("gravity") ||
-        msg.includes("rotation") ||
-        msg.includes("other data")
-    ) {
-        console.log(`not logging`);
-    } else {
-        console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
-    }
+    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
 }
 
 function error(msg: string, where = "main") {

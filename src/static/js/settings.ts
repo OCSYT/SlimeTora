@@ -8,9 +8,15 @@ let settingsMagnetometerEnabled = false;
 
 // Set tracker name and variable
 window.ipc.on("trackerName", (_event, arg) => {
-    document.getElementById("tracker-name").innerHTML = arg;
+    window.localize();
     window.log(`Opened per-tracker settings for: ${arg}`);
     deviceID = arg;
+
+    const trackerNameElement = document.getElementById("tracker-name");
+    trackerNameElement.innerHTML = trackerNameElement.innerHTML.replace(
+        "{trackerName}",
+        deviceID
+    );
 
     // Load settings
     loadSettings(deviceID);

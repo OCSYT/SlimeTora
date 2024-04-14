@@ -11,36 +11,25 @@
         <!-- Tracker settings section -->
         <div class="section">
             <div class="container">
-                <h1 class="title has-text-centered is-2 is-spaced">
-                    <span id="tracker-name">N/A</span> settings<span
-                        class="tooltip-container"
-                    >
-                        <div class="icon">
-                            <img src="../images/help.svg" alt="Help icon" />
-                        </div>
-                        <span
-                            class="tooltip-text subtitle is-6 has-text-weight-normal"
-                        >
-                            Set per-tracker settings for this specific tracker.
-                            An option with yellow text requires a restart of the
-                            program to fully apply.</span
-                        >
-                    </span>
+                <h1
+                    class="title has-text-centered is-2 is-spaced"
+                    id="tracker-name"
+                    data-i18n="trackerInfo.trackerSettings.title"
+                >
+                    {trackerName} settings
                 </h1>
                 <br />
                 <div class="columns is-multiline has-text-centered">
                     <!-- FPS settings -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            FPS transfer rate
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="trackerInfo.trackerSettings.fps.title"
+                            >
+                                FPS transfer rate
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -49,17 +38,28 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="trackerInfo.trackerSettings.fps.tooltip"
                                     >Select the FPS transfer rate for the
                                     trackers. If using Bluetooth, 50FPS may be
                                     more stable.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <div class="select is-info">
                                 <select id="fps-mode-select">
-                                    <option value="50">50 FPS</option>
-                                    <option value="100">100 FPS</option>
+                                    <option
+                                        value="50"
+                                        data-i18n="trackerInfo.trackerSettings.fps.50"
+                                    >
+                                        50 FPS
+                                    </option>
+                                    <option
+                                        value="100"
+                                        data-i18n="trackerInfo.trackerSettings.fps.100"
+                                    >
+                                        100 FPS
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -67,16 +67,14 @@
 
                     <!-- Sensor mode setting -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            Sensor mode
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="trackerInfo.trackerSettings.sensorMode.title"
+                            >
+                                Sensor mode
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -85,18 +83,29 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="trackerInfo.trackerSettings.sensorMode.tooltip"
                                     >Select the sensor mode for the trackers.
                                     Mode 1 enables the magnetometer which is
                                     best if you have a stable geomagnetic
                                     environment.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <div class="select">
                                 <select id="sensor-mode-select">
-                                    <option value="1">Mode 1</option>
-                                    <option value="2">Mode 2</option>
+                                    <option
+                                        value="1"
+                                        data-i18n="trackerInfo.trackerSettings.sensorMode.1"
+                                    >
+                                        Mode 1
+                                    </option>
+                                    <option
+                                        value="2"
+                                        data-i18n="trackerInfo.trackerSettings.sensorMode.2"
+                                    >
+                                        Mode 2
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -104,16 +113,14 @@
 
                     <!-- Sensor correction setting -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            Sensor correction
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="trackerInfo.trackerSettings.sensorCorrection.title"
+                            >
+                                Sensor correction
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -122,12 +129,13 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="trackerInfo.trackerSettings.sensorCorrection.tooltip"
                                     >Enable or disable sensor auto correction
                                     features. Usually not needed to be changed
                                     and results vary between environments.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <div class="switch-container">
                                 <div class="switch">
@@ -143,6 +151,7 @@
                                 <label
                                     for="accelerometer-switch"
                                     style="min-width: 150px"
+                                    data-i18n="trackerInfo.trackerSettings.sensorCorrection.accelerometer"
                                     >Accelerometer</label
                                 >
                             </div>
@@ -160,6 +169,7 @@
                                 <label
                                     for="gyroscope-switch"
                                     style="min-width: 150px"
+                                    data-i18n="trackerInfo.trackerSettings.sensorCorrection.gyroscope"
                                     >Gyroscope</label
                                 >
                             </div>
@@ -177,6 +187,7 @@
                                 <label
                                     for="magnetometer-switch"
                                     style="min-width: 150px"
+                                    data-i18n="trackerInfo.trackerSettings.sensorCorrection.magnetometer"
                                     >Magnetometer</label
                                 >
                             </div>
@@ -184,16 +195,14 @@
                     </div>
                     <!-- Debugging settings -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced has-text-warning"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            Debugging
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced has-text-warning"
+                                data-i18n="trackerInfo.trackerSettings.debugging.title"
+                            >
+                                Debugging
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -202,15 +211,17 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="trackerInfo.trackerSettings.debugging.tooltip"
                                     >Some debugging options for this individual
                                     tracker.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <button
                                 class="button is-info"
                                 onclick="saveTrackerSettings()"
+                                data-i18n="trackerInfo.trackerSettings.debugging.saveSettings"
                             >
                                 Save settings
                             </button>
@@ -220,6 +231,7 @@
                             <button
                                 class="button is-info"
                                 onclick="resetSettings()"
+                                data-i18n="trackerInfo.trackerSettings.debugging.resetSettings"
                             >
                                 Reset settings
                             </button>
@@ -229,6 +241,7 @@
                             <button
                                 class="button is-info"
                                 onclick="getSettings()"
+                                data-i18n="trackerInfo.trackerSettings.debugging.getSettings"
                             >
                                 Get tracker settings
                             </button>

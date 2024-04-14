@@ -2,6 +2,11 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import { contextBridge, ipcRenderer } from "electron";
+import i18next from 'i18next';
+// @ts-ignore
+import locI18next from 'loc-i18next';
+
+let localize: any = null;
 
 contextBridge.exposeInMainWorld("ipc", {
     send: (channel: string, data: any) => {
@@ -28,6 +33,27 @@ contextBridge.exposeInMainWorld("error", (message: string) => {
     console.error(message);
 });
 
+contextBridge.exposeInMainWorld("localize", (resources?: any) => {
+    if (!localize) {
+        i18next.init({
+            lng: 'en',
+            resources,
+        }).then(() => {
+            localize = locI18next.init(i18next);
+            localize('[data-i18n]');
+            
+            ipcRenderer.send("log", "Attempting to localize");
+        });
+    } else {
+        ipcRenderer.send("log", "Attempting to localize again");
+        localize('[data-i18n]');
+    }
+});
+
+contextBridge.exposeInMainWorld("translate", (key: string) => {
+    return i18next.t(key);
+});
+
 declare global {
     interface Window {
         startConnection: () => void;
@@ -46,6 +72,9 @@ declare global {
 
         log: (message: string) => void;
         error: (message: string) => void;
+
+        localize: (resources?: string) => void;
+        translate: (key: string) => string;
     }
     
     interface Rotation {

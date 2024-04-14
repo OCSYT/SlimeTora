@@ -20,11 +20,19 @@ br {
     user-select: none;
 }
 
+.with-tooltip {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+}
+
 .tooltip-container {
     position: relative;
-    display: inline-block;
-    margin-left: 18px;
-    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    margin-left: 16px;
 }
 
 .tooltip-text {

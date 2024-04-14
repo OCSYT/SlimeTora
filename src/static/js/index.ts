@@ -147,17 +147,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     if (isMissingPorts) {
-        setStatus("COM ports missing");
+        setStatus(window.translate("main.status.comPortsMissing"));
         window.ipc.send("show-error", {
-            title: "COM ports missing",
-            message:
-                "Some COM ports set in the config were not found, please make sure your dongle(s) are connected.",
+            title: window.translate("dialog.comPortsMissing.title"),
+            message: window.translate("dialog.comPortsMissing.message"),
         });
     }
 
     selectedComPorts.push(...selectedPorts);
 
     window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
+
+    setStatus(window.translate("main.status.none"));
+    document.getElementById("tracker-count").innerHTML = document
+        .getElementById("tracker-count")
+        .innerHTML.replace("{trackerCount}", "0");
 
     addEventListeners();
 });
@@ -173,7 +177,7 @@ async function startConnection() {
         window.error(
             "Tried to start connection while not connected to SlimeVR"
         );
-        setStatus("SlimeVR not found");
+        setStatus(window.translate("main.status.slimeVRMissing"));
         return;
     } else if (!slimeVRFound && skipSlimeVRCheck) {
         window.log("SlimeVR check skipped");
@@ -199,12 +203,16 @@ async function startConnection() {
         window.log(`Starting GX connection with ports: ${selectedComPorts}`);
     } else {
         window.error("No connection mode enabled");
-        setStatus("No connection mode enabled");
+        setStatus(window.translate("main.status.noConnectionMode"));
+        window.ipc.send("show-error", {
+            title: window.translate("dialog.noConnectionMode.title"),
+            message: window.translate("dialog.noConnectionMode.message"),
+        });
         return false;
     }
 
     isActive = true;
-    setStatus("searching");
+    setStatus(window.translate("main.status.searching"));
 }
 
 function stopConnection() {
@@ -215,14 +223,13 @@ function stopConnection() {
     }
     window.log("Stopping connection(s)...");
 
-    isActive = false;
-
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
     if (gxEnabled) window.ipc.send("stop-connection", "gx");
+
     document.getElementById("tracker-count").innerHTML = "0";
-    document.getElementById("status").innerHTML = "N/A";
-    const deviceList = document.getElementById("device-list");
-    deviceList.innerHTML = "";
+    setStatus(window.translate("main.status.none"));
+    document.getElementById("device-list").innerHTML = "";
+    isActive = false;
 }
 
 function openLogsFolder() {
@@ -475,6 +482,10 @@ async function addDeviceToList(deviceID: string) {
  * Event listeners
  */
 
+window.ipc.on("localize", (_event, resources) => {
+    window.localize(resources);
+});
+
 window.ipc.on("connect", async (_event, deviceID) => {
     window.log(`Connected to ${deviceID}`);
     addDeviceToList(deviceID);
@@ -547,6 +558,8 @@ window.ipc.on("device-data", (_event: any, arg) => {
         rotation,
         gravity,
     }: { trackerName: string; rotation: Rotation; gravity: Gravity } = arg;
+
+    if (!document.getElementById(trackerName)) addDeviceToList(trackerName);
 
     if (
         !isActive ||

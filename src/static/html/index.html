@@ -42,7 +42,10 @@
         <!-- Tracker info section -->
         <div class="section">
             <div class="container">
-                <h1 class="title has-text-centered is-2">
+                <h1
+                    class="title has-text-centered is-2"
+                    data-i18n="trackerInfo.title"
+                >
                     Tracker information
                 </h1>
                 <br />
@@ -57,13 +60,20 @@
         <!-- Global settings section -->
         <div class="section">
             <div class="container">
-                <h1 class="title has-text-centered is-2 is-spaced">
-                    Global settings<span class="tooltip-container">
+                <div class="with-tooltip">
+                    <h1
+                        class="title has-text-centered is-2 is-spaced"
+                        data-i18n="settings.title"
+                    >
+                        Global settings
+                    </h1>
+                    <div class="tooltip-container">
                         <div class="icon">
                             <img src="../images/help.svg" alt="Help icon" />
                         </div>
                         <span
                             class="tooltip-text subtitle is-6 has-text-weight-normal"
+                            data-i18n="settings.tooltip"
                             ><b
                                 >Tracker settings only currently supports GX
                                 trackers, use Haritora Configurator if on
@@ -73,22 +83,20 @@
                             program. An option with yellow text requires a
                             restart of the program to fully apply.</span
                         >
-                    </span>
-                </h1>
+                    </div>
+                </div>
                 <br />
                 <div class="columns is-multiline has-text-centered">
                     <!-- Connection mode setting -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            Connection Mode
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="settings.connectionMode.title"
+                            >
+                                Connection Mode
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -97,13 +105,14 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="settings.connectionMode.tooltip"
                                     >Select the connection mode for the
                                     trackers. Both can be used at the same time
                                     (e.g. GX6 for the 6 main trackers and BT for
                                     the 2 elbows).</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <div class="switch-container">
                                 <div class="switch">
@@ -116,7 +125,11 @@
                                         class="slider round"
                                     ></label>
                                 </div>
-                                <label for="bluetooth-switch">Bluetooth</label>
+                                <label
+                                    for="bluetooth-switch"
+                                    data-i18n="settings.connectionMode.bluetooth"
+                                    >Bluetooth</label
+                                >
                             </div>
                             <div class="switch-container">
                                 <div class="switch">
@@ -126,23 +139,25 @@
                                         class="slider round"
                                     ></label>
                                 </div>
-                                <label for="gx-switch">GX(6/2)</label>
+                                <label
+                                    for="gx-switch"
+                                    data-i18n="settings.connectionMode.gx"
+                                    >GX(6/2)</label
+                                >
                             </div>
                         </div>
                     </div>
 
                     <!-- COM port section -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            GX(6/2 COM ports)
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="settings.comPorts.title"
+                            >
+                                GX(6/2 COM ports)
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -151,13 +166,15 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="settings.comPorts.tooltip"
                                     >Select the COM ports your GX(6/2) dongles
                                     are using. Up to 4 ports can be selected (3
                                     for GX6 and 1 for GX2) unless checks are
                                     bypassed.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
+
                         <div class="settings-container" id="com-ports">
                             <!-- COM ports get populated here -->
                         </div>
@@ -165,16 +182,14 @@
 
                     <!-- FPS settings -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            FPS transfer rate
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="settings.fps.title"
+                            >
+                                FPS transfer rate
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -183,17 +198,28 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="settings.fps.tooltip"
                                     >Select the FPS transfer rate for the
                                     trackers. If using Bluetooth, 50FPS may be
                                     more stable.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <div class="select is-info">
                                 <select id="fps-mode-select">
-                                    <option value="50">50 FPS</option>
-                                    <option value="100">100 FPS</option>
+                                    <option
+                                        value="50"
+                                        data-i18n="settings.fps.50"
+                                    >
+                                        50 FPS
+                                    </option>
+                                    <option
+                                        value="100"
+                                        data-i18n="settings.fps.100"
+                                    >
+                                        100 FPS
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -201,16 +227,14 @@
 
                     <!-- Sensor mode setting -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            Sensor mode
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="settings.sensorMode.title"
+                            >
+                                Sensor mode
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -219,18 +243,29 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="settings.sensorMode.tooltip"
                                     >Select the sensor mode for the trackers.
                                     Mode 1 enables the magnetometer which is
                                     best if you have a stable geomagnetic
                                     environment.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <div class="select">
                                 <select id="sensor-mode-select">
-                                    <option value="1">Mode 1</option>
-                                    <option value="2">Mode 2</option>
+                                    <option
+                                        value="1"
+                                        data-i18n="settings.sensorMode.1"
+                                    >
+                                        Mode 1
+                                    </option>
+                                    <option
+                                        value="2"
+                                        data-i18n="settings.sensorMode.2"
+                                    >
+                                        Mode 2
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -238,16 +273,14 @@
 
                     <!-- Sensor auto correction setting -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            Sensor auto correction
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="settings.sensorCorrection.title"
+                            >
+                                Sensor auto correction
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -256,12 +289,13 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="settings.sensorCorrection.tooltip"
                                     >Enable or disable sensor auto correction
                                     features. Usually not needed to be changed
                                     and results vary between environments.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <div class="switch-container">
                                 <div class="switch">
@@ -277,6 +311,7 @@
                                 <label
                                     for="accelerometer-switch"
                                     style="min-width: 150px"
+                                    data-i18n="settings.sensorCorrection.accelerometer"
                                     >Accelerometer</label
                                 >
                             </div>
@@ -294,6 +329,7 @@
                                 <label
                                     for="gyroscope-switch"
                                     style="min-width: 150px"
+                                    data-i18n="settings.sensorCorrection.gyroscope"
                                     >Gyroscope</label
                                 >
                             </div>
@@ -311,6 +347,7 @@
                                 <label
                                     for="magnetometer-switch"
                                     style="min-width: 150px"
+                                    data-i18n="settings.sensorCorrection.magnetometer"
                                     >Magnetometer</label
                                 >
                             </div>
@@ -319,16 +356,14 @@
 
                     <!-- Save button -->
                     <div class="column is-6">
-                        <h3
-                            class="title is-4 is-spaced"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            "
-                        >
-                            Manual save
-                            <span class="tooltip-container">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="settings.save.title"
+                            >
+                                Manual save
+                            </h3>
+                            <div class="tooltip-container">
                                 <div class="icon">
                                     <img
                                         src="../images/help.svg"
@@ -337,19 +372,21 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="settings.save.tooltip"
                                     >Sometimes your settings may not save
                                     properly (or you just want to make sure
                                     they're saved), so here's a nice little
                                     button for you lol.</span
                                 >
-                            </span>
-                        </h3>
+                            </div>
+                        </div>
                         <div class="settings-container">
                             <div class="buttons is-centered">
                                 <button
                                     class="button is-info"
                                     id="save-settings-button"
                                     onclick="saveSettings()"
+                                    data-i18n="settings.save.saveButton"
                                 >
                                     Save settings
                                 </button>
@@ -365,19 +402,32 @@
         <!-- About section -->
         <div class="section">
             <div class="container">
-                <h1 class="title has-text-centered is-2 is-spaced">About</h1>
-                <h2 class="subtitle has-text-centered">
+                <h1
+                    class="title has-text-centered is-2 is-spaced"
+                    data-i18n="about.title"
+                >
+                    About
+                </h1>
+                <h2 class="subtitle has-text-centered" data-i18n="about.text">
                     The SlimeTora project is a project that allows you to
                     connect the HaritoraX trackers to the SlimeVR server.
                 </h2>
-                <h2 class="subtitle has-text-centered">
+                <h2
+                    class="subtitle has-text-centered"
+                    data-i18n="about.authors"
+                >
                     Made by
                     <a href="https://bracketproto.com/">BracketProto</a> and
                     <a href="https://femboyfurry.net">JovannMC</a>.
                 </h2>
                 <br />
                 <div>
-                    <h2 class="title is-3 has-text-centered">Credits</h2>
+                    <h2
+                        class="title is-3 has-text-centered"
+                        data-i18n="about.credits.title"
+                    >
+                        Credits
+                    </h2>
                     <ul class="has-text-centered">
                         <li>
                             <a
@@ -431,21 +481,29 @@
 
         <div class="section">
             <div class="container">
-                <h1
-                    class="title has-text-centered is-2 is-spaced has-text-danger"
-                >
-                    Debugging<span class="tooltip-container">
+                <div class="with-tooltip">
+                    <h1
+                        class="title has-text-centered is-2 is-spaced has-text-danger"
+                        data-i18n="debugging.title"
+                    >
+                        Debugging
+                    </h1>
+                    <div class="tooltip-container">
                         <div class="icon">
                             <img src="../images/help.svg" alt="Help icon" />
                         </div>
                         <span
                             class="tooltip-text subtitle is-6 has-text-weight-normal"
+                            data-i18n="debugging.tooltip"
                             >An option with yellow text requires a restart of
                             the program to fully apply.</span
                         >
-                    </span>
-                </h1>
-                <h2 class="subtitle has-text-centered">
+                    </div>
+                </div>
+                <h2
+                    class="subtitle has-text-centered"
+                    data-i18n="debugging.text"
+                >
                     Enable or disable debugging features for the program.
                     Debugging tracker data will make log files huge,
                     <b>only use if requested or if you have tracker issues!</b>
@@ -463,7 +521,9 @@
                                     class="slider round"
                                 ></label>
                             </div>
-                            <label for="log-to-file-switch"
+                            <label
+                                for="log-to-file-switch"
+                                data-i18n="debugging.writeToFile"
                                 >Write to log files</label
                             >
                         </div>
@@ -478,7 +538,9 @@
                                     class="slider round"
                                 ></label>
                             </div>
-                            <label for="skip-slimevr-switch"
+                            <label
+                                for="skip-slimevr-switch"
+                                data-i18n="debugging.skipSlimeVR"
                                 >Skip SlimeVR check</label
                             >
                         </div>
@@ -493,7 +555,9 @@
                                     class="slider round"
                                 ></label>
                             </div>
-                            <label for="bypass-com-limit-switch"
+                            <label
+                                for="bypass-com-limit-switch"
+                                data-i18n="debugging.bypassPortLimit"
                                 >Bypass port limit</label
                             >
                         </div>
@@ -511,6 +575,7 @@
                             <label
                                 for="debug-tracker-connections-switch"
                                 class="has-text-warning"
+                                data-i18n="debugging.debugTrackerData"
                                 >Debug tracker data</label
                             >
                         </div>
@@ -520,6 +585,7 @@
                         <button
                             class="button is-info"
                             onclick="openLogsFolder()"
+                            data-i18n="debugging.openLogsFolder"
                         >
                             Open logs folder
                         </button>
