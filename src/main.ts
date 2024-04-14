@@ -134,8 +134,8 @@ ipcMain.on("start-connection", (_event, arg) => {
     ) {
         log("Tried to start connection while already active");
         dialog.showErrorBox(
-            "Connection already active",
-            "Please stop the current connection before starting a new one."
+            window.translate("dialogs.connectionActive.title"),
+            window.translate("dialogs.connectionActive.message")
         );
         return false;
     }
@@ -295,8 +295,8 @@ ipcMain.on("open-logs-folder", () => {
     } else {
         error("Logs directory does not exist");
         dialog.showErrorBox(
-            "No logs!",
-            "You should probably enable debug logging first."
+            window.translate("dialogs.noLogsFolder.title"),
+            window.translate("dialogs.noLogsFolder.message")
         );
     }
 });

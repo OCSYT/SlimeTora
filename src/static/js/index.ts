@@ -15,6 +15,8 @@ let skipSlimeVRCheck = false;
 let bypassCOMPortLimit = false;
 let debugTrackerConnections = false;
 
+let language = "en";
+
 /*
  * Renderer functions
  */
@@ -51,7 +53,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // Populate language select
-    const languageSelect = document.getElementById("language-select");
+    const languageSelect = document.getElementById(
+        "language-select"
+    ) as HTMLSelectElement;
     const languages: string[] = await window.ipc.invoke("get-languages", null);
 
     languages.forEach((language: string) => {
@@ -66,13 +70,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         "get-settings",
         null
     );
+    language = settings.global?.language || "en";
     bluetoothEnabled =
         settings.global?.connectionMode?.bluetoothEnabled || false;
     gxEnabled = settings.global?.connectionMode?.gxEnabled || false;
     fpsMode = settings.global?.trackers?.fpsMode || 50;
     sensorMode = settings.global?.trackers?.sensorMode || 2;
     accelerometerEnabled =
-        settings.global?.trackers?.accelerometerEnabled || false;
+        settings.global?.trackers?.accelerometerEnabled || true;
     gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
     magnetometerEnabled =
         settings.global?.trackers?.magnetometerEnabled || false;
@@ -131,6 +136,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Set the selected option based on the settings
     fpsSelect.value = fpsMode.toString();
     sensorModeSelect.value = sensorMode.toString();
+    languageSelect.value = language.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -160,8 +166,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (isMissingPorts) {
         setStatus(window.translate("main.status.comPortsMissing"));
         window.ipc.send("show-error", {
-            title: window.translate("dialog.comPortsMissing.title"),
-            message: window.translate("dialog.comPortsMissing.message"),
+            title: window.translate("dialogs.comPortsMissing.title"),
+            message: window.translate("dialogs.comPortsMissing.message"),
         });
     }
 
@@ -173,6 +179,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("tracker-count").innerHTML = document
         .getElementById("tracker-count")
         .innerHTML.replace("{trackerCount}", "0");
+
+    window.changeLanguage(language);
 
     addEventListeners();
 });
@@ -216,8 +224,8 @@ async function startConnection() {
         window.error("No connection mode enabled");
         setStatus(window.translate("main.status.noConnectionMode"));
         window.ipc.send("show-error", {
-            title: window.translate("dialog.noConnectionMode.title"),
-            message: window.translate("dialog.noConnectionMode.message"),
+            title: window.translate("dialogs.noConnectionMode.title"),
+            message: window.translate("dialogs.noConnectionMode.message"),
         });
         return false;
     }
@@ -993,6 +1001,11 @@ function addEventListeners() {
             ).value;
             window.log(`Selected language: ${language}`);
             window.changeLanguage(language);
+            window.ipc.send("save-setting", {
+                global: {
+                    language: language,
+                },
+            });
         });
 
     document
