@@ -121,12 +121,14 @@ ipcMain.on("start-connection", (_event, arg) => {
 });
 
 ipcMain.on("stop-connection", (_event, arg: string) => {
-    if (arg.includes("bluetooth")) {
+    if (arg.includes("bluetooth") && device.getConnectionModeActive("bluetooth")) {
         device.stopConnection("bluetooth");
         log("Stopped bluetooth connection");
-    } else if (arg.includes("gx")) {
+    } else if (arg.includes("gx") && device.getConnectionModeActive("gx")) {
         device.stopConnection("gx");
         log("Stopped GX connection");
+    } else {
+        log("No connection to stop");
     }
     connectedDevices = [];
 });
@@ -189,7 +191,11 @@ ipcMain.on("set-tracker-settings", (_event, arg) => {
             return;
         }
 
-        log(`Setting tracker settings for ${deviceID} to: ${JSON.stringify(arg)}`);
+        log(
+            `Setting tracker settings for ${deviceID} to: ${JSON.stringify(
+                arg
+            )}`
+        );
         log(
             `Old tracker settings: ${JSON.stringify(
                 device.getTrackerSettings(deviceID)
@@ -197,7 +203,12 @@ ipcMain.on("set-tracker-settings", (_event, arg) => {
         );
 
         // Save the settings
-        await setTrackerSettings(deviceID, sensorMode, fpsMode, sensorAutoCorrection);
+        await setTrackerSettings(
+            deviceID,
+            sensorMode,
+            fpsMode,
+            sensorAutoCorrection
+        );
 
         log(
             `New tracker settings: ${JSON.stringify(
@@ -207,7 +218,12 @@ ipcMain.on("set-tracker-settings", (_event, arg) => {
     });
 });
 
-async function setTrackerSettings(deviceID: string, sensorMode: number, fpsMode: number, sensorAutoCorrection: string[]) {
+async function setTrackerSettings(
+    deviceID: string,
+    sensorMode: number,
+    fpsMode: number,
+    sensorAutoCorrection: string[]
+) {
     await device.setTrackerSettings(
         deviceID,
         sensorMode,
@@ -482,25 +498,33 @@ function log(msg: string, where = "main") {
             fs.writeFileSync(logPath, "");
         }
 
-        if (msg.startsWith("(haritorax-interpreter)") && !debugTrackerConnections) return;
-        if (msg.includes("gravity") || msg.includes("rotation") || msg.includes("other data")) {
+        if (
+            msg.startsWith("(haritorax-interpreter)") &&
+            !debugTrackerConnections
+        )
+            return;
+        if (
+            msg.includes("gravity") ||
+            msg.includes("rotation") ||
+            msg.includes("other data")
+        ) {
             console.log(`not logging`);
-            
         } else {
             fs.appendFileSync(
                 logPath,
                 `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
             );
         }
-
-        
     }
-    if (msg.includes("gravity") || msg.includes("rotation") || msg.includes("other data")) {
+    if (
+        msg.includes("gravity") ||
+        msg.includes("rotation") ||
+        msg.includes("other data")
+    ) {
         console.log(`not logging`);
     } else {
         console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
     }
-    
 }
 
 function error(msg: string, where = "main") {
@@ -545,10 +569,10 @@ let packetCount = 0;
 const connectToServer = () => {
     return new Promise<void>((resolve) => {
         if (foundSlimeVR) {
-            throw new Error('Already connected to SlimeVR');
+            throw new Error("Already connected to SlimeVR");
         }
 
-        log('Connecting to SlimeVR server...');
+        log("Connecting to SlimeVR server...");
 
         const searchForServerInterval = setInterval(() => {
             if (foundSlimeVR) {
@@ -556,7 +580,7 @@ const connectToServer = () => {
                 return;
             }
 
-            log('Searching for SlimeVR server...');
+            log("Searching for SlimeVR server...");
 
             sendHandshakePacket("SEARCHING");
         }, 1000);
@@ -566,11 +590,11 @@ const connectToServer = () => {
                 return;
             }
 
-            log(`Got message from SlimeVR server: ${data.toString('hex')}`);
+            log(`Got message from SlimeVR server: ${data.toString("hex")}`);
 
             clearInterval(searchForServerInterval);
 
-            log('Connected to SlimeVR server!');
+            log("Connected to SlimeVR server!");
 
             slimeIP = src.address;
             slimePort = src.port;
@@ -760,8 +784,10 @@ function sendBatteryLevel(
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
-    if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
-    if (device && device.getConnectionModeActive("gx")) device.stopConnection("gx");
+    if (device && device.getConnectionModeActive("bluetooth"))
+        device.stopConnection("bluetooth");
+    if (device && device.getConnectionModeActive("gx"))
+        device.stopConnection("gx");
     app.quit();
 });
 

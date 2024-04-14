@@ -22444,6 +22444,10 @@ body {
   padding: 2rem;
 }
 
+br {
+  user-select: none;
+}
+
 .tooltip-container {
   position: relative;
   display: inline-block;

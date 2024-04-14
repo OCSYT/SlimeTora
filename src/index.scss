@@ -16,6 +16,10 @@ body {
     padding: 2rem;
 }
 
+br {
+    user-select: none;
+}
+
 .tooltip-container {
     position: relative;
     display: inline-block;
@@ -121,18 +125,18 @@ body {
 }
 
 .debugging-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .debugging-container .switch-container {
-  flex: 1 0 50%;
+    flex: 1 0 50%;
 }
 
 .logs-folder-container {
-  display: flex;
-  justify-content: center;
+    display: flex;
+    justify-content: center;
 }
 
 .switch {

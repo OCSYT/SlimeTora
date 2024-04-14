@@ -86,7 +86,9 @@ async function loadSettings(deviceID: string) {
         .getElementById("accelerometer-switch")
         .addEventListener("change", async function () {
             settingsAccelerometerEnabled = !settingsAccelerometerEnabled;
-            window.log(`Switched accelerometer to: ${settingsAccelerometerEnabled}`);
+            window.log(
+                `Switched accelerometer to: ${settingsAccelerometerEnabled}`
+            );
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -289,7 +291,9 @@ async function loadSettings(deviceID: string) {
             let sensorAutoCorrection: string[] =
                 trackerSettings.sensorAutoCorrection || [];
 
-            window.log(`Set sensor mode for ${deviceID} to: ${settingsSensorMode}`);
+            window.log(
+                `Set sensor mode for ${deviceID} to: ${settingsSensorMode}`
+            );
 
             window.ipc.send("set-tracker-settings", {
                 deviceID,
@@ -343,7 +347,7 @@ async function saveTrackerSettings() {
         deviceID,
         sensorMode: settingsSensorMode,
         fpsMode: settingsFPSMode,
-        sensorAutoCorrection: sensorAutoCorrection
+        sensorAutoCorrection: sensorAutoCorrection,
     });
 
     window.log(`Saved settings for ${deviceID}`);
@@ -378,7 +382,8 @@ async function resetSettings() {
     settingsSensorMode = settings.global?.trackers?.sensorMode || 2;
     settingsAccelerometerEnabled =
         settings.global?.trackers?.accelerometerEnabled || false;
-    settingsGyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
+    settingsGyroscopeEnabled =
+        settings.global?.trackers?.gyroscopeEnabled || false;
     settingsMagnetometerEnabled =
         settings.global?.trackers?.magnetometerEnabled || false;
 
@@ -399,22 +404,29 @@ async function resetSettings() {
         deviceID,
         sensorMode,
         fpsMode,
-        sensorAutoCorrection: sensorAutoCorrection
+        sensorAutoCorrection: sensorAutoCorrection,
     });
 
     window.log(`Reset settings for ${deviceID} to default`);
 }
 
 async function getSettings() {
-    const currentSettings = await window.ipc.invoke("get-tracker-settings", deviceID);
+    const currentSettings = await window.ipc.invoke(
+        "get-tracker-settings",
+        deviceID
+    );
     const sensorMode = currentSettings.sensorMode;
     const fpsMode = currentSettings.fpsMode;
     const sensorAutoCorrection = currentSettings.sensorAutoCorrection;
 
-    window.log(`Current settings for ${deviceID}: ${JSON.stringify(currentSettings)}`);
+    window.log(
+        `Current settings for ${deviceID}: ${JSON.stringify(currentSettings)}`
+    );
     window.ipc.send("show-message", {
         title: `Current settings for ${deviceID}`,
-        message: `Sensor Mode: ${sensorMode} \nFPS Mode: ${fpsMode} \nSensor Auto Correction: ${sensorAutoCorrection.join(", ")}`,
+        message: `Sensor Mode: ${sensorMode} \nFPS Mode: ${fpsMode} \nSensor Auto Correction: ${sensorAutoCorrection.join(
+            ", "
+        )}`,
     });
 }
 
