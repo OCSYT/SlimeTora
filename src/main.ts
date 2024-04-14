@@ -182,6 +182,11 @@ ipcMain.handle("get-com-ports", async () => {
     return ports.map((port) => port.path).sort();
 });
 
+ipcMain.handle('get-languages', async () => {
+    const resources = await loadTranslations();
+    return Object.keys(resources);
+});
+
 ipcMain.handle("get-tracker-settings", (_event, arg: string) => {
     return device.getTrackerSettings(arg);
 });

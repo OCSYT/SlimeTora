@@ -50,6 +50,15 @@ contextBridge.exposeInMainWorld("localize", (resources?: any) => {
     }
 });
 
+contextBridge.exposeInMainWorld("changeLanguage", (lng: string) => {
+    i18next.changeLanguage(lng).then(() => {
+        if (localize) {
+            ipcRenderer.send("log", `Attempting to change language to ${lng}`);
+            localize('[data-i18n]');
+        }
+    });
+});
+
 contextBridge.exposeInMainWorld("translate", (key: string) => {
     return i18next.t(key);
 });
@@ -74,6 +83,7 @@ declare global {
         error: (message: string) => void;
 
         localize: (resources?: string) => void;
+        changeLanguage: (lng: string) => void;
         translate: (key: string) => string;
     }
     

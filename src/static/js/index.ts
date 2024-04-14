@@ -50,6 +50,17 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
+    // Populate language select
+    const languageSelect = document.getElementById("language-select");
+    const languages: string[] = await window.ipc.invoke("get-languages", null);
+
+    languages.forEach((language: string) => {
+        const option = document.createElement("option");
+        option.value = language;
+        option.text = language;
+        languageSelect.appendChild(option);
+    });
+
     // Get settings from config file
     const settings: { [key: string]: any } = await window.ipc.invoke(
         "get-settings",
@@ -973,6 +984,16 @@ function addEventListeners() {
             });
         }
     });
+
+    document
+        .getElementById("language-select")
+        .addEventListener("change", function () {
+            const language: string = (
+                document.getElementById("language-select") as HTMLSelectElement
+            ).value;
+            window.log(`Selected language: ${language}`);
+            window.changeLanguage(language);
+        });
 
     document
         .getElementById("log-to-file-switch")

@@ -1,5 +1,4 @@
 {
-    "searching": "test",
     "main": {
         "connectedTrackers": "Connected trackers:",
         "startConnection": "Start connection",
@@ -89,11 +88,12 @@
             "gyroscope": "Gyroscope",
             "magnetometer": "Magnetometer"
         },
-        "save":
+        "other":
         {
-            "title": "Manual save",
-            "tooltip": "Sometimes your settings may not save properly (or you just want to make sure they're saved), so here's a nice little button for you lol.",
-            "saveButton": "Save settings"
+            "title": "Other settings",
+            "tooltip": "Sometimes your settings may not save properly (or you just want to make sure they're saved), so here's a nice little button for you lol. You can also change your language here.",
+            "saveButton": "Save settings",
+            "languageButton": "Change language"
         }
     },
     "about": {

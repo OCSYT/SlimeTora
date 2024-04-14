@@ -206,7 +206,7 @@
                             </div>
                         </div>
                         <div class="settings-container">
-                            <div class="select is-info">
+                            <div class="select">
                                 <select id="fps-mode-select">
                                     <option
                                         value="50"
@@ -359,9 +359,9 @@
                         <div class="with-tooltip">
                             <h3
                                 class="title is-4 is-spaced"
-                                data-i18n="settings.save.title"
+                                data-i18n="settings.other.title"
                             >
-                                Manual save
+                                Other settings
                             </h3>
                             <div class="tooltip-container">
                                 <div class="icon">
@@ -376,21 +376,28 @@
                                     >Sometimes your settings may not save
                                     properly (or you just want to make sure
                                     they're saved), so here's a nice little
-                                    button for you lol.</span
+                                    button for you lol. You can also change your
+                                    language here.</span
                                 >
                             </div>
                         </div>
                         <div class="settings-container">
-                            <div class="buttons is-centered">
-                                <button
-                                    class="button is-info"
-                                    id="save-settings-button"
-                                    onclick="saveSettings()"
-                                    data-i18n="settings.save.saveButton"
-                                >
-                                    Save settings
-                                </button>
+                            <div class="select">
+                                <select id="language-select">
+                                    <!-- Languages populated here -->
+                                </select>
                             </div>
+                        </div>
+                        <br />
+                        <div class="buttons is-centered">
+                            <button
+                                class="button is-info"
+                                id="save-settings-button"
+                                onclick="saveSettings()"
+                                data-i18n="settings.save.saveButton"
+                            >
+                                Save settings
+                            </button>
                         </div>
                     </div>
                 </div>
