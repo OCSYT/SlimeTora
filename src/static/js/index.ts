@@ -731,9 +731,6 @@ function addEventListeners() {
                     device.querySelector("#device-id").textContent = device.id;
                 });
             }
-
-            
-
         });
 
     document

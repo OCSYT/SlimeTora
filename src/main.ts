@@ -37,29 +37,29 @@ const configPath = path.resolve(mainPath, "config.json");
  * Translations (i18next)
  */
 async function loadTranslations() {
-    const localesDir = path.join(mainPath, "locales");
+    const languagesDir = path.join(mainPath, "languages");
 
-    if (!fs.existsSync(localesDir)) {
-        fs.mkdirSync(localesDir);
+    if (!fs.existsSync(languagesDir)) {
+        fs.mkdirSync(languagesDir);
     }
 
-    const srcLocalesDir = path.join(__dirname, "static", "locales");
-    const srcFiles = fs.readdirSync(srcLocalesDir);
+    const srcLanguagesDir = path.join(__dirname, "static", "languages");
+    const srcFiles = fs.readdirSync(srcLanguagesDir);
 
     for (const file of srcFiles) {
         fs.copyFileSync(
-            path.join(srcLocalesDir, file),
-            path.join(localesDir, file)
+            path.join(srcLanguagesDir, file),
+            path.join(languagesDir, file)
         );
     }
 
-    const files = fs.readdirSync(localesDir);
+    const files = fs.readdirSync(languagesDir);
     const resources: any = {};
 
     for (const file of files) {
         const lang = path.basename(file, ".json");
         const translations = JSON.parse(
-            fs.readFileSync(path.join(localesDir, file), "utf-8")
+            fs.readFileSync(path.join(languagesDir, file), "utf-8")
         );
 
         resources[lang] = { translation: translations };
