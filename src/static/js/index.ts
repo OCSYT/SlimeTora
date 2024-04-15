@@ -182,9 +182,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
 
     setStatus(window.translate("main.status.none"));
-    document.getElementById("tracker-count").innerHTML = document
+    document.getElementById("tracker-count").textContent = document
         .getElementById("tracker-count")
-        .innerHTML.replace("{trackerCount}", "0");
+        .textContent.replace("{trackerCount}", "0");
 
     window.changeLanguage(language);
 
@@ -251,9 +251,9 @@ function stopConnection() {
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
     if (gxEnabled) window.ipc.send("stop-connection", "gx");
 
-    document.getElementById("tracker-count").innerHTML = "0";
+    document.getElementById("tracker-count").textContent = "0";
     setStatus(window.translate("main.status.none"));
-    document.getElementById("device-list").innerHTML = "";
+    document.getElementById("device-list").textContent = "";
     isActive = false;
 }
 
@@ -386,7 +386,7 @@ function saveSettings() {
  */
 
 function setStatus(status: string) {
-    document.getElementById("status").innerHTML = status;
+    document.getElementById("status").textContent = status;
     window.log(`Set status to: ${status}`);
 }
 
@@ -523,8 +523,8 @@ window.ipc.on("localize", (_event, resources) => {
 window.ipc.on("connect", async (_event, deviceID) => {
     window.log(`Connected to ${deviceID}`);
     addDeviceToList(deviceID);
-    document.getElementById("tracker-count").innerHTML = (
-        parseInt(document.getElementById("tracker-count").innerHTML) + 1
+    document.getElementById("tracker-count").textContent = (
+        parseInt(document.getElementById("tracker-count").textContent) + 1
     ).toString();
 
     setStatus("connected");
@@ -576,11 +576,11 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
 window.ipc.on("disconnect", (_event, deviceID) => {
     window.log(`Disconnected from ${deviceID}`);
     document.getElementById(deviceID).remove();
-    document.getElementById("tracker-count").innerHTML = (
-        parseInt(document.getElementById("tracker-count").innerHTML) - 1
+    document.getElementById("tracker-count").textContent = (
+        parseInt(document.getElementById("tracker-count").textContent) - 1
     ).toString();
 
-    if (document.getElementById("tracker-count").innerHTML === "0")
+    if (document.getElementById("tracker-count").textContent === "0")
         setStatus("searching");
 });
 
@@ -618,10 +618,10 @@ window.ipc.on("device-data", (_event: any, arg) => {
 
     document
         .getElementById(trackerName)
-        .querySelector("#rotation-data").innerHTML = rotationText;
+        .querySelector("#rotation-data").textContent = rotationText;
     document
         .getElementById(trackerName)
-        .querySelector("#acceleration-data").innerHTML = gravityText;
+        .querySelector("#acceleration-data").textContent = gravityText;
 });
 
 window.ipc.on("device-battery", (_event, arg) => {
@@ -639,7 +639,7 @@ window.ipc.on("device-battery", (_event, arg) => {
         .getElementById(trackerName)
         .querySelector("#battery");
     if (batteryText === null) return;
-    batteryText.innerHTML = `${batteryRemaining}% (${batteryVoltage / 1000}V)`;
+    batteryText.textContent = `${batteryRemaining}% (${batteryVoltage / 1000}V)`;
     window.log(
         `Battery for ${trackerName}: ${batteryRemaining}% (${
             batteryVoltage / 1000
@@ -653,7 +653,7 @@ window.ipc.on("set-status", (_event, msg) => {
 
 // Set version number
 window.ipc.on("version", (_event, version) => {
-    document.getElementById("version").innerHTML = version;
+    document.getElementById("version").textContent = version;
     window.log(`Got app version: ${version}`);
 });
 

@@ -13,10 +13,29 @@ window.ipc.on("trackerName", (_event, arg) => {
     deviceID = arg;
 
     const trackerNameElement = document.getElementById("tracker-name");
-    trackerNameElement.innerHTML = trackerNameElement.innerHTML.replace(
-        "{trackerName}",
-        deviceID
-    );
+
+    if (deviceID.startsWith("HaritoraX")) {
+        // Check if censor serial numbers is enabled
+        const settings = window.ipc.invoke("get-settings", null);
+        settings.then((settings) => {
+            if (settings.global?.censorSerialNumbers) {
+                if (deviceID.startsWith("HaritoraX")) {
+                    trackerNameElement.textContent = trackerNameElement.textContent.replace(
+                        "{trackerName}",
+                        "HaritoraX-XXXXXX");;
+                } else if (deviceID.startsWith("HaritoraXW")) {
+                    trackerNameElement.textContent = trackerNameElement.textContent.replace(
+                        "{trackerName}",
+                        "HaritoraXW-XXXXXX");
+                }
+            }
+        });
+    } else {
+        trackerNameElement.textContent = trackerNameElement.textContent.replace(
+            "{trackerName}",
+            deviceID
+        );
+    }
 
     // Load settings
     loadSettings(deviceID);
