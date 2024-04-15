@@ -177,6 +177,31 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
+    // if Bluetooth is the only connection mode enabled, disable every other setting
+    if (bluetoothEnabled && !gxEnabled) {
+        document
+            .getElementById("accelerometer-switch")
+            .setAttribute("disabled", "true");
+        document
+            .getElementById("gyroscope-switch")
+            .setAttribute("disabled", "true");
+        document
+            .getElementById("magnetometer-switch")
+            .setAttribute("disabled", "true");
+        document
+            .getElementById("fps-mode-select")
+            .setAttribute("disabled", "true");
+        document
+            .getElementById("sensor-mode-select")
+            .setAttribute("disabled", "true");
+        document
+            .getElementById("com-ports")
+            .querySelectorAll("input")
+            .forEach((port) => {
+                port.setAttribute("disabled", "true");
+            });
+    }
+
     selectedComPorts.push(...selectedPorts);
 
     window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
@@ -740,9 +765,6 @@ function addEventListeners() {
                     .setAttribute("disabled", "true");
                 document
                     .getElementById("sensor-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("save-settings-button")
                     .setAttribute("disabled", "true");
                 document
                     .getElementById("com-ports")
