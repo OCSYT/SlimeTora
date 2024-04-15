@@ -639,10 +639,10 @@ window.ipc.on("device-battery", (_event, arg) => {
         .getElementById(trackerName)
         .querySelector("#battery");
     if (batteryText === null) return;
-    batteryText.textContent = `${batteryRemaining}% (${batteryVoltage / 1000}V)`;
+    batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
     window.log(
         `Battery for ${trackerName}: ${batteryRemaining}% (${
-            batteryVoltage / 1000
+            batteryVoltage
         }V)`
     );
 });

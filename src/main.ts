@@ -182,7 +182,7 @@ ipcMain.handle("get-com-ports", async () => {
     return ports.map((port) => port.path).sort();
 });
 
-ipcMain.handle('get-languages', async () => {
+ipcMain.handle("get-languages", async () => {
     const resources = await loadTranslations();
     return Object.keys(resources);
 });
@@ -496,21 +496,26 @@ function startDeviceListeners() {
             batteryRemaining: number,
             batteryVoltage: number
         ) => {
+            let batteryVoltageInVolts = batteryVoltage
+                ? batteryVoltage / 1000
+                : 0;
             if (!connectedDevices.includes(trackerName)) return;
+            if (trackerName.startsWith("HaritoraX")) batteryVoltageInVolts = 0;
+
             sendBatteryLevel(
                 batteryRemaining,
-                batteryVoltage,
+                batteryVoltageInVolts,
                 connectedDevices.indexOf(trackerName)
             );
             mainWindow.webContents.send("device-battery", {
                 trackerName,
                 batteryRemaining,
-                batteryVoltage,
+                batteryVoltage: batteryVoltageInVolts
+                    ? batteryVoltageInVolts
+                    : 0,
             });
             log(
-                `Received battery data for ${trackerName}: ${batteryRemaining}% (${
-                    batteryVoltage / 1000
-                }V)`
+                `Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltageInVolts}V)`
             );
         }
     );
@@ -780,16 +785,14 @@ function sendBatteryLevel(
         lowestBatteryData.percentage = percentage;
         lowestBatteryData.voltage = voltage;
         log(
-            `Set lowest battery data: ${lowestBatteryData.percentage}% (${
-                lowestBatteryData.voltage / 1000
-            }V)`
+            `Set lowest battery data: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage}V)`
         );
     }
 
     packetCount += 1;
     const buffer = ServerBoundBatteryLevelPacket.encode(
         BigInt(packetCount),
-        lowestBatteryData.voltage / 1000,
+        lowestBatteryData.voltage,
         lowestBatteryData.percentage
     );
 
@@ -800,9 +803,7 @@ function sendBatteryLevel(
             );
         } else {
             log(
-                `Sent battery data to SlimeVR server: ${
-                    lowestBatteryData.percentage
-                }% (${lowestBatteryData.voltage / 1000}V)`
+                `Sent battery data to SlimeVR server: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage}V)`
             );
         }
     });
