@@ -414,7 +414,7 @@ async function addDeviceToList(deviceID: string) {
     <div class="card" id="${deviceID}">
         <header class="card-header">
             <p class="card-header-title is-centered">
-                Device Name:&nbsp;<span id="device-name">${deviceName}</span>
+                Device:&nbsp;<span id="device-name">${deviceName}</span>
             </p>
             <div class="edit-button-container">
                 <button id="edit-button" class="button is-info">Edit</button>
@@ -499,10 +499,10 @@ async function addDeviceToList(deviceID: string) {
 
     // Censor serial if BT tracker and censorSerialNumbers is enabled
     if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
-        if (deviceName !== deviceID) deviceNameElement.textContent = "HaritoraXW-XXXXXX";
+        if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraXW-XXXXXX";
         newDevice.querySelector("#device-id").textContent = "HaritoraXW-XXXXXX";
     } else if (deviceID.startsWith("HaritoraX") && censorSerialNumbers) {
-        if (deviceName !== deviceID) deviceNameElement.textContent = "HaritoraX-XXXXXX";
+        if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraX-XXXXXX";
         newDevice.querySelector("#device-id").textContent = "HaritoraX-XXXXXX";
     }
 
@@ -676,23 +676,25 @@ function addEventListeners() {
             if (censorSerialNumbers) {
                 const devices = document.getElementById("device-list").querySelectorAll(".card");
                 devices.forEach((device) => {
-                    const deviceName = device.querySelector("#device-name").textContent;
-                    const deviceID = device.querySelector("#device-id").textContent;
-    
-                    if (deviceName.includes("HaritoraXW")) {
-                        device.querySelector("#device-name").textContent = "HaritoraXW-XXXXXX";
+                    const deviceNameElement = device.querySelector("#device-name");
+                    const deviceIDElement = device.querySelector("#device-id");
+                    const deviceName = deviceNameElement.textContent;
+                    const deviceID = deviceIDElement.textContent;
+
+                    if (deviceName.includes("HaritoraX") && deviceName === device.id) {
+                        deviceNameElement.textContent = "HaritoraX-XXXXXX";
                     }
-    
-                    if (deviceID.includes("HaritoraXW")) {
-                        device.querySelector("#device-id").textContent = "HaritoraXW-XXXXXX";
-                    }
-    
-                    if (deviceName.includes("HaritoraX")) {
-                        device.querySelector("#device-name").textContent = "HaritoraX-XXXXXX";
-                    }
-    
+
                     if (deviceID.includes("HaritoraX")) {
-                        device.querySelector("#device-id").textContent = "HaritoraX-XXXXXX";
+                        deviceIDElement.textContent = "HaritoraX-XXXXXX";
+                    }
+
+                    if (deviceName.includes("HaritoraXW") && deviceName === device.id) {
+                        deviceNameElement.textContent = "HaritoraXW-XXXXXX";
+                    }
+
+                    if (deviceID.includes("HaritoraXW")) {
+                        deviceIDElement.textContent = "HaritoraXW-XXXXXX";
                     }
                 });
             } else {

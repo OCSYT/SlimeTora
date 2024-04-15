@@ -16,7 +16,7 @@
     },
     "trackerInfo": {
         "title": "Tracker information",
-        "deviceName": "Device name:",
+        "deviceName": "Device:",
         "deviceID": "Device ID:",
         "rotationData": "Rotation data:",
         "accelerationData": "Acceleration data:",

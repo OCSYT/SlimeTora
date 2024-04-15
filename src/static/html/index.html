@@ -64,6 +64,22 @@
                 >
                     Tracker information
                 </h1>
+                <div class="settings-container">
+                    <div class="switch-container">
+                        <div class="switch">
+                            <input type="checkbox" id="censor-serial-switch" />
+                            <label
+                                for="censor-serial-switch"
+                                class="slider round"
+                            ></label>
+                        </div>
+                        <label
+                            for="censor-serial-switch"
+                            data-i18n="settings.other.censorSerialNumbers"
+                            >Censor serial numbers</label
+                        >
+                    </div>
+                </div>
                 <br />
                 <div class="columns is-multiline" id="device-list">
                     <!-- Trackers get populated here -->
@@ -394,41 +410,28 @@
                                     properly (or you just want to make sure
                                     they're saved), so here's a nice little
                                     button for you lol. You can also change your
-                                    language and censor tracker serial numbers
+                                    language hand censor BT serial numbers
                                     here.</span
                                 >
                             </div>
                         </div>
-                        <div class="settings-container is-flex is-flex-direction-column is-align-items-center" style="gap: 1rem;">
-                            <div class="select" style="max-width: fit-content;">
+                        <div class="settings-container">
+                            <div class="select">
                                 <select id="language-select">
                                     <!-- Languages populated here -->
                                 </select>
                             </div>
-                            <div class="switch-container">
-                                <div class="switch">
-                                    <input type="checkbox" id="censor-serial-switch" />
-                                    <label
-                                        for="censor-serial-switch"
-                                        class="slider round"
-                                    ></label>
-                                </div>
-                                <label
-                                    for="censor-serial-switch"
-                                    data-i18n="settings.other.censorSerialNumbers"
-                                    >Censor serial numbers</label
-                                >
-                            </div>
-                            <div class="buttons is-centered">
-                                <button
-                                    class="button is-info is-centered"
-                                    id="save-settings-button"
-                                    onclick="saveSettings()"
-                                    data-i18n="settings.other.saveButton"
-                                >
-                                    Save settings
-                                </button>
-                            </div>
+                        </div>
+                        <br />
+                        <div class="buttons is-centered">
+                            <button
+                                class="button is-info"
+                                id="save-settings-button"
+                                onclick="saveSettings()"
+                                data-i18n="settings.other.saveButton"
+                            >
+                                Save settings
+                            </button>
                         </div>
                     </div>
                 </div>
