@@ -16,6 +16,7 @@ let bypassCOMPortLimit = false;
 let debugTrackerConnections = false;
 
 let language = "en";
+let censorSerialNumbers = false;
 
 /*
  * Renderer functions
@@ -71,6 +72,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         null
     );
     language = settings.global?.language || "en";
+    censorSerialNumbers = settings.global?.censorSerialNumbers || false;
     bluetoothEnabled =
         settings.global?.connectionMode?.bluetoothEnabled || false;
     gxEnabled = settings.global?.connectionMode?.gxEnabled || false;
@@ -88,6 +90,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         settings.global?.debug?.debugTrackerConnections || false;
 
     // Get the checkbox elements
+    const censorSerialNumbersSwitch = document.getElementById(
+        "censor-serial-switch"
+    ) as HTMLInputElement;
     const bluetoothSwitch = document.getElementById(
         "bluetooth-switch"
     ) as HTMLInputElement;
@@ -115,6 +120,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     ) as HTMLInputElement;
 
     // Set the checked property based on the settings
+    censorSerialNumbersSwitch.checked = censorSerialNumbers;
     bluetoothSwitch.checked = bluetoothEnabled;
     gxSwitch.checked = gxEnabled;
     accelerometerSwitch.checked = accelerometerEnabled;
@@ -405,7 +411,7 @@ async function addDeviceToList(deviceID: string) {
 
     // Fill the div with device data
     newDevice.innerHTML = `
-    <div class="card">
+    <div class="card" id="${deviceID}">
         <header class="card-header">
             <p class="card-header-title is-centered">
                 Device Name:&nbsp;<span id="device-name">${deviceName}</span>
@@ -489,6 +495,15 @@ async function addDeviceToList(deviceID: string) {
             "log",
             `Disabled override settings button for ${deviceID} (unsupported)`
         );
+    }
+
+    // Censor serial if BT tracker and censorSerialNumbers is enabled
+    if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
+        if (deviceName !== deviceID) deviceNameElement.textContent = "HaritoraXW-XXXXXX";
+        newDevice.querySelector("#device-id").textContent = "HaritoraXW-XXXXXX";
+    } else if (deviceID.startsWith("HaritoraX") && censorSerialNumbers) {
+        if (deviceName !== deviceID) deviceNameElement.textContent = "HaritoraX-XXXXXX";
+        newDevice.querySelector("#device-id").textContent = "HaritoraX-XXXXXX";
     }
 
     deviceList.appendChild(newDevice);
@@ -648,6 +663,53 @@ function addEventListeners() {
      */
 
     document
+        .getElementById("censor-serial-switch")
+        .addEventListener("change", function () {
+            censorSerialNumbers = !censorSerialNumbers;
+            window.log(`Censor serial numbers: ${censorSerialNumbers}`);
+            window.ipc.send("save-setting", {
+                global: {
+                    censorSerialNumbers: censorSerialNumbers,
+                },
+            });
+
+            if (censorSerialNumbers) {
+                const devices = document.getElementById("device-list").querySelectorAll(".card");
+                devices.forEach((device) => {
+                    const deviceName = device.querySelector("#device-name").textContent;
+                    const deviceID = device.querySelector("#device-id").textContent;
+    
+                    if (deviceName.includes("HaritoraXW")) {
+                        device.querySelector("#device-name").textContent = "HaritoraXW-XXXXXX";
+                    }
+    
+                    if (deviceID.includes("HaritoraXW")) {
+                        device.querySelector("#device-id").textContent = "HaritoraXW-XXXXXX";
+                    }
+    
+                    if (deviceName.includes("HaritoraX")) {
+                        device.querySelector("#device-name").textContent = "HaritoraX-XXXXXX";
+                    }
+    
+                    if (deviceID.includes("HaritoraX")) {
+                        device.querySelector("#device-id").textContent = "HaritoraX-XXXXXX";
+                    }
+                });
+            } else {
+                const devices = document.getElementById("device-list").querySelectorAll(".card");
+                devices.forEach(async (device) => {
+                    const settings = await window.ipc.invoke("get-settings", null); 
+                    const originalDeviceName = settings.trackers?.[device.id]?.name || device.id;
+                    device.querySelector("#device-name").textContent = originalDeviceName;
+                    device.querySelector("#device-id").textContent = device.id;
+                });
+            }
+
+            
+
+        });
+
+    document
         .getElementById("bluetooth-switch")
         .addEventListener("change", function () {
             bluetoothEnabled = !bluetoothEnabled;
@@ -660,7 +722,7 @@ function addEventListeners() {
                 },
             });
 
-            // if Bluetooth is the only connection mode enabled, disable the every other setting
+            // if Bluetooth is the only connection mode enabled, disable every other setting
             if (bluetoothEnabled && !gxEnabled) {
                 document
                     .getElementById("accelerometer-switch")

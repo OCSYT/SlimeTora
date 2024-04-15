@@ -39,11 +39,16 @@
                     </button>
                 </div>
                 <br />
-                <div
-                    class="title is-2 has-text-centered"
-                >
-                    <h2 class="has-text-weight-medium inline-block" data-i18n="main.status.statusText">Status:</h2>
-                    <p class="has-text-weight-medium inline-block" id="status">N/A</p>
+                <div class="title is-2 has-text-centered">
+                    <h2
+                        class="has-text-weight-medium inline-block"
+                        data-i18n="main.status.statusText"
+                    >
+                        Status:
+                    </h2>
+                    <p class="has-text-weight-medium inline-block" id="status">
+                        N/A
+                    </p>
                 </div>
             </div>
         </div>
@@ -389,27 +394,41 @@
                                     properly (or you just want to make sure
                                     they're saved), so here's a nice little
                                     button for you lol. You can also change your
-                                    language here.</span
+                                    language and censor tracker serial numbers
+                                    here.</span
                                 >
                             </div>
                         </div>
-                        <div class="settings-container">
-                            <div class="select">
+                        <div class="settings-container is-flex is-flex-direction-column is-align-items-center" style="gap: 1rem;">
+                            <div class="select" style="max-width: fit-content;">
                                 <select id="language-select">
                                     <!-- Languages populated here -->
                                 </select>
                             </div>
-                        </div>
-                        <br />
-                        <div class="buttons is-centered">
-                            <button
-                                class="button is-info"
-                                id="save-settings-button"
-                                onclick="saveSettings()"
-                                data-i18n="settings.other.saveButton"
-                            >
-                                Save settings
-                            </button>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input type="checkbox" id="censor-serial-switch" />
+                                    <label
+                                        for="censor-serial-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label
+                                    for="censor-serial-switch"
+                                    data-i18n="settings.other.censorSerialNumbers"
+                                    >Censor serial numbers</label
+                                >
+                            </div>
+                            <div class="buttons is-centered">
+                                <button
+                                    class="button is-info is-centered"
+                                    id="save-settings-button"
+                                    onclick="saveSettings()"
+                                    data-i18n="settings.other.saveButton"
+                                >
+                                    Save settings
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

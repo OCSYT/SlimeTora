@@ -87,9 +87,10 @@
         },
         "other": {
             "title": "Other settings",
-            "tooltip": "Sometimes your settings may not save properly (or you just want to make sure they're saved), so here's a nice little button for you lol. You can also change the program's language here.",
-            "saveButton": "Save settings",
-            "languageButton": "Change language"
+            "tooltip": "Sometimes your settings may not save properly (or you just want to make sure they're saved), so here's a nice little button for you lol. You can also change your language and censor tracker serial numbers here.",
+            "censorSerialNumbers": "Censor serial numbers",
+            "languageButton": "Change language",
+            "saveButton": "Save settings"
         }
     },
     "about": {
