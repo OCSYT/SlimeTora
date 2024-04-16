@@ -13,23 +13,25 @@ This fork rewrites improves on the stability and performance of the app by rewri
 
 # Screenshots
 
-| SlimeTora connection page | SlimeTora tracker info page |
+| Connection section | Tracker info section |
 |:-:|:-:|
-| ![SlimeTora connection page](docs/slimetora_ss_1.png) | ![SlimeTora tracker info page](docs/slimetora_ss_2.png) |
-| SlimeTora settings page | SlimeTora about page |
-| ![SlimeTora settings page](docs/slimetora_ss_3.png) | ![SlimeTora about page](docs/slimetora_ss_4.png) |
+| ![SlimeTora Connection section](docs/slimetora_ss_1.png) | ![Tracker Info section](docs/slimetora_ss_2.png) |
+|  Global settings section | Per-tracker settings page (chest) |
+| ![SlimeTora global settings section](docs/slimetora_ss_3.png) | ![SlimeTora per-tracker (chest) settings page](docs/slimetora_ss_4.png) |
+| About section | Debugging section |
+| ![SlimeTora about section](docs/slimetora_ss_5.png) | ![SlimeTora debugging section](docs/slimetora_ss_6.png) |
 
 # New features
-+ Entire frontend and backend rewrite (with [Bulma](https://bulma.io/) and [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter))
++ Entire frontend and backend rewrite (with [Bulma](https://bulma.io/) and[haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter))
   + The program now has a new UI, the code is cleaner and more maintainable, and should hopefully improve stability/performance.
 + Package app files with `asar`
   + No need to extract thousands of files anymore 😅
 + `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
   + Welcome elbow tracker users!
 + Set tracker settings per-tracker (partial support)
-  + Knee trackers currently have issues, and Bluetoth is not yet supported. Both are disabled automatically.
+  + Knee trackers currently have issues, and Bluetooth is not yet supported. Both are disabled automatically.
 + Localization support
-  + You can help translate the program! Clone the repo and make a new file under `/src/languages/` with the two-letter language identifier (ending with .json)!
+  + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with the two-letter language identifier (ending with .json, e.g. `jp.json`)!
 + Linux support
   + This was done as SlimeVR is supported on Linux, and the first time HaritoraX trackers work on Linux!
   + ..however this is not tested at all. Please let me know if there are issues.
