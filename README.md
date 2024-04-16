@@ -26,8 +26,15 @@ This fork rewrites improves on the stability and performance of the app by rewri
   + No need to extract thousands of files anymore 😅
 + `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
   + Welcome elbow tracker users!
-+ Set any settings per-tracker
++ Set tracker settings per-tracker (partial support)
+  + Knee trackers currently have issues, and Bluetoth is not yet supported. Both are disabled automatically.
++ Localization support
+  + You can help translate the program! Clone the repo and make a new file under `/src/languages/` with the two-letter language identifier (ending with .json)!
++ Linux support
+  + This was done as SlimeVR is supported on Linux, and the first time HaritoraX trackers work on Linux!
+  + ..however this is not tested at all. Please let me know if there are issues.
 + Dynamically grab version number from package.json (instead of relying on manually changing it per release)
++ Censor tracker serial numbers
 + Many new ways to debug the program
 + New SlimeTora logo
 + ..and many more improvements coming soon!
@@ -35,6 +42,7 @@ This fork rewrites improves on the stability and performance of the app by rewri
 # Known issues
 - Tracker auto correction and magnetometer (sensor mode) settings do not work for BT
   - Requires an update to [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter). Help appreciated!
+- Bluetooth tracker's battery report stays on N/A until reported by trackers (instead of instantly grabbing them)
 
 # How to use
 - Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)
@@ -51,4 +59,4 @@ This fork rewrites improves on the stability and performance of the app by rewri
 # Development
 - Clone the project - `git clone https://github.com/JovannMC/SlimeTora.git`
 - Install the dependencies - `npm i`
-- Start the dev environment - `npm start`
+- Start the dev environment - `npm start` or `npm run dev`
