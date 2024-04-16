@@ -49,7 +49,7 @@ async function loadSettings(deviceID: string) {
     // Get settings from config file
     const trackerSettings: TrackerSettings = await window.ipc.invoke(
         "get-tracker-settings",
-        deviceID
+        { trackerName: deviceID }
     );
 
     settingsFPSMode =
@@ -132,7 +132,7 @@ async function loadSettings(deviceID: string) {
 
             const trackerSettings: TrackerSettings = await window.ipc.invoke(
                 "get-tracker-settings",
-                deviceID
+                { trackerName: deviceID }
             );
 
             let sensorAutoCorrection: string[] =
@@ -177,7 +177,7 @@ async function loadSettings(deviceID: string) {
 
             const trackerSettings: TrackerSettings = await window.ipc.invoke(
                 "get-tracker-settings",
-                deviceID
+                { trackerName: deviceID }
             );
 
             let sensorAutoCorrection: string[] =
@@ -222,7 +222,7 @@ async function loadSettings(deviceID: string) {
 
             const trackerSettings: TrackerSettings = await window.ipc.invoke(
                 "get-tracker-settings",
-                deviceID
+                { trackerName: deviceID }
             );
 
             let sensorAutoCorrection: string[] =
@@ -273,7 +273,7 @@ async function loadSettings(deviceID: string) {
 
             const trackerSettings: TrackerSettings = await window.ipc.invoke(
                 "get-tracker-settings",
-                deviceID
+                { trackerName: deviceID }
             );
             const sensorMode: number = settingsSensorMode;
             let sensorAutoCorrection: string[] =
@@ -314,7 +314,7 @@ async function loadSettings(deviceID: string) {
 
             const trackerSettings: TrackerSettings = await window.ipc.invoke(
                 "get-tracker-settings",
-                deviceID
+                { trackerName: deviceID }
             );
             const fpsMode: number = settingsFPSMode;
             let sensorAutoCorrection: string[] =
@@ -364,7 +364,7 @@ async function saveTrackerSettings() {
 
     const trackerSettings: TrackerSettings = await window.ipc.invoke(
         "get-tracker-settings",
-        deviceID
+        { trackerName: deviceID }
     );
 
     let sensorAutoCorrection: string[] = [];
@@ -440,10 +440,9 @@ async function resetSettings() {
 }
 
 async function getSettings() {
-    const currentSettings = await window.ipc.invoke(
-        "get-tracker-settings",
-        deviceID
-    );
+    const currentSettings = await window.ipc.invoke("get-tracker-settings", {
+        trackerName: deviceID,
+    });
     const sensorMode = currentSettings.sensorMode;
     const fpsMode = currentSettings.fpsMode;
     const sensorAutoCorrection = currentSettings.sensorAutoCorrection;

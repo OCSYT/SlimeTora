@@ -18,6 +18,9 @@ let debugTrackerConnections = false;
 let language = "en";
 let censorSerialNumbers = false;
 
+// TODO add BT settings to package and add tracker visualization
+// todo feature to hide bt tracker serials
+
 /*
  * Renderer functions
  */
@@ -337,11 +340,9 @@ function saveSettings() {
 
     window.ipc.invoke("get-active-trackers", null).then((activeTrackers) => {
         activeTrackers.forEach(async (deviceID: string) => {
-            if (deviceID.startsWith("HaritoraX")) return;
-
             const trackerSettings: TrackerSettings = await window.ipc.invoke(
                 "get-tracker-settings",
-                deviceID
+                { trackerName: deviceID }
             );
             let sensorMode: number =
                 trackerSettings.sensorMode !== -1
@@ -517,7 +518,6 @@ async function addDeviceToList(deviceID: string) {
     // if device id starts with HaritoraX or leftKnee or rightKnee, disable the override settings button
     // currently can't change settings for BT devices and knee trackers are having issues with them changing the wrong trackers
     if (
-        deviceID.startsWith("HaritoraX") ||
         deviceID.startsWith("leftKnee") ||
         deviceID.startsWith("rightKnee")
     ) {
@@ -541,10 +541,9 @@ async function addDeviceToList(deviceID: string) {
         newDevice.querySelector("#device-id").textContent = "HaritoraX-XXXXXX";
     }
 
-    deviceList.appendChild(newDevice);
+    await window.ipc.send("get-tracker-battery", deviceID);
 
-    // Trigger battery event
-    window.ipc.send("get-battery", deviceID);
+    deviceList.appendChild(newDevice);
 }
 
 /*
@@ -564,14 +563,12 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     setStatus("connected");
 
-    if (deviceID.startsWith("HaritoraX")) return;
-
     const settings = await window.ipc.invoke("get-settings", null);
     const exists = settings.trackers?.[deviceID] !== undefined;
 
     const trackerSettings = exists
         ? settings.trackers[deviceID]
-        : await window.ipc.invoke("get-tracker-settings", deviceID);
+        : await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
     setTrackerSettings(deviceID, trackerSettings);
 });
 
@@ -908,10 +905,8 @@ function addEventListeners() {
             window.log(`Active trackers: ${activeTrackers}`);
 
             activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
-
                 const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
+                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
                 const sensorMode: number =
                     trackerSettings.sensorMode !== -1
                         ? trackerSettings.sensorMode
@@ -966,9 +961,8 @@ function addEventListeners() {
             window.log(`Active trackers: ${activeTrackers}`);
 
             activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
                 const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
+                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
                 const sensorMode: number =
                     trackerSettings.sensorMode !== -1
                         ? trackerSettings.sensorMode
@@ -1023,9 +1017,9 @@ function addEventListeners() {
             window.log(`Active trackers: ${activeTrackers}`);
 
             activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
+                
                 const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
+                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
                 const sensorMode: number =
                     trackerSettings.sensorMode !== -1
                         ? trackerSettings.sensorMode
@@ -1223,9 +1217,8 @@ function addEventListeners() {
             );
 
             activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
                 const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
+                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
                 const sensorMode: number =
                     trackerSettings.sensorMode !== -1
                         ? trackerSettings.sensorMode
@@ -1269,9 +1262,8 @@ function addEventListeners() {
             );
 
             activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
                 const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
+                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
                 const fpsMode: number =
                     trackerSettings.fpsMode !== -1
                         ? trackerSettings.fpsMode

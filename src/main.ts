@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
-import { HaritoraXWireless } from "haritorax-interpreter";
+import { HaritoraXWireless } from "../../haritorax-interpreter";
 import { SerialPort } from "serialport";
 import Quaternion from "quaternion";
 import i18next from "i18next";
@@ -111,7 +111,6 @@ const createWindow = () => {
  */
 
 ipcMain.on("set-i18next", (_event, object: any) => {
-    log("AAAAAAAAA setting to: " + JSON.stringify(object));
     i18n = object;
 });
 
@@ -124,7 +123,11 @@ ipcMain.on("error", (_event, arg: string) => {
 });
 
 ipcMain.on("start-connection", async (_event, arg) => {
-    const { types, ports, isActive }: { types: string[]; ports?: string[], isActive: boolean } = arg;
+    const {
+        types,
+        ports,
+        isActive,
+    }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (!device) {
@@ -138,7 +141,9 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     if (isActive) {
         error("Tried to start connection while already active");
-        error("..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!")
+        error(
+            "..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!"
+        );
         return false;
     }
 
@@ -147,7 +152,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
     if (types.includes("bluetooth")) {
         connectBluetooth();
     }
-    
+
     if (types.includes("gx") && ports) {
         connectGX(ports);
     }
@@ -179,10 +184,6 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
     connectedDevices = [];
 });
 
-ipcMain.on("get-battery", (_event, arg: string) => {
-    device.getBatteryInfo(arg);
-});
-
 ipcMain.handle("get-com-ports", async () => {
     const ports = await SerialPort.list();
     return ports.map((port) => port.path).sort();
@@ -193,8 +194,19 @@ ipcMain.handle("get-languages", async () => {
     return Object.keys(resources);
 });
 
-ipcMain.handle("get-tracker-settings", (_event, arg: string) => {
-    return device.getTrackerSettings(arg);
+ipcMain.handle("get-tracker-battery", async (_event, arg: string) => {
+    let batteryInfo = await device.getBatteryInfo(arg);
+    return batteryInfo;
+});
+
+ipcMain.handle("get-tracker-settings", async (_event, arg) => {
+    const {
+        trackerName,
+        forceBLE,
+    }: { trackerName: string; forceBLE: boolean } = arg;
+    let settings = await device.getTrackerSettings(trackerName, forceBLE);
+    log("Got settings: " + JSON.stringify(settings));
+    return settings;
 });
 
 ipcMain.handle("get-active-trackers", () => {
@@ -249,7 +261,7 @@ ipcMain.on("set-tracker-settings", (_event, arg) => {
         );
         log(
             `Old tracker settings: ${JSON.stringify(
-                device.getTrackerSettings(deviceID)
+                device.getTrackerSettings(deviceID, true)
             )}`
         );
 
@@ -263,7 +275,7 @@ ipcMain.on("set-tracker-settings", (_event, arg) => {
 
         log(
             `New tracker settings: ${JSON.stringify(
-                device.getTrackerSettings(deviceID)
+                device.getTrackerSettings(deviceID, true)
             )}`
         );
     });
@@ -340,6 +352,7 @@ async function connectBluetooth() {
     if (!connected) {
         error("Error connecting via bluetooth");
         mainWindow.webContents.send("set-status", "connection failed");
+        return;
     }
 }
 
