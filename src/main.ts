@@ -1,8 +1,9 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import { HaritoraXWireless } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
-import * as dgram from "dgram";
 import Quaternion from "quaternion";
+import i18next from "i18next";
+import * as dgram from "dgram";
 import * as fs from "fs";
 import * as path from "path";
 const _ = require("lodash");
@@ -32,6 +33,8 @@ let lowestBatteryData = { percentage: 100, voltage: 0 };
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
+
+let i18n: typeof i18next;
 
 /*
  * Translations (i18next)
@@ -107,6 +110,11 @@ const createWindow = () => {
  * Renderer handlers
  */
 
+ipcMain.on("set-i18next", (_event, object: any) => {
+    log("AAAAAAAAA setting to: " + JSON.stringify(object));
+    i18n = object;
+});
+
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
 });
@@ -115,8 +123,8 @@ ipcMain.on("error", (_event, arg: string) => {
     error(arg, "renderer");
 });
 
-ipcMain.on("start-connection", (_event, arg) => {
-    const { type, ports }: { type: string; ports: string[] } = arg;
+ipcMain.on("start-connection", async (_event, arg) => {
+    const { types, ports, isActive }: { types: string[]; ports?: string[], isActive: boolean } = arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (!device) {
@@ -128,21 +136,19 @@ ipcMain.on("start-connection", (_event, arg) => {
         startDeviceListeners();
     }
 
-    if (
-        device.getConnectionModeActive("bluetooth") ||
-        device.getConnectionModeActive("gx")
-    ) {
-        log("Tried to start connection while already active");
-        dialog.showErrorBox(
-            window.translate("dialogs.connectionActive.title"),
-            window.translate("dialogs.connectionActive.message")
-        );
+    if (isActive) {
+        error("Tried to start connection while already active");
+        error("..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!")
         return false;
     }
 
-    if (type.includes("bluetooth")) {
+    mainWindow.webContents.send("set-status", "searching");
+
+    if (types.includes("bluetooth")) {
         connectBluetooth();
-    } else if (type.includes("gx") && ports) {
+    }
+    
+    if (types.includes("gx") && ports) {
         connectGX(ports);
     }
 
@@ -288,15 +294,19 @@ ipcMain.on("set-debug-tracker-connections", (_event, arg) => {
     log(`Debug tracker connections set to: ${arg}`);
 });
 
-ipcMain.on("open-logs-folder", () => {
+ipcMain.on("open-logs-folder", async () => {
     const logDir = path.resolve(mainPath, "logs");
     if (fs.existsSync(logDir)) {
         shell.openPath(logDir);
     } else {
         error("Logs directory does not exist");
         dialog.showErrorBox(
-            window.translate("dialogs.noLogsFolder.title"),
-            window.translate("dialogs.noLogsFolder.message")
+            await mainWindow.webContents.executeJavaScript(
+                'window.i18n.translate("dialogs.noLogsFolder.title")'
+            ),
+            await mainWindow.webContents.executeJavaScript(
+                'window.i18n.translate("dialogs.noLogsFolder.message")'
+            )
         );
     }
 });

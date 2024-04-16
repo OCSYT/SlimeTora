@@ -20,13 +20,17 @@ window.ipc.on("trackerName", (_event, arg) => {
         settings.then((settings) => {
             if (settings.global?.censorSerialNumbers) {
                 if (deviceID.startsWith("HaritoraX")) {
-                    trackerNameElement.textContent = trackerNameElement.textContent.replace(
-                        "{trackerName}",
-                        "HaritoraX-XXXXXX");;
+                    trackerNameElement.textContent =
+                        trackerNameElement.textContent.replace(
+                            "{trackerName}",
+                            "HaritoraX-XXXXXX"
+                        );
                 } else if (deviceID.startsWith("HaritoraXW")) {
-                    trackerNameElement.textContent = trackerNameElement.textContent.replace(
-                        "{trackerName}",
-                        "HaritoraXW-XXXXXX");
+                    trackerNameElement.textContent =
+                        trackerNameElement.textContent.replace(
+                            "{trackerName}",
+                            "HaritoraXW-XXXXXX"
+                        );
                 }
             }
         });

@@ -234,21 +234,22 @@ async function startConnection() {
     }
 
     if (bluetoothEnabled && gxEnabled) {
-        window.ipc.send("start-connection", { type: "bluetooth" });
         window.ipc.send("start-connection", {
-            type: "gx",
+            types: ["bluetooth", "gx"],
             ports: selectedComPorts,
+            isActive,
         });
         window.log(
             `Starting Bluetooth and GX connection with ports: ${selectedComPorts}`
         );
     } else if (bluetoothEnabled) {
-        window.ipc.send("start-connection", { type: "bluetooth" });
+        window.ipc.send("start-connection", { types: ["bluetooth"], isActive });
         window.log("Starting Bluetooth connection");
     } else if (gxEnabled) {
         window.ipc.send("start-connection", {
-            type: "gx",
+            types: ["gx"],
             ports: selectedComPorts,
+            isActive
         });
         window.log(`Starting GX connection with ports: ${selectedComPorts}`);
     } else {
@@ -261,17 +262,24 @@ async function startConnection() {
         return false;
     }
 
+    // Disable start connection button and enable stop connection button
+    document.getElementById("start-connection-button").setAttribute("disabled", "true");
+    document.getElementById("stop-connection-button").removeAttribute("disabled");
+
     isActive = true;
-    setStatus(window.translate("main.status.searching"));
 }
 
 function stopConnection() {
     if (!isActive || (!bluetoothEnabled && !gxEnabled)) {
-        window.log("No connection to stop");
         window.error("No connection to stop");
+        window.error("..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!")
         return;
     }
     window.log("Stopping connection(s)...");
+
+    // Enable start connection button and disable stop connection button
+    document.getElementById("start-connection-button").removeAttribute("disabled");
+    document.getElementById("stop-connection-button").setAttribute("disabled", "true");
 
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
     if (gxEnabled) window.ipc.send("stop-connection", "gx");
@@ -524,10 +532,12 @@ async function addDeviceToList(deviceID: string) {
 
     // Censor serial if BT tracker and censorSerialNumbers is enabled
     if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
-        if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraXW-XXXXXX";
+        if (deviceName === deviceID)
+            deviceNameElement.textContent = "HaritoraXW-XXXXXX";
         newDevice.querySelector("#device-id").textContent = "HaritoraXW-XXXXXX";
     } else if (deviceID.startsWith("HaritoraX") && censorSerialNumbers) {
-        if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraX-XXXXXX";
+        if (deviceName === deviceID)
+            deviceNameElement.textContent = "HaritoraX-XXXXXX";
         newDevice.querySelector("#device-id").textContent = "HaritoraX-XXXXXX";
     }
 
@@ -666,9 +676,7 @@ window.ipc.on("device-battery", (_event, arg) => {
     if (batteryText === null) return;
     batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
     window.log(
-        `Battery for ${trackerName}: ${batteryRemaining}% (${
-            batteryVoltage
-        }V)`
+        `Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`
     );
 });
 
@@ -699,14 +707,20 @@ function addEventListeners() {
             });
 
             if (censorSerialNumbers) {
-                const devices = document.getElementById("device-list").querySelectorAll(".card");
+                const devices = document
+                    .getElementById("device-list")
+                    .querySelectorAll(".card");
                 devices.forEach((device) => {
-                    const deviceNameElement = device.querySelector("#device-name");
+                    const deviceNameElement =
+                        device.querySelector("#device-name");
                     const deviceIDElement = device.querySelector("#device-id");
                     const deviceName = deviceNameElement.textContent;
                     const deviceID = deviceIDElement.textContent;
 
-                    if (deviceName.includes("HaritoraX") && deviceName === device.id) {
+                    if (
+                        deviceName.includes("HaritoraX") &&
+                        deviceName === device.id
+                    ) {
                         deviceNameElement.textContent = "HaritoraX-XXXXXX";
                     }
 
@@ -714,7 +728,10 @@ function addEventListeners() {
                         deviceIDElement.textContent = "HaritoraX-XXXXXX";
                     }
 
-                    if (deviceName.includes("HaritoraXW") && deviceName === device.id) {
+                    if (
+                        deviceName.includes("HaritoraXW") &&
+                        deviceName === device.id
+                    ) {
                         deviceNameElement.textContent = "HaritoraXW-XXXXXX";
                     }
 
@@ -723,11 +740,18 @@ function addEventListeners() {
                     }
                 });
             } else {
-                const devices = document.getElementById("device-list").querySelectorAll(".card");
+                const devices = document
+                    .getElementById("device-list")
+                    .querySelectorAll(".card");
                 devices.forEach(async (device) => {
-                    const settings = await window.ipc.invoke("get-settings", null); 
-                    const originalDeviceName = settings.trackers?.[device.id]?.name || device.id;
-                    device.querySelector("#device-name").textContent = originalDeviceName;
+                    const settings = await window.ipc.invoke(
+                        "get-settings",
+                        null
+                    );
+                    const originalDeviceName =
+                        settings.trackers?.[device.id]?.name || device.id;
+                    device.querySelector("#device-name").textContent =
+                        originalDeviceName;
                     device.querySelector("#device-id").textContent = device.id;
                 });
             }

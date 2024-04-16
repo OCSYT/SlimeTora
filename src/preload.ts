@@ -2,9 +2,9 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import { contextBridge, ipcRenderer } from "electron";
-import i18next from 'i18next';
+import i18next from "i18next";
 // @ts-ignore
-import locI18next from 'loc-i18next';
+import locI18next from "loc-i18next";
 
 let localize: any = null;
 
@@ -35,18 +35,20 @@ contextBridge.exposeInMainWorld("error", (message: string) => {
 
 contextBridge.exposeInMainWorld("localize", (resources?: any) => {
     if (!localize) {
-        i18next.init({
-            lng: 'en',
-            resources,
-        }).then(() => {
-            localize = locI18next.init(i18next);
-            localize('[data-i18n]');
-            
-            ipcRenderer.send("log", "Attempting to localize");
-        });
+        i18next
+            .init({
+                lng: "en",
+                resources,
+            })
+            .then(() => {
+                localize = locI18next.init(i18next);
+                localize("[data-i18n]");
+
+                ipcRenderer.send("log", "Attempting to localize");
+            });
     } else {
         ipcRenderer.send("log", "Attempting to localize again");
-        localize('[data-i18n]');
+        localize("[data-i18n]");
     }
 });
 
@@ -54,7 +56,7 @@ contextBridge.exposeInMainWorld("changeLanguage", (lng: string) => {
     i18next.changeLanguage(lng).then(() => {
         if (localize) {
             ipcRenderer.send("log", `Attempting to change language to ${lng}`);
-            localize('[data-i18n]');
+            localize("[data-i18n]");
         }
     });
 });
@@ -63,13 +65,17 @@ contextBridge.exposeInMainWorld("translate", (key: string) => {
     return i18next.t(key);
 });
 
+contextBridge.exposeInMainWorld("i18n", {
+    translate: (key: string) => i18next.t(key),
+});
+
 declare global {
     interface Window {
         startConnection: () => void;
         stopConnection: () => void;
         openLogsFolder: () => void;
         openTrackerSettings: (deviceID: string) => void;
-    
+
         ipc: {
             invoke: (channel: string, args: any) => Promise<any>;
             send: (channel: string, args: any) => void;
@@ -86,25 +92,24 @@ declare global {
         changeLanguage: (lng: string) => void;
         translate: (key: string) => string;
     }
-    
+
     interface Rotation {
         x: number;
         y: number;
         z: number;
         w: number;
     }
-    
+
     interface Gravity {
         x: number;
         y: number;
         z: number;
     }
-    
+
     interface TrackerSettings {
         sensorMode: number;
         fpsMode: number;
         sensorAutoCorrection: string[];
         ankleMotionDetection: boolean;
     }
-    
 }

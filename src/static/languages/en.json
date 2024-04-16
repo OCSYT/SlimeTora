@@ -116,10 +116,6 @@
             "title": "COM ports missing",
             "message": "Some COM ports set in the config were not found, please make sure your dongle(s) are connected."
         },
-        "connectionActive": {
-            "title": "Connection already active",
-            "message": "Please stop the current connection before starting a new one."
-        },
         "noLogsFolder": {
             "title": "No logs!",
             "message": "You should probably enable debug logging first in settings."

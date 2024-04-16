@@ -25,6 +25,7 @@
                 <div class="buttons is-centered">
                     <button
                         class="button is-primary"
+                        id="start-connection-button"
                         onclick="startConnection()"
                         data-i18n="main.startConnection"
                     >
@@ -32,8 +33,10 @@
                     </button>
                     <button
                         class="button is-danger"
+                        id="stop-connection-button"
                         onclick="stopConnection()"
                         data-i18n="main.stopConnection"
+                        disabled="true"
                     >
                         Stop connection
                     </button>
