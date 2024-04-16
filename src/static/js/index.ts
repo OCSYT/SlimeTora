@@ -180,31 +180,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // if Bluetooth is the only connection mode enabled, disable every other setting
-    if (bluetoothEnabled && !gxEnabled) {
-        document
-            .getElementById("accelerometer-switch")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("gyroscope-switch")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("magnetometer-switch")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("fps-mode-select")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("sensor-mode-select")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("com-ports")
-            .querySelectorAll("input")
-            .forEach((port) => {
-                port.setAttribute("disabled", "true");
-            });
-    }
-
     selectedComPorts.push(...selectedPorts);
 
     window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
@@ -515,8 +490,8 @@ async function addDeviceToList(deviceID: string) {
     editButton.addEventListener("click", startEditing);
     deviceNameElement.addEventListener("click", startEditing);
 
-    // if device id starts with HaritoraX or leftKnee or rightKnee, disable the override settings button
-    // currently can't change settings for BT devices and knee trackers are having issues with them changing the wrong trackers
+    // if device id is leftKnee or rightKnee, disable the override settings button
+    // currently can't change settings for knee trackers as they are having issues with them changing the wrong trackers
     if (
         deviceID.startsWith("leftKnee") ||
         deviceID.startsWith("rightKnee")
@@ -766,56 +741,6 @@ function addEventListeners() {
                     },
                 },
             });
-
-            // if Bluetooth is the only connection mode enabled, disable every other setting
-            if (bluetoothEnabled && !gxEnabled) {
-                document
-                    .getElementById("accelerometer-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("gyroscope-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("magnetometer-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("fps-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("sensor-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("com-ports")
-                    .querySelectorAll("input")
-                    .forEach((port) => {
-                        port.setAttribute("disabled", "true");
-                    });
-            } else {
-                document
-                    .getElementById("accelerometer-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("gyroscope-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("magnetometer-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("fps-mode-select")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("sensor-mode-select")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("save-settings-button")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("com-ports")
-                    .querySelectorAll("input")
-                    .forEach((port) => {
-                        port.removeAttribute("disabled");
-                    });
-            }
         });
 
     document
@@ -831,58 +756,6 @@ function addEventListeners() {
                 },
             });
 
-            // if Bluetooth is the only connection mode enabled, disable the every other setting
-            if (bluetoothEnabled && !gxEnabled) {
-                document
-                    .getElementById("accelerometer-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("gyroscope-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("magnetometer-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("fps-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("sensor-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("save-settings-button")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("com-ports")
-                    .querySelectorAll("input")
-                    .forEach((port) => {
-                        port.setAttribute("disabled", "true");
-                    });
-            } else {
-                document
-                    .getElementById("accelerometer-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("gyroscope-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("magnetometer-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("fps-mode-select")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("sensor-mode-select")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("save-settings-button")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("com-ports")
-                    .querySelectorAll("input")
-                    .forEach((port) => {
-                        port.removeAttribute("disabled");
-                    });
-            }
         });
 
     document
