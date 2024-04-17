@@ -227,7 +227,7 @@ async function startConnection() {
         window.ipc.send("start-connection", {
             types: ["gx"],
             ports: selectedComPorts,
-            isActive
+            isActive,
         });
         window.log(`Starting GX connection with ports: ${selectedComPorts}`);
     } else {
@@ -241,8 +241,12 @@ async function startConnection() {
     }
 
     // Disable start connection button and enable stop connection button
-    document.getElementById("start-connection-button").setAttribute("disabled", "true");
-    document.getElementById("stop-connection-button").removeAttribute("disabled");
+    document
+        .getElementById("start-connection-button")
+        .setAttribute("disabled", "true");
+    document
+        .getElementById("stop-connection-button")
+        .removeAttribute("disabled");
 
     isActive = true;
 }
@@ -250,14 +254,20 @@ async function startConnection() {
 function stopConnection() {
     if (!isActive || (!bluetoothEnabled && !gxEnabled)) {
         window.error("No connection to stop");
-        window.error("..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!")
+        window.error(
+            "..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!"
+        );
         return;
     }
     window.log("Stopping connection(s)...");
 
     // Enable start connection button and disable stop connection button
-    document.getElementById("start-connection-button").removeAttribute("disabled");
-    document.getElementById("stop-connection-button").setAttribute("disabled", "true");
+    document
+        .getElementById("start-connection-button")
+        .removeAttribute("disabled");
+    document
+        .getElementById("stop-connection-button")
+        .setAttribute("disabled", "true");
 
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
     if (gxEnabled) window.ipc.send("stop-connection", "gx");
@@ -292,6 +302,7 @@ function saveSettings() {
 
     window.ipc.send("save-setting", {
         global: {
+            censorSerialNumbers: censorSerialNumbers,
             connectionMode: {
                 bluetoothEnabled: bluetoothEnabled,
                 gxEnabled: gxEnabled,
@@ -313,79 +324,16 @@ function saveSettings() {
         },
     });
 
-    window.ipc.invoke("get-active-trackers", null).then((activeTrackers) => {
-        activeTrackers.forEach(async (deviceID: string) => {
-            const trackerSettings: TrackerSettings = await window.ipc.invoke(
-                "get-tracker-settings",
-                { trackerName: deviceID }
-            );
-            let sensorMode: number =
-                trackerSettings.sensorMode !== -1
-                    ? trackerSettings.sensorMode
-                    : 2;
-            let fpsMode: number =
-                trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;
-            let sensorAutoCorrection: string[] =
-                trackerSettings.sensorAutoCorrection || [];
+    let sensorAutoCorrection: string[] = []
+    if (accelerometerEnabled) sensorAutoCorrection.push("accel");
+    if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
+    if (magnetometerEnabled) sensorAutoCorrection.push("mag");
 
-            if (accelerometerEnabled) {
-                sensorAutoCorrection.push("accel");
-                window.log("Added accel to sensor auto correction");
-            }
-            if (gyroscopeEnabled) {
-                sensorAutoCorrection.push("gyro");
-                window.log("Added gyro to sensor auto correction");
-            }
-            if (magnetometerEnabled) {
-                sensorAutoCorrection.push("mag");
-                window.log("Added mag to sensor auto correction");
-            }
-
-            window.log(
-                `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-            );
-
-            const settings: { [key: string]: any } = await window.ipc.invoke(
-                "get-settings",
-                null
-            );
-
-            // Check if tracker has user-specified settings
-            const exists = settings.trackers?.[deviceID] !== undefined;
-            if (exists) {
-                // use the per-tracker settings instead of the global settings
-                const configTrackerSettings = settings.trackers[deviceID];
-                sensorMode =
-                    configTrackerSettings.sensorMode &&
-                    configTrackerSettings.sensorMode !== -1
-                        ? configTrackerSettings.sensorMode
-                        : 2;
-                fpsMode =
-                    configTrackerSettings.fpsMode &&
-                    configTrackerSettings.fpsMode !== -1
-                        ? configTrackerSettings.fpsMode
-                        : 50;
-                sensorAutoCorrection =
-                    configTrackerSettings.sensorAutoCorrection || [];
-
-                window.ipc.send(
-                    "log",
-                    `Using per-tracker settings for ${deviceID} instead:
-                    sensorMode: ${sensorMode},
-                    fpsMode: ${fpsMode},
-                    sensorAutoCorrection: ${sensorAutoCorrection}
-                    `
-                );
-            }
-
-            window.ipc.send("set-tracker-settings", {
-                deviceID,
-                sensorMode,
-                fpsMode,
-                sensorAutoCorrection,
-            });
-        });
-    });
+    window.ipc.send("set-all-tracker-settings", {
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection
+    })
 
     window.log("Settings saved");
 }
@@ -490,21 +438,6 @@ async function addDeviceToList(deviceID: string) {
     editButton.addEventListener("click", startEditing);
     deviceNameElement.addEventListener("click", startEditing);
 
-    // if device id is leftKnee or rightKnee, disable the override settings button
-    // currently can't change settings for knee trackers as they are having issues with them changing the wrong trackers
-    if (
-        deviceID.startsWith("leftKnee") ||
-        deviceID.startsWith("rightKnee")
-    ) {
-        newDevice
-            .querySelector("#tracker-settings-button")
-            .setAttribute("disabled", "true");
-        window.ipc.send(
-            "log",
-            `Disabled override settings button for ${deviceID} (unsupported)`
-        );
-    }
-
     // Censor serial if BT tracker and censorSerialNumbers is enabled
     if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
         if (deviceName === deviceID)
@@ -543,7 +476,9 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     const trackerSettings = exists
         ? settings.trackers[deviceID]
-        : await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
+        : await window.ipc.invoke("get-tracker-settings", {
+              trackerName: deviceID,
+          });
     setTrackerSettings(deviceID, trackerSettings);
 });
 
@@ -552,8 +487,9 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
         trackerSettings.sensorMode !== -1 ? trackerSettings.sensorMode : 2;
     const fpsMode: number =
         trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;
-    let sensorAutoCorrection: Set<string> =
-        new Set(trackerSettings.sensorAutoCorrection);
+    let sensorAutoCorrection: Set<string> = new Set(
+        trackerSettings.sensorAutoCorrection
+    );
 
     if (accelerometerEnabled) {
         sensorAutoCorrection.add("accel");
@@ -569,7 +505,9 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
     }
 
     window.log(
-        `Set sensor auto correction for ${deviceID} to: ${Array.from(sensorAutoCorrection).join(',')}`
+        `Set sensor auto correction for ${deviceID} to: ${Array.from(
+            sensorAutoCorrection
+        ).join(",")}`
     );
 
     window.ipc.send("set-tracker-settings", {
@@ -671,7 +609,9 @@ function addEventListeners() {
         .getElementById("censor-serial-switch")
         .addEventListener("change", function () {
             censorSerialNumbers = !censorSerialNumbers;
-            window.log(`Switched censor serial numbers: ${censorSerialNumbers}`);
+            window.log(
+                `Switched censor serial numbers: ${censorSerialNumbers}`
+            );
             window.ipc.send("save-setting", {
                 global: {
                     censorSerialNumbers: censorSerialNumbers,
@@ -755,7 +695,6 @@ function addEventListeners() {
                     },
                 },
             });
-
         });
 
     document
@@ -769,48 +708,6 @@ function addEventListeners() {
                         accelerometerEnabled: accelerometerEnabled,
                     },
                 },
-            });
-
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-            window.log(`Active trackers: ${activeTrackers}`);
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
-                const sensorMode: number =
-                    trackerSettings.sensorMode !== -1
-                        ? trackerSettings.sensorMode
-                        : 2;
-                const fpsMode: number =
-                    trackerSettings.fpsMode !== -1
-                        ? trackerSettings.fpsMode
-                        : 50;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                if (accelerometerEnabled) {
-                    sensorAutoCorrection.push("accel");
-                    window.log("Added accel to sensor auto correction");
-                } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter(
-                        (sensor: string) => sensor !== "accel"
-                    );
-                    window.log("Removed accel from sensor auto correction");
-                }
-
-                window.log(
-                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-                );
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
             });
         });
 
@@ -826,48 +723,6 @@ function addEventListeners() {
                     },
                 },
             });
-
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-            window.log(`Active trackers: ${activeTrackers}`);
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
-                const sensorMode: number =
-                    trackerSettings.sensorMode !== -1
-                        ? trackerSettings.sensorMode
-                        : 2;
-                const fpsMode: number =
-                    trackerSettings.fpsMode !== -1
-                        ? trackerSettings.fpsMode
-                        : 50;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                if (gyroscopeEnabled) {
-                    sensorAutoCorrection.push("gyro");
-                    window.log("Added gyro to sensor auto correction");
-                } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter(
-                        (sensor: string) => sensor !== "gyro"
-                    );
-                    window.log("Removed gyro from sensor auto correction");
-                }
-
-                window.log(
-                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-                );
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
-            });
         });
 
     document
@@ -881,49 +736,6 @@ function addEventListeners() {
                         magnetometerEnabled: magnetometerEnabled,
                     },
                 },
-            });
-
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-            window.log(`Active trackers: ${activeTrackers}`);
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
-                const sensorMode: number =
-                    trackerSettings.sensorMode !== -1
-                        ? trackerSettings.sensorMode
-                        : 2;
-                const fpsMode: number =
-                    trackerSettings.fpsMode !== -1
-                        ? trackerSettings.fpsMode
-                        : 50;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                if (magnetometerEnabled) {
-                    sensorAutoCorrection.push("mag");
-                    window.log(`Added mag to sensor auto correction`);
-                } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter(
-                        (sensor: string) => sensor !== "mag"
-                    );
-                    window.log(`Removed mag from sensor auto correction`);
-                }
-
-                window.log(
-                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-                );
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
             });
         });
 
@@ -1051,7 +863,9 @@ function addEventListeners() {
         .getElementById("debug-tracker-connections-switch")
         .addEventListener("change", function () {
             debugTrackerConnections = !debugTrackerConnections;
-            window.log(`Switched debug tracker connections: ${debugTrackerConnections}`);
+            window.log(
+                `Switched debug tracker connections: ${debugTrackerConnections}`
+            );
             window.ipc.send(
                 "set-debug-tracker-connections",
                 debugTrackerConnections
@@ -1083,31 +897,6 @@ function addEventListeners() {
                     },
                 },
             });
-
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
-                const sensorMode: number =
-                    trackerSettings.sensorMode !== -1
-                        ? trackerSettings.sensorMode
-                        : 2;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                window.log(`Set FPS mode for ${deviceID} to: ${fpsMode}`);
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
-            });
         });
 
     document
@@ -1127,31 +916,6 @@ function addEventListeners() {
                         sensorMode: sensorMode,
                     },
                 },
-            });
-
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", { trackerName: deviceID });
-                const fpsMode: number =
-                    trackerSettings.fpsMode !== -1
-                        ? trackerSettings.fpsMode
-                        : 50;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                window.log(`Set sensor mode for ${deviceID} to: ${sensorMode}`);
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
             });
         });
 }

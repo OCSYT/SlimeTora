@@ -217,68 +217,84 @@ ipcMain.handle("is-slimevr-connected", () => {
     return foundSlimeVR;
 });
 
-class AsyncQueue {
-    private queue: Promise<any>;
-
-    constructor() {
-        this.queue = Promise.resolve();
+ipcMain.on("set-tracker-settings", async (_event, arg) => {
+    const {
+        deviceID,
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection,
+    }: {
+        deviceID: string;
+        sensorMode: number;
+        fpsMode: number;
+        sensorAutoCorrection: string[];
+    } = arg;
+    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
+        error(`Invalid settings received: ${JSON.stringify(arg)}`);
+        return;
     }
 
-    enqueue(fn: () => Promise<any>) {
-        let result = Promise.resolve();
-        this.queue = this.queue.then(() => {
-            result = fn();
-            return result;
-        });
-        return result;
+    const uniqueSensorAutoCorrection = Array.from(
+        new Set(sensorAutoCorrection)
+    );
+
+    log(`Setting tracker settings for ${deviceID} to:`);
+    log(`Sensor mode: ${sensorMode}`);
+    log(`FPS mode: ${fpsMode}`);
+    log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
+    log(
+        `Old tracker settings: ${JSON.stringify(
+            device.getTrackerSettings(deviceID, true)
+        )}`
+    );
+
+    // Save the settings
+    await setTrackerSettings(
+        deviceID,
+        sensorMode,
+        fpsMode,
+        uniqueSensorAutoCorrection
+    );
+
+    log(
+        `New tracker settings: ${JSON.stringify(
+            device.getTrackerSettings(deviceID, true)
+        )}`
+    );
+});
+
+ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
+    const {
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection,
+    }: {
+        sensorMode: number;
+        fpsMode: number;
+        sensorAutoCorrection: string[];
+    } = arg;
+    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
+        error(`Invalid settings received: ${JSON.stringify(arg)}`);
+        return;
     }
-}
 
-const trackerSettingsQueue = new AsyncQueue();
+    const uniqueSensorAutoCorrection = Array.from(
+        new Set(sensorAutoCorrection)
+    );
 
-ipcMain.on("set-tracker-settings", (_event, arg) => {
-    trackerSettingsQueue.enqueue(async () => {
-        const {
-            deviceID,
-            sensorMode,
-            fpsMode,
-            sensorAutoCorrection,
-        }: {
-            deviceID: string;
-            sensorMode: number;
-            fpsMode: number;
-            sensorAutoCorrection: string[];
-        } = arg;
-        if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
-            error(`Invalid settings received: ${JSON.stringify(arg)}`);
-            return;
-        }
+    log(`Setting all tracker settings to:`);
+    log(`Active trackers: ${connectedDevices}`);
+    log(`Sensor mode: ${sensorMode}`);
+    log(`FPS mode: ${fpsMode}`);
+    log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
 
-        const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
-
-        log(
-            `Setting tracker settings for ${deviceID} to: Sensor mode: ${sensorMode}, FPS mode: ${fpsMode}, Sensor auto correction: ${uniqueSensorAutoCorrection}`
-        );
-        log(
-            `Old tracker settings: ${JSON.stringify(
-                device.getTrackerSettings(deviceID, true)
-            )}`
-        );
-
-        // Save the settings
-        await setTrackerSettings(
-            deviceID,
-            sensorMode,
-            fpsMode,
-            uniqueSensorAutoCorrection
-        );
-
-        log(
-            `New tracker settings: ${JSON.stringify(
-                device.getTrackerSettings(deviceID, true)
-            )}`
-        );
-    });
+    // Save the settings
+    await device.setAllTrackerSettings(
+        sensorMode,
+        fpsMode,
+        uniqueSensorAutoCorrection,
+        false
+    );
 });
 
 async function setTrackerSettings(
@@ -287,7 +303,9 @@ async function setTrackerSettings(
     fpsMode: number,
     sensorAutoCorrection: string[]
 ) {
-    const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
+    const uniqueSensorAutoCorrection = Array.from(
+        new Set(sensorAutoCorrection)
+    );
 
     await device.setTrackerSettings(
         deviceID,
