@@ -33,10 +33,11 @@ window.ipc.on("trackerName", (_event, arg) => {
                         );
                 }
             } else {
-                trackerNameElement.textContent = trackerNameElement.textContent.replace(
-                    "{trackerName}",
-                    deviceID
-                );
+                trackerNameElement.textContent =
+                    trackerNameElement.textContent.replace(
+                        "{trackerName}",
+                        deviceID
+                    );
             }
         });
     } else {
@@ -134,13 +135,17 @@ async function loadSettings(deviceID: string) {
                     },
                 },
             });
+
+            settingsUnsavedSettings(true);
         });
 
     document
         .getElementById("gyroscope-switch")
         .addEventListener("change", async function () {
             settingsGyroscopeEnabled = !settingsGyroscopeEnabled;
-            window.log(`Switched gyroscope enabled: ${settingsGyroscopeEnabled}`);
+            window.log(
+                `Switched gyroscope enabled: ${settingsGyroscopeEnabled}`
+            );
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -152,13 +157,17 @@ async function loadSettings(deviceID: string) {
                     },
                 },
             });
+
+            settingsUnsavedSettings(true);
         });
 
     document
         .getElementById("magnetometer-switch")
         .addEventListener("change", async function () {
             settingsMagnetometerEnabled = !settingsMagnetometerEnabled;
-            window.log(`Switched magnetometer enabled: ${settingsMagnetometerEnabled}`);
+            window.log(
+                `Switched magnetometer enabled: ${settingsMagnetometerEnabled}`
+            );
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -170,6 +179,8 @@ async function loadSettings(deviceID: string) {
                     },
                 },
             });
+
+            settingsUnsavedSettings(true);
         });
 
     document
@@ -194,6 +205,8 @@ async function loadSettings(deviceID: string) {
                     },
                 },
             });
+
+            settingsUnsavedSettings(true);
         });
 
     document
@@ -218,10 +231,13 @@ async function loadSettings(deviceID: string) {
                     },
                 },
             });
+
+            settingsUnsavedSettings(true);
         });
 }
 
 async function saveTrackerSettings() {
+    settingsUnsavedSettings(false);
     window.ipc.send("save-setting", {
         trackers: {
             [deviceID]: {
@@ -323,6 +339,20 @@ async function getSettings() {
             ", "
         )}`,
     });
+}
+
+// Set settings button indicator
+function settingsUnsavedSettings(unsaved: boolean) {
+    const saveButton = document.getElementById("save-settings-button");
+    if (unsaved && !saveButton.textContent.includes("(!)")) {
+        saveButton.textContent += " (!)";
+        saveButton.classList.add("is-danger");
+        saveButton.classList.remove("is-info");
+    } else if (!unsaved && saveButton.textContent.includes("(!)")) {
+        saveButton.textContent = saveButton.textContent.replace(" (!)", "");
+        saveButton.classList.add("is-info");
+        saveButton.classList.remove("is-danger");
+    }
 }
 
 async function getSetting(key: string, defaultValue: any) {

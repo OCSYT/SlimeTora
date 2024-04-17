@@ -1,8 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
-import { HaritoraXWireless } from "../../haritorax-interpreter";
+import { HaritoraXWireless } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import Quaternion from "quaternion";
-import i18next from "i18next";
 import * as dgram from "dgram";
 import * as fs from "fs";
 import * as path from "path";
@@ -33,8 +32,6 @@ let lowestBatteryData = { percentage: 100, voltage: 0 };
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
-
-let i18n: typeof i18next;
 
 /*
  * Translations (i18next)
@@ -110,9 +107,6 @@ const createWindow = () => {
  * Renderer handlers
  */
 
-ipcMain.on("set-i18next", (_event, object: any) => {
-    i18n = object;
-});
 
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
@@ -244,7 +238,7 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
     log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
     log(
         `Old tracker settings: ${JSON.stringify(
-            device.getTrackerSettings(deviceID, true)
+            await device.getTrackerSettings(deviceID, true)
         )}`
     );
 
@@ -258,7 +252,7 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
 
     log(
         `New tracker settings: ${JSON.stringify(
-            device.getTrackerSettings(deviceID, true)
+            await device.getTrackerSettings(deviceID, true)
         )}`
     );
 });
@@ -348,7 +342,7 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         title: `${arg} settings`,
         autoHideMenuBar: true,
         width: 800,
-        height: 635,
+        height: 600,
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,
@@ -484,6 +478,10 @@ function startDeviceListeners() {
         mainWindow.webContents.send("disconnect", deviceID);
         connectedDevices = connectedDevices.filter((name) => name !== deviceID);
         log("Connected devices: " + JSON.stringify(connectedDevices));
+    });
+
+    device.on("mag", (trackerName: string, magStatus: string) => {
+        mainWindow.webContents.send("device-mag", { trackerName, magStatus });
     });
 
     device.on(

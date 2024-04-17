@@ -286,6 +286,7 @@ function openLogsFolder() {
 // Save settings
 function saveSettings() {
     window.log("Saving settings...");
+    unsavedSettings(false);
 
     const comPorts: HTMLInputElement[] = Array.from(
         document.getElementById("com-ports").querySelectorAll("input")
@@ -324,7 +325,7 @@ function saveSettings() {
         },
     });
 
-    let sensorAutoCorrection: string[] = []
+    let sensorAutoCorrection: string[] = [];
     if (accelerometerEnabled) sensorAutoCorrection.push("accel");
     if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
     if (magnetometerEnabled) sensorAutoCorrection.push("mag");
@@ -332,10 +333,24 @@ function saveSettings() {
     window.ipc.send("set-all-tracker-settings", {
         sensorMode,
         fpsMode,
-        sensorAutoCorrection
-    })
+        sensorAutoCorrection,
+    });
 
     window.log("Settings saved");
+}
+
+// Set settings button indicator
+function unsavedSettings(unsaved: boolean) {
+    const saveButton = document.getElementById("save-settings-button");
+    if (unsaved && !saveButton.textContent.includes("(!)")) {
+        saveButton.textContent += " (!)";
+        saveButton.classList.add("is-danger");
+        saveButton.classList.remove("is-info");
+    } else if (!unsaved && saveButton.textContent.includes("(!)")) {
+        saveButton.textContent = saveButton.textContent.replace(" (!)", "");
+        saveButton.classList.add("is-info");
+        saveButton.classList.remove("is-danger");
+    }
 }
 
 /*
@@ -359,7 +374,7 @@ async function addDeviceToList(deviceID: string) {
     // Create a new div element
     const newDevice = document.createElement("div");
     newDevice.id = deviceID;
-    newDevice.className = "column";
+    newDevice.className = "column is-6 is-flex-grow-1";
 
     // Check if device has a user-specified name
     const deviceName: string = settings.trackers?.[deviceID]?.name || deviceID;
@@ -368,30 +383,33 @@ async function addDeviceToList(deviceID: string) {
 
     // Fill the div with device data
     newDevice.innerHTML = `
-    <div class="card" id="${deviceID}">
-        <header class="card-header">
-            <p class="card-header-title is-centered">
-                Device:&nbsp;<span id="device-name">${deviceName}</span>
-            </p>
-            <div class="edit-button-container">
-                <button id="edit-button" class="button is-info">Edit</button>
+        <div class="card" id="${deviceID}">
+            <header class="card-header">
+                <div>
+                    <p class="card-header-title is-centered inline-block" data-i18n="trackerInfo.deviceName">
+                        Device:
+                    </p><span class="has-text-white has-text-weight-bold" id="device-name">${deviceName}</span>
+                </div>
+                <div class="edit-button-container">
+                    <button id="edit-button" class="button is-info" data-i18n="trackerInfo.edit">Edit</button>
+                </div>
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    <p class="inline-block" data-i18n="trackerInfo.deviceID">Device ID:</p> <span id="device-id">${deviceID}</span><br>
+                    <p class="inline-block" data-i18n="trackerInfo.rotationData">Rotation Data:</p> <span id="rotation-data">0, 0, 0</span><br>
+                    <p class="inline-block" data-i18n="trackerInfo.accelerationData">Acceleration Data:</p> <span id="acceleration-data">0, 0, 0</span><br>
+                    <p class="inline-block" data-i18n="trackerInfo.battery">Battery:</p> <span id="battery">N/A</span><br>
+                    <p class="inline-block" data-i18n="trackerInfo.magStatus">Mag status:</p> <span id="mag-status"></span><br>
+                </div>
             </div>
-        </header>
-        <div class="card-content">
-            <div class="content">
-                <p>Device ID: <span id="device-id">${deviceID}</span></p>
-                <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
-                <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
-                <p>Battery: <span id="battery">N/A</span></p>
-            </div>
+            <footer class="card-footer">
+                <div class="card-footer-item">
+                    <button id="tracker-settings-button" data-i18n="trackerInfo.settings" onclick="openTrackerSettings('${deviceID}')" class="button is-info" data-i18n="trackerInfo.settings">Override tracker settings</button>
+                </div>
+            </footer>
         </div>
-        <footer class="card-footer">
-            <div class="card-footer-item">
-                <button id="tracker-settings-button" onclick="openTrackerSettings('${deviceID}')" class="button is-info">Override tracker settings</button>
-            </div>
-        </footer>
-    </div>
-    `;
+        `;
 
     const deviceNameElement = newDevice.querySelector("#device-name");
     const editButton = newDevice.querySelector("#edit-button");
@@ -594,6 +612,49 @@ window.ipc.on("set-status", (_event, msg) => {
     setStatus(msg);
 });
 
+window.ipc.on("device-mag", (_event, arg) => {
+    const {
+        trackerName,
+        magStatus,
+    }: { trackerName: string; magStatus: string } = arg;
+    if (!isActive || !trackerName) return;
+    const magStatusElement: HTMLElement = document
+        .getElementById(trackerName)
+        .querySelector("#mag-status");
+    if (magStatusElement === null) return;
+
+    if (
+        magStatus === "green" &&
+        !magStatusElement.classList.contains("mag-status-green")
+    ) {
+        magStatusElement.classList.add("mag-status-green");
+        magStatusElement.classList.remove("mag-status-yellow");
+        magStatusElement.classList.remove("mag-status-red");
+        window.log(`Mag status for ${trackerName}: ${magStatus}`);
+    } else if (
+        magStatus === "yellow" &&
+        !magStatusElement.classList.contains("mag-status-yellow")
+    ) {
+        magStatusElement.classList.add("mag-status-yellow");
+        magStatusElement.classList.remove("mag-status-green");
+        magStatusElement.classList.remove("mag-status-red");
+        window.log(`Mag status for ${trackerName}: ${magStatus}`);
+    } else if (
+        magStatus === "red" &&
+        !magStatusElement.classList.contains("mag-status-red")
+    ) {
+        magStatusElement.classList.add("mag-status-red");
+        magStatusElement.classList.remove("mag-status-green");
+        magStatusElement.classList.remove("mag-status-yellow");
+        window.log(`Mag status for ${trackerName}: ${magStatus}`);
+    } else if (magStatus === "unknown") {
+        magStatusElement.classList.add("mag-status-unknown");
+        magStatusElement.classList.remove("mag-status-red");
+        magStatusElement.classList.remove("mag-status-green");
+        magStatusElement.classList.remove("mag-status-yellow");
+    }
+});
+
 // Set version number
 window.ipc.on("version", (_event, version) => {
     document.getElementById("version").textContent = version;
@@ -681,6 +742,8 @@ function addEventListeners() {
                     },
                 },
             });
+
+            unsavedSettings(true);
         });
 
     document
@@ -695,6 +758,8 @@ function addEventListeners() {
                     },
                 },
             });
+
+            unsavedSettings(true);
         });
 
     document
@@ -709,6 +774,8 @@ function addEventListeners() {
                     },
                 },
             });
+
+            unsavedSettings(true);
         });
 
     document
@@ -723,6 +790,8 @@ function addEventListeners() {
                     },
                 },
             });
+
+            unsavedSettings(true);
         });
 
     document
@@ -737,6 +806,8 @@ function addEventListeners() {
                     },
                 },
             });
+
+            unsavedSettings(true);
         });
 
     document.getElementById("com-ports").addEventListener("change", () => {
@@ -897,6 +968,8 @@ function addEventListeners() {
                     },
                 },
             });
+
+            unsavedSettings(true);
         });
 
     document
@@ -917,6 +990,8 @@ function addEventListeners() {
                     },
                 },
             });
+
+            unsavedSettings(true);
         });
 }
 

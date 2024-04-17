@@ -18,6 +18,13 @@
                 >
                     {trackerName} settings
                 </h1>
+                <h3
+                    class="subtitle has-text-centered"
+                    data-i18n="trackerInfo.trackerSettings.text"
+                >
+                    Override the global tracker settings for this tracker. This
+                    may be buggy and is not recommended for normal use.
+                </h3>
                 <br />
                 <div class="columns is-multiline has-text-centered">
                     <!-- FPS settings -->
@@ -222,6 +229,7 @@
                                 class="button is-info"
                                 onclick="saveTrackerSettings()"
                                 data-i18n="trackerInfo.trackerSettings.debugging.saveSettings"
+                                id="save-settings-button"
                             >
                                 Save settings
                             </button>
