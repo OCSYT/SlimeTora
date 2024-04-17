@@ -671,7 +671,7 @@ function addEventListeners() {
         .getElementById("censor-serial-switch")
         .addEventListener("change", function () {
             censorSerialNumbers = !censorSerialNumbers;
-            window.log(`Censor serial numbers: ${censorSerialNumbers}`);
+            window.log(`Switched censor serial numbers: ${censorSerialNumbers}`);
             window.ipc.send("save-setting", {
                 global: {
                     censorSerialNumbers: censorSerialNumbers,
@@ -818,7 +818,7 @@ function addEventListeners() {
         .getElementById("gyroscope-switch")
         .addEventListener("change", async function () {
             gyroscopeEnabled = !gyroscopeEnabled;
-            window.log(`Gyroscope enabled: ${gyroscopeEnabled}`);
+            window.log(`Switched gyroscope enabled: ${gyroscopeEnabled}`);
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {
@@ -874,7 +874,7 @@ function addEventListeners() {
         .getElementById("magnetometer-switch")
         .addEventListener("change", async function () {
             magnetometerEnabled = !magnetometerEnabled;
-            window.log(`Magnetometer enabled: ${magnetometerEnabled}`);
+            window.log(`Switched magnetometer enabled: ${magnetometerEnabled}`);
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {
@@ -973,7 +973,7 @@ function addEventListeners() {
             const language: string = (
                 document.getElementById("language-select") as HTMLSelectElement
             ).value;
-            window.log(`Selected language: ${language}`);
+            window.log(`Changed selected language: ${language}`);
             window.changeLanguage(language);
             window.ipc.send("save-setting", {
                 global: {
@@ -986,7 +986,7 @@ function addEventListeners() {
         .getElementById("log-to-file-switch")
         .addEventListener("change", function () {
             canLogToFile = !canLogToFile;
-            window.log(`Log to file: ${canLogToFile}`);
+            window.log(`Switched log to file: ${canLogToFile}`);
             window.ipc.send("set-logging", canLogToFile);
             window.ipc.send("save-setting", {
                 global: {
@@ -1001,7 +1001,7 @@ function addEventListeners() {
         .getElementById("skip-slimevr-switch")
         .addEventListener("change", function () {
             skipSlimeVRCheck = !skipSlimeVRCheck;
-            window.log(`Skip SlimeVR check: ${skipSlimeVRCheck}`);
+            window.log(`Switched skip SlimeVR check: ${skipSlimeVRCheck}`);
             window.ipc.send("save-setting", {
                 global: {
                     debug: {
@@ -1015,7 +1015,7 @@ function addEventListeners() {
         .getElementById("bypass-com-limit-switch")
         .addEventListener("change", function () {
             bypassCOMPortLimit = !bypassCOMPortLimit;
-            window.log(`Bypass COM port limit: ${bypassCOMPortLimit}`);
+            window.log(`Switched bypass COM port limit: ${bypassCOMPortLimit}`);
             window.ipc.send("save-setting", {
                 global: {
                     debug: {
@@ -1051,7 +1051,7 @@ function addEventListeners() {
         .getElementById("debug-tracker-connections-switch")
         .addEventListener("change", function () {
             debugTrackerConnections = !debugTrackerConnections;
-            window.log(`Debug tracker connections: ${debugTrackerConnections}`);
+            window.log(`Switched debug tracker connections: ${debugTrackerConnections}`);
             window.ipc.send(
                 "set-debug-tracker-connections",
                 debugTrackerConnections
@@ -1075,7 +1075,7 @@ function addEventListeners() {
                     ) as HTMLSelectElement
                 ).value
             );
-            window.log(`FPS mode: ${fpsMode}`);
+            window.log(`Changed FPS mode: ${fpsMode}`);
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {
@@ -1120,7 +1120,7 @@ function addEventListeners() {
                     ) as HTMLSelectElement
                 ).value
             );
-            window.log(`Sensor mode: ${sensorMode}`);
+            window.log(`Selected sensor mode: ${sensorMode}`);
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {

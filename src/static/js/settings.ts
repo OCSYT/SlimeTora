@@ -167,7 +167,7 @@ async function loadSettings(deviceID: string) {
         .getElementById("gyroscope-switch")
         .addEventListener("change", async function () {
             settingsGyroscopeEnabled = !settingsGyroscopeEnabled;
-            window.log(`Gyroscope enabled: ${settingsGyroscopeEnabled}`);
+            window.log(`Switched gyroscope enabled: ${settingsGyroscopeEnabled}`);
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -212,7 +212,7 @@ async function loadSettings(deviceID: string) {
         .getElementById("magnetometer-switch")
         .addEventListener("change", async function () {
             settingsMagnetometerEnabled = !settingsMagnetometerEnabled;
-            window.log(`Magnetometer enabled: ${settingsMagnetometerEnabled}`);
+            window.log(`Switched magnetometer enabled: ${settingsMagnetometerEnabled}`);
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -263,7 +263,7 @@ async function loadSettings(deviceID: string) {
                     ) as HTMLSelectElement
                 ).value
             );
-            window.log(`FPS mode: ${settingsFPSMode}`);
+            window.log(`Changed FPS mode: ${settingsFPSMode}`);
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -304,7 +304,7 @@ async function loadSettings(deviceID: string) {
                     ) as HTMLSelectElement
                 ).value
             );
-            window.log(`Sensor mode: ${settingsSensorMode}`);
+            window.log(`Changed sensor mode: ${settingsSensorMode}`);
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -410,7 +410,7 @@ async function resetSettings() {
         null
     );
 
-    console.log(`old settings: ${JSON.stringify(settings)}`);
+    console.log(`Old settings: ${JSON.stringify(settings)}`);
 
     settingsFPSMode = settings.global?.trackers?.fpsMode || 50;
     settingsSensorMode = settings.global?.trackers?.sensorMode || 2;
@@ -427,7 +427,7 @@ async function resetSettings() {
     fpsSelect.value = settingsFPSMode.toString();
     sensorModeSelect.value = settingsSensorMode.toString();
 
-    console.log(`new settings: ${JSON.stringify(settings)}`);
+    console.log(`New settings: ${JSON.stringify(settings)}`);
 
     let sensorAutoCorrection: string[] = [];
     if (settingsAccelerometerEnabled) sensorAutoCorrection.push("accel");
