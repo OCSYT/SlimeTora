@@ -32,6 +32,11 @@ window.ipc.on("trackerName", (_event, arg) => {
                             "HaritoraXW-XXXXXX"
                         );
                 }
+            } else {
+                trackerNameElement.textContent = trackerNameElement.textContent.replace(
+                    "{trackerName}",
+                    deviceID
+                );
             }
         });
     } else {

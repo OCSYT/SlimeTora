@@ -254,10 +254,10 @@ ipcMain.on("set-tracker-settings", (_event, arg) => {
             return;
         }
 
+        const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
+
         log(
-            `Setting tracker settings for ${deviceID} to: ${JSON.stringify(
-                arg
-            )}`
+            `Setting tracker settings for ${deviceID} to: Sensor mode: ${sensorMode}, FPS mode: ${fpsMode}, Sensor auto correction: ${uniqueSensorAutoCorrection}`
         );
         log(
             `Old tracker settings: ${JSON.stringify(
@@ -270,7 +270,7 @@ ipcMain.on("set-tracker-settings", (_event, arg) => {
             deviceID,
             sensorMode,
             fpsMode,
-            sensorAutoCorrection
+            uniqueSensorAutoCorrection
         );
 
         log(
@@ -287,11 +287,13 @@ async function setTrackerSettings(
     fpsMode: number,
     sensorAutoCorrection: string[]
 ) {
+    const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
+
     await device.setTrackerSettings(
         deviceID,
         sensorMode,
         fpsMode,
-        sensorAutoCorrection,
+        uniqueSensorAutoCorrection,
         false
     );
 }

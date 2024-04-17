@@ -552,31 +552,31 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
         trackerSettings.sensorMode !== -1 ? trackerSettings.sensorMode : 2;
     const fpsMode: number =
         trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;
-    let sensorAutoCorrection: string[] =
-        trackerSettings.sensorAutoCorrection || [];
+    let sensorAutoCorrection: Set<string> =
+        new Set(trackerSettings.sensorAutoCorrection);
 
     if (accelerometerEnabled) {
-        sensorAutoCorrection.push("accel");
+        sensorAutoCorrection.add("accel");
         window.log("Added accel to sensor auto correction");
     }
     if (gyroscopeEnabled) {
-        sensorAutoCorrection.push("gyro");
+        sensorAutoCorrection.add("gyro");
         window.log("Added gyro to sensor auto correction");
     }
     if (magnetometerEnabled) {
-        sensorAutoCorrection.push("mag");
+        sensorAutoCorrection.add("mag");
         window.log("Added mag to sensor auto correction");
     }
 
     window.log(
-        `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
+        `Set sensor auto correction for ${deviceID} to: ${Array.from(sensorAutoCorrection).join(',')}`
     );
 
     window.ipc.send("set-tracker-settings", {
         deviceID,
         sensorMode,
         fpsMode,
-        sensorAutoCorrection,
+        sensorAutoCorrection: Array.from(sensorAutoCorrection),
     });
 }
 
