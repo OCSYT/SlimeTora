@@ -16,6 +16,7 @@
     },
     "trackerInfo": {
         "title": "Tracker information",
+        "censorSerialNumbers": "Censor serial numbers",
         "deviceName": "Device:",
         "deviceID": "Device ID:",
         "rotationData": "Rotation data:",
@@ -91,7 +92,6 @@
         "other": {
             "title": "Other settings",
             "tooltip": "Some other settings that don't fit in the other categories, including language.",
-            "censorSerialNumbers": "Censor serial numbers",
             "languageButton": "Change language",
             "saveButton": "Save settings"
         }
@@ -102,6 +102,9 @@
         "authors": "Made by:",
         "credits": {
             "title": "Credits"
+        },
+        "translations": {
+            "title": "Translations"
         }
     },
     "debugging": {

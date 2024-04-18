@@ -22444,6 +22444,10 @@ body {
   padding: 2rem;
 }
 
+code {
+  color: white;
+}
+
 br {
   user-select: none;
 }
