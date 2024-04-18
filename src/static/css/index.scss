@@ -89,6 +89,28 @@ br {
         brightness(100%) contrast(102%);
 }
 
+.language-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.language-container .globe-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.language-container .globe-icon img {
+    width: 28px;
+    height: 28px;
+    filter: invert(100%) sepia(2%) saturate(6692%) hue-rotate(194deg)
+        brightness(125%) contrast(97%);
+}
+
+.language-container .globe-icon {
+    margin-right: 12px;
+}
+
 .section {
     background-color: #081e30;
     border-radius: 0.5rem;
