@@ -31,7 +31,7 @@ This fork rewrites improves on the stability and performance of the app by rewri
 + Set tracker settings per-tracker (partial support)
   + Knee trackers currently have issues, and Bluetooth is not yet supported. Both are disabled automatically.
 + Localization support
-  + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with the two-letter language identifier (ending with .json, e.g. `jp.json`)!
+  + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 + Linux support
   + This was done as SlimeVR is supported on Linux, and the first time HaritoraX trackers work on Linux!
   + ..however this is not tested at all. Please let me know if there are issues.
@@ -42,9 +42,12 @@ This fork rewrites improves on the stability and performance of the app by rewri
 + ..and many more improvements coming soon!
 
 # Known issues
-- Tracker auto correction and magnetometer (sensor mode) settings do not work for BT
-  - Requires an update to [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter). Help appreciated!
+- (?) Bluetooth and GX tracker settings may be unreliable
+  - This seems to be really random, unsure if there's something wrong with my testing, device, or if there's a random race condition.
+  - Either way, would use `HaritoraConfigurator` instead if you do not need per-tracker settings.
 - Bluetooth tracker's battery report stays on N/A until reported by trackers (instead of instantly grabbing them)
+- Battery data sent to SlimeVR server isn't per-tracker
+  - Cannot really fix this, instead the program sends the lowest battery data of all the trackers to the server
 
 # How to use
 - Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)
