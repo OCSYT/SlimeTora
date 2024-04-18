@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import { HaritoraXWireless } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import Quaternion from "quaternion";
-import i18next from "i18next";
 import * as dgram from "dgram";
 import * as fs from "fs";
 import * as path from "path";
@@ -33,8 +32,6 @@ let lowestBatteryData = { percentage: 100, voltage: 0 };
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
-
-let i18n: typeof i18next;
 
 /*
  * Translations (i18next)
@@ -110,10 +107,6 @@ const createWindow = () => {
  * Renderer handlers
  */
 
-ipcMain.on("set-i18next", (_event, object: any) => {
-    log("AAAAAAAAA setting to: " + JSON.stringify(object));
-    i18n = object;
-});
 
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
@@ -124,7 +117,11 @@ ipcMain.on("error", (_event, arg: string) => {
 });
 
 ipcMain.on("start-connection", async (_event, arg) => {
-    const { types, ports, isActive }: { types: string[]; ports?: string[], isActive: boolean } = arg;
+    const {
+        types,
+        ports,
+        isActive,
+    }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (!device) {
@@ -138,7 +135,9 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     if (isActive) {
         error("Tried to start connection while already active");
-        error("..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!")
+        error(
+            "..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!"
+        );
         return false;
     }
 
@@ -147,7 +146,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
     if (types.includes("bluetooth")) {
         connectBluetooth();
     }
-    
+
     if (types.includes("gx") && ports) {
         connectGX(ports);
     }
@@ -179,10 +178,6 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
     connectedDevices = [];
 });
 
-ipcMain.on("get-battery", (_event, arg: string) => {
-    device.getBatteryInfo(arg);
-});
-
 ipcMain.handle("get-com-ports", async () => {
     const ports = await SerialPort.list();
     return ports.map((port) => port.path).sort();
@@ -193,8 +188,19 @@ ipcMain.handle("get-languages", async () => {
     return Object.keys(resources);
 });
 
-ipcMain.handle("get-tracker-settings", (_event, arg: string) => {
-    return device.getTrackerSettings(arg);
+ipcMain.handle("get-tracker-battery", async (_event, arg: string) => {
+    let batteryInfo = await device.getBatteryInfo(arg);
+    return batteryInfo;
+});
+
+ipcMain.handle("get-tracker-settings", async (_event, arg) => {
+    const {
+        trackerName,
+        forceBLE,
+    }: { trackerName: string; forceBLE: boolean } = arg;
+    let settings = await device.getTrackerSettings(trackerName, forceBLE);
+    log("Got settings: " + JSON.stringify(settings));
+    return settings;
 });
 
 ipcMain.handle("get-active-trackers", () => {
@@ -205,68 +211,84 @@ ipcMain.handle("is-slimevr-connected", () => {
     return foundSlimeVR;
 });
 
-class AsyncQueue {
-    private queue: Promise<any>;
-
-    constructor() {
-        this.queue = Promise.resolve();
+ipcMain.on("set-tracker-settings", async (_event, arg) => {
+    const {
+        deviceID,
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection,
+    }: {
+        deviceID: string;
+        sensorMode: number;
+        fpsMode: number;
+        sensorAutoCorrection: string[];
+    } = arg;
+    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
+        error(`Invalid settings received: ${JSON.stringify(arg)}`);
+        return;
     }
 
-    enqueue(fn: () => Promise<any>) {
-        let result = Promise.resolve();
-        this.queue = this.queue.then(() => {
-            result = fn();
-            return result;
-        });
-        return result;
+    const uniqueSensorAutoCorrection = Array.from(
+        new Set(sensorAutoCorrection)
+    );
+
+    log(`Setting tracker settings for ${deviceID} to:`);
+    log(`Sensor mode: ${sensorMode}`);
+    log(`FPS mode: ${fpsMode}`);
+    log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
+    log(
+        `Old tracker settings: ${JSON.stringify(
+            await device.getTrackerSettings(deviceID, true)
+        )}`
+    );
+
+    // Save the settings
+    await setTrackerSettings(
+        deviceID,
+        sensorMode,
+        fpsMode,
+        uniqueSensorAutoCorrection
+    );
+
+    log(
+        `New tracker settings: ${JSON.stringify(
+            await device.getTrackerSettings(deviceID, true)
+        )}`
+    );
+});
+
+ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
+    const {
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection,
+    }: {
+        sensorMode: number;
+        fpsMode: number;
+        sensorAutoCorrection: string[];
+    } = arg;
+    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
+        error(`Invalid settings received: ${JSON.stringify(arg)}`);
+        return;
     }
-}
 
-const trackerSettingsQueue = new AsyncQueue();
+    const uniqueSensorAutoCorrection = Array.from(
+        new Set(sensorAutoCorrection)
+    );
 
-ipcMain.on("set-tracker-settings", (_event, arg) => {
-    trackerSettingsQueue.enqueue(async () => {
-        const {
-            deviceID,
-            sensorMode,
-            fpsMode,
-            sensorAutoCorrection,
-        }: {
-            deviceID: string;
-            sensorMode: number;
-            fpsMode: number;
-            sensorAutoCorrection: string[];
-        } = arg;
-        if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
-            error(`Invalid settings received: ${JSON.stringify(arg)}`);
-            return;
-        }
+    log(`Setting all tracker settings to:`);
+    log(`Active trackers: ${connectedDevices}`);
+    log(`Sensor mode: ${sensorMode}`);
+    log(`FPS mode: ${fpsMode}`);
+    log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
 
-        log(
-            `Setting tracker settings for ${deviceID} to: ${JSON.stringify(
-                arg
-            )}`
-        );
-        log(
-            `Old tracker settings: ${JSON.stringify(
-                device.getTrackerSettings(deviceID)
-            )}`
-        );
-
-        // Save the settings
-        await setTrackerSettings(
-            deviceID,
-            sensorMode,
-            fpsMode,
-            sensorAutoCorrection
-        );
-
-        log(
-            `New tracker settings: ${JSON.stringify(
-                device.getTrackerSettings(deviceID)
-            )}`
-        );
-    });
+    // Save the settings
+    await device.setAllTrackerSettings(
+        sensorMode,
+        fpsMode,
+        uniqueSensorAutoCorrection,
+        false
+    );
 });
 
 async function setTrackerSettings(
@@ -275,11 +297,15 @@ async function setTrackerSettings(
     fpsMode: number,
     sensorAutoCorrection: string[]
 ) {
+    const uniqueSensorAutoCorrection = Array.from(
+        new Set(sensorAutoCorrection)
+    );
+
     await device.setTrackerSettings(
         deviceID,
         sensorMode,
         fpsMode,
-        sensorAutoCorrection,
+        uniqueSensorAutoCorrection,
         false
     );
 }
@@ -316,7 +342,7 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         title: `${arg} settings`,
         autoHideMenuBar: true,
         width: 800,
-        height: 635,
+        height: 600,
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,
@@ -340,6 +366,7 @@ async function connectBluetooth() {
     if (!connected) {
         error("Error connecting via bluetooth");
         mainWindow.webContents.send("set-status", "connection failed");
+        return;
     }
 }
 
@@ -451,6 +478,10 @@ function startDeviceListeners() {
         mainWindow.webContents.send("disconnect", deviceID);
         connectedDevices = connectedDevices.filter((name) => name !== deviceID);
         log("Connected devices: " + JSON.stringify(connectedDevices));
+    });
+
+    device.on("mag", (trackerName: string, magStatus: string) => {
+        mainWindow.webContents.send("device-mag", { trackerName, magStatus });
     });
 
     device.on(

@@ -32,6 +32,12 @@ window.ipc.on("trackerName", (_event, arg) => {
                             "HaritoraXW-XXXXXX"
                         );
                 }
+            } else {
+                trackerNameElement.textContent =
+                    trackerNameElement.textContent.replace(
+                        "{trackerName}",
+                        deviceID
+                    );
             }
         });
     } else {
@@ -49,7 +55,7 @@ async function loadSettings(deviceID: string) {
     // Get settings from config file
     const trackerSettings: TrackerSettings = await window.ipc.invoke(
         "get-tracker-settings",
-        deviceID
+        { trackerName: deviceID }
     );
 
     settingsFPSMode =
@@ -130,39 +136,16 @@ async function loadSettings(deviceID: string) {
                 },
             });
 
-            const trackerSettings: TrackerSettings = await window.ipc.invoke(
-                "get-tracker-settings",
-                deviceID
-            );
-
-            let sensorAutoCorrection: string[] =
-                trackerSettings.sensorAutoCorrection || [];
-
-            if (settingsAccelerometerEnabled) {
-                sensorAutoCorrection.push("accel");
-            } else {
-                sensorAutoCorrection = sensorAutoCorrection.filter(
-                    (sensor: string) => sensor !== "accel"
-                );
-            }
-
-            window.log(
-                `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-            );
-
-            window.ipc.send("set-tracker-settings", {
-                deviceID,
-                sensorMode: settingsSensorMode,
-                fpsMode: settingsFPSMode,
-                sensorAutoCorrection,
-            });
+            settingsUnsavedSettings(true);
         });
 
     document
         .getElementById("gyroscope-switch")
         .addEventListener("change", async function () {
             settingsGyroscopeEnabled = !settingsGyroscopeEnabled;
-            window.log(`Gyroscope enabled: ${settingsGyroscopeEnabled}`);
+            window.log(
+                `Switched gyroscope enabled: ${settingsGyroscopeEnabled}`
+            );
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -175,39 +158,16 @@ async function loadSettings(deviceID: string) {
                 },
             });
 
-            const trackerSettings: TrackerSettings = await window.ipc.invoke(
-                "get-tracker-settings",
-                deviceID
-            );
-
-            let sensorAutoCorrection: string[] =
-                trackerSettings.sensorAutoCorrection || [];
-
-            if (settingsGyroscopeEnabled) {
-                sensorAutoCorrection.push("gyro");
-            } else {
-                sensorAutoCorrection = sensorAutoCorrection.filter(
-                    (sensor: string) => sensor !== "gyro"
-                );
-            }
-
-            window.log(
-                `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-            );
-
-            window.ipc.send("set-tracker-settings", {
-                deviceID,
-                sensorMode: settingsSensorMode,
-                fpsMode: settingsFPSMode,
-                sensorAutoCorrection,
-            });
+            settingsUnsavedSettings(true);
         });
 
     document
         .getElementById("magnetometer-switch")
         .addEventListener("change", async function () {
             settingsMagnetometerEnabled = !settingsMagnetometerEnabled;
-            window.log(`Magnetometer enabled: ${settingsMagnetometerEnabled}`);
+            window.log(
+                `Switched magnetometer enabled: ${settingsMagnetometerEnabled}`
+            );
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -220,32 +180,7 @@ async function loadSettings(deviceID: string) {
                 },
             });
 
-            const trackerSettings: TrackerSettings = await window.ipc.invoke(
-                "get-tracker-settings",
-                deviceID
-            );
-
-            let sensorAutoCorrection: string[] =
-                trackerSettings.sensorAutoCorrection || [];
-
-            if (settingsMagnetometerEnabled) {
-                sensorAutoCorrection.push("mag");
-            } else {
-                sensorAutoCorrection = sensorAutoCorrection.filter(
-                    (sensor: string) => sensor !== "mag"
-                );
-            }
-
-            window.log(
-                `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-            );
-
-            window.ipc.send("set-tracker-settings", {
-                deviceID,
-                sensorMode: settingsSensorMode,
-                fpsMode: settingsFPSMode,
-                sensorAutoCorrection,
-            });
+            settingsUnsavedSettings(true);
         });
 
     document
@@ -258,7 +193,7 @@ async function loadSettings(deviceID: string) {
                     ) as HTMLSelectElement
                 ).value
             );
-            window.log(`FPS mode: ${settingsFPSMode}`);
+            window.log(`Changed FPS mode: ${settingsFPSMode}`);
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -271,22 +206,7 @@ async function loadSettings(deviceID: string) {
                 },
             });
 
-            const trackerSettings: TrackerSettings = await window.ipc.invoke(
-                "get-tracker-settings",
-                deviceID
-            );
-            const sensorMode: number = settingsSensorMode;
-            let sensorAutoCorrection: string[] =
-                trackerSettings.sensorAutoCorrection || [];
-
-            window.log(`Set FPS mode for ${deviceID} to: ${settingsFPSMode}`);
-
-            window.ipc.send("set-tracker-settings", {
-                deviceID,
-                sensorMode: settingsSensorMode,
-                fpsMode: settingsFPSMode,
-                sensorAutoCorrection,
-            });
+            settingsUnsavedSettings(true);
         });
 
     document
@@ -299,7 +219,7 @@ async function loadSettings(deviceID: string) {
                     ) as HTMLSelectElement
                 ).value
             );
-            window.log(`Sensor mode: ${settingsSensorMode}`);
+            window.log(`Changed sensor mode: ${settingsSensorMode}`);
             window.ipc.send("save-setting", {
                 trackers: {
                     [deviceID]: {
@@ -312,44 +232,12 @@ async function loadSettings(deviceID: string) {
                 },
             });
 
-            const trackerSettings: TrackerSettings = await window.ipc.invoke(
-                "get-tracker-settings",
-                deviceID
-            );
-            const fpsMode: number = settingsFPSMode;
-            let sensorAutoCorrection: string[] =
-                trackerSettings.sensorAutoCorrection || [];
-
-            window.log(
-                `Set sensor mode for ${deviceID} to: ${settingsSensorMode}`
-            );
-
-            window.ipc.send("set-tracker-settings", {
-                deviceID,
-                sensorMode: settingsSensorMode,
-                fpsMode: settingsFPSMode,
-                sensorAutoCorrection,
-            });
+            settingsUnsavedSettings(true);
         });
 }
 
 async function saveTrackerSettings() {
-    const accelerometerSwitch = document.getElementById(
-        "accelerometer-switch"
-    ) as HTMLInputElement;
-    const gyroscopeSwitch = document.getElementById(
-        "gyroscope-switch"
-    ) as HTMLInputElement;
-    const magnetometerSwitch = document.getElementById(
-        "magnetometer-switch"
-    ) as HTMLInputElement;
-    const fpsSelect = document.getElementById(
-        "fps-mode-select"
-    ) as HTMLSelectElement;
-    const sensorModeSelect = document.getElementById(
-        "sensor-mode-select"
-    ) as HTMLSelectElement;
-
+    settingsUnsavedSettings(false);
     window.ipc.send("save-setting", {
         trackers: {
             [deviceID]: {
@@ -361,11 +249,6 @@ async function saveTrackerSettings() {
             },
         },
     });
-
-    const trackerSettings: TrackerSettings = await window.ipc.invoke(
-        "get-tracker-settings",
-        deviceID
-    );
 
     let sensorAutoCorrection: string[] = [];
     if (settingsAccelerometerEnabled) sensorAutoCorrection.push("accel");
@@ -405,7 +288,7 @@ async function resetSettings() {
         null
     );
 
-    console.log(`old settings: ${JSON.stringify(settings)}`);
+    console.log(`Old settings: ${JSON.stringify(settings)}`);
 
     settingsFPSMode = settings.global?.trackers?.fpsMode || 50;
     settingsSensorMode = settings.global?.trackers?.sensorMode || 2;
@@ -422,7 +305,7 @@ async function resetSettings() {
     fpsSelect.value = settingsFPSMode.toString();
     sensorModeSelect.value = settingsSensorMode.toString();
 
-    console.log(`new settings: ${JSON.stringify(settings)}`);
+    console.log(`New settings: ${JSON.stringify(settings)}`);
 
     let sensorAutoCorrection: string[] = [];
     if (settingsAccelerometerEnabled) sensorAutoCorrection.push("accel");
@@ -440,10 +323,9 @@ async function resetSettings() {
 }
 
 async function getSettings() {
-    const currentSettings = await window.ipc.invoke(
-        "get-tracker-settings",
-        deviceID
-    );
+    const currentSettings = await window.ipc.invoke("get-tracker-settings", {
+        trackerName: deviceID,
+    });
     const sensorMode = currentSettings.sensorMode;
     const fpsMode = currentSettings.fpsMode;
     const sensorAutoCorrection = currentSettings.sensorAutoCorrection;
@@ -457,6 +339,20 @@ async function getSettings() {
             ", "
         )}`,
     });
+}
+
+// Set settings button indicator
+function settingsUnsavedSettings(unsaved: boolean) {
+    const saveButton = document.getElementById("save-settings-button");
+    if (unsaved && !saveButton.textContent.includes("(!)")) {
+        saveButton.textContent += " (!)";
+        saveButton.classList.add("is-danger");
+        saveButton.classList.remove("is-info");
+    } else if (!unsaved && saveButton.textContent.includes("(!)")) {
+        saveButton.textContent = saveButton.textContent.replace(" (!)", "");
+        saveButton.classList.add("is-info");
+        saveButton.classList.remove("is-danger");
+    }
 }
 
 async function getSetting(key: string, defaultValue: any) {

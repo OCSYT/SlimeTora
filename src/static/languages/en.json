@@ -16,15 +16,18 @@
     },
     "trackerInfo": {
         "title": "Tracker information",
+        "censorSerialNumbers": "Censor serial numbers",
         "deviceName": "Device:",
         "deviceID": "Device ID:",
         "rotationData": "Rotation data:",
         "accelerationData": "Acceleration data:",
         "battery": "Battery:",
+        "magStatus": "Mag status:",
         "edit": "Edit",
         "settings": "Override tracker settings",
         "trackerSettings": {
             "title": "{trackerName} settings",
+            "text": "Override the global tracker settings for this tracker. This may be buggy and is not recommended for normal use.",
             "fps": {
                 "title": "FPS transfer rate",
                 "tooltip": "Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.",
@@ -33,7 +36,7 @@
             },
             "sensorMode": {
                 "title": "Sensor mode",
-                "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment.",
+                "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment (mag status is green or yellow). If unstable (mag status is red), use mode 2.",
                 "1": "Mode 1",
                 "2": "Mode 2"
             },
@@ -55,10 +58,11 @@
     },
     "settings": {
         "title": "Global settings",
+        "text": " Change the global settings for the program and the trackers. Highly recommended to use HaritoraConfigurator for tracker settings instead as this may be unreliable.",
         "tooltip": "Set the global settings for the trackers or the program. An option with yellow text requires a restart of the program to fully apply.",
         "connectionMode": {
             "title": "Connection mode",
-            "tooltip": "Tracker settings only currently supports GX trackers, use Haritora Configurator if on Bluetooth.",
+            "tooltip": "Select the connection mode for the trackers. Multiple modes can be selected at once.",
             "bluetooth": "Bluetooth",
             "gx": "GX(6/2)"
         },
@@ -74,7 +78,7 @@
         },
         "sensorMode": {
             "title": "Sensor mode",
-            "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment.",
+            "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment (mag status is green or yellow). If unstable (mag status is red), use mode 2.",
             "1": "Mode 1",
             "2": "Mode 2"
         },
@@ -87,8 +91,7 @@
         },
         "other": {
             "title": "Other settings",
-            "tooltip": "Sometimes your settings may not save properly (or you just want to make sure they're saved), so here's a nice little button for you lol. You can also change your language and censor tracker serial numbers here.",
-            "censorSerialNumbers": "Censor serial numbers",
+            "tooltip": "Some other settings that don't fit in the other categories, including language.",
             "languageButton": "Change language",
             "saveButton": "Save settings"
         }
@@ -99,6 +102,9 @@
         "authors": "Made by:",
         "credits": {
             "title": "Credits"
+        },
+        "translations": {
+            "title": "Translations"
         }
     },
     "debugging": {

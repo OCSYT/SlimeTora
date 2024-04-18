@@ -18,6 +18,9 @@ let debugTrackerConnections = false;
 let language = "en";
 let censorSerialNumbers = false;
 
+// TODO add BT settings to package and add tracker visualization
+// todo feature to hide bt tracker serials
+
 /*
  * Renderer functions
  */
@@ -177,31 +180,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // if Bluetooth is the only connection mode enabled, disable every other setting
-    if (bluetoothEnabled && !gxEnabled) {
-        document
-            .getElementById("accelerometer-switch")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("gyroscope-switch")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("magnetometer-switch")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("fps-mode-select")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("sensor-mode-select")
-            .setAttribute("disabled", "true");
-        document
-            .getElementById("com-ports")
-            .querySelectorAll("input")
-            .forEach((port) => {
-                port.setAttribute("disabled", "true");
-            });
-    }
-
     selectedComPorts.push(...selectedPorts);
 
     window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
@@ -249,7 +227,7 @@ async function startConnection() {
         window.ipc.send("start-connection", {
             types: ["gx"],
             ports: selectedComPorts,
-            isActive
+            isActive,
         });
         window.log(`Starting GX connection with ports: ${selectedComPorts}`);
     } else {
@@ -263,8 +241,12 @@ async function startConnection() {
     }
 
     // Disable start connection button and enable stop connection button
-    document.getElementById("start-connection-button").setAttribute("disabled", "true");
-    document.getElementById("stop-connection-button").removeAttribute("disabled");
+    document
+        .getElementById("start-connection-button")
+        .setAttribute("disabled", "true");
+    document
+        .getElementById("stop-connection-button")
+        .removeAttribute("disabled");
 
     isActive = true;
 }
@@ -272,14 +254,20 @@ async function startConnection() {
 function stopConnection() {
     if (!isActive || (!bluetoothEnabled && !gxEnabled)) {
         window.error("No connection to stop");
-        window.error("..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!")
+        window.error(
+            "..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!"
+        );
         return;
     }
     window.log("Stopping connection(s)...");
 
     // Enable start connection button and disable stop connection button
-    document.getElementById("start-connection-button").removeAttribute("disabled");
-    document.getElementById("stop-connection-button").setAttribute("disabled", "true");
+    document
+        .getElementById("start-connection-button")
+        .removeAttribute("disabled");
+    document
+        .getElementById("stop-connection-button")
+        .setAttribute("disabled", "true");
 
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
     if (gxEnabled) window.ipc.send("stop-connection", "gx");
@@ -298,6 +286,7 @@ function openLogsFolder() {
 // Save settings
 function saveSettings() {
     window.log("Saving settings...");
+    unsavedSettings(false);
 
     const comPorts: HTMLInputElement[] = Array.from(
         document.getElementById("com-ports").querySelectorAll("input")
@@ -314,6 +303,7 @@ function saveSettings() {
 
     window.ipc.send("save-setting", {
         global: {
+            censorSerialNumbers: censorSerialNumbers,
             connectionMode: {
                 bluetoothEnabled: bluetoothEnabled,
                 gxEnabled: gxEnabled,
@@ -335,83 +325,32 @@ function saveSettings() {
         },
     });
 
-    window.ipc.invoke("get-active-trackers", null).then((activeTrackers) => {
-        activeTrackers.forEach(async (deviceID: string) => {
-            if (deviceID.startsWith("HaritoraX")) return;
+    let sensorAutoCorrection: string[] = [];
+    if (accelerometerEnabled) sensorAutoCorrection.push("accel");
+    if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
+    if (magnetometerEnabled) sensorAutoCorrection.push("mag");
 
-            const trackerSettings: TrackerSettings = await window.ipc.invoke(
-                "get-tracker-settings",
-                deviceID
-            );
-            let sensorMode: number =
-                trackerSettings.sensorMode !== -1
-                    ? trackerSettings.sensorMode
-                    : 2;
-            let fpsMode: number =
-                trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;
-            let sensorAutoCorrection: string[] =
-                trackerSettings.sensorAutoCorrection || [];
-
-            if (accelerometerEnabled) {
-                sensorAutoCorrection.push("accel");
-                window.log("Added accel to sensor auto correction");
-            }
-            if (gyroscopeEnabled) {
-                sensorAutoCorrection.push("gyro");
-                window.log("Added gyro to sensor auto correction");
-            }
-            if (magnetometerEnabled) {
-                sensorAutoCorrection.push("mag");
-                window.log("Added mag to sensor auto correction");
-            }
-
-            window.log(
-                `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-            );
-
-            const settings: { [key: string]: any } = await window.ipc.invoke(
-                "get-settings",
-                null
-            );
-
-            // Check if tracker has user-specified settings
-            const exists = settings.trackers?.[deviceID] !== undefined;
-            if (exists) {
-                // use the per-tracker settings instead of the global settings
-                const configTrackerSettings = settings.trackers[deviceID];
-                sensorMode =
-                    configTrackerSettings.sensorMode &&
-                    configTrackerSettings.sensorMode !== -1
-                        ? configTrackerSettings.sensorMode
-                        : 2;
-                fpsMode =
-                    configTrackerSettings.fpsMode &&
-                    configTrackerSettings.fpsMode !== -1
-                        ? configTrackerSettings.fpsMode
-                        : 50;
-                sensorAutoCorrection =
-                    configTrackerSettings.sensorAutoCorrection || [];
-
-                window.ipc.send(
-                    "log",
-                    `Using per-tracker settings for ${deviceID} instead:
-                    sensorMode: ${sensorMode},
-                    fpsMode: ${fpsMode},
-                    sensorAutoCorrection: ${sensorAutoCorrection}
-                    `
-                );
-            }
-
-            window.ipc.send("set-tracker-settings", {
-                deviceID,
-                sensorMode,
-                fpsMode,
-                sensorAutoCorrection,
-            });
-        });
+    window.ipc.send("set-all-tracker-settings", {
+        sensorMode,
+        fpsMode,
+        sensorAutoCorrection,
     });
 
     window.log("Settings saved");
+}
+
+// Set settings button indicator
+function unsavedSettings(unsaved: boolean) {
+    const saveButton = document.getElementById("save-settings-button");
+    if (unsaved && !saveButton.textContent.includes("(!)")) {
+        saveButton.textContent += " (!)";
+        saveButton.classList.add("is-danger");
+        saveButton.classList.remove("is-info");
+    } else if (!unsaved && saveButton.textContent.includes("(!)")) {
+        saveButton.textContent = saveButton.textContent.replace(" (!)", "");
+        saveButton.classList.add("is-info");
+        saveButton.classList.remove("is-danger");
+    }
 }
 
 /*
@@ -435,7 +374,7 @@ async function addDeviceToList(deviceID: string) {
     // Create a new div element
     const newDevice = document.createElement("div");
     newDevice.id = deviceID;
-    newDevice.className = "column";
+    newDevice.className = "column is-6 is-flex-grow-1";
 
     // Check if device has a user-specified name
     const deviceName: string = settings.trackers?.[deviceID]?.name || deviceID;
@@ -444,30 +383,33 @@ async function addDeviceToList(deviceID: string) {
 
     // Fill the div with device data
     newDevice.innerHTML = `
-    <div class="card" id="${deviceID}">
-        <header class="card-header">
-            <p class="card-header-title is-centered">
-                Device:&nbsp;<span id="device-name">${deviceName}</span>
-            </p>
-            <div class="edit-button-container">
-                <button id="edit-button" class="button is-info">Edit</button>
+        <div class="card" id="${deviceID}">
+            <header class="card-header">
+                <div>
+                    <p class="card-header-title is-centered inline-block" data-i18n="trackerInfo.deviceName">
+                        Device:
+                    </p><span class="has-text-white has-text-weight-bold" id="device-name">${deviceName}</span>
+                </div>
+                <div class="edit-button-container">
+                    <button id="edit-button" class="button is-info" data-i18n="trackerInfo.edit">Edit</button>
+                </div>
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    <p class="inline-block" data-i18n="trackerInfo.deviceID">Device ID:</p> <span id="device-id">${deviceID}</span><br>
+                    <p class="inline-block" data-i18n="trackerInfo.rotationData">Rotation Data:</p> <span id="rotation-data">0, 0, 0</span><br>
+                    <p class="inline-block" data-i18n="trackerInfo.accelerationData">Acceleration Data:</p> <span id="acceleration-data">0, 0, 0</span><br>
+                    <p class="inline-block" data-i18n="trackerInfo.battery">Battery:</p> <span id="battery">N/A</span><br>
+                    <p class="inline-block" data-i18n="trackerInfo.magStatus">Mag status:</p> <span id="mag-status"></span><br>
+                </div>
             </div>
-        </header>
-        <div class="card-content">
-            <div class="content">
-                <p>Device ID: <span id="device-id">${deviceID}</span></p>
-                <p>Rotation Data: <span id="rotation-data">0, 0, 0</span></p>
-                <p>Acceleration Data: <span id="acceleration-data">0, 0, 0</span></p>
-                <p>Battery: <span id="battery">N/A</span></p>
-            </div>
+            <footer class="card-footer">
+                <div class="card-footer-item">
+                    <button id="tracker-settings-button" data-i18n="trackerInfo.settings" onclick="openTrackerSettings('${deviceID}')" class="button is-info" data-i18n="trackerInfo.settings">Override tracker settings</button>
+                </div>
+            </footer>
         </div>
-        <footer class="card-footer">
-            <div class="card-footer-item">
-                <button id="tracker-settings-button" onclick="openTrackerSettings('${deviceID}')" class="button is-info">Override tracker settings</button>
-            </div>
-        </footer>
-    </div>
-    `;
+        `;
 
     const deviceNameElement = newDevice.querySelector("#device-name");
     const editButton = newDevice.querySelector("#edit-button");
@@ -514,22 +456,6 @@ async function addDeviceToList(deviceID: string) {
     editButton.addEventListener("click", startEditing);
     deviceNameElement.addEventListener("click", startEditing);
 
-    // if device id starts with HaritoraX or leftKnee or rightKnee, disable the override settings button
-    // currently can't change settings for BT devices and knee trackers are having issues with them changing the wrong trackers
-    if (
-        deviceID.startsWith("HaritoraX") ||
-        deviceID.startsWith("leftKnee") ||
-        deviceID.startsWith("rightKnee")
-    ) {
-        newDevice
-            .querySelector("#tracker-settings-button")
-            .setAttribute("disabled", "true");
-        window.ipc.send(
-            "log",
-            `Disabled override settings button for ${deviceID} (unsupported)`
-        );
-    }
-
     // Censor serial if BT tracker and censorSerialNumbers is enabled
     if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
         if (deviceName === deviceID)
@@ -541,10 +467,9 @@ async function addDeviceToList(deviceID: string) {
         newDevice.querySelector("#device-id").textContent = "HaritoraX-XXXXXX";
     }
 
-    deviceList.appendChild(newDevice);
+    await window.ipc.send("get-tracker-battery", deviceID);
 
-    // Trigger battery event
-    window.ipc.send("get-battery", deviceID);
+    deviceList.appendChild(newDevice);
 }
 
 /*
@@ -564,14 +489,14 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     setStatus("connected");
 
-    if (deviceID.startsWith("HaritoraX")) return;
-
     const settings = await window.ipc.invoke("get-settings", null);
     const exists = settings.trackers?.[deviceID] !== undefined;
 
     const trackerSettings = exists
         ? settings.trackers[deviceID]
-        : await window.ipc.invoke("get-tracker-settings", deviceID);
+        : await window.ipc.invoke("get-tracker-settings", {
+              trackerName: deviceID,
+          });
     setTrackerSettings(deviceID, trackerSettings);
 });
 
@@ -580,31 +505,34 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
         trackerSettings.sensorMode !== -1 ? trackerSettings.sensorMode : 2;
     const fpsMode: number =
         trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;
-    let sensorAutoCorrection: string[] =
-        trackerSettings.sensorAutoCorrection || [];
+    let sensorAutoCorrection: Set<string> = new Set(
+        trackerSettings.sensorAutoCorrection
+    );
 
     if (accelerometerEnabled) {
-        sensorAutoCorrection.push("accel");
+        sensorAutoCorrection.add("accel");
         window.log("Added accel to sensor auto correction");
     }
     if (gyroscopeEnabled) {
-        sensorAutoCorrection.push("gyro");
+        sensorAutoCorrection.add("gyro");
         window.log("Added gyro to sensor auto correction");
     }
     if (magnetometerEnabled) {
-        sensorAutoCorrection.push("mag");
+        sensorAutoCorrection.add("mag");
         window.log("Added mag to sensor auto correction");
     }
 
     window.log(
-        `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
+        `Set sensor auto correction for ${deviceID} to: ${Array.from(
+            sensorAutoCorrection
+        ).join(",")}`
     );
 
     window.ipc.send("set-tracker-settings", {
         deviceID,
         sensorMode,
         fpsMode,
-        sensorAutoCorrection,
+        sensorAutoCorrection: Array.from(sensorAutoCorrection),
     });
 }
 
@@ -684,6 +612,49 @@ window.ipc.on("set-status", (_event, msg) => {
     setStatus(msg);
 });
 
+window.ipc.on("device-mag", (_event, arg) => {
+    const {
+        trackerName,
+        magStatus,
+    }: { trackerName: string; magStatus: string } = arg;
+    if (!isActive || !trackerName) return;
+    const magStatusElement: HTMLElement = document
+        .getElementById(trackerName)
+        .querySelector("#mag-status");
+    if (magStatusElement === null) return;
+
+    if (
+        magStatus === "green" &&
+        !magStatusElement.classList.contains("mag-status-green")
+    ) {
+        magStatusElement.classList.add("mag-status-green");
+        magStatusElement.classList.remove("mag-status-yellow");
+        magStatusElement.classList.remove("mag-status-red");
+        window.log(`Mag status for ${trackerName}: ${magStatus}`);
+    } else if (
+        magStatus === "yellow" &&
+        !magStatusElement.classList.contains("mag-status-yellow")
+    ) {
+        magStatusElement.classList.add("mag-status-yellow");
+        magStatusElement.classList.remove("mag-status-green");
+        magStatusElement.classList.remove("mag-status-red");
+        window.log(`Mag status for ${trackerName}: ${magStatus}`);
+    } else if (
+        magStatus === "red" &&
+        !magStatusElement.classList.contains("mag-status-red")
+    ) {
+        magStatusElement.classList.add("mag-status-red");
+        magStatusElement.classList.remove("mag-status-green");
+        magStatusElement.classList.remove("mag-status-yellow");
+        window.log(`Mag status for ${trackerName}: ${magStatus}`);
+    } else if (magStatus === "unknown") {
+        magStatusElement.classList.add("mag-status-unknown");
+        magStatusElement.classList.remove("mag-status-red");
+        magStatusElement.classList.remove("mag-status-green");
+        magStatusElement.classList.remove("mag-status-yellow");
+    }
+});
+
 // Set version number
 window.ipc.on("version", (_event, version) => {
     document.getElementById("version").textContent = version;
@@ -699,7 +670,9 @@ function addEventListeners() {
         .getElementById("censor-serial-switch")
         .addEventListener("change", function () {
             censorSerialNumbers = !censorSerialNumbers;
-            window.log(`Censor serial numbers: ${censorSerialNumbers}`);
+            window.log(
+                `Switched censor serial numbers: ${censorSerialNumbers}`
+            );
             window.ipc.send("save-setting", {
                 global: {
                     censorSerialNumbers: censorSerialNumbers,
@@ -770,55 +743,7 @@ function addEventListeners() {
                 },
             });
 
-            // if Bluetooth is the only connection mode enabled, disable every other setting
-            if (bluetoothEnabled && !gxEnabled) {
-                document
-                    .getElementById("accelerometer-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("gyroscope-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("magnetometer-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("fps-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("sensor-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("com-ports")
-                    .querySelectorAll("input")
-                    .forEach((port) => {
-                        port.setAttribute("disabled", "true");
-                    });
-            } else {
-                document
-                    .getElementById("accelerometer-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("gyroscope-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("magnetometer-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("fps-mode-select")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("sensor-mode-select")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("save-settings-button")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("com-ports")
-                    .querySelectorAll("input")
-                    .forEach((port) => {
-                        port.removeAttribute("disabled");
-                    });
-            }
+            unsavedSettings(true);
         });
 
     document
@@ -834,58 +759,7 @@ function addEventListeners() {
                 },
             });
 
-            // if Bluetooth is the only connection mode enabled, disable the every other setting
-            if (bluetoothEnabled && !gxEnabled) {
-                document
-                    .getElementById("accelerometer-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("gyroscope-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("magnetometer-switch")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("fps-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("sensor-mode-select")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("save-settings-button")
-                    .setAttribute("disabled", "true");
-                document
-                    .getElementById("com-ports")
-                    .querySelectorAll("input")
-                    .forEach((port) => {
-                        port.setAttribute("disabled", "true");
-                    });
-            } else {
-                document
-                    .getElementById("accelerometer-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("gyroscope-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("magnetometer-switch")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("fps-mode-select")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("sensor-mode-select")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("save-settings-button")
-                    .removeAttribute("disabled");
-                document
-                    .getElementById("com-ports")
-                    .querySelectorAll("input")
-                    .forEach((port) => {
-                        port.removeAttribute("disabled");
-                    });
-            }
+            unsavedSettings(true);
         });
 
     document
@@ -901,56 +775,14 @@ function addEventListeners() {
                 },
             });
 
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-            window.log(`Active trackers: ${activeTrackers}`);
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
-
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number =
-                    trackerSettings.sensorMode !== -1
-                        ? trackerSettings.sensorMode
-                        : 2;
-                const fpsMode: number =
-                    trackerSettings.fpsMode !== -1
-                        ? trackerSettings.fpsMode
-                        : 50;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                if (accelerometerEnabled) {
-                    sensorAutoCorrection.push("accel");
-                    window.log("Added accel to sensor auto correction");
-                } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter(
-                        (sensor: string) => sensor !== "accel"
-                    );
-                    window.log("Removed accel from sensor auto correction");
-                }
-
-                window.log(
-                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-                );
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
-            });
+            unsavedSettings(true);
         });
 
     document
         .getElementById("gyroscope-switch")
         .addEventListener("change", async function () {
             gyroscopeEnabled = !gyroscopeEnabled;
-            window.log(`Gyroscope enabled: ${gyroscopeEnabled}`);
+            window.log(`Switched gyroscope enabled: ${gyroscopeEnabled}`);
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {
@@ -959,55 +791,14 @@ function addEventListeners() {
                 },
             });
 
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-            window.log(`Active trackers: ${activeTrackers}`);
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number =
-                    trackerSettings.sensorMode !== -1
-                        ? trackerSettings.sensorMode
-                        : 2;
-                const fpsMode: number =
-                    trackerSettings.fpsMode !== -1
-                        ? trackerSettings.fpsMode
-                        : 50;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                if (gyroscopeEnabled) {
-                    sensorAutoCorrection.push("gyro");
-                    window.log("Added gyro to sensor auto correction");
-                } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter(
-                        (sensor: string) => sensor !== "gyro"
-                    );
-                    window.log("Removed gyro from sensor auto correction");
-                }
-
-                window.log(
-                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-                );
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
-            });
+            unsavedSettings(true);
         });
 
     document
         .getElementById("magnetometer-switch")
         .addEventListener("change", async function () {
             magnetometerEnabled = !magnetometerEnabled;
-            window.log(`Magnetometer enabled: ${magnetometerEnabled}`);
+            window.log(`Switched magnetometer enabled: ${magnetometerEnabled}`);
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {
@@ -1016,48 +807,7 @@ function addEventListeners() {
                 },
             });
 
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-            window.log(`Active trackers: ${activeTrackers}`);
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number =
-                    trackerSettings.sensorMode !== -1
-                        ? trackerSettings.sensorMode
-                        : 2;
-                const fpsMode: number =
-                    trackerSettings.fpsMode !== -1
-                        ? trackerSettings.fpsMode
-                        : 50;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                if (magnetometerEnabled) {
-                    sensorAutoCorrection.push("mag");
-                    window.log(`Added mag to sensor auto correction`);
-                } else {
-                    sensorAutoCorrection = sensorAutoCorrection.filter(
-                        (sensor: string) => sensor !== "mag"
-                    );
-                    window.log(`Removed mag from sensor auto correction`);
-                }
-
-                window.log(
-                    `Set sensor auto correction for ${deviceID} to: ${sensorAutoCorrection}`
-                );
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
-            });
+            unsavedSettings(true);
         });
 
     document.getElementById("com-ports").addEventListener("change", () => {
@@ -1106,7 +856,7 @@ function addEventListeners() {
             const language: string = (
                 document.getElementById("language-select") as HTMLSelectElement
             ).value;
-            window.log(`Selected language: ${language}`);
+            window.log(`Changed selected language: ${language}`);
             window.changeLanguage(language);
             window.ipc.send("save-setting", {
                 global: {
@@ -1119,7 +869,7 @@ function addEventListeners() {
         .getElementById("log-to-file-switch")
         .addEventListener("change", function () {
             canLogToFile = !canLogToFile;
-            window.log(`Log to file: ${canLogToFile}`);
+            window.log(`Switched log to file: ${canLogToFile}`);
             window.ipc.send("set-logging", canLogToFile);
             window.ipc.send("save-setting", {
                 global: {
@@ -1134,7 +884,7 @@ function addEventListeners() {
         .getElementById("skip-slimevr-switch")
         .addEventListener("change", function () {
             skipSlimeVRCheck = !skipSlimeVRCheck;
-            window.log(`Skip SlimeVR check: ${skipSlimeVRCheck}`);
+            window.log(`Switched skip SlimeVR check: ${skipSlimeVRCheck}`);
             window.ipc.send("save-setting", {
                 global: {
                     debug: {
@@ -1148,7 +898,7 @@ function addEventListeners() {
         .getElementById("bypass-com-limit-switch")
         .addEventListener("change", function () {
             bypassCOMPortLimit = !bypassCOMPortLimit;
-            window.log(`Bypass COM port limit: ${bypassCOMPortLimit}`);
+            window.log(`Switched bypass COM port limit: ${bypassCOMPortLimit}`);
             window.ipc.send("save-setting", {
                 global: {
                     debug: {
@@ -1184,7 +934,9 @@ function addEventListeners() {
         .getElementById("debug-tracker-connections-switch")
         .addEventListener("change", function () {
             debugTrackerConnections = !debugTrackerConnections;
-            window.log(`Debug tracker connections: ${debugTrackerConnections}`);
+            window.log(
+                `Switched debug tracker connections: ${debugTrackerConnections}`
+            );
             window.ipc.send(
                 "set-debug-tracker-connections",
                 debugTrackerConnections
@@ -1208,7 +960,7 @@ function addEventListeners() {
                     ) as HTMLSelectElement
                 ).value
             );
-            window.log(`FPS mode: ${fpsMode}`);
+            window.log(`Changed FPS mode: ${fpsMode}`);
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {
@@ -1217,31 +969,7 @@ function addEventListeners() {
                 },
             });
 
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
-                const sensorMode: number =
-                    trackerSettings.sensorMode !== -1
-                        ? trackerSettings.sensorMode
-                        : 2;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                window.log(`Set FPS mode for ${deviceID} to: ${fpsMode}`);
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
-            });
+            unsavedSettings(true);
         });
 
     document
@@ -1254,7 +982,7 @@ function addEventListeners() {
                     ) as HTMLSelectElement
                 ).value
             );
-            window.log(`Sensor mode: ${sensorMode}`);
+            window.log(`Selected sensor mode: ${sensorMode}`);
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {
@@ -1263,31 +991,7 @@ function addEventListeners() {
                 },
             });
 
-            const activeTrackers: string[] = await window.ipc.invoke(
-                "get-active-trackers",
-                null
-            );
-
-            activeTrackers.forEach(async (deviceID: string) => {
-                if (deviceID.startsWith("HaritoraX")) return;
-                const trackerSettings: TrackerSettings =
-                    await window.ipc.invoke("get-tracker-settings", deviceID);
-                const fpsMode: number =
-                    trackerSettings.fpsMode !== -1
-                        ? trackerSettings.fpsMode
-                        : 50;
-                let sensorAutoCorrection: string[] =
-                    trackerSettings.sensorAutoCorrection || [];
-
-                window.log(`Set sensor mode for ${deviceID} to: ${sensorMode}`);
-
-                window.ipc.send("set-tracker-settings", {
-                    deviceID,
-                    sensorMode,
-                    fpsMode,
-                    sensorAutoCorrection,
-                });
-            });
+            unsavedSettings(true);
         });
 }
 
