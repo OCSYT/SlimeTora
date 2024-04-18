@@ -172,10 +172,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     if (isMissingPorts) {
-        setStatus(window.translate("main.status.comPortsMissing"));
+        setStatus(await window.translate("main.status.comPortsMissing"));
         window.ipc.send("show-error", {
-            title: window.translate("dialogs.comPortsMissing.title"),
-            message: window.translate("dialogs.comPortsMissing.message"),
+            title: await window.translate("dialogs.comPortsMissing.title"),
+            message: await window.translate("dialogs.comPortsMissing.message"),
         });
     }
 
@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
 
-    setStatus(window.translate("main.status.none"));
+    setStatus(await window.translate("main.status.none"));
     document.getElementById("tracker-count").textContent = document
         .getElementById("tracker-count")
         .textContent.replace("{trackerCount}", "0");
@@ -204,7 +204,7 @@ async function startConnection() {
         window.error(
             "Tried to start connection while not connected to SlimeVR"
         );
-        setStatus(window.translate("main.status.slimeVRMissing"));
+        setStatus(await window.translate("main.status.slimeVRMissing"));
         return;
     } else if (!slimeVRFound && skipSlimeVRCheck) {
         window.log("SlimeVR check skipped");
@@ -231,10 +231,10 @@ async function startConnection() {
         window.log(`Starting GX connection with ports: ${selectedComPorts}`);
     } else {
         window.error("No connection mode enabled");
-        setStatus(window.translate("main.status.noConnectionMode"));
+        setStatus(await window.translate("main.status.noConnectionMode"));
         window.ipc.send("show-error", {
-            title: window.translate("dialogs.noConnectionMode.title"),
-            message: window.translate("dialogs.noConnectionMode.message"),
+            title: await window.translate("dialogs.noConnectionMode.title"),
+            message: await window.translate("dialogs.noConnectionMode.message"),
         });
         return false;
     }
@@ -250,7 +250,7 @@ async function startConnection() {
     isActive = true;
 }
 
-function stopConnection() {
+async function stopConnection() {
     if (!isActive || (!bluetoothEnabled && !gxEnabled)) {
         window.error("No connection to stop");
         window.error(
@@ -272,7 +272,7 @@ function stopConnection() {
     if (gxEnabled) window.ipc.send("stop-connection", "gx");
 
     document.getElementById("tracker-count").textContent = "0";
-    setStatus(window.translate("main.status.none"));
+    setStatus(await window.translate("main.status.none"));
     document.getElementById("device-list").textContent = "";
     isActive = false;
 }
@@ -488,7 +488,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
         parseInt(document.getElementById("tracker-count").textContent) + 1
     ).toString();
 
-    setStatus(window.translate("main.status.connected"));
+    setStatus(await window.translate("main.status.connected"));
 
     const settings = await window.ipc.invoke("get-settings", null);
     const exists = settings.trackers?.[deviceID] !== undefined;

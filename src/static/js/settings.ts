@@ -6,9 +6,17 @@ let settingsAccelerometerEnabled = false;
 let settingsGyroscopeEnabled = false;
 let settingsMagnetometerEnabled = false;
 
+document.addEventListener("DOMContentLoaded", async () => {
+    // get all elements with data-i18n and get the attribute value. after, replace the textContent with the translation
+    const i18nElements = document.querySelectorAll("[data-i18n]");
+    i18nElements.forEach(async (element) => {
+        const key = element.getAttribute("data-i18n");
+        element.textContent = await window.translate(key);
+    });
+});
+
 // Set tracker name and variable
 window.ipc.on("trackerName", (_event, arg) => {
-    window.localize();
     window.log(`Opened per-tracker settings for: ${arg}`);
     deviceID = arg;
 

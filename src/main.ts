@@ -182,6 +182,11 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
     connectedDevices = [];
 });
 
+ipcMain.handle("executeJavaScript", async (_event, code) => {
+    const result = await mainWindow.webContents.executeJavaScript(code);
+    return result;
+});
+
 ipcMain.handle("get-com-ports", async () => {
     const ports = await SerialPort.list();
     return ports.map((port) => port.path).sort();

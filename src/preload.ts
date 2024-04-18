@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld("localize", (resources?: any) => {
             .init({
                 lng: "en",
                 resources,
+                debug: true,
             })
             .then(() => {
                 localize = locI18next.init(i18next);
@@ -61,8 +62,16 @@ contextBridge.exposeInMainWorld("changeLanguage", (lng: string) => {
     });
 });
 
-contextBridge.exposeInMainWorld("translate", (key: string) => {
-    return i18next.t(key);
+contextBridge.exposeInMainWorld("translate", async (key: string) => {
+    if (!localize) {
+        const result = await ipcRenderer.invoke(
+            "executeJavaScript",
+            `window.i18n.translate("${key}")`
+        );
+        return result;
+    } else {
+        return i18next.t(key);
+    }
 });
 
 contextBridge.exposeInMainWorld("i18n", {
