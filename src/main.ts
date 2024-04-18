@@ -107,7 +107,6 @@ const createWindow = () => {
  * Renderer handlers
  */
 
-
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
 });
@@ -141,7 +140,12 @@ ipcMain.on("start-connection", async (_event, arg) => {
         return false;
     }
 
-    mainWindow.webContents.send("set-status", "searching");
+    mainWindow.webContents.send(
+        "set-status",
+        await mainWindow.webContents.executeJavaScript(
+            'window.i18n.translate("main.status.searching")'
+        )
+    );
 
     if (types.includes("bluetooth")) {
         connectBluetooth();
@@ -365,7 +369,12 @@ async function connectBluetooth() {
     let connected = await device.startConnection("bluetooth");
     if (!connected) {
         error("Error connecting via bluetooth");
-        mainWindow.webContents.send("set-status", "connection failed");
+        mainWindow.webContents.send(
+            "set-status",
+            await mainWindow.webContents.executeJavaScript(
+                'window.i18n.translate("main.status.connectionFailed")'
+            )
+        );
         return;
     }
 }
@@ -375,7 +384,12 @@ async function connectGX(ports: string[]) {
     let connected = await device.startConnection("gx", ports);
     if (!connected) {
         error("Error connecting via GX dongles");
-        mainWindow.webContents.send("set-status", "connection failed");
+        mainWindow.webContents.send(
+            "set-status",
+            await mainWindow.webContents.executeJavaScript(
+                'window.i18n.translate("main.status.connectionFailed")'
+            )
+        );
     }
 }
 

@@ -18,8 +18,7 @@ let debugTrackerConnections = false;
 let language = "en";
 let censorSerialNumbers = false;
 
-// TODO add BT settings to package and add tracker visualization
-// todo feature to hide bt tracker serials
+// TODO add tracker visualization
 
 /*
  * Renderer functions
@@ -470,6 +469,8 @@ async function addDeviceToList(deviceID: string) {
     await window.ipc.send("get-tracker-battery", deviceID);
 
     deviceList.appendChild(newDevice);
+
+    window.localize();
 }
 
 /*
@@ -487,7 +488,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
         parseInt(document.getElementById("tracker-count").textContent) + 1
     ).toString();
 
-    setStatus("connected");
+    setStatus(window.translate("main.status.connected"));
 
     const settings = await window.ipc.invoke("get-settings", null);
     const exists = settings.trackers?.[deviceID] !== undefined;
