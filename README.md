@@ -42,10 +42,12 @@ This fork rewrites improves on the stability and performance of the app by rewri
 + ..and many more improvements coming soon!
 
 # Known issues
-- (?) Bluetooth and GX tracker settings may be unreliable
+- (?) GX tracker settings may be unreliable
   - This seems to be really random, unsure if there's something wrong with my testing, device, or if there's a random race condition.
   - Either way, would use `HaritoraConfigurator` instead if you do not need per-tracker settings.
 - Bluetooth tracker's battery report stays on N/A until reported by trackers (instead of instantly grabbing them)
+- Mag status may appear as gray "unknown" for.. unknown reasons lol
+  - For some reason, the trackers report more than just three values for mag status. Will do some more testing, but this isn't completely breaking for now.
 - Battery data sent to SlimeVR server isn't per-tracker
   - Cannot really fix this, instead the program sends the lowest battery data of all the trackers to the server
 
