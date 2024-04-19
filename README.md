@@ -22,7 +22,7 @@ This fork rewrites improves on the stability and performance of the app by rewri
 | ![SlimeTora about section](docs/slimetora_ss_5.png) | ![SlimeTora debugging section](docs/slimetora_ss_6.png) |
 
 # New features
-+ Entire frontend and backend rewrite (with [Bulma](https://bulma.io/) and[haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter))
++ Entire frontend and backend rewrite (with [Bulma](https://bulma.io/) and [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter))
   + The program now has a new UI, the code is cleaner and more maintainable, and should hopefully improve stability/performance.
 + Package app files with `asar`
   + No need to extract thousands of files anymore 😅
