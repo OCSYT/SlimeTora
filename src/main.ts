@@ -580,7 +580,6 @@ function startDeviceListeners() {
                     ankleReadings.reduce((a, b) => a + b, 0) /
                     ankleReadings.length;
                     
-                // Map the average ankle data from the range [30, 200] to range [-90, 90]
                 let ankleDegrees =
                     ((ankleAverage - 30) / (200 - 30)) * 180 - 90;
 
