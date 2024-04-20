@@ -9,6 +9,9 @@ let sensorMode = 2;
 let accelerometerEnabled = false;
 let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
+let ankleEnabled = false;
+let leftAnkleVirtualFoot = "";
+let rightAnkleVirtualFoot = "";
 
 let canLogToFile = false;
 let skipSlimeVRCheck = false;
@@ -85,6 +88,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
     magnetometerEnabled =
         settings.global?.trackers?.magnetometerEnabled || false;
+    ankleEnabled = settings.global?.trackers?.ankleEnabled || false;
     canLogToFile = settings.global?.debug?.canLogToFile || false;
     skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck || false;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit || false;
@@ -108,6 +112,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const magnetometerSwitch = document.getElementById(
         "magnetometer-switch"
     ) as HTMLInputElement;
+    const ankleSwitch = document.getElementById(
+        "ankle-switch"
+    ) as HTMLInputElement;
     const logToFileSwitch = document.getElementById(
         "log-to-file-switch"
     ) as HTMLInputElement;
@@ -128,6 +135,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     accelerometerSwitch.checked = accelerometerEnabled;
     gyroscopeSwitch.checked = gyroscopeEnabled;
     magnetometerSwitch.checked = magnetometerEnabled;
+    ankleSwitch.checked = ankleEnabled;
     logToFileSwitch.checked = canLogToFile;
     skipSlimeVRSwitch.checked = skipSlimeVRCheck;
     bypassCOMPortLimitSwitch.checked = bypassCOMPortLimit;
@@ -314,6 +322,7 @@ function saveSettings() {
                 accelerometerEnabled: accelerometerEnabled,
                 gyroscopeEnabled: gyroscopeEnabled,
                 magnetometerEnabled: magnetometerEnabled,
+                ankleEnabled: ankleEnabled,
             },
             debug: {
                 canLogToFile: canLogToFile,
@@ -333,7 +342,10 @@ function saveSettings() {
         sensorMode,
         fpsMode,
         sensorAutoCorrection,
+        ankle: ankleEnabled,
     });
+
+    window.ipc.send("set-ankle", ankleEnabled);
 
     window.log("Settings saved");
 }
@@ -483,7 +495,7 @@ window.ipc.on("localize", (_event, resources) => {
 
 window.ipc.on("connect", async (_event, deviceID) => {
     window.log(`Connected to ${deviceID}`);
-    addDeviceToList(deviceID);
+    if (!deviceID.startsWith("virtualTracker")) addDeviceToList(deviceID);
     document.getElementById("tracker-count").textContent = (
         parseInt(document.getElementById("tracker-count").textContent) + 1
     ).toString();
@@ -804,6 +816,22 @@ function addEventListeners() {
                 global: {
                     trackers: {
                         magnetometerEnabled: magnetometerEnabled,
+                    },
+                },
+            });
+
+            unsavedSettings(true);
+        });
+
+    document
+        .getElementById("ankle-switch")
+        .addEventListener("change", async function () {
+            ankleEnabled = !ankleEnabled;
+            window.log(`Switched ankle enabled: ${ankleEnabled}`);
+            window.ipc.send("save-setting", {
+                global: {
+                    trackers: {
+                        ankleEnabled: ankleEnabled,
                     },
                 },
             });
