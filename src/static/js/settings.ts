@@ -337,6 +337,7 @@ async function getSettings() {
     const sensorMode = currentSettings.sensorMode;
     const fpsMode = currentSettings.fpsMode;
     const sensorAutoCorrection = currentSettings.sensorAutoCorrection;
+    const ankleMotionDetection = currentSettings.ankleMotionDetection;
 
     window.log(
         `Current settings for ${deviceID}: ${JSON.stringify(currentSettings)}`
@@ -345,7 +346,7 @@ async function getSettings() {
         title: `Current settings for ${deviceID}`,
         message: `Sensor Mode: ${sensorMode} \nFPS Mode: ${fpsMode} \nSensor Auto Correction: ${sensorAutoCorrection.join(
             ", "
-        )}`,
+        )} \nAnkle Motion Detection: ${ankleMotionDetection}`,
     });
 }
 

@@ -128,8 +128,39 @@
                     Highly recommended to use HaritoraConfigurator for tracker
                     settings instead as this may be unreliable.
                 </h3>
-                <br />
                 <div class="columns is-multiline has-text-centered">
+                    <div class="column is-12">
+                        <div class="vertical-settings-container">
+                            <div class="language-container">
+                                <div class="globe-icon">
+                                    <img
+                                        src="../images/language.svg"
+                                        alt="Language icon"
+                                    />
+                                </div>
+                                <div class="select">
+                                    <div style="position: relative">
+                                        <select id="language-select">
+                                            <!-- Languages populated here -->
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="buttons is-centered">
+                                <button
+                                    class="button is-info"
+                                    id="save-settings-button"
+                                    onclick="saveSettings()"
+                                    data-i18n="settings.other.saveButton"
+                                >
+                                    Save settings
+                                </button>
+                            </div>
+                        </div>
+                        <br />
+                    </div>
+
                     <!-- Connection mode setting -->
                     <div class="column is-6">
                         <div class="with-tooltip">
@@ -171,6 +202,7 @@
                                 <label
                                     for="bluetooth-switch"
                                     data-i18n="settings.connectionMode.bluetooth"
+                                    style="min-width: 80px"
                                     >Bluetooth</label
                                 >
                             </div>
@@ -185,6 +217,7 @@
                                 <label
                                     for="gx-switch"
                                     data-i18n="settings.connectionMode.gx"
+                                    style="min-width: 80px"
                                     >GX(6/2)</label
                                 >
                             </div>
@@ -398,14 +431,14 @@
                         </div>
                     </div>
 
-                    <!-- Save button -->
+                    <!-- Ankle settings -->
                     <div class="column is-6">
                         <div class="with-tooltip">
                             <h3
                                 class="title is-4 is-spaced"
-                                data-i18n="settings.other.title"
+                                data-i18n="settings.ankle.title"
                             >
-                                Other settings
+                                Virtual feet trackers
                             </h3>
                             <div class="tooltip-container">
                                 <div class="icon">
@@ -416,19 +449,18 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="settings.other.tooltip"
-                                    >Some other settings that don't fit in the
-                                    other categories, including language.</span
+                                    data-i18n="settings.ankle.tooltip"
+                                    >This enables the use of the trackers' ankle
+                                    motion detection (ToF/distance sensors) to
+                                    create virtual feet trackers for use in
+                                    SlimeVR.</span
                                 >
                             </div>
                         </div>
                         <div class="settings-container">
                             <div class="switch-container">
                                 <div class="switch">
-                                    <input
-                                        type="checkbox"
-                                        id="ankle-switch"
-                                    />
+                                    <input type="checkbox" id="ankle-switch" />
                                     <label
                                         for="ankle-switch"
                                         class="slider round"
@@ -436,34 +468,41 @@
                                 </div>
                                 <label
                                     for="ankle-switch"
-                                    data-i18n="settings.other.ankle"
-                                    >Ankle motion detection</label
+                                    data-i18n="settings.ankle.ankle"
+                                    >Virtual feet trackers</label
                                 >
                             </div>
-                        </div>
-                        <div style="margin-top: 0.8rem;"></div>
-                        <div class="language-container">
-                            <div class="globe-icon">
-                                <img src="../images/language.svg" alt="Language icon" />
-                            </div>
-                            <div class="select">
-                                <div style="position: relative;">
-                                    <select id="language-select">
-                                        <!-- Languages populated here -->
-                                    </select>
+                            <br />
+                            <div class="columns">
+                                <div class="column">
+                                    <div class="input-container">
+                                        <label for="left-ankle-id" class="label"
+                                            >Left Ankle</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="left-ankle-id"
+                                            placeholder="Enter device ID"
+                                            class="input"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="column">
+                                    <div class="input-container">
+                                        <label
+                                            for="right-ankle-id"
+                                            class="label"
+                                            >Right Ankle</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="right-ankle-id"
+                                            placeholder="Enter device ID"
+                                            class="input"
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <br />
-                        <div class="buttons is-centered">
-                            <button
-                                class="button is-info"
-                                id="save-settings-button"
-                                onclick="saveSettings()"
-                                data-i18n="settings.other.saveButton"
-                            >
-                                Save settings
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -561,10 +600,10 @@
                     <ul class="has-text-centered">
                         <li>
                             Japanese (<code>日本語</code>) by
-                            <a
-                                href="https://github.com/pikepikeid"
+                            <a href="https://github.com/pikepikeid"
                                 >pikepikeid</a
-                            > (<code>jp.json</code>)
+                            >
+                            (<code>jp.json</code>)
                         </li>
                     </ul>
                 </div>

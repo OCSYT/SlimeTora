@@ -22494,6 +22494,14 @@ br {
   opacity: 1;
 }
 
+.vertical-settings-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
 .select select {
   background: #081f2f;
   color: #fff;
@@ -22608,10 +22616,13 @@ br {
 }
 
 .settings-container {
-  display: grid;
+  display: flex;
   margin: auto;
   width: fit-content;
   height: fit-content;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .switch-container {

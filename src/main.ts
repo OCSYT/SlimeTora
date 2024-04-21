@@ -77,13 +77,15 @@ async function loadTranslations() {
  */
 
 const createWindow = () => {
-    // check if logToFile is set in the config before creating the window
+    // check if certain settings are set in the config before creating the window
     if (fs.existsSync(configPath)) {
         const data = fs.readFileSync(configPath);
         const config: { [key: string]: any } = JSON.parse(data.toString());
         canLogToFile = config.global?.debug?.canLogToFile || false;
         debugTrackerConnections =
             config.global?.debug?.debugTrackerConnections || false;
+        enableVirtualFootTrackers = 
+            config.global?.trackers?.ankleEnabled || false;
     }
 
     mainWindow = new BrowserWindow({
@@ -521,6 +523,8 @@ function startDeviceListeners() {
     });
 
     const ankleReadings: number[] = [];
+    let leftAnkleRotationReading: Rotation;
+    let rightAnkleRotationReading: Rotation;
     const N = 10; // Number of readings to average
     device.on(
         "imu",
@@ -559,6 +563,12 @@ function startDeviceListeners() {
                 z: rawGravity.z,
             };
 
+            if (trackerName === "leftAnkle") {
+                leftAnkleRotationReading = rawRotation;
+            } else if (trackerName === "rightAnkle") {
+                rightAnkleRotationReading = rawRotation;
+            }
+
             sendRotationPacket(
                 rawRotation,
                 connectedDevices.indexOf(trackerName)
@@ -567,7 +577,6 @@ function startDeviceListeners() {
 
             let ankle = rawAnkle;
             if (enableVirtualFootTrackers && rawAnkle) {
-                // Add the new reading to the ankleReadings array
                 ankleReadings.push(ankle);
 
                 // If there are more than N readings, remove the oldest one
@@ -583,18 +592,30 @@ function startDeviceListeners() {
                 let ankleDegrees =
                     ((ankleAverage - 30) / (200 - 30)) * 180 - 90;
 
-                console.log(`Ankle degrees: ${ankleDegrees}`);
+                //console.log(`Ankle degrees: ${ankleDegrees}`);
 
                 // Convert the ankle degrees to radians
-                let ankleRadians = clamp(ankleDegrees * (Math.PI / 180), -2, -0.2);
-                console.log(`Ankle radians: ${ankleRadians}`)
+                let ankleToFRadians = clamp(ankleDegrees * (Math.PI / 180), -2, -0.2);
+                console.log(`Ankle ToF radians: ${ankleToFRadians}`);
+
+                let ankleRecentRotationReading: Rotation;
+
+                // Assign value based on trackerName
+                if (trackerName === "leftAnkle") {
+                    ankleRecentRotationReading = leftAnkleRotationReading;
+                } else {
+                    ankleRecentRotationReading = rightAnkleRotationReading;
+                }
+
+                let ankleRecentRadianY = ankleRecentRotationReading.y;
+                let ankleRecentRadianZ = ankleRecentRotationReading.z;
 
                 // Create a quaternion from the ankle radians
                 const quaternion = {
-                    w: Math.cos(ankleRadians / 2),
-                    x: Math.sin(ankleRadians / 2),
-                    y: 0,
-                    z: 0,
+                    w: Math.cos(ankleToFRadians / 2),
+                    x: Math.sin(ankleToFRadians / 2),
+                    y: Math.sin(ankleRecentRadianY / 2),
+                    z: Math.sin(ankleRecentRadianZ / 2),
                 };
 
                 if (trackerName === virtualTrackerLeftFoot) {
@@ -609,6 +630,10 @@ function startDeviceListeners() {
                         quaternion,
                         connectedDevices.indexOf("virtualTrackerLeftFoot")
                     );
+                    /*sendAccelPacket(
+                        leftAnkleGravityReading,
+                        connectedDevices.indexOf("virtualTrackerLeftFoot")
+                    );*/
                 } else if (trackerName === virtualTrackerRightFoot) {
                     if (!connectedDevices.includes("virtualTrackerRightFoot")) {
                         connectedDevices.sort();
@@ -621,6 +646,10 @@ function startDeviceListeners() {
                         quaternion,
                         connectedDevices.indexOf("virtualTrackerRightFoot")
                     );
+                    /*sendAccelPacket(
+                        rightAnkleGravityReading,
+                        connectedDevices.indexOf("virtualTrackerRightFoot")
+                    );*/
                 }
             }
 
