@@ -89,11 +89,13 @@
             "gyroscope": "Gyroscope",
             "magnetometer": "Magnetometer"
         },
-        "other": {
-            "title": "Other settings",
-            "tooltip": "Some other settings that don't fit in the other categories, including language.",
-            "languageButton": "Change language",
-            "saveButton": "Save settings"
+        "ankle": {
+            "title": "Virtual feet trackers",
+            "tooltip": "Enable the use of the trackers' ankle motion detection (ToF/distance sensors) to create virtual feet trackers for use in SlimeVR.",
+            "ankle": "Feet trackers (w/ ankle data)",
+            "leftAnkle": "Left Ankle",
+            "rightAnkle": "Right Ankle",
+            "placeholder": "Enter device ID"
         }
     },
     "about": {

@@ -84,8 +84,12 @@ const createWindow = () => {
         canLogToFile = config.global?.debug?.canLogToFile || false;
         debugTrackerConnections =
             config.global?.debug?.debugTrackerConnections || false;
-        enableVirtualFootTrackers = 
+        enableVirtualFootTrackers =
             config.global?.trackers?.ankleEnabled || false;
+        virtualTrackerLeftFoot =
+            config.global?.trackers?.virtualTrackerLeftFoot || "";
+        virtualTrackerRightFoot =
+            config.global?.trackers?.virtualTrackerRightFoot || "";
     }
 
     mainWindow = new BrowserWindow({
@@ -563,12 +567,6 @@ function startDeviceListeners() {
                 z: rawGravity.z,
             };
 
-            if (trackerName === "leftAnkle") {
-                leftAnkleRotationReading = rawRotation;
-            } else if (trackerName === "rightAnkle") {
-                rightAnkleRotationReading = rawRotation;
-            }
-
             sendRotationPacket(
                 rawRotation,
                 connectedDevices.indexOf(trackerName)
@@ -576,80 +574,100 @@ function startDeviceListeners() {
             sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
 
             let ankle = rawAnkle;
-            if (enableVirtualFootTrackers && rawAnkle) {
-                ankleReadings.push(ankle);
 
-                // If there are more than N readings, remove the oldest one
-                if (ankleReadings.length > N) {
-                    ankleReadings.shift();
-                }
-
-                // Calculate the average of the last N readings
-                const ankleAverage =
-                    ankleReadings.reduce((a, b) => a + b, 0) /
-                    ankleReadings.length;
-                    
-                let ankleDegrees =
-                    ((ankleAverage - 30) / (200 - 30)) * 180 - 90;
-
-                //console.log(`Ankle degrees: ${ankleDegrees}`);
-
-                // Convert the ankle degrees to radians
-                let ankleToFRadians = clamp(ankleDegrees * (Math.PI / 180), -2, -0.2);
-                console.log(`Ankle ToF radians: ${ankleToFRadians}`);
-
-                let ankleRecentRotationReading: Rotation;
-
-                // Assign value based on trackerName
-                if (trackerName === "leftAnkle") {
-                    ankleRecentRotationReading = leftAnkleRotationReading;
-                } else {
-                    ankleRecentRotationReading = rightAnkleRotationReading;
-                }
-
-                let ankleRecentRadianY = ankleRecentRotationReading.y;
-                let ankleRecentRadianZ = ankleRecentRotationReading.z;
-
-                // Create a quaternion from the ankle radians
-                const quaternion = {
-                    w: Math.cos(ankleToFRadians / 2),
-                    x: Math.sin(ankleToFRadians / 2),
-                    y: Math.sin(ankleRecentRadianY / 2),
-                    z: Math.sin(ankleRecentRadianZ / 2),
-                };
-
+            // Virtual feet (using ankle data) trackers
+            if (enableVirtualFootTrackers) {
                 if (trackerName === virtualTrackerLeftFoot) {
-                    if (!connectedDevices.includes("virtualTrackerLeftFoot")) {
-                        connectedDevices.sort();
-                        trackerQueue.push("virtualTrackerLeftFoot");
-                        await handleNextTracker();
+                    leftAnkleRotationReading = rawRotation;
+                } else if (trackerName === virtualTrackerRightFoot) {
+                    rightAnkleRotationReading = rawRotation;
+                }
+
+                if (rawAnkle) {
+                    ankleReadings.push(ankle);
+
+                    // If there are more than N readings, remove the oldest one
+                    if (ankleReadings.length > N) {
+                        ankleReadings.shift();
                     }
 
-                    // Send virtual left foot data
-                    sendRotationPacket(
-                        quaternion,
-                        connectedDevices.indexOf("virtualTrackerLeftFoot")
+                    // Calculate the average of the last N readings
+                    const ankleAverage =
+                        ankleReadings.reduce((a, b) => a + b, 0) /
+                        ankleReadings.length;
+
+                    let ankleDegrees =
+                        ((ankleAverage - 30) / (200 - 30)) * 180 - 90;
+
+                    //console.log(`Ankle degrees: ${ankleDegrees}`);
+
+                    // Convert the ankle degrees to radians
+                    let ankleToFRadians = clamp(
+                        ankleDegrees * (Math.PI / 180),
+                        -2,
+                        -0.2
                     );
-                    /*sendAccelPacket(
+                    console.log(`Ankle ToF radians: ${ankleToFRadians}`);
+
+                    let ankleRecentRotationReading: Rotation;
+
+                    // Assign value based on trackerName
+                    if (trackerName === "leftAnkle") {
+                        ankleRecentRotationReading = leftAnkleRotationReading;
+                    } else {
+                        ankleRecentRotationReading = rightAnkleRotationReading;
+                    }
+
+                    let ankleRecentRadianY = ankleRecentRotationReading.y;
+                    let ankleRecentRadianZ = ankleRecentRotationReading.z;
+
+                    // Create a quaternion from the ankle radians
+                    const quaternion = {
+                        w: Math.cos(ankleToFRadians / 2),
+                        x: Math.sin(ankleToFRadians / 2),
+                        y: Math.sin(ankleRecentRadianY / 2),
+                        z: Math.sin(ankleRecentRadianZ / 2),
+                    };
+
+                    if (trackerName === virtualTrackerLeftFoot) {
+                        if (
+                            !connectedDevices.includes("virtualTrackerLeftFoot")
+                        ) {
+                            connectedDevices.sort();
+                            trackerQueue.push("virtualTrackerLeftFoot");
+                            await handleNextTracker();
+                        }
+
+                        // Send virtual left foot data
+                        sendRotationPacket(
+                            quaternion,
+                            connectedDevices.indexOf("virtualTrackerLeftFoot")
+                        );
+                        /*sendAccelPacket(
                         leftAnkleGravityReading,
                         connectedDevices.indexOf("virtualTrackerLeftFoot")
                     );*/
-                } else if (trackerName === virtualTrackerRightFoot) {
-                    if (!connectedDevices.includes("virtualTrackerRightFoot")) {
-                        connectedDevices.sort();
-                        trackerQueue.push("virtualTrackerRightFoot");
-                        await handleNextTracker();
-                    }
+                    } else if (trackerName === virtualTrackerRightFoot) {
+                        if (
+                            !connectedDevices.includes(
+                                "virtualTrackerRightFoot"
+                            )
+                        ) {
+                            connectedDevices.sort();
+                            trackerQueue.push("virtualTrackerRightFoot");
+                            await handleNextTracker();
+                        }
 
-                    // Send virtual right foot data
-                    sendRotationPacket(
-                        quaternion,
-                        connectedDevices.indexOf("virtualTrackerRightFoot")
-                    );
-                    /*sendAccelPacket(
+                        // Send virtual right foot data
+                        sendRotationPacket(
+                            quaternion,
+                            connectedDevices.indexOf("virtualTrackerRightFoot")
+                        );
+                        /*sendAccelPacket(
                         rightAnkleGravityReading,
                         connectedDevices.indexOf("virtualTrackerRightFoot")
                     );*/
+                    }
                 }
             }
 

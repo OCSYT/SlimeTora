@@ -10,8 +10,8 @@ let accelerometerEnabled = false;
 let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
 let ankleEnabled = false;
-let leftAnkleVirtualFoot = "";
-let rightAnkleVirtualFoot = "";
+let virtualTrackerLeftFoot = "";
+let virtualTrackerRightFoot = "";
 
 let canLogToFile = false;
 let skipSlimeVRCheck = false;
@@ -153,6 +153,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     fpsSelect.value = fpsMode.toString();
     sensorModeSelect.value = sensorMode.toString();
     languageSelect.value = language.toString();
+
+    // Get the input elements
+    const leftAnkleInput = document.getElementById(
+        "left-ankle-id"
+    ) as HTMLInputElement;
+    const rightAnkleInput = document.getElementById(
+        "right-ankle-id"
+    ) as HTMLInputElement;
+
+    // Set the value based on the settings
+    leftAnkleInput.value = settings.global?.trackers?.virtualTrackerLeftFoot || "";
+    rightAnkleInput.value = settings.global?.trackers?.virtualTrackerRightFoot || "";
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -837,6 +849,38 @@ function addEventListeners() {
             });
 
             unsavedSettings(true);
+        });
+
+    document
+        .getElementById("left-ankle-id")
+        .addEventListener("change", async function () {
+            virtualTrackerLeftFoot = (
+                document.getElementById("left-ankle-id") as HTMLInputElement
+            ).value;
+            window.log(`Changed left ankle virtual foot to: ${virtualTrackerLeftFoot}`);
+            window.ipc.send("save-setting", {
+                global: {
+                    trackers: {
+                        virtualTrackerLeftFoot: virtualTrackerLeftFoot,
+                    },
+                },
+            });
+        });
+    
+    document
+        .getElementById("right-ankle-id")
+        .addEventListener("change", async function () {
+            virtualTrackerRightFoot = (
+                document.getElementById("right-ankle-id") as HTMLInputElement
+            ).value;
+            window.log(`Changed right ankle virtual foot to: ${virtualTrackerRightFoot}`);
+            window.ipc.send("save-setting", {
+                global: {
+                    trackers: {
+                        virtualTrackerRightFoot: virtualTrackerRightFoot,
+                    },
+                },
+            });
         });
 
     document.getElementById("com-ports").addEventListener("change", () => {
