@@ -163,8 +163,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     ) as HTMLInputElement;
 
     // Set the value based on the settings
-    leftAnkleInput.value = settings.global?.trackers?.virtualTrackerLeftFoot || "";
-    rightAnkleInput.value = settings.global?.trackers?.virtualTrackerRightFoot || "";
+    leftAnkleInput.value =
+        settings.global?.trackers?.virtualTrackerLeftFoot || "";
+    rightAnkleInput.value =
+        settings.global?.trackers?.virtualTrackerRightFoot || "";
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -350,12 +352,14 @@ function saveSettings() {
     if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
     if (magnetometerEnabled) sensorAutoCorrection.push("mag");
 
-    window.ipc.send("set-all-tracker-settings", {
-        sensorMode,
-        fpsMode,
-        sensorAutoCorrection,
-        ankle: ankleEnabled,
-    });
+    if (isActive) {
+        window.ipc.send("set-all-tracker-settings", {
+            sensorMode,
+            fpsMode,
+            sensorAutoCorrection,
+            ankle: ankleEnabled,
+        });
+    }
 
     window.ipc.send("set-ankle", ankleEnabled);
 
@@ -857,7 +861,9 @@ function addEventListeners() {
             virtualTrackerLeftFoot = (
                 document.getElementById("left-ankle-id") as HTMLInputElement
             ).value;
-            window.log(`Changed left ankle virtual foot to: ${virtualTrackerLeftFoot}`);
+            window.log(
+                `Changed left ankle virtual foot to: ${virtualTrackerLeftFoot}`
+            );
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {
@@ -866,14 +872,16 @@ function addEventListeners() {
                 },
             });
         });
-    
+
     document
         .getElementById("right-ankle-id")
         .addEventListener("change", async function () {
             virtualTrackerRightFoot = (
                 document.getElementById("right-ankle-id") as HTMLInputElement
             ).value;
-            window.log(`Changed right ankle virtual foot to: ${virtualTrackerRightFoot}`);
+            window.log(
+                `Changed right ankle virtual foot to: ${virtualTrackerRightFoot}`
+            );
             window.ipc.send("save-setting", {
                 global: {
                     trackers: {

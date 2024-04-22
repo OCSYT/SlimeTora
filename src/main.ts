@@ -31,8 +31,8 @@ let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
 
 let enableVirtualFootTrackers = false;
-let virtualTrackerLeftFoot = "leftAnkle";
-let virtualTrackerRightFoot = "rightAnkle";
+let virtualTrackerLeftFoot = "";
+let virtualTrackerRightFoot = "";
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
@@ -577,11 +577,8 @@ function startDeviceListeners() {
 
             // Virtual feet (using ankle data) trackers
             if (enableVirtualFootTrackers) {
-                if (trackerName === virtualTrackerLeftFoot) {
-                    leftAnkleRotationReading = rawRotation;
-                } else if (trackerName === virtualTrackerRightFoot) {
-                    rightAnkleRotationReading = rawRotation;
-                }
+                if (trackerName === virtualTrackerLeftFoot) leftAnkleRotationReading = rawRotation;
+                else if (trackerName === virtualTrackerRightFoot) rightAnkleRotationReading = rawRotation;
 
                 if (rawAnkle) {
                     ankleReadings.push(ankle);
@@ -591,7 +588,6 @@ function startDeviceListeners() {
                         ankleReadings.shift();
                     }
 
-                    // Calculate the average of the last N readings
                     const ankleAverage =
                         ankleReadings.reduce((a, b) => a + b, 0) /
                         ankleReadings.length;
@@ -607,16 +603,15 @@ function startDeviceListeners() {
                         -2,
                         -0.2
                     );
-                    console.log(`Ankle ToF radians: ${ankleToFRadians}`);
+                    //console.log(`Ankle ToF radians: ${ankleToFRadians}`);
 
                     let ankleRecentRotationReading: Rotation;
 
                     // Assign value based on trackerName
-                    if (trackerName === "leftAnkle") {
+                    if (trackerName === virtualTrackerLeftFoot)
                         ankleRecentRotationReading = leftAnkleRotationReading;
-                    } else {
+                    else if (trackerName === virtualTrackerRightFoot)
                         ankleRecentRotationReading = rightAnkleRotationReading;
-                    }
 
                     let ankleRecentRadianY = ankleRecentRotationReading.y;
                     let ankleRecentRadianZ = ankleRecentRotationReading.z;
@@ -643,10 +638,6 @@ function startDeviceListeners() {
                             quaternion,
                             connectedDevices.indexOf("virtualTrackerLeftFoot")
                         );
-                        /*sendAccelPacket(
-                        leftAnkleGravityReading,
-                        connectedDevices.indexOf("virtualTrackerLeftFoot")
-                    );*/
                     } else if (trackerName === virtualTrackerRightFoot) {
                         if (
                             !connectedDevices.includes(
@@ -663,10 +654,6 @@ function startDeviceListeners() {
                             quaternion,
                             connectedDevices.indexOf("virtualTrackerRightFoot")
                         );
-                        /*sendAccelPacket(
-                        rightAnkleGravityReading,
-                        connectedDevices.indexOf("virtualTrackerRightFoot")
-                    );*/
                     }
                 }
             }
@@ -856,13 +843,15 @@ async function handleNextTracker() {
         }
     } else {
         if (connectedDevices.includes(trackerName)) return;
+        connectedDevices.push(trackerName);
+        connectedDevices.sort();
         const sent = (await sendSensorInfoPacket(trackerName)) as boolean;
-        if (sent) {
-            connectedDevices.push(trackerName);
-            connectedDevices.sort();
-        } else {
+        if (!sent) {
             error(
                 `Failed to send sensor info packet for ${trackerName}, not adding to connected devices`
+            );
+            connectedDevices = connectedDevices.filter(
+                (name) => name !== trackerName
             );
         }
     }
