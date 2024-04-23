@@ -22617,12 +22617,12 @@ br {
 
 .settings-container {
   display: flex;
-  margin: auto;
   width: fit-content;
   height: fit-content;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  margin: auto;
 }
 
 .switch-container {
