@@ -116,19 +116,19 @@ br {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
-    position: relative;
+    justify-content: space-between;
+    text-align: center;
 }
 
-.title-container {
+.name-container {
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    position: relative;
+    align-content: center;
 }
 
-.version-container {
+.name-container .version-container {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -140,8 +140,6 @@ br {
     display: flex;
     justify-content: center;
     align-items: center;
-    position: absolute;
-    left: 0;
     width: 72px;
     height: 72px;
 }
@@ -155,18 +153,6 @@ br {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    width: 100%;
-}
-
-.language-container .globe-icon {
-    width: 28px;
-}
-
-.language-container {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    width: 100%;
 }
 
 .language-container .globe-icon {
@@ -182,7 +168,7 @@ br {
 }
 
 .language-container .globe-icon {
-    margin-right: 12px;
+    margin-left: 12px;
 }
 
 /*
