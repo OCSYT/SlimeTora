@@ -89,6 +89,14 @@
             "accelerometer": "加速度",
             "gyroscope": "ジャイロ",
             "magnetometer": "地磁気"
+        },
+        "ankle": {
+            "title": "足首動き検知機能",
+            "tooltip": "足首トラッカーの足首動き検知機能（距離センサー）を有効にして、SlimeVRで使用する仮想の足トラッカーを作成します。",
+            "ankle": "足首検知を有効にする",
+            "leftAnkle": "左足首",
+            "rightAnkle": "右足首",
+            "placeholder": "デバイスIDを入力"
         }
     },
     "about": {
