@@ -212,6 +212,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     window.changeLanguage(language);
 
+    leftAnkleInput.placeholder = await window.translate(
+        "settings.ankle.placeholder"
+    );
+    rightAnkleInput.placeholder = await window.translate(
+        "settings.ankle.placeholder"
+    );
+
     addEventListeners();
 });
 
@@ -933,7 +940,7 @@ function addEventListeners() {
 
     document
         .getElementById("language-select")
-        .addEventListener("change", function () {
+        .addEventListener("change", async function () {
             const language: string = (
                 document.getElementById("language-select") as HTMLSelectElement
             ).value;
@@ -944,6 +951,19 @@ function addEventListeners() {
                     language: language,
                 },
             });
+
+            const leftAnkleInput = document.getElementById(
+                "left-ankle-id"
+            ) as HTMLInputElement;
+            const rightAnkleInput = document.getElementById(
+                "right-ankle-id"
+            ) as HTMLInputElement;
+            leftAnkleInput.placeholder = await window.translate(
+                "settings.ankle.placeholder"
+            );
+            rightAnkleInput.placeholder = await window.translate(
+                "settings.ankle.placeholder"
+            );
         });
 
     document
