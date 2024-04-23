@@ -576,6 +576,7 @@ function startDeviceListeners() {
             let ankle = rawAnkle;
 
             // Virtual feet (using ankle data) trackers
+            // TODO: see if this can be improved by fixing foot going inside leg when the leg is behind the body
             if (enableVirtualFootTrackers) {
                 if (trackerName === virtualTrackerLeftFoot) leftAnkleRotationReading = rawRotation;
                 else if (trackerName === virtualTrackerRightFoot) rightAnkleRotationReading = rawRotation;
@@ -923,7 +924,6 @@ async function sendSensorInfoPacket(trackerName: string) {
 function sendAccelPacket(acceleration: Gravity, deviceID: number) {
     packetCount += 1;
 
-    // turn acceleration object into array with 3 values
     const buffer = ServerBoundAccelPacket.encode(
         BigInt(packetCount),
         deviceID,
