@@ -22540,8 +22540,9 @@ br {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   text-align: center;
+  position: relative;
 }
 
 .name-container {
@@ -22550,14 +22551,8 @@ br {
   justify-content: center;
   align-items: center;
   align-content: center;
-}
-
-.name-container .version-container {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-left: 8px;
-  margin-top: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .logo-container {
@@ -22566,6 +22561,8 @@ br {
   align-items: center;
   width: 72px;
   height: 72px;
+  position: absolute;
+  left: 0;
 }
 
 .logo-container img {
@@ -22577,21 +22574,8 @@ br {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-}
-
-.language-container .globe-icon {
-  width: 28px;
-  height: 28px;
-}
-
-.language-container .globe-icon img {
-  width: 28px;
-  height: 28px;
-  filter: invert(100%) sepia(2%) saturate(6692%) hue-rotate(194deg) brightness(125%) contrast(97%);
-}
-
-.language-container .globe-icon {
-  margin-left: 12px;
+  position: absolute;
+  right: 0;
 }
 
 /*

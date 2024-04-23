@@ -20,32 +20,29 @@
                     <div class="name-container">
                         <div class="title-container">
                             <h1
-                                class="title is-1 has-text-centered is-centered"
+                                class="title is-2 has-text-centered is-centered"
                                 id="app-name"
                             >
-                                SlimeTora
+                                SlimeTora v<span id="version">0.0.0</span>
                             </h1>
-                        </div>
-                        <div class="version-container">
-                            <p class="subtitle" id="version-number">
-                                v<span id="version">0.0.0</span>
-                            </p>
                         </div>
                     </div>
                     <!-- Language container -->
                     <div class="language-container">
-                        <div class="select">
-                            <div style="position: relative">
-                                <select id="language-select">
-                                    <!-- Languages populated here -->
-                                </select>
+                        <div class="control has-icons-left">
+                            <div class="icon">
+                                <img
+                                    src="../images/language.svg"
+                                    alt="Language icon"
+                                />
                             </div>
-                        </div>
-                        <div class="globe-icon">
-                            <img
-                                src="../images/language.svg"
-                                alt="Language icon"
-                            />
+                            <div class="select">
+                                <div style="position: relative">
+                                    <select id="language-select">
+                                        <!-- Languages populated here -->
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -78,7 +75,7 @@
                     </button>
                 </div>
                 <br />
-                <div class="title is-2 has-text-centered">
+                <div class="title is-3 has-text-centered">
                     <h2
                         class="has-text-weight-medium inline-block"
                         data-i18n="main.status.statusText"
@@ -165,22 +162,6 @@
                     settings instead as this may be unreliable.
                 </h3>
                 <div class="columns is-multiline has-text-centered">
-                    <div class="column is-12">
-                        <div class="vertical-settings-container">
-                            <div class="buttons is-centered">
-                                <button
-                                    class="button is-info"
-                                    id="save-settings-button"
-                                    onclick="saveSettings()"
-                                    data-i18n="settings.saveButton"
-                                >
-                                    Save settings
-                                </button>
-                            </div>
-                        </div>
-                        <br />
-                    </div>
-
                     <!-- Connection mode setting -->
                     <div class="column is-6">
                         <div class="with-tooltip">
@@ -526,6 +507,22 @@
                                         />
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column is-12">
+                        <br />
+                        <div class="vertical-settings-container">
+                            <div class="buttons is-centered">
+                                <button
+                                    class="button is-info"
+                                    id="save-settings-button"
+                                    onclick="saveSettings()"
+                                    data-i18n="settings.saveButton"
+                                >
+                                    Save settings
+                                </button>
                             </div>
                         </div>
                     </div>
