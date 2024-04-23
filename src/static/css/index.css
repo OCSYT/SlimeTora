@@ -22433,6 +22433,9 @@ has-background-danger.is-hoverable:active {
   pointer-events: all !important;
 }
 
+/*
+ * Global
+*/
 html {
   background-color: #00101c;
 }
@@ -22450,6 +22453,13 @@ code {
 
 br {
   user-select: none;
+}
+
+.section {
+  background-color: #081e30;
+  border-radius: 0.5rem;
+  color: white;
+  padding: 3rem;
 }
 
 .inline-block {
@@ -22494,14 +22504,6 @@ br {
   opacity: 1;
 }
 
-.vertical-settings-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 2rem;
-}
-
 .select select {
   background: #081f2f;
   color: #fff;
@@ -22523,10 +22525,72 @@ br {
   filter: invert(80%) sepia(24%) saturate(2320%) hue-rotate(169deg) brightness(100%) contrast(102%);
 }
 
+.vertical-settings-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+/*
+ * Main
+*/
+.main-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.title-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.version-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-left: 8px;
+  margin-top: 24px;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  left: 0;
+  width: 72px;
+  height: 72px;
+}
+
+.logo-container img {
+  width: 72px;
+  height: 72px;
+}
+
 .language-container {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.language-container .globe-icon {
+  width: 28px;
+}
+
+.language-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
 }
 
 .language-container .globe-icon {
@@ -22544,13 +22608,9 @@ br {
   margin-right: 12px;
 }
 
-.section {
-  background-color: #081e30;
-  border-radius: 0.5rem;
-  color: white;
-  padding: 3rem;
-}
-
+/*
+ * Device info
+*/
 .edit-button-container {
   padding: 0.5rem 1rem;
 }
@@ -22615,6 +22675,27 @@ br {
   background-color: red;
 }
 
+/*
+ * Debugging
+*/
+.debugging-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.debugging-container .switch-container {
+  flex: 1 0 50%;
+}
+
+.logs-folder-container {
+  display: flex;
+  justify-content: center;
+}
+
+/*
+ * Settings
+*/
 .settings-container {
   display: flex;
   width: fit-content;
@@ -22633,21 +22714,6 @@ br {
   width: fit-content;
   padding: 0.5rem;
   gap: 1rem;
-}
-
-.debugging-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-}
-
-.debugging-container .switch-container {
-  flex: 1 0 50%;
-}
-
-.logs-folder-container {
-  display: flex;
-  justify-content: center;
 }
 
 .switch {
@@ -22720,17 +22786,14 @@ input:disabled + .slider:after {
   width: 10px;
 }
 
-/* Track */
 ::-webkit-scrollbar-track {
   background: #00080f;
 }
 
-/* Handle */
 ::-webkit-scrollbar-thumb {
   background-color: #0a253b;
 }
 
-/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background-color: #071a2a;
 }

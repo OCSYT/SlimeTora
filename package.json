@@ -22,7 +22,7 @@
         "build": "npm run preload && electron-packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar && npm run zip",
         "zip": "cd build/SlimeTora-win32-x64/ && bestzip ../SlimeTora-win32-x64.zip * && cd ../SlimeTora-linux-x64/ && bestzip ../SlimeTora-linux-x64.zip *",
         "preload": "del-cli dist/ && tsc && npm run copy-files",
-        "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.svg\" \"src/static/languages/**/*\" dist/",
+        "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.png\" \"src/**/*.svg\" \"src/static/languages/**/*\" dist/",
         "build-bulma": "npx sass --watch ./src/static/css/index.scss ./src/static/css/index.css",
         "lint": "eslint **/*.js"
     },

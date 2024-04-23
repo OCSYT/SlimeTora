@@ -11,9 +11,40 @@
         <!-- Main section -->
         <div class="section">
             <div class="container">
-                <h1 class="title is-1 has-text-centered is-centered">
-                    SlimeTora v<span id="version">0.0.0</span>
-                </h1>
+                <div class="main-container">
+                    <!-- Logo -->
+                    <div class="logo-container">
+                        <img src="../images/logo.png" alt="SlimeTora logo" />
+                    </div>
+                    <!-- Title -->
+                    <div class="title-container">
+                        <h1
+                            class="title is-1 has-text-centered is-centered"
+                            id="app-name"
+                        >
+                            SlimeTora
+                        </h1>
+                    </div>
+                    <div class="version-container">
+                        <p class="subtitle" id="version-number">
+                            v<span id="version">0.0.0</span>
+                        </p>
+                    </div>
+                </div>
+                <!-- Language container -->
+                <div class="language-container">
+                    <div class="globe-icon">
+                        <img src="../images/language.svg" alt="Language icon" />
+                    </div>
+                    <div class="select">
+                        <div style="position: relative">
+                            <select id="language-select">
+                                <!-- Languages populated here -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <br />
                 <div class="subtitle has-text-centered">
                     <h3 class="inline-block" data-i18n="main.connectedTrackers">
@@ -131,22 +162,6 @@
                 <div class="columns is-multiline has-text-centered">
                     <div class="column is-12">
                         <div class="vertical-settings-container">
-                            <div class="language-container">
-                                <div class="globe-icon">
-                                    <img
-                                        src="../images/language.svg"
-                                        alt="Language icon"
-                                    />
-                                </div>
-                                <div class="select">
-                                    <div style="position: relative">
-                                        <select id="language-select">
-                                            <!-- Languages populated here -->
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <br />
                             <div class="buttons is-centered">
                                 <button
                                     class="button is-info"
@@ -476,7 +491,10 @@
                             <div class="columns">
                                 <div class="column">
                                     <div class="input-container">
-                                        <label for="left-ankle-id" class="label" data-i18n="settings.ankle.leftAnkle"
+                                        <label
+                                            for="left-ankle-id"
+                                            class="label"
+                                            data-i18n="settings.ankle.leftAnkle"
                                             >Left Ankle</label
                                         >
                                         <input
