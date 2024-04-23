@@ -74,10 +74,6 @@ contextBridge.exposeInMainWorld("translate", async (key: string) => {
     }
 });
 
-contextBridge.exposeInMainWorld("i18n", {
-    translate: (key: string) => i18next.t(key),
-});
-
 declare global {
     interface Window {
         startConnection: () => void;
@@ -99,7 +95,7 @@ declare global {
 
         localize: (resources?: string) => void;
         changeLanguage: (lng: string) => void;
-        translate: (key: string) => string;
+        translate: (key: string) => Promise<string>;
     }
 
     interface Rotation {
