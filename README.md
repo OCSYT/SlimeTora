@@ -37,6 +37,7 @@ This fork rewrites improves on the stability and performance of the app by rewri
 + Linux support
   + This was done as SlimeVR is supported on Linux, and the first time HaritoraX trackers work on Linux!
   + ..however this is not tested at all. Please let me know if there are issues.
+  + + Magnetometet statuses
 + Dynamically grab version number from package.json (instead of relying on manually changing it per release)
 + Censor tracker serial numbers
 + Many new ways to debug the program
