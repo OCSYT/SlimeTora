@@ -28,8 +28,10 @@ This fork rewrites improves on the stability and performance of the app by rewri
   + No need to extract thousands of files anymore 😅
 + `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
   + Welcome elbow tracker users!
-+ Set tracker settings per-tracker (partial support)
-  + Knee trackers currently have issues, and Bluetooth is not yet supported. Both are disabled automatically.
++ Set tracker settings per-tracker
++ Create virtual feet trackers
+  + Using the ankle motion detection festure, we can use the data from the ToF/distance sensors from the ankle to create virtual feet trackers for use in SlimeVR!
+  + Currently in beta and needs more testing
 + Localization support
   + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 + Linux support
@@ -46,8 +48,6 @@ This fork rewrites improves on the stability and performance of the app by rewri
   - This seems to be really random, unsure if there's something wrong with my testing, device, or if there's a random race condition.
   - Either way, would use `HaritoraConfigurator` instead if you do not need per-tracker settings.
 - Bluetooth tracker's battery report stays on N/A until reported by trackers (instead of instantly grabbing them)
-- Mag status may appear as gray "unknown" for.. unknown reasons lol
-  - For some reason, the trackers report more than just three values for mag status. Will do some more testing, but this isn't completely breaking for now.
 - Battery data sent to SlimeVR server isn't per-tracker
   - Cannot really fix this, instead the program sends the lowest battery data of all the trackers to the server
 
