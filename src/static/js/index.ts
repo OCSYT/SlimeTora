@@ -396,6 +396,19 @@ function setStatus(status: string) {
     window.log(`Set status to: ${status}`);
 }
 
+const deviceQueue: string[] = [];
+let isProcessingQueue = false;
+async function processQueue() {
+    if (isProcessingQueue) return;
+    isProcessingQueue = true;
+
+    while (deviceQueue.length > 0) {
+        const deviceID = deviceQueue.shift();
+        await addDeviceToList(deviceID);
+    }
+    isProcessingQueue = false;
+}
+
 async function addDeviceToList(deviceID: string) {
     if (document.getElementById(deviceID)) return;
     window.log(`Adding device to device list: ${deviceID}`);
@@ -518,8 +531,12 @@ window.ipc.on("localize", (_event, resources) => {
 });
 
 window.ipc.on("connect", async (_event, deviceID) => {
-    window.log(`Connected to ${deviceID}`);
-    if (!deviceID.startsWith("virtualTracker")) addDeviceToList(deviceID);
+    if (!deviceID.startsWith("virtualTracker")) {
+        window.log(`Connected to ${deviceID}`);
+        deviceQueue.push(deviceID);
+        processQueue();
+    }
+
     document.getElementById("tracker-count").textContent = (
         parseInt(document.getElementById("tracker-count").textContent) + 1
     ).toString();
@@ -593,13 +610,17 @@ window.ipc.on("device-data", (_event: any, arg) => {
         gravity,
     }: { trackerName: string; rotation: Rotation; gravity: Gravity } = arg;
 
-    if (!document.getElementById(trackerName)) addDeviceToList(trackerName);
-
     if (
         !isActive ||
-        !document.getElementById("device-list").querySelector(`#${trackerName}`)
+        !document
+            .getElementById("device-list")
+            .querySelector(`#${trackerName}`)
     )
         return;
+
+    deviceQueue.push(trackerName);
+    processQueue();
+
     const now = Date.now();
 
     // Limit updates to every 50ms
