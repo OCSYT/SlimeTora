@@ -30,14 +30,14 @@ This fork rewrites improves on the stability and performance of the app by rewri
   + Welcome elbow tracker users!
 + Set tracker settings per-tracker
 + Create virtual feet trackers
-  + Using the ankle motion detection festure, we can use the data from the ToF/distance sensors from the ankle to create virtual feet trackers for use in SlimeVR!
+  + Using the ankle motion detection feature, we can use the data from the ToF/distance sensors from the ankle to create virtual feet trackers for use in SlimeVR!
   + Currently in beta and needs more testing
 + Localization support
   + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 + Linux support
   + This was done as SlimeVR is supported on Linux, and the first time HaritoraX trackers work on Linux!
   + ..however this is not tested at all. Please let me know if there are issues.
-  + + Magnetometet statuses
+  + + Magnetometer statuses
 + Dynamically grab version number from package.json (instead of relying on manually changing it per release)
 + Censor tracker serial numbers
 + Many new ways to debug the program
