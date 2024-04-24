@@ -138,7 +138,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
             "Creating new HaritoraXWireless instance with debugTrackerConnections: " +
                 debugTrackerConnections
         );
-        device = new HaritoraXWireless(debugTrackerConnections ? 2 : 0);
+        device = new HaritoraXWireless(debugTrackerConnections ? 2 : 0, true);
         startDeviceListeners();
     }
 
