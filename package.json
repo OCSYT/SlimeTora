@@ -1,7 +1,7 @@
 {
     "name": "slimetora",
     "productName": "slimetora",
-    "version": "1.0.0-alpha6",
+    "version": "1.0.0-alpha7",
     "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
     "private": true,
     "author": {
