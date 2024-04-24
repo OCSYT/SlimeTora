@@ -397,6 +397,7 @@ function setStatus(status: string) {
 }
 
 async function addDeviceToList(deviceID: string) {
+    if (document.getElementById(deviceID)) return;
     window.log(`Adding device to device list: ${deviceID}`);
 
     const settings: { [key: string]: any } = await window.ipc.invoke(

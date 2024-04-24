@@ -166,8 +166,10 @@ ipcMain.on("start-connection", async (_event, arg) => {
     }
 
     const activeTrackers: string[] = device.getActiveTrackers();
-    if (!activeTrackers || activeTrackers.length === 0) return;
-    activeTrackers.forEach((trackerName) => {
+    // make sure they have unique entries
+    const uniqueActiveTrackers = Array.from(new Set(activeTrackers));
+    if (!uniqueActiveTrackers || uniqueActiveTrackers.length === 0) return;
+    uniqueActiveTrackers.forEach((trackerName) => {
         trackerQueue.push(trackerName);
         handleNextTracker();
         log(`Connected to tracker: ${trackerName}`);
