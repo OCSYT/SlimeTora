@@ -66,16 +66,12 @@ contextBridge.exposeInMainWorld("translate", async (key: string) => {
     if (!localize) {
         const result = await ipcRenderer.invoke(
             "executeJavaScript",
-            `window.translate("${key}")`
+            `window.i18n.translate("${key}")`
         );
         return result;
     } else {
         return i18next.t(key);
     }
-});
-
-contextBridge.exposeInMainWorld("i18n", {
-    translate: (key: string) => i18next.t(key),
 });
 
 declare global {

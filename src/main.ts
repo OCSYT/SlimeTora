@@ -138,7 +138,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
             "Creating new HaritoraXWireless instance with debugTrackerConnections: " +
                 debugTrackerConnections
         );
-        device = new HaritoraXWireless(debugTrackerConnections ? 2 : 0, true);
+        device = new HaritoraXWireless(debugTrackerConnections ? 2 : 0);
         startDeviceListeners();
     }
 
@@ -153,7 +153,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
     mainWindow.webContents.send(
         "set-status",
         await mainWindow.webContents.executeJavaScript(
-            'window.translate("main.status.searching")'
+            'window.i18n.translate("main.status.searching")'
         )
     );
 
@@ -360,10 +360,10 @@ ipcMain.on("open-logs-folder", async () => {
         error("Logs directory does not exist");
         dialog.showErrorBox(
             await mainWindow.webContents.executeJavaScript(
-                'window.translate("dialogs.noLogsFolder.title")'
+                'window.i18n.translate("dialogs.noLogsFolder.title")'
             ),
             await mainWindow.webContents.executeJavaScript(
-                'window.translate("dialogs.noLogsFolder.message")'
+                'window.i18n.translate("dialogs.noLogsFolder.message")'
             )
         );
     }
@@ -400,7 +400,7 @@ async function connectBluetooth() {
         mainWindow.webContents.send(
             "set-status",
             await mainWindow.webContents.executeJavaScript(
-                'window.translate("main.status.connectionFailed")'
+                'window.i18n.translate("main.status.connectionFailed")'
             )
         );
         return;
@@ -415,7 +415,7 @@ async function connectGX(ports: string[]) {
         mainWindow.webContents.send(
             "set-status",
             await mainWindow.webContents.executeJavaScript(
-                'window.translate("main.status.connectionFailed")'
+                'window.i18n.translate("main.status.connectionFailed")'
             )
         );
     }
