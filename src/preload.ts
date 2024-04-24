@@ -74,6 +74,10 @@ contextBridge.exposeInMainWorld("translate", async (key: string) => {
     }
 });
 
+contextBridge.exposeInMainWorld("i18n", {
+    translate: (key: string) => i18next.t(key),
+});
+
 declare global {
     interface Window {
         startConnection: () => void;
