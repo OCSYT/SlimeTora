@@ -169,12 +169,12 @@ ipcMain.on("start-connection", async (_event, arg) => {
     // make sure they have unique entries
     const uniqueActiveTrackers = Array.from(new Set(activeTrackers));
     if (!uniqueActiveTrackers || uniqueActiveTrackers.length === 0) return;
-    uniqueActiveTrackers.forEach((trackerName) => {
+    uniqueActiveTrackers.forEach(async (trackerName) => {
         trackerQueue.push(trackerName);
-        handleNextTracker();
+        await handleNextTracker();
         log(`Connected to tracker: ${trackerName}`);
         mainWindow.webContents.send("connect", trackerName);
-        log("Connected devices: " + JSON.stringify(trackerName));
+        log("Connected devices: " + JSON.stringify(uniqueActiveTrackers));
     });
 });
 
@@ -507,10 +507,10 @@ ipcMain.on("show-error", (_event, arg) => {
  */
 
 function startDeviceListeners() {
-    device.on("connect", (deviceID: string) => {
+    device.on("connect", async (deviceID: string) => {
         if (connectedDevices.includes(deviceID)) return;
         trackerQueue.push(deviceID);
-        handleNextTracker();
+        await handleNextTracker();
         log(`Connected to tracker: ${deviceID}`);
         mainWindow.webContents.send("connect", deviceID);
         log("Connected devices: " + JSON.stringify(connectedDevices));
@@ -861,7 +861,7 @@ async function handleNextTracker() {
 
     isHandlingTracker = false;
 
-    handleNextTracker();
+    await handleNextTracker();
 }
 
 /*
