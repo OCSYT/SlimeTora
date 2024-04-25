@@ -888,7 +888,7 @@ async function sendHandshakePacket(trackerName: string) {
                 reject(false);
             } else {
                 log(
-                    `Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length} // Handshake`
+                    `Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length - 1} // Handshake`
                 );
                 resolve(true);
             }
@@ -903,7 +903,7 @@ async function sendSensorInfoPacket(trackerName: string) {
 
         const buffer = ServerBoundSensorInfoPacket.encode(
             BigInt(packetCount),
-            connectedDevices.length,
+            connectedDevices.length - 1,
             SensorStatus.OK,
             SensorType.UNKNOWN
         );
@@ -914,7 +914,7 @@ async function sendSensorInfoPacket(trackerName: string) {
                 reject(false);
             } else {
                 log(
-                    `Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length}`
+                    `Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length - 1}`
                 );
                 resolve(true);
                 packetCount += 1;
