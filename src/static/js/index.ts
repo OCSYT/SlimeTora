@@ -562,6 +562,7 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
     let sensorAutoCorrection: Set<string> = new Set(
         trackerSettings.sensorAutoCorrection
     );
+    const ankleEnabled: boolean = trackerSettings.ankleEnabled || false;
 
     if (accelerometerEnabled) {
         sensorAutoCorrection.add("accel");
@@ -587,6 +588,7 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
         sensorMode,
         fpsMode,
         sensorAutoCorrection: Array.from(sensorAutoCorrection),
+        ankle: ankleEnabled,
     });
 }
 
