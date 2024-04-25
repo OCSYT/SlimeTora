@@ -29,9 +29,6 @@ This fork rewrites improves on the stability and performance of the app by rewri
 + `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
   + Welcome elbow tracker users!
 + Set tracker settings per-tracker
-+ Create virtual feet trackers
-  + Using the ankle motion detection feature, we can use the data from the ToF/distance sensors from the ankle to create virtual feet trackers for use in SlimeVR!
-  + Currently in beta and needs more testing
 + Localization support
   + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 + Linux support

@@ -9,9 +9,6 @@ let sensorMode = 2;
 let accelerometerEnabled = false;
 let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
-let ankleEnabled = false;
-let virtualTrackerLeftFoot = "";
-let virtualTrackerRightFoot = "";
 
 let canLogToFile = false;
 let skipSlimeVRCheck = false;
@@ -88,7 +85,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
     magnetometerEnabled =
         settings.global?.trackers?.magnetometerEnabled || false;
-    ankleEnabled = settings.global?.trackers?.ankleEnabled || false;
     canLogToFile = settings.global?.debug?.canLogToFile || false;
     skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck || false;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit || false;
@@ -112,9 +108,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const magnetometerSwitch = document.getElementById(
         "magnetometer-switch"
     ) as HTMLInputElement;
-    const ankleSwitch = document.getElementById(
-        "ankle-switch"
-    ) as HTMLInputElement;
     const logToFileSwitch = document.getElementById(
         "log-to-file-switch"
     ) as HTMLInputElement;
@@ -135,7 +128,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     accelerometerSwitch.checked = accelerometerEnabled;
     gyroscopeSwitch.checked = gyroscopeEnabled;
     magnetometerSwitch.checked = magnetometerEnabled;
-    ankleSwitch.checked = ankleEnabled;
     logToFileSwitch.checked = canLogToFile;
     skipSlimeVRSwitch.checked = skipSlimeVRCheck;
     bypassCOMPortLimitSwitch.checked = bypassCOMPortLimit;
@@ -153,20 +145,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     fpsSelect.value = fpsMode.toString();
     sensorModeSelect.value = sensorMode.toString();
     languageSelect.value = language.toString();
-
-    // Get the input elements
-    const leftAnkleInput = document.getElementById(
-        "left-ankle-id"
-    ) as HTMLInputElement;
-    const rightAnkleInput = document.getElementById(
-        "right-ankle-id"
-    ) as HTMLInputElement;
-
-    // Set the value based on the settings
-    leftAnkleInput.value =
-        settings.global?.trackers?.virtualTrackerLeftFoot || "";
-    rightAnkleInput.value =
-        settings.global?.trackers?.virtualTrackerRightFoot || "";
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -211,13 +189,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         .textContent.replace("{trackerCount}", "0");
 
     window.changeLanguage(language);
-
-    leftAnkleInput.placeholder = await window.translate(
-        "settings.ankle.placeholder"
-    );
-    rightAnkleInput.placeholder = await window.translate(
-        "settings.ankle.placeholder"
-    );
 
     addEventListeners();
 });
@@ -343,7 +314,6 @@ function saveSettings() {
                 accelerometerEnabled: accelerometerEnabled,
                 gyroscopeEnabled: gyroscopeEnabled,
                 magnetometerEnabled: magnetometerEnabled,
-                ankleEnabled: ankleEnabled,
             },
             debug: {
                 canLogToFile: canLogToFile,
@@ -364,11 +334,8 @@ function saveSettings() {
             sensorMode,
             fpsMode,
             sensorAutoCorrection,
-            ankle: ankleEnabled,
         });
     }
-
-    window.ipc.send("set-ankle", ankleEnabled);
 
     window.log("Settings saved");
 }
@@ -562,7 +529,6 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
     let sensorAutoCorrection: Set<string> = new Set(
         trackerSettings.sensorAutoCorrection
     );
-    const ankleEnabled: boolean = trackerSettings.ankleEnabled || false;
 
     if (accelerometerEnabled) {
         sensorAutoCorrection.add("accel");
@@ -588,7 +554,6 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
         sensorMode,
         fpsMode,
         sensorAutoCorrection: Array.from(sensorAutoCorrection),
-        ankle: ankleEnabled,
     });
 }
 
@@ -870,58 +835,6 @@ function addEventListeners() {
             unsavedSettings(true);
         });
 
-    document
-        .getElementById("ankle-switch")
-        .addEventListener("change", async function () {
-            ankleEnabled = !ankleEnabled;
-            window.log(`Switched ankle enabled: ${ankleEnabled}`);
-            window.ipc.send("save-setting", {
-                global: {
-                    trackers: {
-                        ankleEnabled: ankleEnabled,
-                    },
-                },
-            });
-
-            unsavedSettings(true);
-        });
-
-    document
-        .getElementById("left-ankle-id")
-        .addEventListener("change", async function () {
-            virtualTrackerLeftFoot = (
-                document.getElementById("left-ankle-id") as HTMLInputElement
-            ).value;
-            window.log(
-                `Changed left ankle virtual foot to: ${virtualTrackerLeftFoot}`
-            );
-            window.ipc.send("save-setting", {
-                global: {
-                    trackers: {
-                        virtualTrackerLeftFoot: virtualTrackerLeftFoot,
-                    },
-                },
-            });
-        });
-
-    document
-        .getElementById("right-ankle-id")
-        .addEventListener("change", async function () {
-            virtualTrackerRightFoot = (
-                document.getElementById("right-ankle-id") as HTMLInputElement
-            ).value;
-            window.log(
-                `Changed right ankle virtual foot to: ${virtualTrackerRightFoot}`
-            );
-            window.ipc.send("save-setting", {
-                global: {
-                    trackers: {
-                        virtualTrackerRightFoot: virtualTrackerRightFoot,
-                    },
-                },
-            });
-        });
-
     document.getElementById("com-ports").addEventListener("change", () => {
         const comPorts: HTMLInputElement[] = Array.from(
             document.getElementById("com-ports").querySelectorAll("input")
@@ -975,19 +888,6 @@ function addEventListeners() {
                     language: language,
                 },
             });
-
-            const leftAnkleInput = document.getElementById(
-                "left-ankle-id"
-            ) as HTMLInputElement;
-            const rightAnkleInput = document.getElementById(
-                "right-ankle-id"
-            ) as HTMLInputElement;
-            leftAnkleInput.placeholder = await window.translate(
-                "settings.ankle.placeholder"
-            );
-            rightAnkleInput.placeholder = await window.translate(
-                "settings.ankle.placeholder"
-            );
         });
 
     document

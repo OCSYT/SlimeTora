@@ -119,6 +119,5 @@ declare global {
         sensorMode: number;
         fpsMode: number;
         sensorAutoCorrection: string[];
-        ankleMotionDetection: boolean;
     }
 }

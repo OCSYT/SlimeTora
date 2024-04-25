@@ -84,8 +84,6 @@ const createWindow = () => {
         canLogToFile = config.global?.debug?.canLogToFile || false;
         debugTrackerConnections =
             config.global?.debug?.debugTrackerConnections || false;
-        enableVirtualFootTrackers =
-            config.global?.trackers?.ankleEnabled || false;
         virtualTrackerLeftFoot =
             config.global?.trackers?.virtualTrackerLeftFoot || "";
         virtualTrackerRightFoot =
@@ -238,13 +236,11 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         sensorMode,
         fpsMode,
         sensorAutoCorrection,
-        ankle,
     }: {
         deviceID: string;
         sensorMode: number;
         fpsMode: number;
         sensorAutoCorrection: string[];
-        ankle: boolean;
     } = arg;
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
         error(`Invalid settings received: ${JSON.stringify(arg)}`);
@@ -259,7 +255,6 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
     log(`Sensor mode: ${sensorMode}`);
     log(`FPS mode: ${fpsMode}`);
     log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
-    log(`Ankle motion detection: ${ankle}`);
     log(
         `Old tracker settings: ${JSON.stringify(
             await device.getTrackerSettings(deviceID, true)
@@ -272,7 +267,6 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         sensorMode,
         fpsMode,
         uniqueSensorAutoCorrection,
-        ankle
     );
 
     log(
@@ -287,12 +281,10 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
         sensorMode,
         fpsMode,
         sensorAutoCorrection,
-        ankle,
     }: {
         sensorMode: number;
         fpsMode: number;
         sensorAutoCorrection: string[];
-        ankle: boolean;
     } = arg;
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
         error(`Invalid settings received: ${JSON.stringify(arg)}`);
@@ -308,14 +300,13 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
     log(`Sensor mode: ${sensorMode}`);
     log(`FPS mode: ${fpsMode}`);
     log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
-    log(`Ankle motion detection: ${ankle}`);
 
     // Save the settings
-    await device.setAllTrackerSettings(
+    device.setAllTrackerSettings(
         sensorMode,
         fpsMode,
         uniqueSensorAutoCorrection,
-        ankle
+        false
     );
 });
 
@@ -324,29 +315,23 @@ async function setTrackerSettings(
     sensorMode: number,
     fpsMode: number,
     sensorAutoCorrection: string[],
-    ankle: boolean
 ) {
     const uniqueSensorAutoCorrection = Array.from(
         new Set(sensorAutoCorrection)
     );
 
-    await device.setTrackerSettings(
+    device.setTrackerSettings(
         deviceID,
         sensorMode,
         fpsMode,
         uniqueSensorAutoCorrection,
-        ankle
+        false
     );
 }
 
 ipcMain.on("set-logging", (_event, arg) => {
     canLogToFile = arg;
     log(`Logging to file set to: ${arg}`);
-});
-
-ipcMain.on("set-ankle", (_event, arg) => {
-    enableVirtualFootTrackers = arg;
-    log(`Ankle motion detection set to: ${arg}`);
 });
 
 ipcMain.on("set-debug-tracker-connections", (_event, arg) => {
@@ -528,17 +513,12 @@ function startDeviceListeners() {
         mainWindow.webContents.send("device-mag", { trackerName, magStatus });
     });
 
-    const ankleReadings: number[] = [];
-    const N = 10; // Number of readings to average
-    let leftAnkleRotationReading: Rotation;
-    let rightAnkleRotationReading: Rotation;
     device.on(
         "imu",
         async (
             trackerName: string,
             rawRotation: Rotation,
             rawGravity: Gravity,
-            rawAnkle: number
         ) => {
             if (
                 !connectedDevices.includes(trackerName) ||
@@ -575,105 +555,10 @@ function startDeviceListeners() {
             );
             sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
 
-            let ankle = rawAnkle;
-
-            // Virtual feet (using ankle data) trackers
-            // TODO: see if this can be improved by fixing foot going inside leg when the leg is behind the body
-            if (
-                enableVirtualFootTrackers &&
-                (trackerName === virtualTrackerLeftFoot ||
-                    trackerName === virtualTrackerRightFoot)
-            ) {
-                if (trackerName === virtualTrackerLeftFoot)
-                    leftAnkleRotationReading = rawRotation;
-                else if (trackerName === virtualTrackerRightFoot)
-                    rightAnkleRotationReading = rawRotation;
-
-                if (rawAnkle) {
-                    ankleReadings.push(ankle);
-
-                    // If there are more than N readings, remove the oldest one
-                    if (ankleReadings.length > N) {
-                        ankleReadings.shift();
-                    }
-
-                    const ankleAverage =
-                        ankleReadings.reduce((a, b) => a + b, 0) /
-                        ankleReadings.length;
-
-                    let ankleDegrees =
-                        ((ankleAverage - 30) / (200 - 30)) * 180 - 90;
-
-                    //console.log(`Ankle degrees: ${ankleDegrees}`);
-
-                    // Convert the ankle degrees to radians
-                    let ankleToFRadians = clamp(
-                        ankleDegrees * (Math.PI / 180),
-                        -2,
-                        -0.2
-                    );
-                    //console.log(`Ankle ToF radians: ${ankleToFRadians}`);
-
-                    let ankleRecentRotationReading: Rotation;
-                    
-                    // Assign value based on trackerName
-                    if (trackerName === virtualTrackerLeftFoot)
-                        ankleRecentRotationReading = leftAnkleRotationReading;
-                    else if (trackerName === virtualTrackerRightFoot)
-                        ankleRecentRotationReading = rightAnkleRotationReading;
-
-                    let ankleRecentRadianY = ankleRecentRotationReading.y;
-                    let ankleRecentRadianZ = ankleRecentRotationReading.z;
-
-                    // Create a quaternion from the ankle radians
-                    const quaternion = {
-                        w: Math.cos(ankleToFRadians / 2),
-                        x: Math.sin(ankleToFRadians / 2),
-                        y: Math.sin(ankleRecentRadianY / 2),
-                        z: Math.sin(ankleRecentRadianZ / 2),
-                    };
-
-                    if (trackerName === virtualTrackerLeftFoot) {
-                        if (
-                            !connectedDevices.includes("virtualTrackerLeftFoot")
-                        ) {
-                            connectedDevices.sort();
-                            trackerQueue.push("virtualTrackerLeftFoot");
-                            await handleNextTracker();
-                        }
-
-                        // Send virtual left foot data
-                        sendRotationPacket(
-                            quaternion,
-                            connectedDevices.indexOf("virtualTrackerLeftFoot")
-                        );
-                    } else if (trackerName === virtualTrackerRightFoot) {
-                        if (
-                            !connectedDevices.includes(
-                                "virtualTrackerRightFoot"
-                            )
-                        ) {
-                            connectedDevices.sort();
-                            trackerQueue.push("virtualTrackerRightFoot");
-                            await handleNextTracker();
-                        }
-
-                        // Send virtual right foot data
-                        sendRotationPacket(
-                            quaternion,
-                            connectedDevices.indexOf("virtualTrackerRightFoot")
-                        );
-                    }
-
-                    log(`Sending virtual foot data for ${trackerName}`);
-                }
-            }
-
             mainWindow.webContents.send("device-data", {
                 trackerName,
                 rotation,
-                gravity,
-                ankle,
+                gravity
             });
         }
     );
