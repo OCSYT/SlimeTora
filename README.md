@@ -29,12 +29,13 @@ This fork rewrites improves on the stability and performance of the app by rewri
 + `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
   + Welcome elbow tracker users!
 + Set tracker settings per-tracker
+  + Currently in beta and needs more testing
 + Localization support
   + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 + Linux support
   + This was done as SlimeVR is supported on Linux, and the first time HaritoraX trackers work on Linux!
   + ..however this is not tested at all. Please let me know if there are issues.
-  + + Magnetometer statuses
++ Magnetometer statuses
 + Dynamically grab version number from package.json (instead of relying on manually changing it per release)
 + Censor tracker serial numbers
 + Many new ways to debug the program
@@ -45,8 +46,7 @@ This fork rewrites improves on the stability and performance of the app by rewri
 - (?) GX tracker settings may be unreliable
   - This seems to be really random, unsure if there's something wrong with my testing, device, or if there's a random race condition.
   - Either way, would use `HaritoraConfigurator` instead if you do not need per-tracker settings.
-- `v1.0.0-alpha8` - Duplicate trackers may be shown in the app
-  - Fixed with the next upcoming release, `v1.0.0-alpha9`
+- Restarting connections on GX does not work until a program restart (Bluetooth is fine)
 - Bluetooth tracker's battery report stays on N/A until reported by trackers (instead of instantly grabbing them)
 - Battery data sent to SlimeVR server isn't per-tracker
   - Cannot really fix this, instead the program sends the lowest battery data of all the trackers to the server
