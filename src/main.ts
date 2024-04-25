@@ -30,10 +30,6 @@ let debugTrackerConnections = false;
 let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
 
-let enableVirtualFootTrackers = false;
-let virtualTrackerLeftFoot: string;
-let virtualTrackerRightFoot: string;
-
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
 
@@ -84,10 +80,6 @@ const createWindow = () => {
         canLogToFile = config.global?.debug?.canLogToFile || false;
         debugTrackerConnections =
             config.global?.debug?.debugTrackerConnections || false;
-        virtualTrackerLeftFoot =
-            config.global?.trackers?.virtualTrackerLeftFoot || "";
-        virtualTrackerRightFoot =
-            config.global?.trackers?.virtualTrackerRightFoot || "";
     }
 
     mainWindow = new BrowserWindow({
