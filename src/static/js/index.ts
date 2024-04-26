@@ -427,6 +427,7 @@ async function addDeviceToList(deviceID: string) {
         `;
 
     const deviceNameElement = newDevice.querySelector("#device-name");
+    const deviceIDElement = newDevice.querySelector("#device-id");
     const editButton = newDevice.querySelector("#edit-button");
 
     function startEditing() {
@@ -468,6 +469,8 @@ async function addDeviceToList(deviceID: string) {
         }
     }
 
+    if (!editButton || !deviceNameElement || !deviceIDElement) return;
+
     editButton.addEventListener("click", startEditing);
     deviceNameElement.addEventListener("click", startEditing);
 
@@ -475,14 +478,14 @@ async function addDeviceToList(deviceID: string) {
     if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
         if (deviceName === deviceID)
             deviceNameElement.textContent = "HaritoraXW-XXXXXX";
-        newDevice.querySelector("#device-id").textContent = "HaritoraXW-XXXXXX";
+        deviceIDElement.textContent = "HaritoraXW-XXXXXX";
     } else if (deviceID.startsWith("HaritoraX") && censorSerialNumbers) {
         if (deviceName === deviceID)
             deviceNameElement.textContent = "HaritoraX-XXXXXX";
-        newDevice.querySelector("#device-id").textContent = "HaritoraX-XXXXXX";
+        deviceIDElement.textContent = "HaritoraX-XXXXXX";
     }
 
-    await window.ipc.send("get-tracker-battery", deviceID);
+    window.ipc.send("get-tracker-battery", deviceID);
 
     deviceList.appendChild(newDevice);
 
@@ -498,15 +501,15 @@ window.ipc.on("localize", (_event, resources) => {
 });
 
 window.ipc.on("connect", async (_event, deviceID) => {
-    if (!deviceID.startsWith("virtualTracker")) {
-        window.log(`Connected to ${deviceID}`);
-        deviceQueue.push(deviceID);
-        processQueue();
-    }
+    window.log(`Connected to ${deviceID}`);
+    deviceQueue.push(deviceID);
+    processQueue();
 
-    document.getElementById("tracker-count").textContent = (
-        parseInt(document.getElementById("tracker-count").textContent) + 1
-    ).toString();
+    const trackerCount = document.getElementById("tracker-count");
+    if (trackerCount)
+        trackerCount.textContent = (
+            parseInt(document.getElementById("tracker-count").textContent) + 1
+        ).toString();
 
     setStatus(await window.translate("main.status.connected"));
 
@@ -570,23 +573,19 @@ window.ipc.on("disconnect", (_event, deviceID) => {
 
 let lastUpdate = Date.now();
 
-window.ipc.on("device-data", (_event: any, arg) => {
+window.ipc.on("device-data", async (_event: any, arg) => {
     const {
         trackerName,
         rotation,
         gravity,
     }: { trackerName: string; rotation: Rotation; gravity: Gravity } = arg;
-
-    if (
-        !isActive ||
-        !document
-            .getElementById("device-list")
-            .querySelector(`#${trackerName}`)
-    )
+    if (!isActive) return;
+    if (!document.getElementById(trackerName)) {
+        window.ipc.send("log", `Device ${trackerName} not found in DOM, adding to queue`)
+        deviceQueue.push(trackerName);
+        await processQueue();
         return;
-
-    deviceQueue.push(trackerName);
-    processQueue();
+    }
 
     const now = Date.now();
 
@@ -604,12 +603,17 @@ window.ipc.on("device-data", (_event: any, arg) => {
         0
     )}, ${gravity.z.toFixed(0)}`;
 
-    document
+    const rotationDataElement = document
         .getElementById(trackerName)
-        .querySelector("#rotation-data").textContent = rotationText;
-    document
+        .querySelector("#rotation-data");
+    const accelerationDataElement = document
         .getElementById(trackerName)
-        .querySelector("#acceleration-data").textContent = gravityText;
+        .querySelector("#acceleration-data");
+
+    if (!rotationDataElement || !accelerationDataElement) return;
+
+    rotationDataElement.textContent = rotationText;
+    accelerationDataElement.textContent = gravityText;
 });
 
 window.ipc.on("device-battery", (_event, arg) => {
@@ -626,7 +630,7 @@ window.ipc.on("device-battery", (_event, arg) => {
     const batteryText: HTMLElement = document
         .getElementById(trackerName)
         .querySelector("#battery");
-    if (batteryText === null) return;
+    if (!batteryText) return;
     batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
     window.log(
         `Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`
@@ -643,43 +647,26 @@ window.ipc.on("device-mag", (_event, arg) => {
         magStatus,
     }: { trackerName: string; magStatus: string } = arg;
     if (!isActive || !trackerName) return;
-    const magStatusElement: HTMLElement = document
-        .getElementById(trackerName)
-        .querySelector("#mag-status");
-    if (magStatusElement === null) return;
 
-    if (
-        magStatus === "green" &&
-        !magStatusElement.classList.contains("mag-status-green")
-    ) {
-        magStatusElement.classList.add("mag-status-green");
-        magStatusElement.classList.remove("mag-status-yellow");
-        magStatusElement.classList.remove("mag-status-red");
-        window.log(`Mag status for ${trackerName}: ${magStatus}`);
-    } else if (
-        magStatus === "yellow" &&
-        !magStatusElement.classList.contains("mag-status-yellow")
-    ) {
-        magStatusElement.classList.add("mag-status-yellow");
-        magStatusElement.classList.remove("mag-status-green");
-        magStatusElement.classList.remove("mag-status-red");
-        window.log(`Mag status for ${trackerName}: ${magStatus}`);
-    } else if (
-        magStatus === "red" &&
-        !magStatusElement.classList.contains("mag-status-red")
-    ) {
-        magStatusElement.classList.add("mag-status-red");
-        magStatusElement.classList.remove("mag-status-green");
-        magStatusElement.classList.remove("mag-status-yellow");
-        window.log(`Mag status for ${trackerName}: ${magStatus}`);
-    } else if (magStatus === "unknown") {
-        magStatusElement.classList.add("mag-status-unknown");
-        magStatusElement.classList.remove("mag-status-red");
-        magStatusElement.classList.remove("mag-status-green");
-        magStatusElement.classList.remove("mag-status-yellow");
+    const trackerElement = document.getElementById(trackerName);
+    if (!trackerElement) return;
+
+    const magStatusElement: HTMLElement = trackerElement.querySelector("#mag-status");
+    if (!magStatusElement) return;
+
+    const statuses: { [key: string]: string } = {
+        green: "mag-status-green",
+        yellow: "mag-status-yellow",
+        red: "mag-status-red",
+        unknown: "mag-status-unknown",
+    };
+
+    for (let status in statuses) {
+        magStatusElement.classList.remove(statuses[status]);
     }
-});
 
+    magStatusElement.classList.add(statuses[magStatus]);
+});
 // Set version number
 window.ipc.on("version", (_event, version) => {
     document.getElementById("version").textContent = version;
@@ -712,6 +699,9 @@ function addEventListeners() {
                     const deviceNameElement =
                         device.querySelector("#device-name");
                     const deviceIDElement = device.querySelector("#device-id");
+
+                    if (!deviceNameElement || !deviceIDElement) return;
+
                     const deviceName = deviceNameElement.textContent;
                     const deviceID = deviceIDElement.textContent;
 
@@ -746,11 +736,16 @@ function addEventListeners() {
                         "get-settings",
                         null
                     );
+                    const deviceNameElement =
+                        device.querySelector("#device-name");
+                    const deviceIDElement = device.querySelector("#device-id");
                     const originalDeviceName =
                         settings.trackers?.[device.id]?.name || device.id;
-                    device.querySelector("#device-name").textContent =
-                        originalDeviceName;
-                    device.querySelector("#device-id").textContent = device.id;
+
+                    if (!deviceNameElement || !deviceIDElement) return;
+
+                    deviceNameElement.textContent = originalDeviceName;
+                    deviceIDElement.textContent = device.id;
                 });
             }
         });
