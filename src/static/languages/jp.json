@@ -10,8 +10,7 @@
             "connected": "接続済み",
             "comPortsMissing": "COMポートが見つかりません",
             "slimeVRMissing": "SlimeVRが見つかりません",
-            "noConnectionMode": "有効な接続モードがありません",
-            "connectionFailed": "接続失敗"
+            "noConnectionMode": "有効な接続モードがありません"
         }
     },
     "trackerInfo": {

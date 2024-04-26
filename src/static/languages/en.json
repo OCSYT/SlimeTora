@@ -10,8 +10,7 @@
             "connected": "connected",
             "comPortsMissing": "COM ports missing",
             "slimeVRMissing": "SlimeVR not found",
-            "noConnectionMode": "No connection mode enabled",
-            "connectionFailed": "connection failed"
+            "noConnectionMode": "No connection mode enabled"
         }
     },
     "trackerInfo": {

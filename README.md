@@ -46,10 +46,9 @@ This fork rewrites improves on the stability and performance of the app by rewri
 - (?) GX tracker settings may be unreliable
   - This seems to be really random, unsure if there's something wrong with my testing, device, or if there's a random race condition.
   - Either way, would use `HaritoraConfigurator` instead if you do not need per-tracker settings.
-- Restarting connections on GX does not work until a program restart (Bluetooth is fine)
 - Bluetooth tracker's battery report stays on N/A until reported by trackers (instead of instantly grabbing them)
 - Battery data sent to SlimeVR server isn't per-tracker
-  - Cannot really fix this, instead the program sends the lowest battery data of all the trackers to the server
+  - Cannot really fix this, instead the program sends the lowest battery data from all the trackers to the server
 
 # How to use
 - Install the [SlimeVR server](https://docs.slimevr.dev/server/index.html)

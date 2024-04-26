@@ -148,11 +148,13 @@ ipcMain.on("start-connection", async (_event, arg) => {
     );
 
     if (types.includes("bluetooth")) {
-        connectBluetooth();
+        log("Starting Bluetooth connection");
+        device.startConnection("bluetooth");
     }
 
     if (types.includes("gx") && ports) {
-        connectGX(ports);
+        log("Starting GX connection with ports: " + JSON.stringify(ports));
+        device.startConnection("gx", ports);
     }
 
     const activeTrackers: string[] = device.getActiveTrackers();
@@ -370,35 +372,6 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         trackerSettingsWindow.webContents.send("trackerName", arg);
     });
 });
-
-async function connectBluetooth() {
-    log("Connecting via bluetooth");
-    let connected = await device.startConnection("bluetooth");
-    if (!connected) {
-        error("Error connecting via bluetooth");
-        mainWindow.webContents.send(
-            "set-status",
-            await mainWindow.webContents.executeJavaScript(
-                'window.i18n.translate("main.status.connectionFailed")'
-            )
-        );
-        return;
-    }
-}
-
-async function connectGX(ports: string[]) {
-    log(`Connecting via GX dongles with ports: ${ports}`);
-    let connected = await device.startConnection("gx", ports);
-    if (!connected) {
-        error("Error connecting via GX dongles");
-        mainWindow.webContents.send(
-            "set-status",
-            await mainWindow.webContents.executeJavaScript(
-                'window.i18n.translate("main.status.connectionFailed")'
-            )
-        );
-    }
-}
 
 /*
  * Config handlers
