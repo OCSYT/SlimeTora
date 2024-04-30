@@ -6,7 +6,12 @@ import i18next from "i18next";
 // @ts-ignore
 import locI18next from "loc-i18next";
 
+import * as THREE from 'three'
 let localize: any = null;
+
+contextBridge.exposeInMainWorld("three", {
+    THREE
+});
 
 contextBridge.exposeInMainWorld("ipc", {
     send: (channel: string, data: any) => {
@@ -80,9 +85,14 @@ contextBridge.exposeInMainWorld("i18n", {
 
 declare global {
     interface Window {
+        three: {
+            THREE: typeof THREE;
+        };
+
         startConnection: () => void;
         stopConnection: () => void;
         openLogsFolder: () => void;
+        saveSettings: () => void;
         openTrackerSettings: (deviceID: string) => void;
 
         ipc: {

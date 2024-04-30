@@ -16,6 +16,7 @@
     "trackerInfo": {
         "title": "Tracker information",
         "censorSerialNumbers": "Censor serial numbers",
+        "trackerVisualization": "Tracker visualization",
         "deviceName": "Device:",
         "deviceID": "Device ID:",
         "rotationData": "Rotation data:",

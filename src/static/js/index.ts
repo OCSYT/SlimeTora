@@ -17,8 +17,7 @@ let debugTrackerConnections = false;
 
 let language = "en";
 let censorSerialNumbers = false;
-
-// TODO add tracker visualization
+let trackerVisualization = false;
 
 /*
  * Renderer functions
@@ -75,6 +74,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     );
     language = settings.global?.language || "en";
     censorSerialNumbers = settings.global?.censorSerialNumbers || false;
+    trackerVisualization = settings.global?.trackerVisualization || false;
     bluetoothEnabled =
         settings.global?.connectionMode?.bluetoothEnabled || false;
     gxEnabled = settings.global?.connectionMode?.gxEnabled || false;
@@ -94,6 +94,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Get the checkbox elements
     const censorSerialNumbersSwitch = document.getElementById(
         "censor-serial-switch"
+    ) as HTMLInputElement;
+    const trackerVisualizationSwitch = document.getElementById(
+        "visualization-switch"
     ) as HTMLInputElement;
     const bluetoothSwitch = document.getElementById(
         "bluetooth-switch"
@@ -123,6 +126,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Set the checked property based on the settings
     censorSerialNumbersSwitch.checked = censorSerialNumbers;
+    trackerVisualizationSwitch.checked = trackerVisualization;
     bluetoothSwitch.checked = bluetoothEnabled;
     gxSwitch.checked = gxEnabled;
     accelerometerSwitch.checked = accelerometerEnabled;
@@ -492,6 +496,182 @@ async function addDeviceToList(deviceID: string) {
     window.localize();
 }
 
+function createVisualization(deviceID: string) {
+    window.log(`Creating visualization for ${deviceID}`);
+    const THREE = window.three.THREE;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+    camera.position.z = 5;
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true }); // Set alpha to true for a transparent background
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+    directionalLight.position.set(0, 1, 1);
+    scene.add(directionalLight);
+
+    let cube: any = null;
+    const textureLoader = new THREE.TextureLoader();
+
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+    const fbxLoader = new FBXLoader();
+
+    fbxLoader.load(
+        "./tracker.fbx",
+        (object: any) => {
+            object.scale.set(0.01, 0.01, 0.01);
+
+            textureLoader.load(
+                "./trackertexture.png",
+                (texture: any) => {
+                    object.traverse((child: any) => {
+                        if (child.isMesh) {
+                            // Create a PBR material
+                            const material = new THREE.MeshStandardMaterial({
+                                map: texture,
+                                roughness: 0.5,
+                                metalness: 0,
+                            });
+                            child.material = material;
+                        }
+                    });
+                },
+                undefined,
+                (error: any) => {
+                    console.error(
+                        "An error occurred loading the texture:",
+                        error
+                    );
+                }
+            );
+            cube = object;
+            scene.add(object);
+        },
+        (xhr: any) => {
+            console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+        },
+        (error: any) => {
+            console.log(error);
+        }
+    );
+
+    const composer = new EffectComposer(renderer);
+
+    // Render Pass
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    // Outline Pass
+    const outlinePass = new OutlinePass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        scene,
+        camera
+    );
+    outlinePass.renderToScreen = true;
+    outlinePass.edgeStrength = 10;
+    outlinePass.edgeGlow = 0;
+    outlinePass.edgeThickness = 0.5;
+    outlinePass.pulsePeriod = 0;
+    outlinePass.usePatternTexture = false;
+    outlinePass.visibleEdgeColor.set("#ffffff");
+    outlinePass.hiddenEdgeColor.set("#ffffff");
+    composer.addPass(outlinePass);
+
+    const animate = () => {
+        requestAnimationFrame(animate);
+        if (cube != null) {
+            outlinePass.selectedObjects = [cube];
+        }
+        composer.render();
+    };
+
+    let gravityLine: any = null;
+
+    window.ipc.on("device-data", (_event, arg) => {
+        const {
+            trackerName,
+            rotation,
+            gravity,
+        }: { trackerName: string; rotation: Rotation; gravity: Gravity } = arg;
+
+        if (cube == null) return;
+        // Create a quaternion from the components
+        const rotationQuaternion = new THREE.Quaternion(
+            rotation.x,
+            rotation.y,
+            rotation.z,
+            rotation.w
+        );
+
+        const gravityVector = new THREE.Vector3(
+            gravity.x,
+            gravity.y,
+            gravity.z
+        );
+
+        rotationQuaternion.normalize();
+
+        // Apply the quaternion rotation to the cube
+        cube.quaternion.copy(rotationQuaternion);
+
+        // Update the length of the gravity line
+        if (gravityLine) {
+            updateGravityLineLength(gravityVector, cube.quaternion);
+        } else {
+            createGravityLine(gravityVector);
+        }
+    });
+
+    // Function to create or update the gravity line
+    function createGravityLine(gravity: any) {
+        // Create a line geometry to represent the gravity vector
+        const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            gravity.clone(),
+        ]);
+
+        // Create a basic material for the line
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffff00 });
+
+        // Create the line mesh
+        gravityLine = new THREE.Line(lineGeometry, lineMaterial);
+
+        // Add the line to the scene
+        scene.add(gravityLine);
+    }
+
+    // Function to update the length of the gravity line
+    function updateGravityLineLength(gravity: any, rot: any) {
+        const endPoint = gravity.clone().applyQuaternion(rot); // End point at the gravity vector's tip (multiplied by 10 for visualization)
+        const positions = gravityLine.geometry.attributes.position.array;
+        positions[3] = endPoint.x;
+        positions[4] = endPoint.y;
+        positions[5] = endPoint.z;
+        gravityLine.geometry.attributes.position.needsUpdate = true;
+    }
+
+    window.addEventListener("resize", () => {
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+
+        camera.aspect = newWidth / newHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(newWidth, newHeight);
+    });
+
+    animate();
+}
+
 /*
  * Event listeners
  */
@@ -522,6 +702,8 @@ window.ipc.on("connect", async (_event, deviceID) => {
               trackerName: deviceID,
           });
     setTrackerSettings(deviceID, trackerSettings);
+
+    if (trackerVisualization) createVisualization(deviceID);
 });
 
 function setTrackerSettings(deviceID: string, trackerSettings: any) {
@@ -581,7 +763,10 @@ window.ipc.on("device-data", async (_event: any, arg) => {
     }: { trackerName: string; rotation: Rotation; gravity: Gravity } = arg;
     if (!isActive) return;
     if (!document.getElementById(trackerName)) {
-        window.ipc.send("log", `Device ${trackerName} not found in DOM, adding to queue`)
+        window.ipc.send(
+            "log",
+            `Device ${trackerName} not found in DOM, adding to queue`
+        );
         deviceQueue.push(trackerName);
         await processQueue();
         return;
@@ -651,7 +836,8 @@ window.ipc.on("device-mag", (_event, arg) => {
     const trackerElement = document.getElementById(trackerName);
     if (!trackerElement) return;
 
-    const magStatusElement: HTMLElement = trackerElement.querySelector("#mag-status");
+    const magStatusElement: HTMLElement =
+        trackerElement.querySelector("#mag-status");
     if (!magStatusElement) return;
 
     const statuses: { [key: string]: string } = {
@@ -748,6 +934,18 @@ function addEventListeners() {
                     deviceIDElement.textContent = device.id;
                 });
             }
+        });
+
+    document
+        .getElementById("visualization-switch")
+        .addEventListener("change", function () {
+            trackerVisualization = !trackerVisualization;
+            window.log(`Switched tracker visualization: ${trackerVisualization}`);
+            window.ipc.send("save-setting", {
+                global: {
+                    trackerVisualization: trackerVisualization,
+                },
+            });
         });
 
     document
@@ -1023,7 +1221,3 @@ window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for ${deviceID}`);
     window.ipc.send("open-tracker-settings", deviceID);
 };
-
-/*
- * TypeScript declarations
- */

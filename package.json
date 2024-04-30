@@ -31,6 +31,7 @@
     "devDependencies": {
         "@electron/packager": "^18.3.2",
         "@types/node": "^20.12.5",
+        "@types/three": "^0.164.0",
         "bestzip": "^2.2.1",
         "copyfiles": "^2.4.1",
         "del-cli": "^5.1.0",
@@ -47,6 +48,7 @@
         "loc-i18next": "^0.1.6",
         "lodash": "^4.17.21",
         "quaternion": "^1.5.1",
-        "sass": "^1.72.0"
+        "sass": "^1.72.0",
+        "three": "^0.164.1"
     }
 }

@@ -322,8 +322,8 @@ async function resetSettings() {
 
     window.ipc.send("save-tracker-settings", {
         deviceID,
-        sensorMode,
-        fpsMode,
+        sensorMode: settingsSensorMode,
+        fpsMode: settingsFPSMode,
         sensorAutoCorrection: sensorAutoCorrection,
     });
 
