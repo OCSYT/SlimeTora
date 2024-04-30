@@ -482,50 +482,26 @@ function startDeviceListeners() {
         "imu",
         async (
             trackerName: string,
-            rawRotation: Rotation,
-            rawGravity: Gravity,
+            rotation: Rotation,
+            gravity: Gravity,
         ) => {
             if (
                 !connectedDevices.includes(trackerName) ||
-                !rawRotation ||
-                !rawGravity
+                !rotation ||
+                !gravity
             )
                 return;
 
-            // Convert rotation to quaternion to euler angles in radians
-            const quaternion = new Quaternion(
-                rawRotation.w,
-                rawRotation.x,
-                rawRotation.y,
-                rawRotation.z
-            );
-            const eulerRadians = quaternion.toEuler("XYZ");
-
-            // Convert the Euler angles to degrees
-            const rotation = {
-                x: eulerRadians[0] * (180 / Math.PI),
-                y: eulerRadians[1] * (180 / Math.PI),
-                z: eulerRadians[2] * (180 / Math.PI),
-            };
-
-            const gravity = {
-                x: rawGravity.x,
-                y: rawGravity.y,
-                z: rawGravity.z,
-            };
-
             sendRotationPacket(
-                rawRotation,
+                rotation,
                 connectedDevices.indexOf(trackerName)
             );
-            sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
+            sendAccelPacket(gravity, connectedDevices.indexOf(trackerName));
 
             mainWindow.webContents.send("device-data", {
                 trackerName,
                 rotation,
-                gravity,
-                rawRotation,
-                rawGravity
+                gravity
             });
         }
     );
