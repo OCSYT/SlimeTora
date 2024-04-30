@@ -523,7 +523,9 @@ function startDeviceListeners() {
             mainWindow.webContents.send("device-data", {
                 trackerName,
                 rotation,
-                gravity
+                gravity,
+                rawRotation,
+                rawGravity
             });
         }
     );
