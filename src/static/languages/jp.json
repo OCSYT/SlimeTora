@@ -15,7 +15,9 @@
     },
     "trackerInfo": {
         "title": "トラッカー情報",
+        "tooltip": "TO CHANGE",
         "censorSerialNumbers": "シリアルナンバーを隠す",
+        "trackerVisualization": "TO CHANGE",
         "deviceName": "デバイス名:",
         "deviceID": "デバイスID:",
         "rotationData": "回転:",
@@ -58,7 +60,7 @@
     "settings": {
         "title": "全般設定",
         "text": "アプリケーションとトラッカー内部、両方の設定を変更できます。但し、トラッカー内の設定を書き換えるのは信頼性が低い可能性があるので、HaritoraConfiguratorを使用することを強くお勧めします。",
-        "tooltip": "トラッカーまたはアプリケーションの設定を行います。黄色の文字で表示されるオプションを適用するにはアプリケーションの再起動が必要です。",
+        "tooltip": "TO CHANGE",
         "connectionMode": {
             "title": "接続モード",
             "tooltip": "トラッカーとの接続モードを選択します。一度に複数のモードを選択することが可能です。",
@@ -108,7 +110,7 @@
     },
     "debugging": {
         "title": "デバッグ",
-        "tooltip": "黄色の文字で表示されるオプションを適用するにはアプリケーションの再起動が必要です。",
+        "tooltip": "TO CHANGE",
         "text": "デバッグ機能を有効または無効にします。トラッカーのログファイルが巨大になるので、ログを要求された場合やトラッカーに問題がある場合にのみ使用してください！",
         "writeToFile": "デバッグログを有効にする",
         "skipSlimeVR": "SlimeVRのチェックをスキップする",

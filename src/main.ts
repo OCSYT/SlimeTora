@@ -742,9 +742,10 @@ async function sendHandshakePacket(trackerName: string) {
                 error(`Error sending handshake: ${err}`);
                 reject(false);
             } else {
+                if (trackerName == "SEARCHING") return;
                 log(
                     `Added device ${trackerName} to SlimeVR server as IMU ${
-                        connectedDevices.length - 1
+                        connectedDevices.length
                     } // Handshake`
                 );
                 resolve(true);

@@ -96,12 +96,26 @@
         <!-- Tracker info section -->
         <div class="section">
             <div class="container">
-                <h1
-                    class="title has-text-centered is-2"
-                    data-i18n="trackerInfo.title"
-                >
-                    Tracker information
-                </h1>
+                <div class="with-tooltip">
+                    <h3
+                        class="title is-2 is-spaced"
+                        data-i18n="trackerInfo.title"
+                    >
+                        Tracker information
+                    </h3>
+                    <div class="tooltip-container">
+                        <div class="icon">
+                            <img src="../images/help.svg" alt="Help icon" />
+                        </div>
+                        <span
+                            class="tooltip-text subtitle is-6 has-text-weight-normal"
+                            data-i18n="trackerInfo.tooltip"
+                            >See information about the connected trackers. An
+                            option with yellow text requires a restart of the
+                            connection or program to fully apply.</span
+                        >
+                    </div>
+                </div>
                 <div class="vertical-settings-container">
                     <div class="switch-container">
                         <div class="switch">
@@ -113,6 +127,7 @@
                         </div>
                         <label
                             for="visualization-switch"
+                            class="has-text-warning"
                             data-i18n="trackerInfo.trackerVisualization"
                             >Tracker visualization</label
                         >
@@ -470,7 +485,7 @@
                         <div class="input-container is-centered">
                             <label
                                 for="tracker-visualization-fps"
-                                class="label"
+                                class="label has-text-warning"
                                 data-i18n="settings.other.trackerVisualizationFPS"
                                 >Tracker visualization FPS</label
                             >
