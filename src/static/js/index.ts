@@ -495,8 +495,8 @@ async function addDeviceToList(deviceID: string) {
 
         iframe.id = `${deviceID}-visualization`;
         iframe.src = "./visualization.html";
-        iframe.width = "200px";
-        iframe.height = "200px";
+        iframe.width = "280px";
+        iframe.height = "280px";
 
         const container = newDevice.querySelector(".content");
         if (container) {

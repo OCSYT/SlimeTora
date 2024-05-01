@@ -546,11 +546,6 @@ function startDeviceListeners() {
     });
 }
 
-// Function to clamp a value between a min and max
-function clamp(value: number, min: number, max: number) {
-    return Math.min(Math.max(value, min), max);
-}
-
 function log(msg: string, where = "main") {
     const date = new Date();
 

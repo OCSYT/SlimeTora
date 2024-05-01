@@ -71,7 +71,7 @@
                     object.scale.set(0.01, 0.01, 0.01);
 
                     textureLoader.load(
-                        "../trackertexture.png",
+                        "../tracker-texture.png",
                         (texture) => {
                             object.traverse((child) => {
                                 if (child.isMesh) {
@@ -127,8 +127,18 @@
             outlinePass.hiddenEdgeColor.set("#ffffff");
             composer.addPass(outlinePass);
 
-            const animate = () => {
+            let lastFrameTime = 0;
+            const frameInterval = 1000 / 15; // 15 FPS
+
+            const animate = (currentTime) => {
                 requestAnimationFrame(animate);
+
+                if (currentTime - lastFrameTime < frameInterval) {
+                    return;
+                }
+
+                lastFrameTime = currentTime;
+
                 if (cube != null) {
                     outlinePass.selectedObjects = [cube];
                 }
@@ -152,8 +162,6 @@
                     event.data.gravity.y,
                     event.data.gravity.z
                 );
-
-                console.log("Quaternion: ", quaternion);
 
                 quaternion.normalize();
 
