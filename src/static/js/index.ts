@@ -283,8 +283,8 @@ async function stopConnection() {
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
     if (gxEnabled) window.ipc.send("stop-connection", "gx");
 
-    document.getElementById("tracker-count").textContent = "0";
     setStatus(await window.translate("main.status.none"));
+    document.getElementById("tracker-count").textContent = "0";
     document.getElementById("device-list").textContent = "";
     isActive = false;
 }
@@ -513,6 +513,13 @@ async function addDeviceToList(deviceID: string) {
         }
     }
 
+    // add to tracker count
+    const trackerCount = document.getElementById("tracker-count");
+    if (trackerCount)
+        trackerCount.textContent = (
+            parseInt(document.getElementById("tracker-count").textContent) + 1
+        ).toString();
+
     window.ipc.send("get-tracker-battery", deviceID);
 
     deviceList.appendChild(newDevice);
@@ -529,15 +536,11 @@ window.ipc.on("localize", (_event, resources) => {
 });
 
 window.ipc.on("connect", async (_event, deviceID) => {
+    if (!isActive) return;
+
     window.log(`Connected to ${deviceID}`);
     deviceQueue.push(deviceID);
     processQueue();
-
-    const trackerCount = document.getElementById("tracker-count");
-    if (trackerCount)
-        trackerCount.textContent = (
-            parseInt(document.getElementById("tracker-count").textContent) + 1
-        ).toString();
 
     setStatus(await window.translate("main.status.connected"));
 
