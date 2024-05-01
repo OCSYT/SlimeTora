@@ -596,7 +596,9 @@ window.ipc.on("device-data", async (_event: any, arg) => {
         trackerName,
         rotation,
         gravity,
-    }: { trackerName: string; rotation: Rotation; gravity: Gravity } = arg;
+        rawRotation,
+        rawGravity
+    }: { trackerName: string; rotation: Rotation; gravity: Gravity, rawRotation: Rotation, rawGravity: Gravity } = arg;
     if (!isActive) return;
     if (!document.getElementById(trackerName)) {
         window.ipc.send(
@@ -633,7 +635,7 @@ window.ipc.on("device-data", async (_event: any, arg) => {
     ) as HTMLIFrameElement;
     if (visualizationIframe) {
         const iframeWindow = visualizationIframe.contentWindow;
-        iframeWindow.postMessage({ rotation, gravity }, "*");
+        iframeWindow.postMessage({ rotation: rawRotation, gravity: rawGravity }, "*");
     }
 });
 
