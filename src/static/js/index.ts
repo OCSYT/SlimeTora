@@ -591,8 +591,6 @@ window.ipc.on("disconnect", (_event, deviceID) => {
         setStatus("searching");
 });
 
-let lastUpdate = Date.now();
-
 window.ipc.on("device-data", async (_event: any, arg) => {
     const {
         trackerName,
@@ -609,15 +607,6 @@ window.ipc.on("device-data", async (_event: any, arg) => {
         await processQueue();
         return;
     }
-
-    const now = Date.now();
-
-    // Limit updates to every 50ms
-    if (now - lastUpdate < 50) {
-        return;
-    }
-
-    lastUpdate = now;
 
     const rotationText = `${rotation.x.toFixed(0)}, ${rotation.y.toFixed(
         0
