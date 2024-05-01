@@ -15,9 +15,9 @@
     },
     "trackerInfo": {
         "title": "トラッカー情報",
-        "tooltip": "TO CHANGE",
+        "tooltip": "接続されたトラッカーの情報です。黄色の文字で表示されるオプションを適用するには、トラッカーを再接続するかアプリケーションの再起動が必要です。",
         "censorSerialNumbers": "シリアルナンバーを隠す",
-        "trackerVisualization": "TO CHANGE",
+        "trackerVisualization": "トラッカーモデルを表示",
         "deviceName": "デバイス名:",
         "deviceID": "デバイスID:",
         "rotationData": "回転:",
@@ -92,8 +92,8 @@
         },
         "other": {
             "title": "その他の設定",
-            "tooltip": "TO CHANGE",
-            "visualizationFPS": "TO CHANGE",
+            "tooltip": "他のカテゴリーに当てはまらないその他の設定。",
+            "visualizationFPS": "トラッカーモデルのフレームレート",
             "saveButton": "設定の保存"
         }
     },
@@ -110,7 +110,7 @@
     },
     "debugging": {
         "title": "デバッグ",
-        "tooltip": "TO CHANGE",
+        "tooltip": "黄色の文字で表示されるオプションを適用するには、トラッカーを再接続するかアプリケーションの再起動が必要です。",
         "text": "デバッグ機能を有効または無効にします。トラッカーのログファイルが巨大になるので、ログを要求された場合やトラッカーに問題がある場合にのみ使用してください！",
         "writeToFile": "デバッグログを有効にする",
         "skipSlimeVR": "SlimeVRのチェックをスキップする",
