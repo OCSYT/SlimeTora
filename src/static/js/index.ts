@@ -18,6 +18,7 @@ let debugTrackerConnections = false;
 let language = "en";
 let censorSerialNumbers = false;
 let trackerVisualization = false;
+let trackerVisualizationFPS = 10;
 
 /*
  * Renderer functions
@@ -75,6 +76,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     language = settings.global?.language || "en";
     censorSerialNumbers = settings.global?.censorSerialNumbers || false;
     trackerVisualization = settings.global?.trackerVisualization || false;
+    trackerVisualizationFPS = settings.global?.trackerVisualizationFPS || 10;
     bluetoothEnabled =
         settings.global?.connectionMode?.bluetoothEnabled || false;
     gxEnabled = settings.global?.connectionMode?.gxEnabled || false;
@@ -162,6 +164,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             port.checked = true;
         }
     });
+
+    // Set input values
+    const trackerVisualizationFPSInput = document.getElementById(
+        "tracker-visualization-fps"
+    ) as HTMLInputElement;
+    trackerVisualizationFPSInput.value = trackerVisualizationFPS.toString();
 
     // Check if the selected COM ports are still available
     let isMissingPorts = false;
@@ -494,7 +502,7 @@ async function addDeviceToList(deviceID: string) {
         const iframe = document.createElement("iframe");
 
         iframe.id = `${deviceID}-visualization`;
-        iframe.src = "./visualization.html";
+        iframe.src = `./visualization.html?fps=${trackerVisualizationFPS}`;
         iframe.width = "280px";
         iframe.height = "280px";
 
@@ -597,8 +605,14 @@ window.ipc.on("device-data", async (_event: any, arg) => {
         rotation,
         gravity,
         rawRotation,
-        rawGravity
-    }: { trackerName: string; rotation: Rotation; gravity: Gravity, rawRotation: Rotation, rawGravity: Gravity } = arg;
+        rawGravity,
+    }: {
+        trackerName: string;
+        rotation: Rotation;
+        gravity: Gravity;
+        rawRotation: Rotation;
+        rawGravity: Gravity;
+    } = arg;
     if (!isActive) return;
     if (!document.getElementById(trackerName)) {
         window.ipc.send(
@@ -633,10 +647,11 @@ window.ipc.on("device-data", async (_event: any, arg) => {
     const visualizationIframe = document.getElementById(
         `${trackerName}-visualization`
     ) as HTMLIFrameElement;
-    if (visualizationIframe) {
-        const iframeWindow = visualizationIframe.contentWindow;
-        iframeWindow.postMessage({ rotation: rawRotation, gravity: rawGravity }, "*");
-    }
+    if (visualizationIframe)
+        visualizationIframe.contentWindow.postMessage(
+            { rotation: rawRotation, gravity: rawGravity },
+            "*"
+        );
 });
 
 window.ipc.on("device-battery", (_event, arg) => {
@@ -691,7 +706,7 @@ window.ipc.on("device-mag", (_event, arg) => {
 
     magStatusElement.classList.add(statuses[magStatus]);
 });
-// Set version number
+
 window.ipc.on("version", (_event, version) => {
     document.getElementById("version").textContent = version;
     window.log(`Got app version: ${version}`);
@@ -1050,6 +1065,26 @@ function addEventListeners() {
             });
 
             unsavedSettings(true);
+        });
+
+    document
+        .getElementById("tracker-visualization-fps")
+        .addEventListener("change", async function () {
+            trackerVisualizationFPS = parseInt(
+                (
+                    document.getElementById(
+                        "tracker-visualization-fps"
+                    ) as HTMLInputElement
+                ).value
+            );
+            window.log(
+                `Selected tracker visualization FPS: ${trackerVisualizationFPS}`
+            );
+            window.ipc.send("save-setting", {
+                global: {
+                    trackerVisualizationFPS: trackerVisualizationFPS,
+                },
+            });
         });
 }
 

@@ -27,9 +27,7 @@
                         </div>
                     </div>
                     <div class="version-container">
-                        <p class="subtitle">
-                            v<span id="version">0.0.0</span>
-                        </p>
+                        <p class="subtitle">v<span id="version">0.0.0</span></p>
                     </div>
                     <!-- Language container -->
                     <div class="language-container">
@@ -160,11 +158,7 @@
                         <span
                             class="tooltip-text subtitle is-6 has-text-weight-normal"
                             data-i18n="settings.tooltip"
-                            ><b
-                                >Tracker settings only currently supports GX
-                                trackers, use Haritora Configurator if on
-                                Bluetooth.</b
-                            >
+                        >
                             Set the global settings for the trackers or the
                             program. An option with yellow text requires a
                             restart of the program to fully apply.</span
@@ -451,18 +445,53 @@
                     </div>
 
                     <div class="column is-6">
-                        <br />
-                        <div class="vertical-settings-container">
-                            <div class="buttons is-centered">
-                                <button
-                                    class="button is-info"
-                                    id="save-settings-button"
-                                    onclick="saveSettings()"
-                                    data-i18n="settings.saveButton"
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="settings.other.title"
+                            >
+                                Other settings
+                            </h3>
+                            <div class="tooltip-container">
+                                <div class="icon">
+                                    <img
+                                        src="../images/help.svg"
+                                        alt="Help icon"
+                                    />
+                                </div>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="settings.other.tooltip"
+                                    >Some other settings that don't fit in the
+                                    other categories.</span
                                 >
-                                    Save settings
-                                </button>
                             </div>
+                        </div>
+                        <div class="input-container is-centered">
+                            <label
+                                for="tracker-visualization-fps"
+                                class="label"
+                                data-i18n="settings.other.trackerVisualizationFPS"
+                                >Tracker visualization FPS</label
+                            >
+                            <input
+                                type="text"
+                                id="tracker-visualization-fps"
+                                placeholder="10"
+                                class="input"
+                                style="max-width: 30%"
+                            />
+                        </div>
+                        <br />
+                        <div class="buttons is-centered">
+                            <button
+                                class="button is-info"
+                                id="save-settings-button"
+                                onclick="saveSettings()"
+                                data-i18n="settings.other.saveButton"
+                            >
+                                Save settings
+                            </button>
                         </div>
                     </div>
                 </div>

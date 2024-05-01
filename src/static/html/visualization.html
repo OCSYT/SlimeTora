@@ -40,6 +40,11 @@
             import { ShaderPass } from "ShaderPass";
             import { FXAAShader } from "FXAAShader";
 
+            const urlParams = new URLSearchParams(window.location.search);
+            const fps = Number(urlParams.get('fps'));
+
+            console.log("Initialized visualization with fps: " + fps)
+
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(
                 45,
@@ -128,7 +133,7 @@
             composer.addPass(outlinePass);
 
             let lastFrameTime = 0;
-            const frameInterval = 1000 / 15; // 15 FPS
+            const frameInterval = 1000 / fps;
 
             const animate = (currentTime) => {
                 requestAnimationFrame(animate);

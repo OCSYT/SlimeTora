@@ -59,7 +59,6 @@
         "title": "全般設定",
         "text": "アプリケーションとトラッカー内部、両方の設定を変更できます。但し、トラッカー内の設定を書き換えるのは信頼性が低い可能性があるので、HaritoraConfiguratorを使用することを強くお勧めします。",
         "tooltip": "トラッカーまたはアプリケーションの設定を行います。黄色の文字で表示されるオプションを適用するにはアプリケーションの再起動が必要です。",
-        "saveButton": "設定の保存",
         "connectionMode": {
             "title": "接続モード",
             "tooltip": "トラッカーとの接続モードを選択します。一度に複数のモードを選択することが可能です。",
@@ -88,6 +87,12 @@
             "accelerometer": "加速度",
             "gyroscope": "ジャイロ",
             "magnetometer": "地磁気"
+        },
+        "other": {
+            "title": "その他の設定",
+            "tooltip": "TO CHANGE",
+            "visualizationFPS": "TO CHANGE",
+            "saveButton": "設定の保存"
         }
     },
     "about": {

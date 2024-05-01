@@ -60,7 +60,6 @@
         "title": "Global settings",
         "text": " Change the global settings for the program and the trackers. Highly recommended to use HaritoraConfigurator for tracker settings instead as this may be unreliable.",
         "tooltip": "Set the global settings for the trackers or the program. An option with yellow text requires a restart of the program to fully apply.",
-        "saveButton": "Save settings",
         "connectionMode": {
             "title": "Connection mode",
             "tooltip": "Select the connection mode for the trackers. Multiple modes can be selected at once.",
@@ -89,6 +88,12 @@
             "accelerometer": "Accelerometer",
             "gyroscope": "Gyroscope",
             "magnetometer": "Magnetometer"
+        },
+        "other": {
+            "title": "Other settings",
+            "tooltip": "Other settings for the program that don't fit in the other categories.",
+            "visualizationFPS": "Tracker visualization FPS",
+            "saveButton": "Save settings"
         }
     },
     "about": {

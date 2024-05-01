@@ -260,7 +260,7 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         deviceID,
         sensorMode,
         fpsMode,
-        uniqueSensorAutoCorrection,
+        uniqueSensorAutoCorrection
     );
 
     log(
@@ -308,7 +308,7 @@ async function setTrackerSettings(
     deviceID: string,
     sensorMode: number,
     fpsMode: number,
-    sensorAutoCorrection: string[],
+    sensorAutoCorrection: string[]
 ) {
     const uniqueSensorAutoCorrection = Array.from(
         new Set(sensorAutoCorrection)
@@ -483,7 +483,7 @@ function startDeviceListeners() {
         async (
             trackerName: string,
             rawRotation: Rotation,
-            rawGravity: Gravity,
+            rawGravity: Gravity
         ) => {
             if (
                 !connectedDevices.includes(trackerName) ||
@@ -525,7 +525,7 @@ function startDeviceListeners() {
                 rotation,
                 gravity,
                 rawRotation,
-                rawGravity
+                rawGravity,
             });
         }
     );
