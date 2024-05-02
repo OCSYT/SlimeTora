@@ -294,9 +294,7 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
 
 ipcMain.handle("get-tracker-battery", async (_event, arg: string) => {
     let { batteryRemaining } = await device.getBatteryInfo(arg);
-
-    // Convert ArrayBuffer to number (why is it returning an ArrayBuffer what)
-    batteryRemaining = new Uint8Array(batteryRemaining)[0];
+    if (!batteryRemaining) return;
     device.emit("battery", arg, batteryRemaining, 0); // BT doesn't support voltage (afaik)
 });
 
@@ -853,22 +851,33 @@ function sendRotationPacket(rotation: Rotation, deviceID: number) {
     });
 }
 
+// Initialize arrays to store the last few percentages and voltages
+const lastPercentages: number[] = [];
+const lastVoltages: number[] = [];
+
 function sendBatteryLevel(
     percentage: number,
     voltage: number,
     deviceID: number
 ) {
-    // Send lowest battery data to SlimeVR server (cannot send battery data for individual sensors)
-    if (
-        percentage < lowestBatteryData.percentage ||
-        voltage < lowestBatteryData.voltage
-    ) {
-        lowestBatteryData.percentage = percentage;
-        lowestBatteryData.voltage = voltage;
-        log(
-            `Set lowest battery data: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage}V)`
-        );
-    }
+    lastPercentages.push(percentage);
+    lastVoltages.push(voltage);
+
+    // Remove oldest element after max is reached
+    const maxElements = 5;
+    if (lastPercentages.length > maxElements) lastPercentages.shift();
+    if (lastVoltages.length > maxElements) lastVoltages.shift();
+
+    // Get the lowest non-zero percentage and voltage
+    const lowestPercentage = Math.min(...lastPercentages.filter(p => p !== 0));
+    const lowestVoltage = Math.min(...lastVoltages.filter(v => v !== 0));
+
+    if (lowestPercentage !== Infinity) lowestBatteryData.percentage = lowestPercentage;
+    if (lowestVoltage !== Infinity) lowestBatteryData.voltage = lowestVoltage;
+
+    log(
+        `Set lowest battery data: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage}V)`
+    );
 
     packetCount += 1;
     const buffer = ServerBoundBatteryLevelPacket.encode(
