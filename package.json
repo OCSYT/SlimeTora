@@ -43,7 +43,7 @@
     "dependencies": {
         "@slimevr/firmware-protocol": "^0.5.1",
         "bulma": "^1.0.0",
-        "haritorax-interpreter": "^1.8.1",
+        "haritorax-interpreter": "^1.8.2",
         "i18next": "^23.11.1",
         "loc-i18next": "^0.1.6",
         "lodash": "^4.17.21",
