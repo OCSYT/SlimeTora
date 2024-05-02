@@ -4,10 +4,7 @@
 
 
 # SlimeTora
-## The rewrite is almost complete and v1.0.0 will be released soon along with a video. Thanks for the support! You'll find full releases on the parent repo when released: https://github.com/OCSYT/SlimeTora
-A program that connects the HaritoraX Wireless trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting `Bluetooth` and the `GX(6/2)` communication dongles.
-
-This fork rewrites improves on the stability and performance of the app by rewriting the entire program from scratch; frontend and backend.
+A program that connects the HaritoraX trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), currently supporting the `HaritoraX Wireless` with other trackers coming soon. Supports `Bluetooth` and the `GX(6/2)` communication dongles.
 
 </div>
 
@@ -46,6 +43,8 @@ This fork rewrites improves on the stability and performance of the app by rewri
 - (?) GX tracker settings may be unreliable
   - This seems to be really random, unsure if there's something wrong with my testing, device, or if there's a random race condition.
   - Either way, would use `HaritoraConfigurator` instead if you do not need per-tracker settings.
+- Battery information is slightly inaccurate on first connection
+  - Fixes itself after the tracker reports the battery information by itself
 - Battery data sent to SlimeVR server isn't per-tracker
   - Cannot really fix this, instead the program sends the lowest battery data from all the trackers to the server
 

@@ -34,7 +34,7 @@ let debugTrackerConnections = false;
 let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
 
-// this variable is literally only used so i can fix a stupid issue where with both BT+GX enabled, it sometimes connects the bt trackers again directly after again
+// this variable is literally only used so i can fix a stupid issue where with both BT+GX enabled, it sometimes connects the BT trackers again directly after again, breaking the program
 // why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
 // -jovannmc
 let connectionActive = false;
@@ -283,6 +283,10 @@ ipcMain.on("start-connection", async (_event, arg) => {
     });
 });
 
+// for some reason when stopping connections, sometimes BT just doesn't disconnect from devices and they stay connected
+// honestly this isn't a huge deal, and well "instant" connections like the GX trackers or something lol
+// have a weird bug? it's a "feature" now!
+// -jovannmc
 ipcMain.on("stop-connection", (_event, arg: string) => {
     if (
         arg.includes("bluetooth") &&
