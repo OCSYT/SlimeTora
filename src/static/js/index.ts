@@ -1,3 +1,7 @@
+/*
+ * Global variables
+ */
+
 let isActive = false;
 
 let bluetoothEnabled = false;
@@ -294,11 +298,12 @@ function openLogsFolder() {
     window.ipc.send("open-logs-folder", null);
 }
 
-// Save settings
+// "Save settings" (manual save) button
 function saveSettings() {
     window.log("Saving settings...");
     unsavedSettings(false);
 
+    // Grab all com-port inputs
     const comPorts: HTMLInputElement[] = Array.from(
         document.getElementById("com-ports").querySelectorAll("input")
     );
@@ -312,6 +317,7 @@ function saveSettings() {
 
     window.log(`Selected COM ports: ${selectedPorts}`);
 
+    // Save settings to config file
     window.ipc.send("save-setting", {
         global: {
             censorSerialNumbers: censorSerialNumbers,
@@ -336,6 +342,7 @@ function saveSettings() {
         },
     });
 
+    // Send tracker settings to connected trackers
     let sensorAutoCorrection: string[] = [];
     if (accelerometerEnabled) sensorAutoCorrection.push("accel");
     if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
@@ -352,7 +359,7 @@ function saveSettings() {
     window.log("Settings saved");
 }
 
-// Set settings button indicator
+// Set settings button indicator (if changes need a manual save)
 function unsavedSettings(unsaved: boolean) {
     const saveButton = document.getElementById("save-settings-button");
     if (unsaved && !saveButton.textContent.includes("(!)")) {
@@ -375,6 +382,7 @@ function setStatus(status: string) {
     window.log(`Set status to: ${status}`);
 }
 
+// Use a queue to handle adding device to the list, prevents async issues
 const deviceQueue: string[] = [];
 let isProcessingQueue = false;
 async function processQueue() {
@@ -535,6 +543,19 @@ window.ipc.on("localize", (_event, resources) => {
     window.localize(resources);
 });
 
+window.ipc.on("version", (_event, version) => {
+    document.getElementById("version").textContent = version;
+    window.log(`Got app version: ${version}`);
+});
+
+window.ipc.on("set-status", (_event, msg) => {
+    setStatus(msg);
+});
+
+/*
+ * Tracker device (haritorax-interpreter) event listeners
+ */
+
 window.ipc.on("connect", async (_event, deviceID) => {
     if (!isActive) return;
 
@@ -560,6 +581,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
     }
 });
 
+// Helper for "connect" event
 function setTrackerSettings(deviceID: string, trackerSettings: any) {
     const sensorMode: number =
         trackerSettings.sensorMode !== -1 ? trackerSettings.sensorMode : 2;
@@ -683,10 +705,6 @@ window.ipc.on("device-battery", (_event, arg) => {
     );
 });
 
-window.ipc.on("set-status", (_event, msg) => {
-    setStatus(msg);
-});
-
 window.ipc.on("device-mag", (_event, arg) => {
     const {
         trackerName,
@@ -715,14 +733,10 @@ window.ipc.on("device-mag", (_event, arg) => {
     magStatusElement.classList.add(statuses[magStatus]);
 });
 
-window.ipc.on("version", (_event, version) => {
-    document.getElementById("version").textContent = version;
-    window.log(`Got app version: ${version}`);
-});
-
+// Add event listeners for the document
 function addEventListeners() {
     /*
-     * Settings event listeners
+     * "Tracker info" event listeners
      */
 
     document
@@ -811,6 +825,10 @@ function addEventListeners() {
             });
         });
 
+    /*
+     * "Connection mode" event listeners
+     */
+
     document
         .getElementById("bluetooth-switch")
         .addEventListener("change", function () {
@@ -842,6 +860,98 @@ function addEventListeners() {
 
             unsavedSettings(true);
         });
+
+    document.getElementById("com-ports").addEventListener("change", () => {
+        const comPorts: HTMLInputElement[] = Array.from(
+            document.getElementById("com-ports").querySelectorAll("input")
+        );
+        const selectedPorts: string[] = [];
+
+        comPorts.forEach((port) => {
+            if (port.checked) {
+                selectedPorts.push(port.id);
+                if (!selectedComPorts.includes(port.id))
+                    selectedComPorts.push(port.id);
+            } else {
+                selectedComPorts.splice(selectedComPorts.indexOf(port.id), 1);
+            }
+        });
+
+        window.log(`Selected COM ports: ${selectedPorts}`);
+        window.ipc.send("save-setting", {
+            global: {
+                connectionMode: {
+                    comPorts: selectedPorts,
+                },
+            },
+        });
+
+        // If four ports are selected, disable the rest
+        if (selectedPorts.length >= 4 && !bypassCOMPortLimit) {
+            comPorts.forEach((port) => {
+                if (!port.checked) {
+                    port.disabled = true;
+                }
+            });
+        } else {
+            // If less than four ports are selected, enable all ports
+            comPorts.forEach((port) => {
+                port.disabled = false;
+            });
+        }
+    });
+
+    /*
+     * Other settings event listeners
+     */
+
+    document
+        .getElementById("fps-mode-select")
+        .addEventListener("change", async function () {
+            fpsMode = parseInt(
+                (
+                    document.getElementById(
+                        "fps-mode-select"
+                    ) as HTMLSelectElement
+                ).value
+            );
+            window.log(`Changed FPS mode: ${fpsMode}`);
+            window.ipc.send("save-setting", {
+                global: {
+                    trackers: {
+                        fpsMode: fpsMode,
+                    },
+                },
+            });
+
+            unsavedSettings(true);
+        });
+
+    document
+        .getElementById("sensor-mode-select")
+        .addEventListener("change", async function () {
+            sensorMode = parseInt(
+                (
+                    document.getElementById(
+                        "sensor-mode-select"
+                    ) as HTMLSelectElement
+                ).value
+            );
+            window.log(`Selected sensor mode: ${sensorMode}`);
+            window.ipc.send("save-setting", {
+                global: {
+                    trackers: {
+                        sensorMode: sensorMode,
+                    },
+                },
+            });
+
+            unsavedSettings(true);
+        });
+
+    /*
+     * "Tracker auto correction" event listeners
+     */
 
     document
         .getElementById("accelerometer-switch")
@@ -891,60 +1001,9 @@ function addEventListeners() {
             unsavedSettings(true);
         });
 
-    document.getElementById("com-ports").addEventListener("change", () => {
-        const comPorts: HTMLInputElement[] = Array.from(
-            document.getElementById("com-ports").querySelectorAll("input")
-        );
-        const selectedPorts: string[] = [];
-
-        comPorts.forEach((port) => {
-            if (port.checked) {
-                selectedPorts.push(port.id);
-                if (!selectedComPorts.includes(port.id))
-                    selectedComPorts.push(port.id);
-            } else {
-                selectedComPorts.splice(selectedComPorts.indexOf(port.id), 1);
-            }
-        });
-
-        window.log(`Selected COM ports: ${selectedPorts}`);
-        window.ipc.send("save-setting", {
-            global: {
-                connectionMode: {
-                    comPorts: selectedPorts,
-                },
-            },
-        });
-
-        // If four ports are selected, disable the rest
-        if (selectedPorts.length >= 4 && !bypassCOMPortLimit) {
-            comPorts.forEach((port) => {
-                if (!port.checked) {
-                    port.disabled = true;
-                }
-            });
-        } else {
-            // If less than four ports are selected, enable all ports
-            comPorts.forEach((port) => {
-                port.disabled = false;
-            });
-        }
-    });
-
-    document
-        .getElementById("language-select")
-        .addEventListener("change", async function () {
-            const language: string = (
-                document.getElementById("language-select") as HTMLSelectElement
-            ).value;
-            window.log(`Changed selected language: ${language}`);
-            window.changeLanguage(language);
-            window.ipc.send("save-setting", {
-                global: {
-                    language: language,
-                },
-            });
-        });
+    /*
+     * "Debug" event listeners
+     */
 
     document
         .getElementById("log-to-file-switch")
@@ -1029,50 +1088,6 @@ function addEventListeners() {
                     },
                 },
             });
-        });
-
-    document
-        .getElementById("fps-mode-select")
-        .addEventListener("change", async function () {
-            fpsMode = parseInt(
-                (
-                    document.getElementById(
-                        "fps-mode-select"
-                    ) as HTMLSelectElement
-                ).value
-            );
-            window.log(`Changed FPS mode: ${fpsMode}`);
-            window.ipc.send("save-setting", {
-                global: {
-                    trackers: {
-                        fpsMode: fpsMode,
-                    },
-                },
-            });
-
-            unsavedSettings(true);
-        });
-
-    document
-        .getElementById("sensor-mode-select")
-        .addEventListener("change", async function () {
-            sensorMode = parseInt(
-                (
-                    document.getElementById(
-                        "sensor-mode-select"
-                    ) as HTMLSelectElement
-                ).value
-            );
-            window.log(`Selected sensor mode: ${sensorMode}`);
-            window.ipc.send("save-setting", {
-                global: {
-                    trackers: {
-                        sensorMode: sensorMode,
-                    },
-                },
-            });
-
-            unsavedSettings(true);
         });
 
     document

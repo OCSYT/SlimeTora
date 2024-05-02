@@ -1,3 +1,7 @@
+/*
+ * Global imports and variables
+ */
+
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import { HaritoraXWireless } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
@@ -35,7 +39,9 @@ const configPath = path.resolve(mainPath, "config.json");
 
 /*
  * Translations (i18next)
+ * Grabs the available translations in the program directory's "languages" folder to add as an option in renderer process
  */
+
 async function loadTranslations() {
     const languagesDir = path.join(mainPath, "languages");
 
@@ -103,6 +109,17 @@ const createWindow = () => {
     });
 };
 
+app.on("ready", createWindow);
+
+app.on("window-all-closed", () => {
+    if (device && device.getConnectionModeActive("bluetooth"))
+        device.stopConnection("bluetooth");
+    if (device && device.getConnectionModeActive("gx"))
+        device.stopConnection("gx");
+    app.quit();
+});
+
+
 /*
  * Renderer handlers
  */
@@ -114,6 +131,96 @@ ipcMain.on("log", (_event, arg: string) => {
 ipcMain.on("error", (_event, arg: string) => {
     error(arg, "renderer");
 });
+
+ipcMain.on("show-message", (_event, arg) => {
+    const { title, message }: { title: string; message: string } = arg;
+    dialog.showMessageBox({ title, message });
+});
+
+ipcMain.on("show-error", (_event, arg) => {
+    const { title, message }: { title: string; message: string } = arg;
+    dialog.showErrorBox(title, message);
+});
+
+ipcMain.handle("is-slimevr-connected", () => {
+    return foundSlimeVR;
+});
+
+// Used here to execute JS, specifically to load translations for errors (because uh, this is the only way I and AI could figure out how to do it properly lol)
+// Will change this to only return translated strings instead of being a security risk.. lmfao
+ipcMain.handle("executeJavaScript", async (_event, code) => {
+    const result = await mainWindow.webContents.executeJavaScript(code);
+    return result;
+});
+
+ipcMain.handle("get-active-trackers", () => {
+    return connectedDevices;
+});
+
+ipcMain.handle("get-com-ports", async () => {
+    const ports = await SerialPort.list();
+    return ports.map((port) => port.path).sort();
+});
+
+ipcMain.handle("get-languages", async () => {
+    const resources = await loadTranslations();
+    return Object.keys(resources);
+});
+
+ipcMain.on("set-logging", (_event, arg) => {
+    canLogToFile = arg;
+    log(`Logging to file set to: ${arg}`);
+});
+
+ipcMain.on("set-debug-tracker-connections", (_event, arg) => {
+    debugTrackerConnections = arg;
+    log(`Debug tracker connections set to: ${arg}`);
+});
+
+ipcMain.on("open-logs-folder", async () => {
+    const logDir = path.resolve(mainPath, "logs");
+    if (fs.existsSync(logDir)) {
+        shell.openPath(logDir);
+    } else {
+        error("Logs directory does not exist");
+        dialog.showErrorBox(
+            await mainWindow.webContents.executeJavaScript(
+                'window.i18n.translate("dialogs.noLogsFolder.title")'
+            ),
+            await mainWindow.webContents.executeJavaScript(
+                'window.i18n.translate("dialogs.noLogsFolder.message")'
+            )
+        );
+    }
+});
+
+ipcMain.on("open-tracker-settings", (_event, arg: string) => {
+    let trackerSettingsWindow = new BrowserWindow({
+        title: `${arg} settings`,
+        autoHideMenuBar: true,
+        width: 800,
+        height: 600,
+        webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: true,
+            preload: path.join(__dirname, "preload.js"),
+        },
+        icon: path.join(__dirname, "static/images/icon.ico"),
+    });
+
+    trackerSettingsWindow.loadURL(
+        path.join(__dirname, "static/html/settings.html")
+    );
+
+    trackerSettingsWindow.webContents.on("did-finish-load", () => {
+        // send trackerName to window
+        trackerSettingsWindow.webContents.send("trackerName", arg);
+    });
+});
+
+/*
+ * Renderer tracker/device handlers
+ */
 
 ipcMain.on("start-connection", async (_event, arg) => {
     const {
@@ -158,8 +265,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
     }
 
     const activeTrackers: string[] = device.getActiveTrackers();
-    // make sure they have unique entries
-    const uniqueActiveTrackers = Array.from(new Set(activeTrackers));
+    const uniqueActiveTrackers = Array.from(new Set(activeTrackers)); // Make sure they have unique entries
     if (!uniqueActiveTrackers || uniqueActiveTrackers.length === 0) return;
     uniqueActiveTrackers.forEach(async (trackerName) => {
         trackerQueue.push(trackerName);
@@ -186,32 +292,20 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
     connectedDevices = [];
 });
 
-ipcMain.handle("executeJavaScript", async (_event, code) => {
-    const result = await mainWindow.webContents.executeJavaScript(code);
-    return result;
-});
-
-ipcMain.handle("get-com-ports", async () => {
-    const ports = await SerialPort.list();
-    return ports.map((port) => port.path).sort();
-});
-
-ipcMain.handle("get-languages", async () => {
-    const resources = await loadTranslations();
-    return Object.keys(resources);
-});
-
 ipcMain.handle("get-tracker-battery", async (_event, arg: string) => {
     let { batteryRemaining } = await device.getBatteryInfo(arg);
 
     // Convert ArrayBuffer to number (why is it returning an ArrayBuffer what)
     batteryRemaining = new Uint8Array(batteryRemaining)[0];
-    device.emit('battery', arg, batteryRemaining, 0); // BT doesn't support voltage
+    device.emit("battery", arg, batteryRemaining, 0); // BT doesn't support voltage (afaik)
 });
 
 ipcMain.handle("get-tracker-mag", async (_event, arg: string) => {
     let magInfo = await device.getTrackerMag(arg);
-    mainWindow.webContents.send("device-mag", { trackerName: arg, magStatus: magInfo });
+    mainWindow.webContents.send("device-mag", {
+        trackerName: arg,
+        magStatus: magInfo,
+    });
     return magInfo;
 });
 
@@ -223,14 +317,6 @@ ipcMain.handle("get-tracker-settings", async (_event, arg) => {
     let settings = await device.getTrackerSettings(trackerName, forceBLE);
     log("Got settings: " + JSON.stringify(settings));
     return settings;
-});
-
-ipcMain.handle("get-active-trackers", () => {
-    return connectedDevices;
-});
-
-ipcMain.handle("is-slimevr-connected", () => {
-    return foundSlimeVR;
 });
 
 ipcMain.on("set-tracker-settings", async (_event, arg) => {
@@ -279,6 +365,26 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
     );
 });
 
+// Helper for "set-tracker-settings" event
+async function setTrackerSettings(
+    deviceID: string,
+    sensorMode: number,
+    fpsMode: number,
+    sensorAutoCorrection: string[]
+) {
+    const uniqueSensorAutoCorrection = Array.from(
+        new Set(sensorAutoCorrection)
+    );
+
+    device.setTrackerSettings(
+        deviceID,
+        sensorMode,
+        fpsMode,
+        uniqueSensorAutoCorrection,
+        false // we don't support ankle yet
+    );
+}
+
 ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
     const {
         sensorMode,
@@ -309,77 +415,8 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
         sensorMode,
         fpsMode,
         uniqueSensorAutoCorrection,
-        false
+        false // we don't support ankle yet
     );
-});
-
-async function setTrackerSettings(
-    deviceID: string,
-    sensorMode: number,
-    fpsMode: number,
-    sensorAutoCorrection: string[]
-) {
-    const uniqueSensorAutoCorrection = Array.from(
-        new Set(sensorAutoCorrection)
-    );
-
-    device.setTrackerSettings(
-        deviceID,
-        sensorMode,
-        fpsMode,
-        uniqueSensorAutoCorrection,
-        false
-    );
-}
-
-ipcMain.on("set-logging", (_event, arg) => {
-    canLogToFile = arg;
-    log(`Logging to file set to: ${arg}`);
-});
-
-ipcMain.on("set-debug-tracker-connections", (_event, arg) => {
-    debugTrackerConnections = arg;
-    log(`Debug tracker connections set to: ${arg}`);
-});
-
-ipcMain.on("open-logs-folder", async () => {
-    const logDir = path.resolve(mainPath, "logs");
-    if (fs.existsSync(logDir)) {
-        shell.openPath(logDir);
-    } else {
-        error("Logs directory does not exist");
-        dialog.showErrorBox(
-            await mainWindow.webContents.executeJavaScript(
-                'window.i18n.translate("dialogs.noLogsFolder.title")'
-            ),
-            await mainWindow.webContents.executeJavaScript(
-                'window.i18n.translate("dialogs.noLogsFolder.message")'
-            )
-        );
-    }
-});
-
-ipcMain.on("open-tracker-settings", (_event, arg: string) => {
-    let trackerSettingsWindow = new BrowserWindow({
-        title: `${arg} settings`,
-        autoHideMenuBar: true,
-        width: 800,
-        height: 600,
-        webPreferences: {
-            contextIsolation: true,
-            nodeIntegration: true,
-            preload: path.join(__dirname, "preload.js"),
-        },
-        icon: path.join(__dirname, "static/images/icon.ico"),
-    });
-
-    trackerSettingsWindow.loadURL(
-        path.join(__dirname, "static/html/settings.html")
-    );
-
-    trackerSettingsWindow.webContents.on("did-finish-load", () => {
-        trackerSettingsWindow.webContents.send("trackerName", arg);
-    });
 });
 
 /*
@@ -449,16 +486,6 @@ ipcMain.handle("get-setting", (_event, name) => {
     }
 
     return current;
-});
-
-ipcMain.on("show-message", (_event, arg) => {
-    const { title, message }: { title: string; message: string } = arg;
-    dialog.showMessageBox({ title, message });
-});
-
-ipcMain.on("show-error", (_event, arg) => {
-    const { title, message }: { title: string; message: string } = arg;
-    dialog.showErrorBox(title, message);
 });
 
 /*
@@ -753,9 +780,7 @@ async function sendHandshakePacket(trackerName: string) {
             } else {
                 if (trackerName == "SEARCHING") return;
                 log(
-                    `Added device ${trackerName} to SlimeVR server as IMU ${
-                        connectedDevices.length
-                    } // Handshake`
+                    `Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length} // Handshake`
                 );
                 resolve(true);
             }
@@ -864,16 +889,6 @@ function sendBatteryLevel(
         }
     });
 }
-
-app.on("ready", createWindow);
-
-app.on("window-all-closed", () => {
-    if (device && device.getConnectionModeActive("bluetooth"))
-        device.stopConnection("bluetooth");
-    if (device && device.getConnectionModeActive("gx"))
-        device.stopConnection("gx");
-    app.quit();
-});
 
 /*
  * TypeScript declarations
