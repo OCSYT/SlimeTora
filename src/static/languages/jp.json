@@ -93,7 +93,7 @@
         "other": {
             "title": "その他の設定",
             "tooltip": "他のカテゴリーに当てはまらないその他の設定。",
-            "visualizationFPS": "トラッカーモデルのフレームレート",
+            "trackerVisualizationFPS": "トラッカーモデルのフレームレート",
             "saveButton": "設定の保存"
         }
     },

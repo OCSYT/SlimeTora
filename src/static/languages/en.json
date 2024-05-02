@@ -93,7 +93,7 @@
         "other": {
             "title": "Other settings",
             "tooltip": "Other settings for the program that don't fit in the other categories.",
-            "visualizationFPS": "Tracker visualization FPS",
+            "trackerVisualizationFPS": "Tracker visualization FPS",
             "saveButton": "Save settings"
         }
     },
