@@ -906,6 +906,41 @@ function addEventListeners() {
      */
 
     document
+        .getElementById("tracker-visualization-fps")
+        .addEventListener("change", async function () {
+            trackerVisualizationFPS = parseInt(
+                (
+                    document.getElementById(
+                        "tracker-visualization-fps"
+                    ) as HTMLInputElement
+                ).value
+            );
+            window.log(
+                `Selected tracker visualization FPS: ${trackerVisualizationFPS}`
+            );
+            window.ipc.send("save-setting", {
+                global: {
+                    trackerVisualizationFPS: trackerVisualizationFPS,
+                },
+            });
+        });
+
+    document
+        .getElementById("language-select")
+        .addEventListener("change", async function () {
+            const language: string = (
+                document.getElementById("language-select") as HTMLSelectElement
+            ).value;
+            window.log(`Changed selected language: ${language}`);
+            window.changeLanguage(language);
+            window.ipc.send("save-setting", {
+                global: {
+                    language: language,
+                },
+            });
+        });
+
+    document
         .getElementById("fps-mode-select")
         .addEventListener("change", async function () {
             fpsMode = parseInt(
@@ -1086,26 +1121,6 @@ function addEventListeners() {
                     debug: {
                         debugTrackerConnections: debugTrackerConnections,
                     },
-                },
-            });
-        });
-
-    document
-        .getElementById("tracker-visualization-fps")
-        .addEventListener("change", async function () {
-            trackerVisualizationFPS = parseInt(
-                (
-                    document.getElementById(
-                        "tracker-visualization-fps"
-                    ) as HTMLInputElement
-                ).value
-            );
-            window.log(
-                `Selected tracker visualization FPS: ${trackerVisualizationFPS}`
-            );
-            window.ipc.send("save-setting", {
-                global: {
-                    trackerVisualizationFPS: trackerVisualizationFPS,
                 },
             });
         });
