@@ -553,6 +553,11 @@ window.ipc.on("connect", async (_event, deviceID) => {
               trackerName: deviceID,
           });
     setTrackerSettings(deviceID, trackerSettings);
+
+    if (deviceID.startsWith("HaritoraX")) {
+        window.ipc.invoke("get-tracker-battery", deviceID);
+        window.ipc.invoke("get-tracker-mag", deviceID);
+    }
 });
 
 function setTrackerSettings(deviceID: string, trackerSettings: any) {

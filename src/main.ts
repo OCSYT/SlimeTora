@@ -202,8 +202,17 @@ ipcMain.handle("get-languages", async () => {
 });
 
 ipcMain.handle("get-tracker-battery", async (_event, arg: string) => {
-    let batteryInfo = await device.getBatteryInfo(arg);
-    return batteryInfo;
+    let { batteryRemaining } = await device.getBatteryInfo(arg);
+
+    // Convert ArrayBuffer to number (why is it returning an ArrayBuffer what)
+    batteryRemaining = new Uint8Array(batteryRemaining)[0];
+    device.emit('battery', arg, batteryRemaining, 0); // BT doesn't support voltage
+});
+
+ipcMain.handle("get-tracker-mag", async (_event, arg: string) => {
+    let magInfo = await device.getTrackerMag(arg);
+    mainWindow.webContents.send("device-mag", { trackerName: arg, magStatus: magInfo });
+    return magInfo;
 });
 
 ipcMain.handle("get-tracker-settings", async (_event, arg) => {

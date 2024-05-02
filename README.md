@@ -35,8 +35,8 @@ This fork rewrites improves on the stability and performance of the app by rewri
 + Linux support
   + This was done as SlimeVR is supported on Linux, and the first time HaritoraX trackers work on Linux!
   + ..however this is not tested at all. Please let me know if there are issues.
++ Tracker visualization
 + Magnetometer statuses
-+ Dynamically grab version number from package.json (instead of relying on manually changing it per release)
 + Censor tracker serial numbers
 + Many new ways to debug the program
 + New SlimeTora logo
@@ -46,7 +46,6 @@ This fork rewrites improves on the stability and performance of the app by rewri
 - (?) GX tracker settings may be unreliable
   - This seems to be really random, unsure if there's something wrong with my testing, device, or if there's a random race condition.
   - Either way, would use `HaritoraConfigurator` instead if you do not need per-tracker settings.
-- Bluetooth tracker's battery report stays on N/A until reported by trackers (instead of instantly grabbing them)
 - Battery data sent to SlimeVR server isn't per-tracker
   - Cannot really fix this, instead the program sends the lowest battery data from all the trackers to the server
 
