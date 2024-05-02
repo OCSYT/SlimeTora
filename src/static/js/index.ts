@@ -321,6 +321,8 @@ function saveSettings() {
     window.ipc.send("save-setting", {
         global: {
             censorSerialNumbers: censorSerialNumbers,
+            trackerVisualization: trackerVisualization,
+            trackerVisualizationFPS: trackerVisualizationFPS,
             connectionMode: {
                 bluetoothEnabled: bluetoothEnabled,
                 gxEnabled: gxEnabled,

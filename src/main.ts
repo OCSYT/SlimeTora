@@ -34,6 +34,11 @@ let debugTrackerConnections = false;
 let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
 
+// this variable is literally only used so i can fix a stupid issue where with both BT+GX enabled, it sometimes connects the bt trackers again directly after again
+// why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
+// -jovannmc
+let connectionActive = false;
+
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
 
@@ -264,6 +269,8 @@ ipcMain.on("start-connection", async (_event, arg) => {
         device.startConnection("gx", ports);
     }
 
+    connectionActive = true;
+
     const activeTrackers: string[] = device.getActiveTrackers();
     const uniqueActiveTrackers = Array.from(new Set(activeTrackers)); // Make sure they have unique entries
     if (!uniqueActiveTrackers || uniqueActiveTrackers.length === 0) return;
@@ -289,6 +296,8 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
     } else {
         log("No connection to stop");
     }
+
+    connectionActive = false;
     connectedDevices = [];
 });
 
@@ -492,7 +501,7 @@ ipcMain.handle("get-setting", (_event, name) => {
 
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
-        if (connectedDevices.includes(deviceID)) return;
+        if (connectedDevices.includes(deviceID) || !connectionActive) return;
         trackerQueue.push(deviceID);
         await handleNextTracker();
         log(`Connected to tracker: ${deviceID}`);
