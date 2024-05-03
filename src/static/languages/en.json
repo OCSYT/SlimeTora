@@ -1,0 +1,135 @@
+{
+    "main": {
+        "connectedTrackers": "Connected trackers:",
+        "startConnection": "Start connection",
+        "stopConnection": "Stop connection",
+        "status": {
+            "statusText": "Status:",
+            "none": "N/A",
+            "searching": "searching",
+            "connected": "connected",
+            "comPortsMissing": "COM ports missing",
+            "slimeVRMissing": "SlimeVR not found",
+            "noConnectionMode": "No connection mode enabled"
+        }
+    },
+    "trackerInfo": {
+        "title": "Tracker information",
+        "tooltip": "See information about the connected trackers. An option with yellow text requires a restart of the connection or program to fully apply.",
+        "censorSerialNumbers": "Censor serial numbers",
+        "trackerVisualization": "Tracker visualization",
+        "deviceName": "Device:",
+        "deviceID": "Device ID:",
+        "rotationData": "Rotation data:",
+        "accelerationData": "Acceleration data:",
+        "battery": "Battery:",
+        "magStatus": "Mag status:",
+        "edit": "Edit",
+        "settings": "Override tracker settings",
+        "trackerSettings": {
+            "title": "{trackerName} settings",
+            "text": "Override the global tracker settings for this tracker. This may be buggy and is not recommended for normal use.",
+            "fps": {
+                "title": "FPS transfer rate",
+                "tooltip": "Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.",
+                "50": "50 FPS",
+                "100": "100 FPS"
+            },
+            "sensorMode": {
+                "title": "Sensor mode",
+                "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment (mag status is green or yellow). If unstable (mag status is red), use mode 2.",
+                "1": "Mode 1",
+                "2": "Mode 2"
+            },
+            "sensorCorrection": {
+                "title": "Sensor auto correction",
+                "tooltip": "Enable or disable sensor auto correction features. Usually not needed to be changed and results vary between environments.",
+                "accelerometer": "Accelerometer",
+                "gyroscope": "Gyroscope",
+                "magnetometer": "Magnetometer"
+            },
+            "debugging": {
+                "title": "Debugging",
+                "tooltip": "Some debugging options for this individual tracker.",
+                "saveSettings": "Save settings",
+                "resetSettings": "Reset settings",
+                "getSettings": "Get tracker settings"
+            }
+        }
+    },
+    "settings": {
+        "title": "Global settings",
+        "text": "Change the global settings for the program and the trackers. Highly recommended to use HaritoraConfigurator for tracker settings instead as this may be unreliable.",
+        "tooltip": "Set the global settings for the trackers or the program. An option with yellow text requires a restart of the connection or program to fully apply.",
+        "connectionMode": {
+            "title": "Connection mode",
+            "tooltip": "Select the connection mode for the trackers. Multiple modes can be selected at once.",
+            "bluetooth": "Bluetooth",
+            "gx": "GX(6/2)"
+        },
+        "comPorts": {
+            "title": "COM ports (GX)",
+            "tooltip": "Select the COM ports your GX(6/2) dongles are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2) unless checks are bypassed."
+        },
+        "fps": {
+            "title": "FPS transfer rate",
+            "tooltip": "Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.",
+            "50": "50 FPS",
+            "100": "100 FPS"
+        },
+        "sensorMode": {
+            "title": "Sensor mode",
+            "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment (mag status is green or yellow). If unstable (mag status is red), use mode 2.",
+            "1": "Mode 1",
+            "2": "Mode 2"
+        },
+        "sensorCorrection": {
+            "title": "Sensor auto correction",
+            "tooltip": "Enable or disable sensor auto correction features. Usually not needed to be changed and results vary between environments.",
+            "accelerometer": "Accelerometer",
+            "gyroscope": "Gyroscope",
+            "magnetometer": "Magnetometer"
+        },
+        "other": {
+            "title": "Other settings",
+            "tooltip": "Other settings for the program that don't fit in the other categories.",
+            "trackerVisualizationFPS": "Tracker visualization FPS",
+            "saveButton": "Save settings"
+        }
+    },
+    "about": {
+        "title": "About",
+        "text": "The SlimeTora project is a project that allows you to connect the HaritoraX trackers to the SlimeVR server.",
+        "authors": "Made by:",
+        "credits": {
+            "title": "Credits"
+        },
+        "translations": {
+            "title": "Translations"
+        }
+    },
+    "debugging": {
+        "title": "Debugging",
+        "tooltip": "An option with yellow text requires a restart of the connection or program to fully apply.",
+        "text": "Enable or disable debugging features for the program. Debugging tracker data will make log files huge, only use if requested or if you have tracker issues!",
+        "writeToFile": "Write to log files",
+        "skipSlimeVR": "Skip SlimeVR check",
+        "bypassPortLimit": "Bypass port limit",
+        "debugTrackerData": "Debug tracker data",
+        "openLogsFolder": "Open logs folder"
+    },
+    "dialogs": {
+        "comPortsMissing": {
+            "title": "COM ports missing",
+            "message": "Some COM ports set in the config were not found, please make sure your dongle(s) are connected."
+        },
+        "noLogsFolder": {
+            "title": "No logs!",
+            "message": "You should probably enable debug logging first in settings."
+        },
+        "noConnectionMode": {
+            "title": "No connection mode enabled",
+            "message": "Please enable at least one connection mode (Bluetooth or GX) in the settings."
+        }
+    }
+}
