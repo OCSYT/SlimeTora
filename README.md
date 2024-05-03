@@ -18,25 +18,19 @@ A program that connects the HaritoraX trackers to the [SlimeVR server](https://d
 | About section | Debugging section |
 | ![SlimeTora about section](docs/slimetora_ss_5.png) | ![SlimeTora debugging section](docs/slimetora_ss_6.png) |
 
-# New features
-+ Entire frontend and backend rewrite (with [Bulma](https://bulma.io/) and [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter))
-  + The program now has a new UI, the code is cleaner and more maintainable, and should hopefully improve stability/performance.
-+ Package app files with `asar`
-  + No need to extract thousands of files anymore 😅
+# Features
++ Use of [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter) package to process tracker data
 + `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
-  + Welcome elbow tracker users!
 + Set tracker settings per-tracker
-  + Currently in beta and needs more testing
 + Localization support
   + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 + Linux support
   + This was done as SlimeVR is supported on Linux, and the first time HaritoraX trackers work on Linux!
-  + ..however this is not tested at all. Please let me know if there are issues.
+  + ..however this is not tested at all. Please let us know if there are issues.
 + Tracker visualization
 + Magnetometer statuses
 + Censor tracker serial numbers
-+ Many new ways to debug the program
-+ New SlimeTora logo
++ Debugging options
 + ..and many more improvements coming soon!
 
 # Known issues
@@ -44,7 +38,7 @@ A program that connects the HaritoraX trackers to the [SlimeVR server](https://d
   - This seems to be really random, unsure if there's something wrong with my testing, device, or if there's a random race condition.
   - Either way, would use `HaritoraConfigurator` instead if you do not need per-tracker settings.
 - Battery information is slightly inaccurate on first connection
-  - Fixes itself after the tracker reports the battery information by itself
+  - Fixes after the tracker reports the battery information by itself
 - Battery data sent to SlimeVR server isn't per-tracker
   - Cannot really fix this, instead the program sends the lowest battery data from all the trackers to the server
 
