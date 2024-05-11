@@ -524,6 +524,34 @@ function startDeviceListeners() {
         mainWindow.webContents.send("device-mag", { trackerName, magStatus });
     });
 
+    let clickCount = 0;
+    let clickTimeout: NodeJS.Timeout = null;
+
+    device.on("button", (trackerName, buttonPressed, isOn) => {
+        if (!isOn || !buttonPressed) return;
+
+        clickCount++;
+        if (clickTimeout !== null) clearTimeout(clickTimeout);
+
+        clickTimeout = setTimeout(() => {
+            if (clickCount === 1) {
+                log(`Single click ${buttonPressed} button from ${trackerName}`);
+                sendYawReset();
+            } else if (clickCount === 2) {
+                log(`Double click ${buttonPressed} button from ${trackerName}`);
+                sendFullReset();
+            } else if (clickCount === 3) {
+                log(`Triple click ${buttonPressed} button from ${trackerName}`);
+                sendMountingReset();
+            } else {
+                log(`Four click ${buttonPressed} button from ${trackerName}`);
+                sendPauseTracking();
+            }
+
+            clickCount = 0;
+        }, 500);
+    });
+
     device.on(
         "imu",
         async (
@@ -614,67 +642,6 @@ function startDeviceListeners() {
     });
 }
 
-function log(msg: string, where = "main") {
-    const date = new Date();
-
-    if (canLogToFile) {
-        const logDir = path.resolve(mainPath, "logs");
-        const logPath = path.join(
-            logDir,
-            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(
-                -2
-            )}${("0" + date.getDate()).slice(-2)}.txt`
-        );
-
-        // Create the directory if it doesn't exist
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
-        }
-
-        // Create the file if it doesn't exist
-        if (!fs.existsSync(logPath)) {
-            fs.writeFileSync(logPath, "");
-        }
-
-        fs.appendFileSync(
-            logPath,
-            `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
-        );
-    }
-    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
-}
-
-function error(msg: string, where = "main") {
-    const date = new Date();
-    if (canLogToFile) {
-        const logDir = path.resolve(mainPath, "logs");
-        const logPath = path.join(
-            logDir,
-            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(
-                -2
-            )}${("0" + date.getDate()).slice(-2)}.txt`
-        );
-
-        // Create the directory if it doesn't exist
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
-        }
-
-        // Create the file if it doesn't exist
-        if (!fs.existsSync(logPath)) {
-            fs.writeFileSync(logPath, "");
-        }
-
-        if (where === "interpreter" && !debugTrackerConnections) return;
-
-        fs.appendFileSync(
-            logPath,
-            `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`
-        );
-    }
-    console.error(`${date.toTimeString()} -- ERROR -- (${where}): ${msg}`);
-}
-
 /*
  * SlimeVR Forwarding
  */
@@ -686,7 +653,8 @@ let packetCount = 0;
 const connectToServer = () => {
     return new Promise<void>((resolve) => {
         if (foundSlimeVR) {
-            throw new Error("Already connected to SlimeVR");
+            resolve();
+            return;
         }
 
         log("Connecting to SlimeVR server...");
@@ -707,7 +675,7 @@ const connectToServer = () => {
                 return;
             }
 
-            log(`Got message from SlimeVR server: ${data.toString("hex")}`);
+            log(`Got message from SlimeVR server: ${data.toString()}`);
 
             clearInterval(searchForServerInterval);
 
@@ -767,7 +735,7 @@ async function handleNextTracker() {
  * Packet sending
  */
 
-// Sends a handshake packet to SlimeVR Server (first IMU tracker)
+// Sends a handshake packet to SlimeVR server (first IMU tracker)
 async function sendHandshakePacket(trackerName: string) {
     return new Promise((resolve, reject) => {
         packetCount += 1;
@@ -796,7 +764,7 @@ async function sendHandshakePacket(trackerName: string) {
     });
 }
 
-// Adds a new IMU tracker to SlimeVR Server
+// Adds a new IMU tracker to SlimeVR server
 async function sendSensorInfoPacket(trackerName: string) {
     return new Promise((resolve, reject) => {
         packetCount += 1;
@@ -825,6 +793,7 @@ async function sendSensorInfoPacket(trackerName: string) {
     });
 }
 
+// Sends an acceleration packet to SlimeVR server
 function sendAccelPacket(acceleration: Gravity, deviceID: number) {
     packetCount += 1;
 
@@ -842,6 +811,7 @@ function sendAccelPacket(acceleration: Gravity, deviceID: number) {
     });
 }
 
+// Sends a rotation packet to SlimeVR server
 function sendRotationPacket(rotation: Rotation, deviceID: number) {
     packetCount += 1;
 
@@ -865,6 +835,7 @@ function sendRotationPacket(rotation: Rotation, deviceID: number) {
 const lastPercentages: number[] = [];
 const lastVoltages: number[] = [];
 
+// Send battery info to SlimeVR server
 function sendBatteryLevel(
     percentage: number,
     voltage: number,
@@ -910,6 +881,104 @@ function sendBatteryLevel(
             );
         }
     });
+}
+
+function sendPacketToServer(actionCode: number, logMessage: string) {
+    packetCount += 1;
+    var buffer = new ArrayBuffer(128);
+    var view = new DataView(buffer);
+    view.setInt32(0, 21);
+    view.setBigInt64(4, BigInt(packetCount));
+    view.setInt8(12, actionCode);
+    const sendBuffer = new Uint8Array(buffer);
+    sock.send(sendBuffer, 0, sendBuffer.length, slimePort, slimeIP, (err) => {
+        if (err) {
+            console.error(`Error sending packet:`, err);
+        } else {
+            log(logMessage);
+        }
+    });
+}
+
+function sendFullReset() {
+    sendPacketToServer(2, "Sending full reset packet to SlimeVR server");
+}
+
+function sendYawReset() {
+    sendPacketToServer(3, "Sending yaw reset packet to SlimeVR server");
+}
+
+function sendMountingReset() {
+    sendPacketToServer(4, "Sending mounting reset packet to SlimeVR server");
+}
+
+function sendPauseTracking() {
+    sendPacketToServer(5, "Sending pause tracking packet to SlimeVR server");
+}
+
+/*
+ * Logging
+ */
+
+function log(msg: string, where = "main") {
+    const date = new Date();
+
+    if (canLogToFile) {
+        const logDir = path.resolve(mainPath, "logs");
+        const logPath = path.join(
+            logDir,
+            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(
+                -2
+            )}${("0" + date.getDate()).slice(-2)}.txt`
+        );
+
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+        }
+
+        // Create the file if it doesn't exist
+        if (!fs.existsSync(logPath)) {
+            fs.writeFileSync(logPath, "");
+        }
+
+        fs.appendFileSync(
+            logPath,
+            `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
+        );
+    }
+    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
+}
+
+function error(msg: string, where = "main") {
+    const date = new Date();
+    if (canLogToFile) {
+        const logDir = path.resolve(mainPath, "logs");
+        const logPath = path.join(
+            logDir,
+            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(
+                -2
+            )}${("0" + date.getDate()).slice(-2)}.txt`
+        );
+
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+        }
+
+        // Create the file if it doesn't exist
+        if (!fs.existsSync(logPath)) {
+            fs.writeFileSync(logPath, "");
+        }
+
+        if (where === "interpreter" && !debugTrackerConnections) return;
+
+        fs.appendFileSync(
+            logPath,
+            `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`
+        );
+    }
+    console.error(`${date.toTimeString()} -- ERROR -- (${where}): ${msg}`);
 }
 
 /*
