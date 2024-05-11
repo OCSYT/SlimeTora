@@ -124,7 +124,6 @@ app.on("window-all-closed", () => {
     app.quit();
 });
 
-
 /*
  * Renderer handlers
  */
@@ -598,9 +597,7 @@ function startDeviceListeners() {
             mainWindow.webContents.send("device-battery", {
                 trackerName,
                 batteryRemaining,
-                batteryVoltage: batteryVoltageInVolts
-                    ? batteryVoltageInVolts
-                    : 0,
+                batteryVoltage: batteryVoltageInVolts,
             });
             log(
                 `Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltageInVolts}V)`
@@ -882,10 +879,13 @@ function sendBatteryLevel(
     if (lastVoltages.length > maxElements) lastVoltages.shift();
 
     // Get the lowest non-zero percentage and voltage
-    const lowestPercentage = Math.min(...lastPercentages.filter(p => p !== 0));
-    const lowestVoltage = Math.min(...lastVoltages.filter(v => v !== 0));
+    const lowestPercentage = Math.min(
+        ...lastPercentages.filter((p) => p !== 0)
+    );
+    const lowestVoltage = Math.min(...lastVoltages.filter((v) => v !== 0));
 
-    if (lowestPercentage !== Infinity) lowestBatteryData.percentage = lowestPercentage;
+    if (lowestPercentage !== Infinity)
+        lowestBatteryData.percentage = lowestPercentage;
     if (lowestVoltage !== Infinity) lowestBatteryData.voltage = lowestVoltage;
 
     log(

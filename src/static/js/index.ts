@@ -694,7 +694,7 @@ window.ipc.on("device-battery", (_event, arg) => {
         batteryRemaining: number;
         batteryVoltage: number;
     } = arg;
-    if (!isActive || !trackerName) return;
+    if (!isActive || !trackerName || !batteryVoltage) return;
     const batteryText: HTMLElement = document
         .getElementById(trackerName)
         .querySelector("#battery");
