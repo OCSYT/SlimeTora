@@ -524,23 +524,29 @@ function startDeviceListeners() {
         mainWindow.webContents.send("device-mag", { trackerName, magStatus });
     });
 
-    let clickCount = 0;
-    let clickTimeout: NodeJS.Timeout = null;
+    let clickCounts: { [key: string]: number } = {};
+    let clickTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
     device.on("button", (trackerName, buttonPressed, isOn) => {
         if (!isOn || !buttonPressed) return;
 
-        clickCount++;
-        if (clickTimeout !== null) clearTimeout(clickTimeout);
+        let key = `${trackerName}-${buttonPressed}`;
 
-        clickTimeout = setTimeout(() => {
-            if (clickCount === 1) {
+        if (!clickCounts[key]) {
+            clickCounts[key] = 0;
+        }
+
+        clickCounts[key]++;
+        if (clickTimeouts[key] !== undefined) clearTimeout(clickTimeouts[key]);
+
+        clickTimeouts[key] = setTimeout(() => {
+            if (clickCounts[key] === 1) {
                 log(`Single click ${buttonPressed} button from ${trackerName}`);
                 sendYawReset();
-            } else if (clickCount === 2) {
+            } else if (clickCounts[key] === 2) {
                 log(`Double click ${buttonPressed} button from ${trackerName}`);
                 sendFullReset();
-            } else if (clickCount === 3) {
+            } else if (clickCounts[key] === 3) {
                 log(`Triple click ${buttonPressed} button from ${trackerName}`);
                 sendMountingReset();
             } else {
@@ -548,7 +554,7 @@ function startDeviceListeners() {
                 sendPauseTracking();
             }
 
-            clickCount = 0;
+            clickCounts[key] = 0;
         }, 500);
     });
 
