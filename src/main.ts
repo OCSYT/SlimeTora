@@ -58,10 +58,7 @@ async function loadTranslations() {
     const srcFiles = fs.readdirSync(srcLanguagesDir);
 
     for (const file of srcFiles) {
-        fs.copyFileSync(
-            path.join(srcLanguagesDir, file),
-            path.join(languagesDir, file)
-        );
+        fs.copyFileSync(path.join(srcLanguagesDir, file), path.join(languagesDir, file));
     }
 
     const files = fs.readdirSync(languagesDir);
@@ -69,9 +66,7 @@ async function loadTranslations() {
 
     for (const file of files) {
         const lang = path.basename(file, ".json");
-        const translations = JSON.parse(
-            fs.readFileSync(path.join(languagesDir, file), "utf-8")
-        );
+        const translations = JSON.parse(fs.readFileSync(path.join(languagesDir, file), "utf-8"));
 
         resources[lang] = { translation: translations };
     }
@@ -89,8 +84,7 @@ const createWindow = () => {
         const data = fs.readFileSync(configPath);
         const config: { [key: string]: any } = JSON.parse(data.toString());
         canLogToFile = config.global?.debug?.canLogToFile || false;
-        debugTrackerConnections =
-            config.global?.debug?.debugTrackerConnections || false;
+        debugTrackerConnections = config.global?.debug?.debugTrackerConnections || false;
     }
 
     mainWindow = new BrowserWindow({
@@ -117,10 +111,8 @@ const createWindow = () => {
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
-    if (device && device.getConnectionModeActive("bluetooth"))
-        device.stopConnection("bluetooth");
-    if (device && device.getConnectionModeActive("com"))
-        device.stopConnection("com");
+    if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
+    if (device && device.getConnectionModeActive("com")) device.stopConnection("com");
     app.quit();
 });
 
@@ -136,14 +128,7 @@ ipcMain.on("process-data", () => {
             return console.log(err);
         }
         let lines = data.split("\n");
-        const trackerNames = [
-            "leftKnee",
-            "rightKnee",
-            "chest",
-            "hip",
-            "rightAnkle",
-            "leftAnkle",
-        ];
+        const trackerNames = ["leftKnee", "rightKnee", "chest", "hip", "rightAnkle", "leftAnkle"];
 
         let i = 0;
         function processLine() {
@@ -254,9 +239,7 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    trackerSettingsWindow.loadURL(
-        path.join(__dirname, "static/html/settings.html")
-    );
+    trackerSettingsWindow.loadURL(path.join(__dirname, "static/html/settings.html"));
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
         // send trackerName to window
@@ -269,11 +252,8 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
  */
 
 ipcMain.on("start-connection", async (_event, arg) => {
-    const {
-        types,
-        ports,
-        isActive,
-    }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
+    const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } =
+        arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (!device) {
@@ -327,10 +307,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 });
 
 ipcMain.on("stop-connection", (_event, arg: string) => {
-    if (
-        arg.includes("bluetooth") &&
-        device.getConnectionModeActive("bluetooth")
-    ) {
+    if (arg.includes("bluetooth") && device.getConnectionModeActive("bluetooth")) {
         device.stopConnection("bluetooth");
         log("Stopped bluetooth connection");
     } else if (arg.includes("com") && device.getConnectionModeActive("com")) {
@@ -360,10 +337,7 @@ ipcMain.handle("get-tracker-mag", async (_event, arg: string) => {
 });
 
 ipcMain.handle("get-tracker-settings", async (_event, arg) => {
-    const {
-        trackerName,
-        forceBLE,
-    }: { trackerName: string; forceBLE: boolean } = arg;
+    const { trackerName, forceBLE }: { trackerName: string; forceBLE: boolean } = arg;
     let settings = await device.getTrackerSettings(trackerName, forceBLE);
     log("Got settings: " + JSON.stringify(settings));
     return settings;
@@ -386,33 +360,18 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         return;
     }
 
-    const uniqueSensorAutoCorrection = Array.from(
-        new Set(sensorAutoCorrection)
-    );
+    const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
 
     log(`Setting tracker settings for ${deviceID} to:`);
     log(`Sensor mode: ${sensorMode}`);
     log(`FPS mode: ${fpsMode}`);
     log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
-    log(
-        `Old tracker settings: ${JSON.stringify(
-            await device.getTrackerSettings(deviceID, true)
-        )}`
-    );
+    log(`Old tracker settings: ${JSON.stringify(await device.getTrackerSettings(deviceID, true))}`);
 
     // Save the settings
-    await setTrackerSettings(
-        deviceID,
-        sensorMode,
-        fpsMode,
-        uniqueSensorAutoCorrection
-    );
+    await setTrackerSettings(deviceID, sensorMode, fpsMode, uniqueSensorAutoCorrection);
 
-    log(
-        `New tracker settings: ${JSON.stringify(
-            await device.getTrackerSettings(deviceID, true)
-        )}`
-    );
+    log(`New tracker settings: ${JSON.stringify(await device.getTrackerSettings(deviceID, true))}`);
 });
 
 // Helper for "set-tracker-settings" event
@@ -422,9 +381,7 @@ async function setTrackerSettings(
     fpsMode: number,
     sensorAutoCorrection: string[]
 ) {
-    const uniqueSensorAutoCorrection = Array.from(
-        new Set(sensorAutoCorrection)
-    );
+    const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
 
     device.setTrackerSettings(
         deviceID,
@@ -450,9 +407,7 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
         return;
     }
 
-    const uniqueSensorAutoCorrection = Array.from(
-        new Set(sensorAutoCorrection)
-    );
+    const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
 
     log(`Setting all tracker settings to:`);
     log(`Active trackers: ${connectedDevices}`);
@@ -484,28 +439,20 @@ ipcMain.handle("get-settings", () => {
 });
 
 ipcMain.on("save-setting", (_event, data) => {
-    const config: { [key: string]: any } = JSON.parse(
-        fs.readFileSync(configPath).toString()
-    );
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     // Use lodash's mergeWith to merge the new data with the existing config (not merge as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
-    const mergedConfig = _.mergeWith(
-        config,
-        data,
-        (objValue: any, srcValue: any) => {
-            if (_.isArray(objValue)) {
-                return srcValue;
-            }
+    const mergedConfig = _.mergeWith(config, data, (objValue: any, srcValue: any) => {
+        if (_.isArray(objValue)) {
+            return srcValue;
         }
-    );
+    });
 
     fs.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 4));
 });
 
 ipcMain.handle("has-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(
-        fs.readFileSync(configPath).toString()
-    );
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     const properties = name.split(".");
     let current = config;
@@ -521,9 +468,7 @@ ipcMain.handle("has-setting", (_event, name) => {
 });
 
 ipcMain.handle("get-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(
-        fs.readFileSync(configPath).toString()
-    );
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     const properties = name.split(".");
     let current = config;
@@ -598,68 +543,47 @@ function startDeviceListeners() {
         }, 500);
     });
 
-    device.on(
-        "imu",
-        async (
-            trackerName: string,
-            rawRotation: Rotation,
-            rawGravity: Gravity
-        ) => {
-            if (
-                !connectedDevices.includes(trackerName) ||
-                !rawRotation ||
-                !rawGravity
-            )
-                return;
+    device.on("imu", async (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
+        if (!connectedDevices.includes(trackerName) || !rawRotation || !rawGravity) return;
 
-            // Convert rotation to quaternion to euler angles in radians
-            const quaternion = new Quaternion(
-                rawRotation.w,
-                rawRotation.x,
-                rawRotation.y,
-                rawRotation.z
-            );
-            const eulerRadians = quaternion.toEuler("XYZ");
+        // Convert rotation to quaternion to euler angles in radians
+        const quaternion = new Quaternion(
+            rawRotation.w,
+            rawRotation.x,
+            rawRotation.y,
+            rawRotation.z
+        );
+        const eulerRadians = quaternion.toEuler("XYZ");
 
-            // Convert the Euler angles to degrees
-            const rotation = {
-                x: eulerRadians[0] * (180 / Math.PI),
-                y: eulerRadians[1] * (180 / Math.PI),
-                z: eulerRadians[2] * (180 / Math.PI),
-            };
+        // Convert the Euler angles to degrees
+        const rotation = {
+            x: eulerRadians[0] * (180 / Math.PI),
+            y: eulerRadians[1] * (180 / Math.PI),
+            z: eulerRadians[2] * (180 / Math.PI),
+        };
 
-            const gravity = {
-                x: rawGravity.x,
-                y: rawGravity.y,
-                z: rawGravity.z,
-            };
+        const gravity = {
+            x: rawGravity.x,
+            y: rawGravity.y,
+            z: rawGravity.z,
+        };
 
-            sendRotationPacket(
-                rawRotation,
-                connectedDevices.indexOf(trackerName)
-            );
-            sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
+        sendRotationPacket(rawRotation, connectedDevices.indexOf(trackerName));
+        sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
 
-            mainWindow.webContents.send("device-data", {
-                trackerName,
-                rotation,
-                gravity,
-                rawRotation,
-                rawGravity,
-            });
-        }
-    );
+        mainWindow.webContents.send("device-data", {
+            trackerName,
+            rotation,
+            gravity,
+            rawRotation,
+            rawGravity,
+        });
+    });
 
     device.on(
         "battery",
-        (
-            trackerName: string,
-            batteryRemaining: number,
-            batteryVoltage: number
-        ) => {
-            let batteryVoltageInVolts = batteryVoltage
-                ? batteryVoltage / 1000
-                : 0;
+        (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
+            let batteryVoltageInVolts = batteryVoltage ? batteryVoltage / 1000 : 0;
             if (!connectedDevices.includes(trackerName)) return;
             if (trackerName.startsWith("HaritoraX")) batteryVoltageInVolts = 0;
 
@@ -753,9 +677,7 @@ async function handleNextTracker() {
             connectedDevices.push(trackerName);
             connectedDevices.sort();
         } else {
-            error(
-                `Failed to send handshake for ${trackerName}, not adding to connected devices`
-            );
+            error(`Failed to send handshake for ${trackerName}, not adding to connected devices`);
         }
     } else {
         if (connectedDevices.includes(trackerName)) return;
@@ -766,9 +688,7 @@ async function handleNextTracker() {
             error(
                 `Failed to send sensor info packet for ${trackerName}, not adding to connected devices`
             );
-            connectedDevices = connectedDevices.filter(
-                (name) => name !== trackerName
-            );
+            connectedDevices = connectedDevices.filter((name) => name !== trackerName);
         }
     }
 
@@ -843,17 +763,10 @@ async function sendSensorInfoPacket(trackerName: string) {
 function sendAccelPacket(acceleration: Gravity, deviceID: number) {
     packetCount += 1;
 
-    const buffer = ServerBoundAccelPacket.encode(
-        BigInt(packetCount),
-        deviceID,
-        acceleration
-    );
+    const buffer = ServerBoundAccelPacket.encode(BigInt(packetCount), deviceID, acceleration);
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-        if (err)
-            error(
-                `Error sending acceleration packet for sensor ${deviceID}: ${err}`
-            );
+        if (err) error(`Error sending acceleration packet for sensor ${deviceID}: ${err}`);
     });
 }
 
@@ -870,10 +783,7 @@ function sendRotationPacket(rotation: Rotation, deviceID: number) {
     );
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-        if (err)
-            error(
-                `Error sending rotation packet for sensor ${deviceID}: ${err}`
-            );
+        if (err) error(`Error sending rotation packet for sensor ${deviceID}: ${err}`);
     });
 }
 
@@ -882,11 +792,7 @@ const lastPercentages: number[] = [];
 const lastVoltages: number[] = [];
 
 // Send battery info to SlimeVR server
-function sendBatteryLevel(
-    percentage: number,
-    voltage: number,
-    deviceID: number
-) {
+function sendBatteryLevel(percentage: number, voltage: number, deviceID: number) {
     lastPercentages.push(percentage);
     lastVoltages.push(voltage);
 
@@ -896,13 +802,10 @@ function sendBatteryLevel(
     if (lastVoltages.length > maxElements) lastVoltages.shift();
 
     // Get the lowest non-zero percentage and voltage
-    const lowestPercentage = Math.min(
-        ...lastPercentages.filter((p) => p !== 0)
-    );
+    const lowestPercentage = Math.min(...lastPercentages.filter((p) => p !== 0));
     const lowestVoltage = Math.min(...lastVoltages.filter((v) => v !== 0));
 
-    if (lowestPercentage !== Infinity)
-        lowestBatteryData.percentage = lowestPercentage;
+    if (lowestPercentage !== Infinity) lowestBatteryData.percentage = lowestPercentage;
     if (lowestVoltage !== Infinity) lowestBatteryData.voltage = lowestVoltage;
 
     log(
@@ -918,9 +821,7 @@ function sendBatteryLevel(
 
     sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
         if (err) {
-            error(
-                `Error sending battery level packet for sensor ${deviceID}: ${err}`
-            );
+            error(`Error sending battery level packet for sensor ${deviceID}: ${err}`);
         } else {
             log(
                 `Sent battery data to SlimeVR server: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage}V)`
@@ -973,9 +874,9 @@ function log(msg: string, where = "main") {
         const logDir = path.resolve(mainPath, "logs");
         const logPath = path.join(
             logDir,
-            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(
-                -2
-            )}${("0" + date.getDate()).slice(-2)}.txt`
+            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
+                "0" + date.getDate()
+            ).slice(-2)}.txt`
         );
 
         // Create the directory if it doesn't exist
@@ -988,10 +889,7 @@ function log(msg: string, where = "main") {
             fs.writeFileSync(logPath, "");
         }
 
-        fs.appendFileSync(
-            logPath,
-            `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`
-        );
+        fs.appendFileSync(logPath, `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`);
     }
     console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
 }
@@ -1002,9 +900,9 @@ function error(msg: string, where = "main") {
         const logDir = path.resolve(mainPath, "logs");
         const logPath = path.join(
             logDir,
-            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(
-                -2
-            )}${("0" + date.getDate()).slice(-2)}.txt`
+            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
+                "0" + date.getDate()
+            ).slice(-2)}.txt`
         );
 
         // Create the directory if it doesn't exist
@@ -1019,10 +917,7 @@ function error(msg: string, where = "main") {
 
         if (where === "interpreter" && !debugTrackerConnections) return;
 
-        fs.appendFileSync(
-            logPath,
-            `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`
-        );
+        fs.appendFileSync(logPath, `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`);
     }
     console.error(`${date.toTimeString()} -- ERROR -- (${where}): ${msg}`);
 }
