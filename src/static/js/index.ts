@@ -228,7 +228,7 @@ async function startConnection() {
 
     if (bluetoothEnabled && gxEnabled) {
         window.ipc.send("start-connection", {
-            types: ["bluetooth", "gx"],
+            types: ["bluetooth", "com"],
             ports: selectedComPorts,
             isActive,
         });
@@ -240,7 +240,7 @@ async function startConnection() {
         window.log("Starting Bluetooth connection");
     } else if (gxEnabled) {
         window.ipc.send("start-connection", {
-            types: ["gx"],
+            types: ["com"],
             ports: selectedComPorts,
             isActive,
         });
@@ -285,7 +285,7 @@ async function stopConnection() {
         .setAttribute("disabled", "true");
 
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
-    if (gxEnabled) window.ipc.send("stop-connection", "gx");
+    if (gxEnabled) window.ipc.send("stop-connection", "com");
 
     setStatus(await window.translate("main.status.none"));
     document.getElementById("tracker-count").textContent = "0";
@@ -653,6 +653,8 @@ window.ipc.on("device-data", async (_event: any, arg) => {
         await processQueue();
         return;
     }
+
+    console.log(`Rotation for ${trackerName}: ${JSON.stringify(rotation)}`);
 
     const rotationText = `${rotation.x.toFixed(0)}, ${rotation.y.toFixed(
         0
@@ -1126,10 +1128,15 @@ function addEventListeners() {
         });
 }
 
+function processData() {
+    window.ipc.send("process-data", null);
+}
+
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.openLogsFolder = openLogsFolder;
 window.saveSettings = saveSettings;
+window.processData = processData;
 window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for ${deviceID}`);
     window.ipc.send("open-tracker-settings", deviceID);

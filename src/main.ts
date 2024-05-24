@@ -3,7 +3,7 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
-import { HaritoraXWireless } from "haritorax-interpreter";
+import { HaritoraX } from "../../haritorax-interpreter";
 import { SerialPort } from "serialport";
 import Quaternion from "quaternion";
 import * as dgram from "dgram";
@@ -27,7 +27,7 @@ import {
 } from "@slimevr/firmware-protocol";
 
 let mainWindow: BrowserWindow | null = null;
-let device: HaritoraXWireless = undefined;
+let device: HaritoraX = undefined;
 let connectedDevices: string[] = [];
 let canLogToFile = false;
 let debugTrackerConnections = false;
@@ -119,14 +119,56 @@ app.on("ready", createWindow);
 app.on("window-all-closed", () => {
     if (device && device.getConnectionModeActive("bluetooth"))
         device.stopConnection("bluetooth");
-    if (device && device.getConnectionModeActive("gx"))
-        device.stopConnection("gx");
+    if (device && device.getConnectionModeActive("com"))
+        device.stopConnection("com");
     app.quit();
 });
 
 /*
  * Renderer handlers
  */
+
+ipcMain.on("process-data", () => {
+    const dataPath = path.resolve(mainPath, "data.txt");
+
+    fs.readFile(dataPath, "utf8", function (err, data) {
+        if (err) {
+            return console.log(err);
+        }
+        let lines = data.split("\n");
+        const trackerNames = [
+            "leftKnee",
+            "rightKnee",
+            "chest",
+            "hip",
+            "rightAnkle",
+            "leftAnkle",
+        ];
+
+        let i = 0;
+        function processLine() {
+            if (i >= lines.length) return; // stop if we've processed all lines
+
+            const data = lines[i]; // The base64 string
+            const buffer = Buffer.from(data, "base64");
+
+            if (buffer.length === 84) {
+                trackerNames.forEach((trackerName, index) => {
+                    const start = index * 14; // 14 bytes per tracker
+                    const trackerBuffer = buffer.slice(start, start + 14);
+                    device.parseIMUData(trackerBuffer, trackerName);
+                });
+            } else {
+                console.error("Unexpected data length:", buffer.length);
+            }
+
+            i++;
+            setTimeout(processLine, 0); // process next line after 100ms
+        }
+
+        processLine(); // start processing
+    });
+});
 
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
@@ -236,10 +278,12 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     if (!device) {
         log(
-            "Creating new HaritoraXWireless instance with debugTrackerConnections: " +
+            "Creating new HaritoraX instance with debugTrackerConnections: " +
                 debugTrackerConnections
         );
-        device = new HaritoraXWireless(debugTrackerConnections ? 2 : 0, true);
+        // !
+        // TODO: add setting in renderer html to enable and disable wireless or wired trackers
+        device = new HaritoraX("wireless", debugTrackerConnections ? 2 : 0, true);
         startDeviceListeners();
     }
 
@@ -263,9 +307,9 @@ ipcMain.on("start-connection", async (_event, arg) => {
         device.startConnection("bluetooth");
     }
 
-    if (types.includes("gx") && ports) {
+    if (types.includes("com") && ports) {
         log("Starting GX connection with ports: " + JSON.stringify(ports));
-        device.startConnection("gx", ports);
+        device.startConnection("com", ports);
     }
 
     connectionActive = true;
@@ -282,10 +326,6 @@ ipcMain.on("start-connection", async (_event, arg) => {
     });
 });
 
-// for some reason when stopping connections, sometimes BT just doesn't disconnect from devices and they stay connected
-// honestly this isn't a huge deal, and well "instant" connections like the GX trackers or something lol
-// have a weird bug? it's a "feature" now!
-// -jovannmc
 ipcMain.on("stop-connection", (_event, arg: string) => {
     if (
         arg.includes("bluetooth") &&
@@ -293,8 +333,8 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
     ) {
         device.stopConnection("bluetooth");
         log("Stopped bluetooth connection");
-    } else if (arg.includes("gx") && device.getConnectionModeActive("gx")) {
-        device.stopConnection("gx");
+    } else if (arg.includes("com") && device.getConnectionModeActive("com")) {
+        device.stopConnection("com");
         log("Stopped GX connection");
     } else {
         log("No connection to stop");
@@ -528,7 +568,7 @@ function startDeviceListeners() {
     let clickTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
     device.on("button", (trackerName, buttonPressed, isOn) => {
-        if (!isOn || !buttonPressed) return;
+        if (!trackerName || !isOn || !buttonPressed) return;
 
         let key = `${trackerName}-${buttonPressed}`;
 
