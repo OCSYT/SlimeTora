@@ -138,12 +138,15 @@
 
         <br />
 
-        <!-- Global settings section -->
+        <!-- Program settings section -->
         <div class="section">
             <div class="container">
                 <div class="with-tooltip">
-                    <h1 class="title has-text-centered is-2 is-spaced" data-i18n="settings.title">
-                        Global settings
+                    <h1
+                        class="title has-text-centered is-2 is-spaced"
+                        data-i18n="programSettings.title"
+                    >
+                        Program settings
                     </h1>
                     <div class="tooltip-container">
                         <div class="icon">
@@ -151,25 +154,73 @@
                         </div>
                         <span
                             class="tooltip-text subtitle is-6 has-text-weight-normal"
-                            data-i18n="settings.tooltip"
+                            data-i18n="programSettings.tooltip"
                         >
-                            Set the global settings for the trackers or the program. An option with
-                            yellow text requires a restart of the program to fully apply.</span
+                            Set the settings of the program. An option with yellow text requires a
+                            restart of the program to fully apply.</span
                         >
                     </div>
                 </div>
-                <h3 class="subtitle has-text-centered" data-i18n="settings.text">
-                    Change the global settings for the program and the trackers. Highly recommended
-                    to use HaritoraConfigurator for tracker settings instead as this may be
-                    unreliable.
-                </h3>
+                <br />
                 <div class="columns is-multiline has-text-centered">
+                    <!-- Tracker model setting -->
+                    <div class="column is-6">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="programSettings.trackerModel.title"
+                            >
+                                Tracker model
+                            </h3>
+                            <div class="tooltip-container">
+                                <div class="icon">
+                                    <img src="../images/help.svg" alt="Help icon" />
+                                </div>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="programSettings.trackerModel.tooltip"
+                                    >Select the model of HaritoraX trackers you have, the HaritoraX
+                                    Wireless or HaritoraX Wired (1.1b/1.1/1.0).</span
+                                >
+                            </div>
+                        </div>
+                        <div class="settings-container">
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input type="checkbox" id="wireless-tracker-switch" checked />
+                                    <label
+                                        for="wireless-tracker-switch"
+                                        class="slider round"
+                                    ></label>
+                                </div>
+                                <label
+                                    for="wireless-tracker-switch"
+                                    style="min-width: 160px"
+                                    data-i18n="programSettings.trackerModel.wireless"
+                                    >HaritoraX Wireless</label
+                                >
+                            </div>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input type="checkbox" id="wired-tracker-switch" />
+                                    <label for="wired-tracker-switch" class="slider round"></label>
+                                </div>
+                                <label
+                                    for="wired-tracker-switchh"
+                                    style="min-width: 160px"
+                                    data-i18n="programSettings.trackerModel.wired"
+                                    >HaritoraX 1.1b/1.1/1.0</label
+                                >
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Connection mode setting -->
                     <div class="column is-6">
                         <div class="with-tooltip">
                             <h3
                                 class="title is-4 is-spaced"
-                                data-i18n="settings.connectionMode.title"
+                                data-i18n="programSettings.connectionMode.title"
                             >
                                 Connection Mode
                             </h3>
@@ -179,7 +230,7 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="settings.connectionMode.tooltip"
+                                    data-i18n="programSettings.connectionMode.tooltip"
                                     >Select the connection mode for the trackers. Both can be used
                                     at the same time (e.g. GX6 for the 6 main trackers and BT for
                                     the 2 elbows).</span
@@ -194,7 +245,7 @@
                                 </div>
                                 <label
                                     for="bluetooth-switch"
-                                    data-i18n="settings.connectionMode.bluetooth"
+                                    data-i18n="programSettings.connectionMode.bluetooth"
                                     style="min-width: 80px"
                                     >Bluetooth</label
                                 >
@@ -206,7 +257,7 @@
                                 </div>
                                 <label
                                     for="gx-switch"
-                                    data-i18n="settings.connectionMode.gx"
+                                    data-i18n="programSettings.connectionMode.gx"
                                     style="min-width: 80px"
                                     >GX(6/2)</label
                                 >
@@ -217,7 +268,10 @@
                     <!-- COM port section -->
                     <div class="column is-6">
                         <div class="with-tooltip">
-                            <h3 class="title is-4 is-spaced" data-i18n="settings.comPorts.title">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="programSettings.comPorts.title"
+                            >
                                 COM ports (GX)
                             </h3>
                             <div class="tooltip-container">
@@ -226,7 +280,7 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="settings.comPorts.tooltip"
+                                    data-i18n="programSettings.comPorts.tooltip"
                                     >Select the COM ports your GX(6/2) dongles are using. Up to 4
                                     ports can be selected (3 for GX6 and 1 for GX2) unless checks
                                     are bypassed.</span
@@ -239,10 +293,78 @@
                         </div>
                     </div>
 
+                    <div class="column is-6">
+                        <div class="with-tooltip">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="programSettings.other.title"
+                            >
+                                Other settings
+                            </h3>
+                            <div class="tooltip-container">
+                                <div class="icon">
+                                    <img src="../images/help.svg" alt="Help icon" />
+                                </div>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="programSettings.other.tooltip"
+                                    >Some other settings that don't fit in the other
+                                    categories.</span
+                                >
+                            </div>
+                        </div>
+                        <div class="input-container is-centered">
+                            <label
+                                for="tracker-visualization-fps"
+                                class="label has-text-warning"
+                                data-i18n="programSettings.other.trackerVisualizationFPS"
+                                >Tracker visualization FPS</label
+                            >
+                            <input
+                                type="text"
+                                id="tracker-visualization-fps"
+                                placeholder="10"
+                                class="input"
+                                style="max-width: 30%"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <!-- Tracker settings section -->
+        <div class="section">
+            <div class="container">
+                <div class="with-tooltip">
+                    <h1
+                        class="title has-text-centered is-2 is-spaced"
+                        data-i18n="trackerSettings.title"
+                    >
+                        Tracker settings
+                    </h1>
+                    <div class="tooltip-container">
+                        <div class="icon">
+                            <img src="../images/help.svg" alt="Help icon" />
+                        </div>
+                        <span
+                            class="tooltip-text subtitle is-6 has-text-weight-normal"
+                            data-i18n="trackerSettings.tooltip"
+                        >
+                            Set the global settings for the trackers (can be overriden per-tracker).
+                            An option with yellow text requires a restart of the program to fully
+                            apply.</span
+                        >
+                    </div>
+                </div>
+                <br />
+                <div class="columns is-multiline has-text-centered">
                     <!-- FPS settings -->
                     <div class="column is-6">
                         <div class="with-tooltip">
-                            <h3 class="title is-4 is-spaced" data-i18n="settings.fps.title">
+                            <h3 class="title is-4 is-spaced" data-i18n="trackerSettings.fps.title">
                                 FPS transfer rate
                             </h3>
                             <div class="tooltip-container">
@@ -251,7 +373,7 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="settings.fps.tooltip"
+                                    data-i18n="trackerSettings.fps.tooltip"
                                     >Select the FPS transfer rate for the trackers. If using
                                     Bluetooth, 50FPS may be more stable.</span
                                 >
@@ -260,8 +382,10 @@
                         <div class="settings-container">
                             <div class="select">
                                 <select id="fps-mode-select">
-                                    <option value="50" data-i18n="settings.fps.50">50 FPS</option>
-                                    <option value="100" data-i18n="settings.fps.100">
+                                    <option value="50" data-i18n="trackerSettings.fps.50">
+                                        50 FPS
+                                    </option>
+                                    <option value="100" data-i18n="trackerSettings.fps.100">
                                         100 FPS
                                     </option>
                                 </select>
@@ -272,7 +396,10 @@
                     <!-- Sensor mode setting -->
                     <div class="column is-6">
                         <div class="with-tooltip">
-                            <h3 class="title is-4 is-spaced" data-i18n="settings.sensorMode.title">
+                            <h3
+                                class="title is-4 is-spaced"
+                                data-i18n="trackerSettings.sensorMode.title"
+                            >
                                 Sensor mode
                             </h3>
                             <div class="tooltip-container">
@@ -281,20 +408,21 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="settings.sensorMode.tooltip"
+                                    data-i18n="trackerSettings.sensorMode.tooltip"
                                     >Select the sensor mode for the trackers. Mode 1 enables the
                                     magnetometer which is best if you have a stable geomagnetic
-                                    environment.</span
+                                    environment (mag status is green or yellow). If unstable (mag
+                                    status is red), use mode 2.</span
                                 >
                             </div>
                         </div>
                         <div class="settings-container">
                             <div class="select">
                                 <select id="sensor-mode-select">
-                                    <option value="1" data-i18n="settings.sensorMode.1">
+                                    <option value="1" data-i18n="trackerSettings.sensorMode.1">
                                         Mode 1
                                     </option>
-                                    <option value="2" data-i18n="settings.sensorMode.2">
+                                    <option value="2" data-i18n="trackerSettings.sensorMode.2">
                                         Mode 2
                                     </option>
                                 </select>
@@ -307,7 +435,7 @@
                         <div class="with-tooltip">
                             <h3
                                 class="title is-4 is-spaced"
-                                data-i18n="settings.sensorCorrection.title"
+                                data-i18n="trackerSettings.sensorCorrection.title"
                             >
                                 Sensor auto correction
                             </h3>
@@ -317,7 +445,7 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="settings.sensorCorrection.tooltip"
+                                    data-i18n="trackerSettings.sensorCorrection.tooltip"
                                     >Enable or disable sensor auto correction features. Usually not
                                     needed to be changed and results vary between
                                     environments.</span
@@ -333,7 +461,7 @@
                                 <label
                                     for="accelerometer-switch"
                                     style="min-width: 150px"
-                                    data-i18n="settings.sensorCorrection.accelerometer"
+                                    data-i18n="trackerSettings.sensorCorrection.accelerometer"
                                     >Accelerometer</label
                                 >
                             </div>
@@ -345,7 +473,7 @@
                                 <label
                                     for="gyroscope-switch"
                                     style="min-width: 150px"
-                                    data-i18n="settings.sensorCorrection.gyroscope"
+                                    data-i18n="trackerSettings.sensorCorrection.gyroscope"
                                     >Gyroscope</label
                                 >
                             </div>
@@ -357,7 +485,7 @@
                                 <label
                                     for="magnetometer-switch"
                                     style="min-width: 150px"
-                                    data-i18n="settings.sensorCorrection.magnetometer"
+                                    data-i18n="trackerSettings.sensorCorrection.magnetometer"
                                     >Magnetometer</label
                                 >
                             </div>
@@ -365,44 +493,12 @@
                     </div>
 
                     <div class="column is-6">
-                        <div class="with-tooltip">
-                            <h3 class="title is-4 is-spaced" data-i18n="settings.other.title">
-                                Other settings
-                            </h3>
-                            <div class="tooltip-container">
-                                <div class="icon">
-                                    <img src="../images/help.svg" alt="Help icon" />
-                                </div>
-                                <span
-                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="settings.other.tooltip"
-                                    >Some other settings that don't fit in the other
-                                    categories.</span
-                                >
-                            </div>
-                        </div>
-                        <div class="input-container is-centered">
-                            <label
-                                for="tracker-visualization-fps"
-                                class="label has-text-warning"
-                                data-i18n="settings.other.trackerVisualizationFPS"
-                                >Tracker visualization FPS</label
-                            >
-                            <input
-                                type="text"
-                                id="tracker-visualization-fps"
-                                placeholder="10"
-                                class="input"
-                                style="max-width: 30%"
-                            />
-                        </div>
-                        <br />
                         <div class="buttons is-centered">
                             <button
                                 class="button is-info"
                                 id="save-settings-button"
                                 onclick="saveSettings()"
-                                data-i18n="settings.other.saveButton"
+                                data-i18n="trackerSettings.saveButton"
                             >
                                 Save settings
                             </button>
@@ -491,6 +587,7 @@
 
         <br />
 
+        <!-- Debugging section -->
         <div class="section">
             <div class="container">
                 <div class="with-tooltip">
@@ -514,7 +611,8 @@
                 </div>
                 <h2 class="subtitle has-text-centered" data-i18n="debugging.text">
                     Enable or disable debugging features for the program. Debugging tracker data
-                    will make log files huge, only use if requested or if you have tracker issues!
+                    will make log files huge and cause lag, only use if requested or if you have
+                    tracker issues!
                 </h2>
                 <div class="column is-12">
                     <div class="debugging-container">
@@ -572,6 +670,7 @@
                         >
                             Open logs folder
                         </button>
+                        <!-- remove before release -->
                         <button class="button is-info" onclick="processData()">Process data</button>
                     </div>
                 </div>
