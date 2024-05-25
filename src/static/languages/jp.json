@@ -70,7 +70,7 @@
             "title": "接続モード",
             "tooltip": "トラッカーとの接続モードを選択します。接続モードは同時に使用することが可能です。",
             "bluetooth": "Bluetooth (LE)",
-            "gx": "COMポート / GXドングル(6/2)"
+            "com": "COMポート / GXドングル(6/2)"
         },
         "comPorts": {
             "title": "COMポート (GX)",
