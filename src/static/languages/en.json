@@ -68,9 +68,13 @@
         },
         "connectionMode": {
             "title": "Connection mode",
-            "tooltip": "Select the connection mode for the trackers. Multiple modes can be selected at once.",
-            "bluetooth": "Bluetooth",
-            "gx": "GX(6/2)"
+            "tooltip": "Select the connection mode used to connect to the trackers. Multiple modes can be used at the same time if wanted.",
+            "bluetooth": "Bluetooth (LE)",
+            "com": "COM / GX(6/2)"
+        },
+        "comPorts": {
+            "title": "COM ports",
+            "tooltip": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2) unless checks are bypassed."
         },
         "other": {
             "title": "Other settings",
