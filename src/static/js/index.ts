@@ -751,8 +751,6 @@ function addEventListeners() {
                 },
             },
         });
-
-        unsavedSettings(true);
     });
 
     document.getElementById("gx-switch").addEventListener("change", function () {
@@ -765,8 +763,6 @@ function addEventListeners() {
                 },
             },
         });
-
-        unsavedSettings(true);
     });
 
     document.getElementById("com-ports").addEventListener("change", () => {
