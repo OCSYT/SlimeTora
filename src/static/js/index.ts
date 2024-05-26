@@ -989,15 +989,10 @@ function addEventListeners() {
         });
 }
 
-function processData() {
-    window.ipc.send("process-data", null);
-}
-
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.openLogsFolder = openLogsFolder;
 window.saveSettings = saveSettings;
-window.processData = processData;
 window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for ${deviceID}`);
     window.ipc.send("open-tracker-settings", deviceID);
