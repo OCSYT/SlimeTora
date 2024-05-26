@@ -128,7 +128,7 @@ ipcMain.on("process-data", () => {
             return console.log(err);
         }
         let lines = data.split("\n");
-        const trackerNames = ["leftKnee", "rightKnee", "chest", "hip", "rightAnkle", "leftAnkle"];
+        const trackerNames = ["chest", "leftKnee", "leftAnkle", "rightKnee", "rightAnkle", "hip"];
 
         let i = 0;
         function processLine() {
