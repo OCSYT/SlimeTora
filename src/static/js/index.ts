@@ -8,6 +8,9 @@ let bluetoothEnabled = false;
 let gxEnabled = false;
 const selectedComPorts: string[] = [];
 
+let wirelessTrackerEnabled = false;
+let wiredTrackerEnabled = false;
+
 let fpsMode = 50;
 let sensorMode = 2;
 let accelerometerEnabled = false;
@@ -735,6 +738,40 @@ function addEventListeners() {
                 trackerVisualization: trackerVisualization,
             },
         });
+    });
+
+    /*
+     * "Tracker model" event listeners
+     */
+
+    document.getElementById("wireless-tracker-switch").addEventListener("change", function () {
+        wirelessTrackerEnabled = !wirelessTrackerEnabled;
+        window.log(`Switched wireless tracker to: ${wirelessTrackerEnabled}`);
+        window.ipc.send("save-setting", {
+            global: {
+                trackers: {
+                    wirelessTrackerEnabled: wirelessTrackerEnabled,
+                },
+            },
+        });
+
+        unsavedSettings(true);
+        window.ipc.send("set-wireless-tracker", wirelessTrackerEnabled);
+    });
+
+    document.getElementById("wired-tracker-switch").addEventListener("change", function () {
+        wiredTrackerEnabled = !wiredTrackerEnabled;
+        window.log(`Switched wired tracker to: ${wiredTrackerEnabled}`);
+        window.ipc.send("save-setting", {
+            global: {
+                trackers: {
+                    wiredTrackerEnabled: wiredTrackerEnabled,
+                },
+            },
+        });
+
+        unsavedSettings(true);
+        window.ipc.send("set-wired-tracker", wiredTrackerEnabled);
     });
 
     /*

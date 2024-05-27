@@ -34,6 +34,8 @@ let debugTrackerConnections = false;
 let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
 
+let wirelessTrackerEnabled = false;
+let wiredTrackerEnabled = false;
 // this variable is literally only used so i can fix a stupid issue where with both BT+GX enabled, it sometimes connects the BT trackers again directly after again, breaking the program
 // why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
 // -jovannmc
@@ -173,6 +175,16 @@ ipcMain.on("set-debug-tracker-connections", (_event, arg) => {
     log(`Debug tracker connections set to: ${arg}`);
 });
 
+ipcMain.on("set-wireless-tracker", (_event, arg) => {
+    wirelessTrackerEnabled = arg;
+    log(`Wireless tracker enabled set to: ${arg}`);
+});
+
+ipcMain.on("set-wired-tracker", (_event, arg) => {
+    wiredTrackerEnabled = arg;
+    log(`Wired tracker enabled set to: ${arg}`);
+});
+
 ipcMain.on("open-logs-folder", async () => {
     const logDir = path.resolve(mainPath, "logs");
     if (fs.existsSync(logDir)) {
@@ -226,9 +238,13 @@ ipcMain.on("start-connection", async (_event, arg) => {
             "Creating new HaritoraX instance with debugTrackerConnections: " +
                 debugTrackerConnections
         );
-        // !
-        // TODO: add setting in renderer html to enable and disable wireless or wired trackers
-        device = new HaritoraX("wireless", debugTrackerConnections ? 2 : 0, true);
+
+        if (wiredTrackerEnabled) {
+            device = new HaritoraX("wired", debugTrackerConnections ? 2 : 0, true);
+        } else if (wirelessTrackerEnabled) {
+            device = new HaritoraX("wireless", debugTrackerConnections ? 2 : 0, false);
+        }
+        
         startDeviceListeners();
     }
 
@@ -477,7 +493,7 @@ function startDeviceListeners() {
     let clickCounts: { [key: string]: number } = {};
     let clickTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
-    device.on("button", (trackerName, buttonPressed, isOn) => {
+    device.on("button", (trackerName: string, buttonPressed: string, isOn: boolean) => {
         if (!trackerName || !isOn || !buttonPressed) return;
 
         let key = `${trackerName}-${buttonPressed}`;
@@ -646,9 +662,11 @@ async function handleNextTracker() {
         }
     } else {
         if (connectedDevices.includes(trackerName)) return;
-        connectedDevices.push(trackerName);
-        connectedDevices.sort();
         const sent = (await sendSensorInfoPacket(trackerName)) as boolean;
+        if (sent) {
+            connectedDevices.push(trackerName);
+            connectedDevices.sort();
+        }
         if (!sent) {
             error(
                 `Failed to send sensor info packet for ${trackerName}, not adding to connected devices`
