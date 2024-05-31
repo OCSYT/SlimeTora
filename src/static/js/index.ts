@@ -79,6 +79,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     censorSerialNumbers = settings.global?.censorSerialNumbers || false;
     trackerVisualization = settings.global?.trackerVisualization || false;
     trackerVisualizationFPS = settings.global?.trackerVisualizationFPS || 10;
+    wirelessTrackerEnabled = settings.global?.trackers?.wirelessTrackerEnabled || false;
+    wiredTrackerEnabled = settings.global?.trackers?.wiredTrackerEnabled || false;
     bluetoothEnabled = settings.global?.connectionMode?.bluetoothEnabled || false;
     gxEnabled = settings.global?.connectionMode?.gxEnabled || false;
     fpsMode = settings.global?.trackers?.fpsMode || 50;
@@ -98,6 +100,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     const trackerVisualizationSwitch = document.getElementById(
         "visualization-switch"
     ) as HTMLInputElement;
+    const wirelessTrackerSwitch = document.getElementById(
+        "wireless-tracker-switch"
+    ) as HTMLInputElement;
+    const wiredTrackerSwitch = document.getElementById("wired-tracker-switch") as HTMLInputElement;
     const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
     const gxSwitch = document.getElementById("gx-switch") as HTMLInputElement;
     const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
@@ -115,6 +121,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Set the checked property based on the settings
     censorSerialNumbersSwitch.checked = censorSerialNumbers;
     trackerVisualizationSwitch.checked = trackerVisualization;
+    wirelessTrackerSwitch.checked = wirelessTrackerEnabled;
+    wiredTrackerSwitch.checked = wiredTrackerEnabled;
     bluetoothSwitch.checked = bluetoothEnabled;
     gxSwitch.checked = gxEnabled;
     accelerometerSwitch.checked = accelerometerEnabled;

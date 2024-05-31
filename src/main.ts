@@ -87,6 +87,8 @@ const createWindow = () => {
         const config: { [key: string]: any } = JSON.parse(data.toString());
         canLogToFile = config.global?.debug?.canLogToFile || false;
         debugTrackerConnections = config.global?.debug?.debugTrackerConnections || false;
+        wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled || false;
+        wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled || false;
     }
 
     mainWindow = new BrowserWindow({
@@ -234,17 +236,19 @@ ipcMain.on("start-connection", async (_event, arg) => {
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (!device) {
-        log(
-            "Creating new HaritoraX instance with debugTrackerConnections: " +
-                debugTrackerConnections
-        );
-
-        if (wiredTrackerEnabled) {
-            device = new HaritoraX("wired", debugTrackerConnections ? 2 : 0, true);
-        } else if (wirelessTrackerEnabled) {
-            device = new HaritoraX("wireless", debugTrackerConnections ? 2 : 0, false);
+        if (!wiredTrackerEnabled && !wirelessTrackerEnabled) {
+            log("Error: Neither wired nor wireless tracker is enabled");
+            return;
         }
-        
+
+        const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
+        const debugLevel = debugTrackerConnections ? 2 : 0;
+
+        log(
+            `Creating new HaritoraX ${trackerType} instance with debugTrackerConnections: ${debugTrackerConnections}`
+        );
+        device = new HaritoraX(trackerType, debugLevel, false);
+
         startDeviceListeners();
     }
 
