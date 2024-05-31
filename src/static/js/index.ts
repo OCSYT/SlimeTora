@@ -812,28 +812,24 @@ function addEventListeners() {
         const comPorts: HTMLInputElement[] = Array.from(
             document.getElementById("com-ports").querySelectorAll("input")
         );
-        const selectedPorts: string[] = [];
-
+        selectedComPorts.length = 0;
         comPorts.forEach((port) => {
             if (port.checked) {
-                selectedPorts.push(port.id);
-                if (!selectedComPorts.includes(port.id)) selectedComPorts.push(port.id);
-            } else {
-                selectedComPorts.splice(selectedComPorts.indexOf(port.id), 1);
+                selectedComPorts.push(port.id);
             }
         });
 
-        window.log(`Selected COM ports: ${selectedPorts}`);
+        window.log(`Selected COM ports: ${selectedComPorts}`);
         window.ipc.send("save-setting", {
             global: {
                 connectionMode: {
-                    comPorts: selectedPorts,
+                    comPorts: selectedComPorts,
                 },
             },
         });
 
         // If four ports are selected, disable the rest
-        if (selectedPorts.length >= 4 && !bypassCOMPortLimit) {
+        if (selectedComPorts.length >= 4 && !bypassCOMPortLimit) {
             comPorts.forEach((port) => {
                 if (!port.checked) {
                     port.disabled = true;
