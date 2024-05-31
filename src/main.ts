@@ -208,8 +208,8 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
     let trackerSettingsWindow = new BrowserWindow({
         title: `${arg} settings`,
         autoHideMenuBar: true,
-        width: 800,
-        height: 600,
+        width: 850,
+        height: 650,
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,

@@ -192,11 +192,10 @@
                         <div class="settings-container">
                             <button
                                 class="button is-info"
-                                onclick="saveTrackerSettings()"
-                                data-i18n="trackerInfo.trackerSettings.debugging.saveSettings"
-                                id="save-settings-button"
+                                onclick="getSettings()"
+                                data-i18n="trackerInfo.trackerSettings.debugging.getSettings"
                             >
-                                Save settings
+                                Get tracker settings
                             </button>
                         </div>
                         <br />
@@ -209,19 +208,13 @@
                                 Reset settings
                             </button>
                         </div>
-                        <br />
-                        <div class="settings-container">
-                            <button
-                                class="button is-info"
-                                onclick="getSettings()"
-                                data-i18n="trackerInfo.trackerSettings.debugging.getSettings"
-                            >
-                                Get tracker settings
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <button class="button is-info" id="save-button" onclick="saveTrackerSettings()">
+            <img src="../images/save.svg" id="saveIcon" alt="Save icon"/>
+        </button>
     </body>
 </html>

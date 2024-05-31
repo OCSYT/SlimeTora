@@ -167,7 +167,7 @@
                     <div class="column is-6">
                         <div class="with-tooltip">
                             <h3
-                                class="title is-4 is-spaced"
+                                class="title is-4 is-spaced has-text-warning"
                                 data-i18n="programSettings.trackerModel.title"
                             >
                                 Tracker model
@@ -491,19 +491,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="column is-6">
-                        <div class="buttons is-centered">
-                            <button
-                                class="button is-info"
-                                id="save-settings-button"
-                                onclick="saveSettings()"
-                                data-i18n="trackerSettings.saveButton"
-                            >
-                                Save settings
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -674,5 +661,9 @@
                 </div>
             </div>
         </div>
+
+        <button class="button is-info" id="save-button" onclick="saveSettings()">
+            <img src="../images/save.svg" id="saveIcon" alt="Save icon"/>
+        </button>
     </body>
 </html>

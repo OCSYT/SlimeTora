@@ -51,7 +51,6 @@
             "debugging": {
                 "title": "デバッグ",
                 "tooltip": "各トラッカーに関連するいくつかのデバッグ用オプション",
-                "saveSettings": "設定を保存",
                 "resetSettings": "設定をリセット",
                 "getSettings": "設定をトラッカーから取得"
             }
@@ -103,8 +102,7 @@
             "accelerometer": "加速度",
             "gyroscope": "ジャイロ",
             "magnetometer": "地磁気"
-        },
-        "saveButton": "Save settings"
+        }
     },
     "about": {
         "title": "About",

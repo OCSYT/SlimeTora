@@ -22455,6 +22455,25 @@ br {
   user-select: none;
 }
 
+#save-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  padding: 10px;
+}
+#save-button #saveIcon {
+  width: 24px;
+  height: 24px;
+}
+#save-button #saveIcon img {
+  width: 26px;
+  height: 26px;
+}
+
 .section {
   background-color: #081e30;
   border-radius: 0.5rem;

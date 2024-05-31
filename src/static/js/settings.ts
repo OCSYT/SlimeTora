@@ -288,13 +288,11 @@ async function getSettings() {
 
 // Set settings button indicator
 function settingsUnsavedSettings(unsaved: boolean) {
-    const saveButton = document.getElementById("save-settings-button");
-    if (unsaved && !saveButton.textContent.includes("(!)")) {
-        saveButton.textContent += " (!)";
+    const saveButton = document.getElementById("save-button");
+    if (unsaved && !saveButton.classList.contains("is-danger")) {
         saveButton.classList.add("is-danger");
         saveButton.classList.remove("is-info");
-    } else if (!unsaved && saveButton.textContent.includes("(!)")) {
-        saveButton.textContent = saveButton.textContent.replace(" (!)", "");
+    } else if (!unsaved && saveButton.classList.contains("is-danger")) {
         saveButton.classList.add("is-info");
         saveButton.classList.remove("is-danger");
     }

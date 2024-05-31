@@ -51,7 +51,6 @@
             "debugging": {
                 "title": "Debugging",
                 "tooltip": "Some debugging options for this individual tracker.",
-                "saveSettings": "Save settings",
                 "resetSettings": "Reset settings",
                 "getSettings": "Get tracker settings"
             }
@@ -103,8 +102,7 @@
             "accelerometer": "Accelerometer",
             "gyroscope": "Gyroscope",
             "magnetometer": "Magnetometer"
-        },
-        "saveButton": "Save settings"
+        }
     },
     "about": {
         "title": "About",
