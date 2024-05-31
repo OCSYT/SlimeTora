@@ -76,6 +76,10 @@ async function loadTranslations() {
     return resources;
 }
 
+async function translate(key: string) {
+    return await mainWindow.webContents.executeJavaScript(`window.i18n.translate("${key}")`);
+};
+
 /*
  * Renderer
  */
@@ -146,13 +150,6 @@ ipcMain.handle("is-slimevr-connected", () => {
     return foundSlimeVR;
 });
 
-// Used here to execute JS, specifically to load translations for errors (because uh, this is the only way I and AI could figure out how to do it properly lol)
-// Will change this to only return translated strings instead of being a security risk.. lmfao
-ipcMain.handle("executeJavaScript", async (_event, code) => {
-    const result = await mainWindow.webContents.executeJavaScript(code);
-    return result;
-});
-
 ipcMain.handle("get-active-trackers", () => {
     return connectedDevices;
 });
@@ -194,12 +191,8 @@ ipcMain.on("open-logs-folder", async () => {
     } else {
         error("Logs directory does not exist");
         dialog.showErrorBox(
-            await mainWindow.webContents.executeJavaScript(
-                'window.i18n.translate("dialogs.noLogsFolder.title")'
-            ),
-            await mainWindow.webContents.executeJavaScript(
-                'window.i18n.translate("dialogs.noLogsFolder.message")'
-            )
+            await translate("dialogs.noLogsFolder.title"),
+            await translate("dialogs.noLogsFolder.message")
         );
     }
 });
@@ -262,9 +255,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     mainWindow.webContents.send(
         "set-status",
-        await mainWindow.webContents.executeJavaScript(
-            'window.i18n.translate("main.status.searching")'
-        )
+        await translate("main.status.searching")
     );
 
     if (types.includes("bluetooth")) {
