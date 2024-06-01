@@ -240,6 +240,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
         log(
             `Creating new HaritoraX ${trackerType} instance with debugTrackerConnections: ${debugTrackerConnections}`
         );
+        // TODO: make the imu tracking processing data optional in the renderer
         device = new HaritoraX(trackerType, debugLevel, false);
 
         startDeviceListeners();
@@ -647,32 +648,32 @@ async function handleNextTracker() {
     isHandlingTracker = true;
     const trackerName = trackerQueue.shift();
 
-    if (connectedDevices.length === 0) {
-        const sent = (await sendHandshakePacket(trackerName)) as boolean;
-        if (sent) {
-            connectedDevices.push(trackerName);
-            connectedDevices.sort();
+    if (!connectedDevices.includes(trackerName)) {
+        let sent = false;
+        if (connectedDevices.length === 0) {
+            sent = (await sendHandshakePacket(trackerName)) as boolean;
+            if (sent) {
+                connectedDevices.push(trackerName);
+                connectedDevices.sort();
+            } else {
+                error(`Failed to send handshake for ${trackerName}, not adding to connected devices`);
+            }
         } else {
-            error(`Failed to send handshake for ${trackerName}, not adding to connected devices`);
-        }
-    } else {
-        if (connectedDevices.includes(trackerName)) return;
-        const sent = (await sendSensorInfoPacket(trackerName)) as boolean;
-        if (sent) {
-            connectedDevices.push(trackerName);
-            connectedDevices.sort();
-        }
-        if (!sent) {
-            error(
-                `Failed to send sensor info packet for ${trackerName}, not adding to connected devices`
-            );
-            connectedDevices = connectedDevices.filter((name) => name !== trackerName);
+            sent = (await sendSensorInfoPacket(trackerName)) as boolean;
+            if (sent) {
+                connectedDevices.push(trackerName);
+                connectedDevices.sort();
+            } else {
+                error(`Failed to send sensor info packet for ${trackerName}, not adding to connected devices`);
+                connectedDevices = connectedDevices.filter((name) => name !== trackerName);
+            }
         }
     }
 
     isHandlingTracker = false;
-
-    await handleNextTracker();
+    if (trackerQueue.length > 0) {
+        await handleNextTracker();
+    }
 }
 
 /*
@@ -715,7 +716,7 @@ async function sendSensorInfoPacket(trackerName: string) {
 
         const buffer = ServerBoundSensorInfoPacket.encode(
             BigInt(packetCount),
-            connectedDevices.length - 1,
+            connectedDevices.length,
             SensorStatus.OK,
             SensorType.UNKNOWN
         );
@@ -727,7 +728,7 @@ async function sendSensorInfoPacket(trackerName: string) {
             } else {
                 log(
                     `Added device ${trackerName} to SlimeVR server as IMU ${
-                        connectedDevices.length - 1
+                        connectedDevices.length
                     }`
                 );
                 resolve(true);

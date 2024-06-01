@@ -362,6 +362,7 @@ async function processQueue() {
         await addDeviceToList(deviceID);
     }
     isProcessingQueue = false;
+    return true;
 }
 
 async function addDeviceToList(deviceID: string) {
@@ -523,10 +524,13 @@ window.ipc.on("connect", async (_event, deviceID) => {
     if (!isActive) return;
 
     window.log(`Connected to ${deviceID}`);
-    deviceQueue.push(deviceID);
+
+    if (!deviceQueue.includes(deviceID)) deviceQueue.push(deviceID);
     processQueue();
 
     setStatus(await window.translate("main.status.connected"));
+
+    if (wiredTrackerEnabled) return;
 
     const settings = await window.ipc.invoke("get-settings", null);
     const exists = settings.trackers?.[deviceID] !== undefined;
@@ -601,8 +605,10 @@ window.ipc.on("device-data", async (_event: any, arg) => {
     } = arg;
     if (!isActive) return;
     if (!document.getElementById(trackerName)) {
-        window.ipc.send("log", `Device ${trackerName} not found in DOM, adding to queue`);
-        deviceQueue.push(trackerName);
+        if (!deviceQueue.includes(trackerName)) {
+            window.ipc.send("log", `Device ${trackerName} not found in DOM, adding to queue`);
+            deviceQueue.push(trackerName);
+        }
         await processQueue();
         return;
     }
