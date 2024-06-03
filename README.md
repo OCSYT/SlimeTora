@@ -4,6 +4,7 @@
 
 
 # SlimeTora
+## v1.1.0 is nearing completion (on the v1.1.0 branch) and will finally add support for the HaritoraX wired models very soon with many other QoL features! Thanks for your patience!
 A program that connects the HaritoraX trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), currently supporting the `HaritoraX Wireless` with other trackers coming soon. Supports `Bluetooth` and the `GX(6/2)` communication dongles.
 
 Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
