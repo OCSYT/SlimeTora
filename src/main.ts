@@ -3,6 +3,7 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
+// @ts-ignore
 import { HaritoraX } from "../../haritorax-interpreter";
 import { SerialPort } from "serialport";
 import Quaternion from "quaternion";
@@ -680,7 +681,7 @@ async function handleNextTracker() {
  * Packet sending
  */
 
-// Sends a handshake packet to SlimeVR server (first IMU tracker)
+// Sends a handshake packet to SlimeVR server (first IMU tracker // IMU 0)
 async function sendHandshakePacket(trackerName: string) {
     return new Promise((resolve, reject) => {
         packetCount += 1;
@@ -731,8 +732,8 @@ async function sendSensorInfoPacket(trackerName: string) {
                         connectedDevices.length
                     }`
                 );
-                resolve(true);
                 packetCount += 1;
+                resolve(true);
             }
         });
     });

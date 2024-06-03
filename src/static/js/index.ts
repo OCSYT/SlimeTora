@@ -492,6 +492,12 @@ async function addDeviceToList(deviceID: string) {
             parseInt(document.getElementById("tracker-count").textContent) + 1
         ).toString();
 
+    // Disable tracker settings button if wired tracker is enabled
+    if (wiredTrackerEnabled) {
+        const settingsButton = newDevice.querySelector("#tracker-settings-button");
+        if (settingsButton) settingsButton.setAttribute("disabled", "true");
+    }
+
     window.ipc.send("get-tracker-battery", deviceID);
 
     deviceList.appendChild(newDevice);
@@ -769,6 +775,13 @@ function addEventListeners() {
 
         unsavedSettings(true);
         window.ipc.send("set-wireless-tracker", wirelessTrackerEnabled);
+
+        // Disable unsupported settings
+        if (wirelessTrackerEnabled) {
+            document.getElementById("wired-tracker-switch").setAttribute("disabled", "true");
+        } else {
+            document.getElementById("wired-tracker-switch").removeAttribute("disabled");
+        }
     });
 
     document.getElementById("wired-tracker-switch").addEventListener("change", function () {
@@ -784,6 +797,19 @@ function addEventListeners() {
 
         unsavedSettings(true);
         window.ipc.send("set-wired-tracker", wiredTrackerEnabled);
+
+        // Disable unsupported settings
+        const ids = ["wireless-tracker-switch", "bluetooth-switch"];
+        ids.forEach(id => {
+            const element = document.getElementById(id);
+            setElementDisabledState(element, wiredTrackerEnabled);
+        });
+
+        const switchesAndSelects = document.getElementById("tracker-settings").querySelectorAll('[id$="-switch"], [id$="-select"]');
+        switchesAndSelects.forEach(element => {
+            setElementDisabledState(element, wiredTrackerEnabled);
+        });
+
     });
 
     /*
@@ -1034,10 +1060,25 @@ function addEventListeners() {
         });
 }
 
+function processData() {
+    window.log("Processing data...");
+    window.ipc.send("process-data", null);
+}
+
+function setElementDisabledState(element: Element, isDisabled: boolean) {
+    if (isDisabled) {
+        element.setAttribute("disabled", "true");
+    } else {
+        element.removeAttribute("disabled");
+    }
+}
+
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.openLogsFolder = openLogsFolder;
 window.saveSettings = saveSettings;
+window.processData = processData;
+
 window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for ${deviceID}`);
     window.ipc.send("open-tracker-settings", deviceID);

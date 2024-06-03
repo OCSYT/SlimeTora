@@ -9,7 +9,7 @@
 
     <body>
         <!-- Main section -->
-        <div class="section">
+        <div class="section" id="main">
             <div class="container">
                 <div class="main-container">
                     <!-- Logo -->
@@ -85,7 +85,7 @@
         <br />
 
         <!-- Tracker info section -->
-        <div class="section">
+        <div class="section" id="tracker-info">
             <div class="container">
                 <div class="with-tooltip">
                     <h3 class="title is-2 is-spaced" data-i18n="trackerInfo.title">
@@ -139,7 +139,7 @@
         <br />
 
         <!-- Program settings section -->
-        <div class="section">
+        <div class="section" id="program-settings">
             <div class="container">
                 <div class="with-tooltip">
                     <h1
@@ -336,7 +336,7 @@
         <br />
 
         <!-- Tracker settings section -->
-        <div class="section">
+        <div class="section" id="tracker-settings">
             <div class="container">
                 <div class="with-tooltip">
                     <h1
@@ -498,7 +498,7 @@
         <br />
 
         <!-- About section -->
-        <div class="section">
+        <div class="section" id="about">
             <div class="container">
                 <h1 class="title has-text-centered is-2 is-spaced" data-i18n="about.title">
                     About
@@ -575,7 +575,7 @@
         <br />
 
         <!-- Debugging section -->
-        <div class="section">
+        <div class="section" id="debugging">
             <div class="container">
                 <div class="with-tooltip">
                     <h1
@@ -657,6 +657,8 @@
                         >
                             Open logs folder
                         </button>
+                        <!-- remove before release -->
+                        <button class="button is-info" onclick="processData()">Process data</button>
                     </div>
                 </div>
             </div>
