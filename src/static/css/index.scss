@@ -129,6 +129,16 @@ br {
     gap: 2rem;
 }
 
+.grid-settings-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    justify-items: center;
+    align-items: center;
+    gap: 0.2rem;
+    margin: auto;
+}
+
 /*
  * Main
 */
@@ -255,15 +265,6 @@ br {
  * Debugging
 */
 
-.debugging-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-}
-
-.debugging-container .switch-container {
-    flex: 1 0 50%;
-}
 
 .logs-folder-container {
     display: flex;

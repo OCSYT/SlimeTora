@@ -602,8 +602,8 @@
                     tracker issues!
                 </h2>
                 <div class="column is-12">
-                    <div class="debugging-container">
-                        <div class="switch-container">
+                    <div class="grid-settings-container">
+                        <div class="switch-container is-centered">
                             <div class="switch">
                                 <input type="checkbox" id="log-to-file-switch" />
                                 <label for="log-to-file-switch" class="slider round"></label>
@@ -612,7 +612,7 @@
                                 >Write to log files</label
                             >
                         </div>
-                        <div class="switch-container">
+                        <div class="switch-container is-centered">
                             <div class="switch">
                                 <input type="checkbox" id="skip-slimevr-switch" />
                                 <label for="skip-slimevr-switch" class="slider round"></label>
@@ -621,7 +621,7 @@
                                 >Skip SlimeVR check</label
                             >
                         </div>
-                        <div class="switch-container">
+                        <div class="switch-container is-centered">
                             <div class="switch">
                                 <input type="checkbox" id="bypass-com-limit-switch" />
                                 <label for="bypass-com-limit-switch" class="slider round"></label>
@@ -632,20 +632,28 @@
                                 >Bypass port limit</label
                             >
                         </div>
-                        <div class="switch-container">
-                            <div class="switch">
-                                <input type="checkbox" id="debug-tracker-connections-switch" />
-                                <label
-                                    for="debug-tracker-connections-switch"
-                                    class="slider round"
-                                ></label>
-                            </div>
+                        <div class="input-container is-centered has-text-centered">
                             <label
-                                for="debug-tracker-connections-switch"
-                                class="has-text-warning"
-                                data-i18n="debugging.debugTrackerData"
-                                >Debug tracker data</label
+                                for="tracker-visualization-fps"
+                                class="label has-text-warning"
+                                data-i18n="debugging.loggingMode.text"
+                                >Logging mode</label
                             >
+                            <div class="settings-container">
+                                <div class="select">
+                                    <select id="fps-mode-select">
+                                        <option value="1" data-i18n="debugging.loggingMode.minimal">
+                                            Minimal data
+                                        </option>
+                                        <option value="2" data-i18n="debugging.loggingMode.extra">
+                                            Extra data
+                                        </option>
+                                        <option value="3" data-i18n="debugging.loggingMode.all">
+                                            All data (!!!)
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <br />
