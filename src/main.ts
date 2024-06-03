@@ -129,6 +129,45 @@ app.on("window-all-closed", () => {
  * Renderer handlers
  */
 
+ipcMain.on("process-data", () => {
+    const dataPath = path.resolve(mainPath, "data.txt");
+
+    log("Processing data from data.txt...")
+
+    fs.readFile(dataPath, "utf8", function (err, data) {
+        if (err) {
+            return console.log(err);
+        }
+        let lines = data.split("\n");
+        const trackerNames = ["chest", "leftKnee", "leftAnkle", "rightKnee", "rightAnkle", "hip"];
+
+        log(`Processing ${lines.length} lines of data...`)
+        let i = 0;
+        function processLine() {
+            if (i >= lines.length) return; // stop if we've processed all lines
+
+            const data = lines[i]; // The base64 string
+            const buffer = Buffer.from(data, "base64");
+
+            if (buffer.length === 84) {
+                trackerNames.forEach((trackerName, index) => {
+                    const start = index * 14; // 14 bytes per tracker
+                    const trackerBuffer = buffer.slice(start, start + 14);
+                    device.parseIMUData(trackerBuffer, trackerName);
+                });
+            } else {
+                console.error("Unexpected data length:", buffer.length);
+            }
+
+            i++;
+            setTimeout(processLine, 0); // process next line after 100ms
+        }
+
+        processLine(); // start processing
+    });
+});
+
+
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
 });
@@ -634,6 +673,8 @@ const connectToServer = () => {
             packetCount += 1;
             foundSlimeVR = true;
 
+            sendPackets();
+
             resolve();
         });
     });
@@ -646,37 +687,39 @@ const trackerQueue: string[] = [];
 
 async function handleNextTracker() {
     if (trackerQueue.length === 0 || isHandlingTracker) return;
+
     isHandlingTracker = true;
     const trackerName = trackerQueue.shift();
 
     if (!connectedDevices.includes(trackerName)) {
+        connectedDevices.push(trackerName);
+        connectedDevices.sort();
+    }
+
+    isHandlingTracker = false;
+    await handleNextTracker();
+}
+
+async function sendPackets() {
+    while (!foundSlimeVR) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    for (const trackerName of connectedDevices) {
         let sent = false;
+        // check if its first tracker
         if (connectedDevices.length === 0) {
             sent = (await sendHandshakePacket(trackerName)) as boolean;
-            if (sent) {
-                connectedDevices.push(trackerName);
-                connectedDevices.sort();
-            } else {
-                error(`Failed to send handshake for ${trackerName}, not adding to connected devices`);
-            }
+            if (!sent) error(`Failed to send handshake for ${trackerName}, not adding to connected devices`);
         } else {
             sent = (await sendSensorInfoPacket(trackerName)) as boolean;
-            if (sent) {
-                connectedDevices.push(trackerName);
-                connectedDevices.sort();
-            } else {
+            if (!sent) {
                 error(`Failed to send sensor info packet for ${trackerName}, not adding to connected devices`);
                 connectedDevices = connectedDevices.filter((name) => name !== trackerName);
             }
         }
     }
-
-    isHandlingTracker = false;
-    if (trackerQueue.length > 0) {
-        await handleNextTracker();
-    }
 }
-
 /*
  * Packet sending
  */
@@ -715,9 +758,15 @@ async function sendSensorInfoPacket(trackerName: string) {
     return new Promise((resolve, reject) => {
         packetCount += 1;
 
+        const imuNumber = connectedDevices.indexOf(trackerName);
+        if (imuNumber === -1) {
+            reject(`Tracker ${trackerName} not found in connected devices`);
+            return;
+        }
+
         const buffer = ServerBoundSensorInfoPacket.encode(
             BigInt(packetCount),
-            connectedDevices.length,
+            imuNumber,
             SensorStatus.OK,
             SensorType.UNKNOWN
         );
@@ -728,9 +777,7 @@ async function sendSensorInfoPacket(trackerName: string) {
                 reject(false);
             } else {
                 log(
-                    `Added device ${trackerName} to SlimeVR server as IMU ${
-                        connectedDevices.length
-                    }`
+                    `Added device ${trackerName} to SlimeVR server as IMU ${imuNumber}`
                 );
                 packetCount += 1;
                 resolve(true);
