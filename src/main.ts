@@ -31,7 +31,7 @@ let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
 let connectedDevices: string[] = [];
 let canLogToFile = false;
-let debugTrackerConnections = false;
+let loggingMode = 1;
 let foundSlimeVR = false;
 let lowestBatteryData = { percentage: 100, voltage: 0 };
 
@@ -91,9 +91,9 @@ const createWindow = () => {
         const data = fs.readFileSync(configPath);
         const config: { [key: string]: any } = JSON.parse(data.toString());
         canLogToFile = config.global?.debug?.canLogToFile || false;
-        debugTrackerConnections = config.global?.debug?.debugTrackerConnections || false;
         wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled || false;
         wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled || false;
+        loggingMode = config.global?.debug?.loggingMode || 1;
     }
 
     mainWindow = new BrowserWindow({
@@ -204,14 +204,14 @@ ipcMain.handle("get-languages", async () => {
     return Object.keys(resources);
 });
 
-ipcMain.on("set-logging", (_event, arg) => {
+ipcMain.on("set-log-to-file", (_event, arg) => {
     canLogToFile = arg;
     log(`Logging to file set to: ${arg}`);
 });
 
-ipcMain.on("set-debug-tracker-connections", (_event, arg) => {
-    debugTrackerConnections = arg;
-    log(`Debug tracker connections set to: ${arg}`);
+ipcMain.on("set-logging", (_event, arg) => {
+    loggingMode = arg;
+    log(`Logging mode set to: ${arg}`);
 });
 
 ipcMain.on("set-wireless-tracker", (_event, arg) => {
@@ -275,13 +275,18 @@ ipcMain.on("start-connection", async (_event, arg) => {
         }
 
         const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
-        const debugLevel = debugTrackerConnections ? 2 : 0;
 
         log(
-            `Creating new HaritoraX ${trackerType} instance with debugTrackerConnections: ${debugTrackerConnections}`
+            `Creating new HaritoraX ${trackerType} instance with logging mode ${loggingMode}...`
         );
-        // TODO: make the imu tracking processing data optional in the renderer
-        device = new HaritoraX(trackerType, debugLevel, false);
+        
+        if (loggingMode === 1) {
+            device = new HaritoraX(trackerType, 0, false);
+        } else if (loggingMode === 2) {
+            device = new HaritoraX(trackerType, 2, false);
+        } else if (loggingMode === 3) {
+            device = new HaritoraX(trackerType, 2, true);
+        }
 
         startDeviceListeners();
     }
@@ -942,7 +947,7 @@ function error(msg: string, where = "main") {
             fs.writeFileSync(logPath, "");
         }
 
-        if (where === "interpreter" && !debugTrackerConnections) return;
+        if (where === "interpreter" && loggingMode === 1) return;
 
         fs.appendFileSync(logPath, `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`);
     }

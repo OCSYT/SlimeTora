@@ -20,12 +20,12 @@ let magnetometerEnabled = false;
 let canLogToFile = false;
 let skipSlimeVRCheck = false;
 let bypassCOMPortLimit = false;
-let debugTrackerConnections = false;
 
 let language = "en";
 let censorSerialNumbers = false;
 let trackerVisualization = false;
 let trackerVisualizationFPS = 10;
+let loggingMode = 1;
 
 /*
  * Renderer functions
@@ -89,9 +89,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
     magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled || false;
     canLogToFile = settings.global?.debug?.canLogToFile || false;
+    loggingMode = settings.global?.debug?.loggingMode || 1;
     skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck || false;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit || false;
-    debugTrackerConnections = settings.global?.debug?.debugTrackerConnections || false;
 
     // Get the checkbox elements
     const censorSerialNumbersSwitch = document.getElementById(
@@ -114,9 +114,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const bypassCOMPortLimitSwitch = document.getElementById(
         "bypass-com-limit-switch"
     ) as HTMLInputElement;
-    const debugTrackerConnectionsSwitch = document.getElementById(
-        "debug-tracker-connections-switch"
-    ) as HTMLInputElement;
 
     // Set the checked property based on the settings
     censorSerialNumbersSwitch.checked = censorSerialNumbers;
@@ -131,16 +128,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     logToFileSwitch.checked = canLogToFile;
     skipSlimeVRSwitch.checked = skipSlimeVRCheck;
     bypassCOMPortLimitSwitch.checked = bypassCOMPortLimit;
-    debugTrackerConnectionsSwitch.checked = debugTrackerConnections;
 
     // Get the select elements
     const fpsSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
     const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
+    const loggingModeSelect = document.getElementById("logging-mode-select") as HTMLSelectElement;
 
     // Set the selected option based on the settings
     fpsSelect.value = fpsMode.toString();
     sensorModeSelect.value = sensorMode.toString();
     languageSelect.value = language.toString();
+    loggingModeSelect.value = loggingMode.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -307,7 +305,7 @@ function saveSettings() {
                 canLogToFile: canLogToFile,
                 skipSlimeVRCheck: skipSlimeVRCheck,
                 bypassCOMPortLimit: bypassCOMPortLimit,
-                debugTrackerConnections: debugTrackerConnections,
+                loggingMode: loggingMode,
             },
         },
     });
@@ -988,7 +986,7 @@ function addEventListeners() {
     document.getElementById("log-to-file-switch").addEventListener("change", function () {
         canLogToFile = !canLogToFile;
         window.log(`Switched log to file: ${canLogToFile}`);
-        window.ipc.send("set-logging", canLogToFile);
+        window.ipc.send("set-log-to-file", canLogToFile);
         window.ipc.send("save-setting", {
             global: {
                 debug: {
@@ -1044,20 +1042,23 @@ function addEventListeners() {
         }
     });
 
-    document
-        .getElementById("debug-tracker-connections-switch")
-        .addEventListener("change", function () {
-            debugTrackerConnections = !debugTrackerConnections;
-            window.log(`Switched debug tracker connections: ${debugTrackerConnections}`);
-            window.ipc.send("set-debug-tracker-connections", debugTrackerConnections);
-            window.ipc.send("save-setting", {
-                global: {
-                    debug: {
-                        debugTrackerConnections: debugTrackerConnections,
-                    },
+    document.getElementById("logging-mode-select").addEventListener("change", async function () {
+        loggingMode = parseInt(
+            (document.getElementById("logging-mode-select") as HTMLSelectElement).value
+        );
+        window.log(`Selected logging mode: ${loggingMode}`);
+        window.ipc.send("set-logging", canLogToFile);
+        window.ipc.send("save-setting", {
+            global: {
+                debug: {
+                    loggingMode: loggingMode,
                 },
-            });
+            },
         });
+
+        unsavedSettings(true);
+    });
+
 }
 
 function processData() {
