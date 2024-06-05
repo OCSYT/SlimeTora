@@ -176,6 +176,23 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
+    if (wirelessTrackerEnabled && !wiredTrackerEnabled) {
+        setElementDisabledState(document.getElementById("wired-tracker-switch"), true);
+    } else if (wiredTrackerEnabled && !wirelessTrackerEnabled) {
+        const ids = ["wireless-tracker-switch", "bluetooth-switch"];
+        ids.forEach((id) => {
+            const element = document.getElementById(id);
+            setElementDisabledState(element, wiredTrackerEnabled);
+        });
+
+        const switchesAndSelects = document
+            .getElementById("tracker-settings")
+            .querySelectorAll('[id$="-switch"], [id$="-select"]');
+        switchesAndSelects.forEach((element) => {
+            setElementDisabledState(element, wiredTrackerEnabled);
+        });
+    }
+
     selectedComPorts.push(...selectedPorts);
 
     window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
@@ -771,7 +788,6 @@ function addEventListeners() {
             },
         });
 
-        unsavedSettings(true);
         window.ipc.send("set-wireless-tracker", wirelessTrackerEnabled);
 
         // Disable unsupported settings
@@ -793,21 +809,21 @@ function addEventListeners() {
             },
         });
 
-        unsavedSettings(true);
         window.ipc.send("set-wired-tracker", wiredTrackerEnabled);
 
         // Disable unsupported settings
         const ids = ["wireless-tracker-switch", "bluetooth-switch"];
-        ids.forEach(id => {
+        ids.forEach((id) => {
             const element = document.getElementById(id);
             setElementDisabledState(element, wiredTrackerEnabled);
         });
 
-        const switchesAndSelects = document.getElementById("tracker-settings").querySelectorAll('[id$="-switch"], [id$="-select"]');
-        switchesAndSelects.forEach(element => {
+        const switchesAndSelects = document
+            .getElementById("tracker-settings")
+            .querySelectorAll('[id$="-switch"], [id$="-select"]');
+        switchesAndSelects.forEach((element) => {
             setElementDisabledState(element, wiredTrackerEnabled);
         });
-
     });
 
     /*
@@ -1055,10 +1071,7 @@ function addEventListeners() {
                 },
             },
         });
-
-        unsavedSettings(true);
     });
-
 }
 
 function processData() {

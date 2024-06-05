@@ -79,7 +79,7 @@ async function loadTranslations() {
 
 async function translate(key: string) {
     return await mainWindow.webContents.executeJavaScript(`window.i18n.translate("${key}")`);
-};
+}
 
 /*
  * Renderer
@@ -132,7 +132,7 @@ app.on("window-all-closed", () => {
 ipcMain.on("process-data", () => {
     const dataPath = path.resolve(mainPath, "data.txt");
 
-    log("Processing data from data.txt...")
+    log("Processing data from data.txt...");
 
     fs.readFile(dataPath, "utf8", function (err, data) {
         if (err) {
@@ -141,7 +141,7 @@ ipcMain.on("process-data", () => {
         let lines = data.split("\n");
         const trackerNames = ["chest", "leftKnee", "leftAnkle", "rightKnee", "rightAnkle", "hip"];
 
-        log(`Processing ${lines.length} lines of data...`)
+        log(`Processing ${lines.length} lines of data...`);
         let i = 0;
         function processLine() {
             if (i >= lines.length) return; // stop if we've processed all lines
@@ -166,7 +166,6 @@ ipcMain.on("process-data", () => {
         processLine(); // start processing
     });
 });
-
 
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
@@ -268,18 +267,22 @@ ipcMain.on("start-connection", async (_event, arg) => {
         arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
-    if (!device) {
+    if (
+        !device ||
+        // new device instance if the tracker model is different
+        (device.getActiveTrackerModel() === "wired" && !wiredTrackerEnabled) ||
+        (device.getActiveTrackerModel() === "wireless" && !wirelessTrackerEnabled)
+    ) {
         if (!wiredTrackerEnabled && !wirelessTrackerEnabled) {
-            log("Error: Neither wired nor wireless tracker is enabled");
+            // TODO: add error message to renderer
+            error("No device model enabled");
             return;
         }
 
         const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
 
-        log(
-            `Creating new HaritoraX ${trackerType} instance with logging mode ${loggingMode}...`
-        );
-        
+        log(`Creating new HaritoraX ${trackerType} instance with logging mode ${loggingMode}...`);
+
         if (loggingMode === 1) {
             device = new HaritoraX(trackerType, 0, false);
         } else if (loggingMode === 2) {
@@ -299,10 +302,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
         return false;
     }
 
-    mainWindow.webContents.send(
-        "set-status",
-        await translate("main.status.searching")
-    );
+    mainWindow.webContents.send("set-status", await translate("main.status.searching"));
 
     if (types.includes("bluetooth")) {
         log("Starting Bluetooth connection");
@@ -715,11 +715,16 @@ async function sendPackets() {
         // check if its first tracker
         if (connectedDevices.length === 0) {
             sent = (await sendHandshakePacket(trackerName)) as boolean;
-            if (!sent) error(`Failed to send handshake for ${trackerName}, not adding to connected devices`);
+            if (!sent)
+                error(
+                    `Failed to send handshake for ${trackerName}, not adding to connected devices`
+                );
         } else {
             sent = (await sendSensorInfoPacket(trackerName)) as boolean;
             if (!sent) {
-                error(`Failed to send sensor info packet for ${trackerName}, not adding to connected devices`);
+                error(
+                    `Failed to send sensor info packet for ${trackerName}, not adding to connected devices`
+                );
                 connectedDevices = connectedDevices.filter((name) => name !== trackerName);
             }
         }
@@ -781,9 +786,7 @@ async function sendSensorInfoPacket(trackerName: string) {
                 error(`Error sending sensor info packet: ${err}`);
                 reject(false);
             } else {
-                log(
-                    `Added device ${trackerName} to SlimeVR server as IMU ${imuNumber}`
-                );
+                log(`Added device ${trackerName} to SlimeVR server as IMU ${imuNumber}`);
                 packetCount += 1;
                 resolve(true);
             }
