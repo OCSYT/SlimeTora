@@ -122,7 +122,12 @@
         "writeToFile": "Write to log files",
         "skipSlimeVR": "Skip SlimeVR check",
         "bypassPortLimit": "Bypass port limit",
-        "debugTrackerData": "Debug tracker data",
+        "loggingMode": {
+            "title": "Logging mode",
+            "minimal": "Minimal data",
+            "extra": "Extra data",
+            "all": "All data (!!!)"
+        },
         "openLogsFolder": "Open logs folder"
     },
     "dialogs": {

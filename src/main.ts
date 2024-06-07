@@ -119,6 +119,7 @@ const createWindow = () => {
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
+    tracker.deinit();
     if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
     if (device && device.getConnectionModeActive("com")) device.stopConnection("com");
     app.quit();
@@ -143,9 +144,9 @@ ipcMain.on("process-data", () => {
         log(`Processing ${lines.length} lines of data...`);
         let i = 0;
         function processLine() {
-            if (i >= lines.length) return; // stop if we've processed all lines
+            if (i >= lines.length) return;
 
-            const data = lines[i]; // The base64 string
+            const data = lines[i];
             const buffer = Buffer.from(data, "base64");
 
             if (buffer.length === 84) {
@@ -159,10 +160,10 @@ ipcMain.on("process-data", () => {
             }
 
             i++;
-            setTimeout(processLine, 0); // process next line after 100ms
+            setTimeout(processLine, 0);
         }
 
-        processLine(); // start processing
+        processLine();
     });
 });
 
@@ -261,6 +262,14 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
  * Renderer tracker/device handlers
  */
 
+async function addTracker(trackerName: string) {
+    await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK);
+    connectedDevices.push(trackerName);
+
+    log(`Connected to tracker: ${trackerName}`);
+    mainWindow.webContents.send("connect", trackerName);
+}
+
 ipcMain.on("start-connection", async (_event, arg) => {
     const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } =
         arg;
@@ -319,13 +328,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
     const uniqueActiveTrackers = Array.from(new Set(activeTrackers)); // Make sure they have unique entries
     if (!uniqueActiveTrackers || uniqueActiveTrackers.length === 0) return;
     uniqueActiveTrackers.forEach(async (trackerName) => {
-        sensors.push(
-            await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK)
-        );
-        connectedDevices.push(trackerName);
-
-        log(`Connected to tracker: ${trackerName}`);
-        mainWindow.webContents.send("connect", trackerName);
+        addTracker(trackerName);
         log("Connected devices: " + JSON.stringify(uniqueActiveTrackers));
     });
 });
@@ -341,6 +344,7 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
         log("No connection to stop");
     }
 
+    tracker.disconnectFromServer();
     connectionActive = false;
     connectedDevices = [];
 });
@@ -514,13 +518,7 @@ ipcMain.handle("get-setting", (_event, name) => {
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
         if (connectedDevices.includes(deviceID) || !connectionActive) return;
-        sensors.push(
-            await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK)
-        );
-        connectedDevices.push(deviceID);
-
-        log(`Connected to tracker: ${deviceID}`);
-        mainWindow.webContents.send("connect", deviceID);
+        addTracker(deviceID);
         log("Connected devices: " + JSON.stringify(connectedDevices));
     });
 
@@ -653,37 +651,38 @@ const tracker = new EmulatedTracker(
     MCUType.UNKNOWN
 );
 
-const sensors: EmulatedSensor[] = [];
-
 const connectToServer = async () => {
     tracker.on("ready", () => {
-        log("Ready, searching for SlimeVR server...");
+        log("Ready to search for SlimeVR server...");
     });
-    tracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
 
     tracker.on("connected-to-server", async (ip: string, port: number) => {
         log(`Connected to SlimeVR server on ${ip}:${port}`);
         foundSlimeVR = true;
     });
 
-    tracker.on("unknown-incoming-packet", (packet: any) => {
-        log(`Unknown packet type ${packet.type}`);
+    tracker.on("searching-for-server", () => {
+        log("Searching for SlimeVR server...");
     });
 
     tracker.on("disconnected-from-server", (reason) => {
+        if (reason === "manual") return;
         log(`Disconnected from SlimeVR server: ${reason}`);
         tracker.searchForServer();
     });
 
-    tracker.on("server-feature-flags", (flags) =>
-        log(`Server feature flags: ${flags.getAllEnabled()}`, "@slimevr/emulated-tracker")
-    );
+    tracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
 
-    tracker.on("incoming-packet", (packet) =>
-        log(`Incoming packet: ${packet.type}`, "@slimevr/emulated-tracker")
-    );
+    tracker.on("unknown-incoming-packet", (packet: any) => {
+        log(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
+    });
+
     tracker.on("unknown-incoming-packet", (buf) =>
         log(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
+    );
+    // TODO: remove these two after testing
+    tracker.on("incoming-packet", (packet) =>
+        log(`Incoming packet: ${packet.type}`, "@slimevr/emulated-tracker")
     );
     tracker.on("outgoing-packet", (packet) =>
         log(`Outgoing packet: ${packet.type}`, "@slimevr/emulated-tracker")

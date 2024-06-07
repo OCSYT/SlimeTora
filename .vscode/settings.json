@@ -24,6 +24,7 @@
         "bestzip",
         "bulma",
         "copyfiles",
+        "deinit",
         "FXAA",
         "gltf",
         "importmap",
