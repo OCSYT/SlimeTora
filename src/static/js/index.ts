@@ -634,8 +634,6 @@ window.ipc.on("device-data", async (_event: any, arg) => {
         return;
     }
 
-    console.log(`Rotation for ${trackerName}: ${JSON.stringify(rotation)}`);
-
     const rotationText = `${rotation.x.toFixed(0)}, ${rotation.y.toFixed(0)}, ${rotation.z.toFixed(
         0
     )}`;
