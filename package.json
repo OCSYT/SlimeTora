@@ -39,10 +39,11 @@
         "del-cli": "^5.1.0",
         "electron": "29.1.6",
         "eslint": "^8.57.0",
+        "node-gyp-build": "4.8.0",
         "typescript": "^5.4.4"
     },
     "dependencies": {
-        "@slimevr/firmware-protocol": "^0.5.1",
+        "@slimevr/firmware-protocol": "^0.5.3",
         "bulma": "^1.0.0",
         "haritorax-interpreter": "^1.8.3",
         "i18next": "^23.11.1",

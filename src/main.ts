@@ -701,6 +701,8 @@ async function handleNextTracker() {
         connectedDevices.sort();
     }
 
+    sendPackets();
+
     isHandlingTracker = false;
     await handleNextTracker();
 }
