@@ -1,13 +1,12 @@
 {
     "compilerOptions": {
-      "moduleResolution": "node",
-      "target": "ES2022",
-      "module": "ES2022",
+      "target": "es5",
+      "module": "commonjs",
       "outDir": "./dist",
       "strict": true,
       "esModuleInterop": true,
       "strictNullChecks": false,
     },
-    "include": ["src/**/*.ts", "src/preload.mts"],
+    "include": ["src/**/*.ts"],
     "exclude": ["node_modules"]
 }

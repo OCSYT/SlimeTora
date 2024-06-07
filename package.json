@@ -1,7 +1,7 @@
 {
     "name": "slimetora",
     "productName": "slimetora",
-    "type": "module",
+    "version": "1.0.0",
     "description": "A program that connects the HaritoraX Wireless trackers to the SlimeVR server",
     "private": true,
     "author": {
@@ -30,7 +30,7 @@
     "license": "MIT",
     "devDependencies": {
         "@electron/packager": "^18.3.2",
-        "@types/lodash-es": "^4.17.12",
+        "@electron/rebuild": "^3.6.0",
         "@types/node": "^20.12.5",
         "@types/serialport": "^8.0.5",
         "@types/three": "^0.164.0",
@@ -38,19 +38,16 @@
         "copyfiles": "^2.4.1",
         "del-cli": "^5.1.0",
         "electron": "29.1.6",
-        "electron-rebuild": "^3.2.9",
         "eslint": "^8.57.0",
         "typescript": "^5.4.4"
     },
     "dependencies": {
-        "@slimevr/common": "^0.1.2",
-        "@slimevr/firmware-protocol": "^0.6.3",
-        "@slimevr/tracker-emulation": "^0.2.1",
+        "@slimevr/firmware-protocol": "^0.5.1",
         "bulma": "^1.0.0",
         "haritorax-interpreter": "^1.8.3",
         "i18next": "^23.11.1",
         "loc-i18next": "^0.1.6",
-        "lodash-es": "^4.17.21",
+        "lodash": "^4.17.21",
         "quaternion": "^1.5.1",
         "sass": "^1.72.0",
         "three": "^0.164.1"
