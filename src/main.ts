@@ -25,7 +25,7 @@ import {
     SensorType,
     UserAction,
 } from "@slimevr/firmware-protocol";
-import { EmulatedSensor, EmulatedTracker } from "@slimevr/tracker-emulation";
+import { EmulatedTracker } from "@slimevr/tracker-emulation";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
@@ -108,7 +108,7 @@ const createWindow = () => {
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    mainWindow.loadURL(path.join(__dirname, "static/html/index.html"));
+    mainWindow.loadURL("file://" + path.join(__dirname, "static/html/index.html"));
 
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", await loadTranslations());
@@ -250,7 +250,7 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    trackerSettingsWindow.loadURL(path.join(__dirname, "static/html/settings.html"));
+    trackerSettingsWindow.loadURL("file://" + path.join(__dirname, "static/html/settings.html"));
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
         // send trackerName to window
