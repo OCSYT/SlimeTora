@@ -120,7 +120,7 @@
     "debugging": {
         "title": "Debugging",
         "tooltip": "An option with yellow text requires a restart of the connection or program to fully apply.",
-        "text": "Enable or disable debugging features for the program. Debugging tracker data will make log files huge and cause lag, only use if requested or if you have tracker issues!",
+        "text": "Enable or disable debugging features for the program. Using logging mode 'All data (!!!)' will cause huge log files and lag, only use if asked or have tracker issues!",
         "writeToFile": "Write to log files",
         "skipSlimeVR": "Skip SlimeVR check",
         "bypassPortLimit": "Bypass port limit",
