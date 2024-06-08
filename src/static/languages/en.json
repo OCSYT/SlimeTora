@@ -10,7 +10,9 @@
             "connected": "connected",
             "comPortsMissing": "COM ports missing",
             "slimeVRMissing": "SlimeVR not found",
-            "noConnectionMode": "No connection mode enabled"
+            "noConnectionMode": "No connection mode enabled",
+            "noTrackerModel": "No tracker model selected",
+            "noComPorts": "No COM ports selected"
         }
     },
     "trackerInfo": {
@@ -137,11 +139,19 @@
         },
         "noLogsFolder": {
             "title": "No logs!",
-            "message": "You should probably enable debug logging first in settings."
+            "message": "You should probably enable debug logging first in debugging settings."
         },
         "noConnectionMode": {
             "title": "No connection mode enabled",
-            "message": "Please enable at least one connection mode (Bluetooth or GX) in the settings."
+            "message": "Please enable at least one connection mode in the program's settings."
+        },
+        "noTrackerModel": {
+            "title": "No tracker model selected",
+            "message": "Please select a device model in the program's settings."
+        },
+        "noComPorts": {
+            "title": "No COM ports selected",
+            "message": "Please select at least one COM port in the program's settings."
         }
     }
 }

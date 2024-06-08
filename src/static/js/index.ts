@@ -230,6 +230,16 @@ async function startConnection() {
         window.ipc.send("start-connection", { types: ["bluetooth"], isActive });
         window.log("Starting Bluetooth connection");
     } else if (gxEnabled) {
+        if (selectedComPorts.length === 0) {
+            window.error("No COM ports selected");
+            setStatus(await window.translate("main.status.noComPorts"));
+            window.ipc.send("show-error", {
+                title: await window.translate("dialogs.noComPorts.title"),
+                message: await window.translate("dialogs.noComPorts.message"),
+            });
+            return false;
+        }
+
         window.ipc.send("start-connection", {
             types: ["com"],
             ports: selectedComPorts,
@@ -242,6 +252,17 @@ async function startConnection() {
         window.ipc.send("show-error", {
             title: await window.translate("dialogs.noConnectionMode.title"),
             message: await window.translate("dialogs.noConnectionMode.message"),
+        });
+        return false;
+    }
+
+    // Check if any tracker model is enabled
+    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
+        window.error("No tracker model enabled");
+        setStatus(await window.translate("main.status.noTrackerModel"));
+        window.ipc.send("show-error", {
+            title: await window.translate("dialogs.noTrackerModel.title"),
+            message: await window.translate("dialogs.noTrackerModel.message"),
         });
         return false;
     }

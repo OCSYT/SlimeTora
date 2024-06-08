@@ -273,11 +273,11 @@ ipcMain.on("start-connection", async (_event, arg) => {
         (device.getActiveTrackerModel() === "wired" && !wiredTrackerEnabled) ||
         (device.getActiveTrackerModel() === "wireless" && !wirelessTrackerEnabled)
     ) {
-        if (!wiredTrackerEnabled && !wirelessTrackerEnabled) {
-            // TODO: add error message to renderer
-            error("No device model enabled");
-            return;
-        }
+        if (
+            (!wirelessTrackerEnabled && !wiredTrackerEnabled) ||
+            (types.includes("COM") && ports.length === 0)
+        )
+            return false;
 
         const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
 
