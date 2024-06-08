@@ -5,7 +5,7 @@
 let isActive = false;
 
 let bluetoothEnabled = false;
-let gxEnabled = false;
+let comEnabled = false;
 const selectedComPorts: string[] = [];
 
 let wirelessTrackerEnabled = false;
@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     wirelessTrackerEnabled = settings.global?.trackers?.wirelessTrackerEnabled || false;
     wiredTrackerEnabled = settings.global?.trackers?.wiredTrackerEnabled || false;
     bluetoothEnabled = settings.global?.connectionMode?.bluetoothEnabled || false;
-    gxEnabled = settings.global?.connectionMode?.gxEnabled || false;
+    comEnabled = settings.global?.connectionMode?.comEnabled || false;
     fpsMode = settings.global?.trackers?.fpsMode || 50;
     sensorMode = settings.global?.trackers?.sensorMode || 2;
     accelerometerEnabled = settings.global?.trackers?.accelerometerEnabled || true;
@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     ) as HTMLInputElement;
     const wiredTrackerSwitch = document.getElementById("wired-tracker-switch") as HTMLInputElement;
     const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
-    const gxSwitch = document.getElementById("gx-switch") as HTMLInputElement;
+    const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
     const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
     const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
     const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     wirelessTrackerSwitch.checked = wirelessTrackerEnabled;
     wiredTrackerSwitch.checked = wiredTrackerEnabled;
     bluetoothSwitch.checked = bluetoothEnabled;
-    gxSwitch.checked = gxEnabled;
+    comSwitch.checked = comEnabled;
     accelerometerSwitch.checked = accelerometerEnabled;
     gyroscopeSwitch.checked = gyroscopeEnabled;
     magnetometerSwitch.checked = magnetometerEnabled;
@@ -219,17 +219,17 @@ async function startConnection() {
         window.log("SlimeVR check skipped");
     }
 
-    if (bluetoothEnabled && gxEnabled) {
+    if (bluetoothEnabled && comEnabled) {
         window.ipc.send("start-connection", {
             types: ["bluetooth", "com"],
             ports: selectedComPorts,
             isActive,
         });
-        window.log(`Starting Bluetooth and GX connection with ports: ${selectedComPorts}`);
+        window.log(`Starting Bluetooth and COM connection with ports: ${selectedComPorts}`);
     } else if (bluetoothEnabled) {
         window.ipc.send("start-connection", { types: ["bluetooth"], isActive });
         window.log("Starting Bluetooth connection");
-    } else if (gxEnabled) {
+    } else if (comEnabled) {
         if (selectedComPorts.length === 0) {
             window.error("No COM ports selected");
             setStatus(await window.translate("main.status.noComPorts"));
@@ -245,7 +245,7 @@ async function startConnection() {
             ports: selectedComPorts,
             isActive,
         });
-        window.log(`Starting GX connection with ports: ${selectedComPorts}`);
+        window.log(`Starting COM connection with ports: ${selectedComPorts}`);
     } else {
         window.error("No connection mode enabled");
         setStatus(await window.translate("main.status.noConnectionMode"));
@@ -275,7 +275,7 @@ async function startConnection() {
 }
 
 async function stopConnection() {
-    if (!isActive || (!bluetoothEnabled && !gxEnabled)) {
+    if (!isActive || (!bluetoothEnabled && !comEnabled)) {
         window.error("No connection to stop");
         window.error(
             "..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!"
@@ -289,7 +289,7 @@ async function stopConnection() {
     document.getElementById("stop-connection-button").setAttribute("disabled", "true");
 
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
-    if (gxEnabled) window.ipc.send("stop-connection", "com");
+    if (comEnabled) window.ipc.send("stop-connection", "com");
 
     setStatus(await window.translate("main.status.none"));
     document.getElementById("tracker-count").textContent = "0";
@@ -329,7 +329,7 @@ function saveSettings() {
             trackerVisualizationFPS: trackerVisualizationFPS,
             connectionMode: {
                 bluetoothEnabled: bluetoothEnabled,
-                gxEnabled: gxEnabled,
+                comEnabled: comEnabled,
                 comPorts: selectedPorts,
             },
             trackers: {
@@ -861,13 +861,13 @@ function addEventListeners() {
         });
     });
 
-    document.getElementById("gx-switch").addEventListener("change", function () {
-        gxEnabled = !gxEnabled;
-        window.log(`Switched GX to: ${gxEnabled}`);
+    document.getElementById("com-switch").addEventListener("change", function () {
+        comEnabled = !comEnabled;
+        window.log(`Switched COM to: ${comEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 connectionMode: {
-                    gxEnabled: gxEnabled,
+                    comEnabled: comEnabled,
                 },
             },
         });
@@ -1060,7 +1060,7 @@ function addEventListeners() {
 
         if (bypassCOMPortLimit) {
             comPorts.forEach((port) => {
-                if (bluetoothEnabled && !gxEnabled) {
+                if (bluetoothEnabled && !comEnabled) {
                     port.disabled = true;
                     return;
                 }

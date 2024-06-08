@@ -231,9 +231,8 @@
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
                                     data-i18n="programSettings.connectionMode.tooltip"
-                                    >Select the connection mode for the trackers. Both can be used
-                                    at the same time (e.g. GX6 for the 6 main trackers and BT for
-                                    the 2 elbows).</span
+                                    >Select the connection mode used to connect to the trackers.
+                                    Multiple modes can be used at the same time if wanted.</span
                                 >
                             </div>
                         </div>
@@ -252,11 +251,11 @@
                             </div>
                             <div class="switch-container">
                                 <div class="switch">
-                                    <input type="checkbox" id="gx-switch" />
-                                    <label for="gx-switch" class="slider round"></label>
+                                    <input type="checkbox" id="com-switch" />
+                                    <label for="com-switch" class="slider round"></label>
                                 </div>
                                 <label
-                                    for="gx-switch"
+                                    for="com-switch"
                                     data-i18n="programSettings.connectionMode.com"
                                     style="min-width: 110px"
                                     >COM / GX(6/2)</label
@@ -597,9 +596,9 @@
                     </div>
                 </div>
                 <h2 class="subtitle has-text-centered" data-i18n="debugging.text">
-                    Enable or disable debugging features for the program. Debugging tracker data
-                    will make log files huge and cause lag, only use if requested or if you have
-                    tracker issues!
+                    Enable or disable debugging features for the program. Using logging mode 'All
+                    data (!!!)' will cause huge log files and lag, only use if asked or have tracker
+                    issues!
                 </h2>
                 <div class="column is-12">
                     <div class="grid-settings-container">

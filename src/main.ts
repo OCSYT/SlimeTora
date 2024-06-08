@@ -37,7 +37,7 @@ let lowestBatteryData = { percentage: 100, voltage: 0 };
 
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
-// this variable is literally only used so i can fix a stupid issue where with both BT+GX enabled, it sometimes connects the BT trackers again directly after again, breaking the program
+// this variable is literally only used so i can fix a stupid issue where with both BT+COM enabled, it sometimes connects the BT trackers again directly after again, breaking the program
 // why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
 // -jovannmc
 let connectionActive = false;
@@ -310,7 +310,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
     }
 
     if (types.includes("com") && ports) {
-        log("Starting GX connection with ports: " + JSON.stringify(ports));
+        log("Starting COM connection with ports: " + JSON.stringify(ports));
         device.startConnection("com", ports);
     }
 
@@ -334,7 +334,7 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
         log("Stopped bluetooth connection");
     } else if (arg.includes("com") && device.getConnectionModeActive("com")) {
         device.stopConnection("com");
-        log("Stopped GX connection");
+        log("Stopped COM connection");
     } else {
         log("No connection to stop");
     }
@@ -732,6 +732,7 @@ async function sendPackets() {
         }
     }
 }
+
 /*
  * Packet sending
  */
