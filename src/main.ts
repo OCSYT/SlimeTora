@@ -149,7 +149,7 @@ ipcMain.on("process-data", () => {
             const data = lines[i];
             const buffer = Buffer.from(data, "base64");
 
-            if (buffer.length === 84) {
+            if (buffer.length === 84 || buffer.length == 88) {
                 trackerNames.forEach((trackerName, index) => {
                     const start = index * 14; // 14 bytes per tracker
                     const trackerBuffer = buffer.slice(start, start + 14);

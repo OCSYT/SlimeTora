@@ -19,12 +19,13 @@
     "scripts": {
         "start": "npm run preload && electron .",
         "dev": "tsc && npm run copy-files && electron .",
-        "build": "npm run preload && electron-packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar && npm run zip",
+        "build": "npm run preload && npm run minify && electron-packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar && npm run zip",
+        "minify": "modclean -r --patterns=\"default:*\" --ignore='three/*,electron/*,*.ts,*.d.ts,*.min.js,.bin*,.bin/*,.{ps1,cmd},**/!*.*'",
         "zip": "cd build/SlimeTora-win32-x64/ && bestzip ../SlimeTora-win32-x64.zip * && cd ../SlimeTora-linux-x64/ && bestzip ../SlimeTora-linux-x64.zip *",
         "preload": "del-cli dist/ && tsc && npm run copy-files",
         "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.png\" \"src/**/*.svg\" \"src/**/*.fbx\" \"src/static/languages/**/*\"  dist/",
         "build-bulma": "npx sass --watch ./src/static/css/index.scss ./src/static/css/index.css",
-        "lint": "eslint **/*.js"
+        "lint": "eslint ./src/**/*.ts"
     },
     "keywords": [],
     "license": "MIT",
@@ -37,10 +38,12 @@
         "bestzip": "^2.2.1",
         "copyfiles": "^2.4.1",
         "del-cli": "^5.1.0",
-        "electron": "29.1.6",
+        "electron": "^29.4.2",
         "eslint": "^8.57.0",
+        "modclean": "^3.0.0-beta.1",
+        "modclean-patterns-default": "^1.1.2",
         "node-gyp-build": "4.8.0",
-        "typescript": "^5.4.4"
+        "typescript": "^5.4.5"
     },
     "dependencies": {
         "@slimevr/firmware-protocol": "^0.5.3",
@@ -51,6 +54,6 @@
         "lodash": "^4.17.21",
         "quaternion": "^1.5.1",
         "sass": "^1.72.0",
-        "three": "^0.164.1"
+        "three": "^0.165.0"
     }
 }
