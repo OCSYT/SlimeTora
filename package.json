@@ -46,7 +46,7 @@
     "dependencies": {
         "@slimevr/common": "^0.1.2",
         "@slimevr/firmware-protocol": "^0.6.3",
-        "@slimevr/tracker-emulation": "^0.2.1",
+        "@slimevr/tracker-emulation": "^0.2.2",
         "bulma": "^1.0.0",
         "haritorax-interpreter": "^1.8.3",
         "i18next": "^23.11.1",

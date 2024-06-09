@@ -26,11 +26,11 @@ import {
     UserAction,
     FirmwareFeatureFlags,
 } from "@slimevr/firmware-protocol";
-import { EmulatedTracker } from "@slimevr/tracker-emulation";
+import { EmulatedTracker, EmulatedSensor } from "@slimevr/tracker-emulation";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
-let connectedDevices: string[] = [];
+let connectedDevices: Map<string, EmulatedSensor> = new Map<string, EmulatedSensor>();
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
@@ -262,14 +262,6 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
  * Renderer tracker/device handlers
  */
 
-async function addTracker(trackerName: string) {
-    await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK);
-    connectedDevices.push(trackerName);
-
-    log(`Connected to tracker: ${trackerName}`);
-    mainWindow.webContents.send("connect", trackerName);
-}
-
 ipcMain.on("start-connection", async (_event, arg) => {
     const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } =
         arg;
@@ -322,13 +314,14 @@ ipcMain.on("start-connection", async (_event, arg) => {
         device.startConnection("com", ports);
     }
 
+    tracker.searchForServer();
     connectionActive = true;
 
     const activeTrackers: string[] = device.getActiveTrackers();
     const uniqueActiveTrackers = Array.from(new Set(activeTrackers)); // Make sure they have unique entries
     if (!uniqueActiveTrackers || uniqueActiveTrackers.length === 0) return;
     uniqueActiveTrackers.forEach(async (trackerName) => {
-        addTracker(trackerName);
+        await addTracker(trackerName);
         log("Connected devices: " + JSON.stringify(uniqueActiveTrackers));
     });
 });
@@ -344,8 +337,11 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
         log("No connection to stop");
     }
 
+    tracker.disconnectFromServer();
+    tracker.clearSensors();
+    connectedDevices.clear();
+    
     connectionActive = false;
-    connectedDevices = [];
 });
 
 ipcMain.handle("get-tracker-battery", async (_event, arg: string) => {
@@ -514,19 +510,49 @@ ipcMain.handle("get-setting", (_event, name) => {
  * Interpreter event listeners
  */
 
+let trackerQueue: string[] = [];
+let isProcessingQueue = false;
+
+async function addTracker(trackerName: string) {
+    trackerQueue.push(trackerName);
+    processQueue();
+}
+
+async function processQueue() {
+    if (isProcessingQueue || trackerQueue.length === 0) return;
+    isProcessingQueue = true;
+
+    while (trackerQueue.length > 0) {
+        const trackerName = trackerQueue.shift();
+        if (connectedDevices.has(trackerName) && connectedDevices.get(trackerName)) continue;
+        connectedDevices.set(trackerName, await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK));
+
+        // Sort the connectedDevices map by keys
+        connectedDevices = new Map([...connectedDevices.entries()].sort());
+
+        log(`Connected to tracker: ${trackerName}`);
+        log("Connected devices: " + JSON.stringify(Array.from(connectedDevices.keys()).filter(key => connectedDevices.get(key))));
+        mainWindow.webContents.send("connect", trackerName);
+    }
+
+    isProcessingQueue = false;
+}
+
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
-        if (connectedDevices.includes(deviceID) || !connectionActive) return;
-        addTracker(deviceID);
-        log("Connected devices: " + JSON.stringify(connectedDevices));
+        if ((connectedDevices.has(deviceID) && connectedDevices.get(deviceID)) || !connectionActive) return;
+        await addTracker(deviceID);
     });
 
     device.on("disconnect", (deviceID: string) => {
-        if (!connectedDevices.includes(deviceID)) return;
+        if (!connectedDevices.has(deviceID)) return;
         log(`Disconnected from tracker: ${deviceID}`);
+
+        tracker.removeSensor(connectedDevices.get(deviceID));
+        connectedDevices.set(deviceID, undefined);
+
         mainWindow.webContents.send("disconnect", deviceID);
-        connectedDevices = connectedDevices.filter((name) => name !== deviceID);
-        log("Connected devices: " + JSON.stringify(connectedDevices));
+        log("Connected devices: " + JSON.stringify(Array.from(connectedDevices.keys()).filter(key => connectedDevices.get(key))));
     });
 
     device.on("mag", (trackerName: string, magStatus: string) => {
@@ -568,7 +594,7 @@ function startDeviceListeners() {
     });
 
     device.on("imu", async (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
-        if (!connectedDevices.includes(trackerName) || !rawRotation || !rawGravity) return;
+        if (!connectedDevices.has(trackerName) || !rawRotation || !rawGravity) return;
 
         // Convert rotation to quaternion to euler angles in radians
         const quaternion = new Quaternion(
@@ -594,12 +620,12 @@ function startDeviceListeners() {
         const gravity = new Vector(rawGravity.x, rawGravity.y, rawGravity.z);
 
         tracker.sendRotationData(
-            connectedDevices.indexOf(trackerName),
+            Array.from(connectedDevices.keys()).indexOf(trackerName),
             RotationDataType.NORMAL,
             quaternion,
             0
         );
-        tracker.sendAcceleration(connectedDevices.indexOf(trackerName), gravity);
+        tracker.sendAcceleration(Array.from(connectedDevices.keys()).indexOf(trackerName), gravity);
 
         mainWindow.webContents.send("device-data", {
             trackerName,
@@ -614,7 +640,7 @@ function startDeviceListeners() {
         "battery",
         (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
             let batteryVoltageInVolts = batteryVoltage ? batteryVoltage / 1000 : 0;
-            if (!connectedDevices.includes(trackerName)) return;
+            if (!connectedDevices.has(trackerName)) return;
             if (trackerName.startsWith("HaritoraX")) batteryVoltageInVolts = 0;
 
             tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
@@ -665,8 +691,9 @@ const connectToServer = async () => {
     });
 
     tracker.on("disconnected-from-server", (reason) => {
-        if (reason === "manual") return;
         log(`Disconnected from SlimeVR server: ${reason}`);
+        foundSlimeVR = false;
+        if (reason === "manual") return;
         tracker.searchForServer();
     });
 
@@ -676,7 +703,7 @@ const connectToServer = async () => {
         log(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
     });
 
-    tracker.on("unknown-incoming-packet", (buf) =>
+    tracker.on("unknown-incoming-packet", (buf: Buffer) =>
         log(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
     );
 
