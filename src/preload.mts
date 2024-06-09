@@ -9,10 +9,6 @@ import locI18next from "loc-i18next";
 import * as THREE from "three";
 let localize: any = null;
 
-contextBridge.exposeInMainWorld("three", {
-    THREE,
-});
-
 contextBridge.exposeInMainWorld("ipc", {
     send: (channel: string, data: any) => {
         ipcRenderer.send(channel, data);

@@ -4,28 +4,29 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 // @ts-ignore
-import { HaritoraX } from "../../haritorax-interpreter";
+import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
 import { SerialPort } from "serialport";
-import Quaternion from "quaternion";
-import * as dgram from "dgram";
+import BetterQuaternion from "quaternion";
 import * as fs from "fs";
 import * as path from "path";
-const _ = require("lodash");
+import * as _ from "lodash-es";
 
-const sock = dgram.createSocket("udp4");
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
+import { MACAddress, Quaternion, Vector } from "@slimevr/common";
 import {
+    RotationDataType,
     BoardType,
     MCUType,
-    RotationDataType,
-    SensorType,
     SensorStatus,
-    ServerBoundAccelPacket,
-    ServerBoundBatteryLevelPacket,
-    ServerBoundHandshakePacket,
-    ServerBoundRotationDataPacket,
-    ServerBoundSensorInfoPacket,
+    SensorType,
+    UserAction,
+    FirmwareFeatureFlags,
 } from "@slimevr/firmware-protocol";
+import { EmulatedTracker } from "@slimevr/tracker-emulation";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
@@ -33,7 +34,6 @@ let connectedDevices: string[] = [];
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
-let lowestBatteryData = { percentage: 100, voltage: 0 };
 
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
@@ -104,7 +104,7 @@ const createWindow = () => {
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,
-            preload: path.join(__dirname, "preload.js"),
+            preload: path.join(__dirname, "preload.mjs"),
         },
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
@@ -245,7 +245,7 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,
-            preload: path.join(__dirname, "preload.js"),
+            preload: path.join(__dirname, "preload.mjs"),
         },
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
@@ -261,6 +261,14 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
 /*
  * Renderer tracker/device handlers
  */
+
+async function addTracker(trackerName: string) {
+    await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK);
+    connectedDevices.push(trackerName);
+
+    log(`Connected to tracker: ${trackerName}`);
+    mainWindow.webContents.send("connect", trackerName);
+}
 
 ipcMain.on("start-connection", async (_event, arg) => {
     const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } =
@@ -320,10 +328,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
     const uniqueActiveTrackers = Array.from(new Set(activeTrackers)); // Make sure they have unique entries
     if (!uniqueActiveTrackers || uniqueActiveTrackers.length === 0) return;
     uniqueActiveTrackers.forEach(async (trackerName) => {
-        trackerQueue.push(trackerName);
-        await handleNextTracker();
-        log(`Connected to tracker: ${trackerName}`);
-        mainWindow.webContents.send("connect", trackerName);
+        addTracker(trackerName);
         log("Connected devices: " + JSON.stringify(uniqueActiveTrackers));
     });
 });
@@ -512,10 +517,7 @@ ipcMain.handle("get-setting", (_event, name) => {
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
         if (connectedDevices.includes(deviceID) || !connectionActive) return;
-        trackerQueue.push(deviceID);
-        await handleNextTracker();
-        log(`Connected to tracker: ${deviceID}`);
-        mainWindow.webContents.send("connect", deviceID);
+        addTracker(deviceID);
         log("Connected devices: " + JSON.stringify(connectedDevices));
     });
 
@@ -549,16 +551,16 @@ function startDeviceListeners() {
         clickTimeouts[key] = setTimeout(() => {
             if (clickCounts[key] === 1) {
                 log(`Single click ${buttonPressed} button from ${trackerName}`);
-                sendYawReset();
+                tracker.sendUserAction(UserAction.RESET_YAW);
             } else if (clickCounts[key] === 2) {
                 log(`Double click ${buttonPressed} button from ${trackerName}`);
-                sendFullReset();
+                tracker.sendUserAction(UserAction.RESET_FULL);
             } else if (clickCounts[key] === 3) {
                 log(`Triple click ${buttonPressed} button from ${trackerName}`);
-                sendMountingReset();
+                tracker.sendUserAction(UserAction.RESET_MOUNTING);
             } else {
                 log(`Four click ${buttonPressed} button from ${trackerName}`);
-                sendPauseTracking();
+                tracker.sendUserAction(UserAction.PAUSE_TRACKING);
             }
 
             clickCounts[key] = 0;
@@ -575,23 +577,29 @@ function startDeviceListeners() {
             rawRotation.y,
             rawRotation.z
         );
-        const eulerRadians = quaternion.toEuler("XYZ");
 
-        // Convert the Euler angles to degrees
+        // Convert the to Euler angles then to degrees
+        const eulerRadians = new BetterQuaternion(
+            quaternion.x,
+            quaternion.y,
+            quaternion.z,
+            quaternion.w
+        ).toEuler("XYZ");
         const rotation = {
             x: eulerRadians[0] * (180 / Math.PI),
             y: eulerRadians[1] * (180 / Math.PI),
             z: eulerRadians[2] * (180 / Math.PI),
         };
 
-        const gravity = {
-            x: rawGravity.x,
-            y: rawGravity.y,
-            z: rawGravity.z,
-        };
+        const gravity = new Vector(rawGravity.x, rawGravity.y, rawGravity.z);
 
-        sendRotationPacket(rawRotation, connectedDevices.indexOf(trackerName));
-        sendAccelPacket(rawGravity, connectedDevices.indexOf(trackerName));
+        tracker.sendRotationData(
+            connectedDevices.indexOf(trackerName),
+            RotationDataType.NORMAL,
+            quaternion,
+            0
+        );
+        tracker.sendAcceleration(connectedDevices.indexOf(trackerName), gravity);
 
         mainWindow.webContents.send("device-data", {
             trackerName,
@@ -609,11 +617,7 @@ function startDeviceListeners() {
             if (!connectedDevices.includes(trackerName)) return;
             if (trackerName.startsWith("HaritoraX")) batteryVoltageInVolts = 0;
 
-            sendBatteryLevel(
-                batteryRemaining,
-                batteryVoltageInVolts,
-                connectedDevices.indexOf(trackerName)
-            );
+            tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
             mainWindow.webContents.send("device-battery", {
                 trackerName,
                 batteryRemaining,
@@ -626,11 +630,11 @@ function startDeviceListeners() {
     );
 
     device.on("log", (msg: string) => {
-        log(msg, "main");
+        log(msg);
     });
 
     device.on("error", (msg: string) => {
-        error(msg, "main");
+        error(msg);
     });
 }
 
@@ -638,268 +642,48 @@ function startDeviceListeners() {
  * SlimeVR Forwarding
  */
 
-let slimeIP = "0.0.0.0";
-let slimePort = 6969;
-let packetCount = 0;
+const tracker = new EmulatedTracker(
+    new MACAddress([0x01, 0x02, 0x03, 0x04, 0x05, 0x06]),
+    app.getVersion(),
+    new FirmwareFeatureFlags(new Map([])),
+    BoardType.CUSTOM,
+    MCUType.UNKNOWN
+);
 
-const connectToServer = () => {
-    return new Promise<void>((resolve) => {
-        if (foundSlimeVR) {
-            resolve();
-            return;
-        }
-
-        log("Connecting to SlimeVR server...");
-
-        const searchForServerInterval = setInterval(() => {
-            if (foundSlimeVR) {
-                clearInterval(searchForServerInterval);
-                return;
-            }
-
-            log("Searching for SlimeVR server...");
-
-            sendHandshakePacket("SEARCHING");
-        }, 1000);
-
-        sock.on("message", (data, src) => {
-            if (foundSlimeVR) {
-                return;
-            }
-
-            log(`Got message from SlimeVR server: ${data.toString()}`);
-
-            clearInterval(searchForServerInterval);
-
-            log("Connected to SlimeVR server!");
-
-            slimeIP = src.address;
-            slimePort = src.port;
-            packetCount += 1;
-            foundSlimeVR = true;
-
-            sendPackets();
-
-            resolve();
-        });
+const connectToServer = async () => {
+    tracker.on("ready", () => {
+        log("Ready to search for SlimeVR server...");
     });
+
+    tracker.on("connected-to-server", async (ip: string, port: number) => {
+        log(`Connected to SlimeVR server on ${ip}:${port}`);
+        foundSlimeVR = true;
+    });
+
+    tracker.on("searching-for-server", () => {
+        log("Searching for SlimeVR server...");
+    });
+
+    tracker.on("disconnected-from-server", (reason) => {
+        if (reason === "manual") return;
+        log(`Disconnected from SlimeVR server: ${reason}`);
+        tracker.searchForServer();
+    });
+
+    tracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
+
+    tracker.on("unknown-incoming-packet", (packet: any) => {
+        log(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
+    });
+
+    tracker.on("unknown-incoming-packet", (buf) =>
+        log(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
+    );
+
+    await tracker.init();
 };
 
 connectToServer();
-
-let isHandlingTracker = false;
-const trackerQueue: string[] = [];
-
-async function handleNextTracker() {
-    if (trackerQueue.length === 0 || isHandlingTracker) return;
-
-    isHandlingTracker = true;
-    const trackerName = trackerQueue.shift();
-
-    if (!connectedDevices.includes(trackerName)) {
-        connectedDevices.push(trackerName);
-        connectedDevices.sort();
-    }
-
-    sendPackets();
-
-    isHandlingTracker = false;
-    await handleNextTracker();
-}
-
-async function sendPackets() {
-    while (!foundSlimeVR) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-
-    for (const trackerName of connectedDevices) {
-        let sent = false;
-        // check if its first tracker
-        if (connectedDevices.length === 0) {
-            sent = (await sendHandshakePacket(trackerName)) as boolean;
-            if (!sent)
-                error(
-                    `Failed to send handshake for ${trackerName}, not adding to connected devices`
-                );
-        } else {
-            sent = (await sendSensorInfoPacket(trackerName)) as boolean;
-            if (!sent) {
-                error(
-                    `Failed to send sensor info packet for ${trackerName}, not adding to connected devices`
-                );
-                connectedDevices = connectedDevices.filter((name) => name !== trackerName);
-            }
-        }
-    }
-}
-
-/*
- * Packet sending
- */
-
-// Sends a handshake packet to SlimeVR server (first IMU tracker // IMU 0)
-async function sendHandshakePacket(trackerName: string) {
-    return new Promise((resolve, reject) => {
-        packetCount += 1;
-
-        const handshake = ServerBoundHandshakePacket.encode(
-            BigInt(packetCount),
-            BoardType.CUSTOM,
-            SensorType.UNKNOWN,
-            MCUType.UNKNOWN,
-            1.022,
-            "HaritoraX",
-            [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]
-        );
-        sock.send(handshake, 0, handshake.length, slimePort, slimeIP, (err) => {
-            if (err) {
-                error(`Error sending handshake: ${err}`);
-                reject(false);
-            } else {
-                if (trackerName == "SEARCHING") return;
-                log(
-                    `Added device ${trackerName} to SlimeVR server as IMU ${connectedDevices.length} // Handshake`
-                );
-                resolve(true);
-            }
-        });
-    });
-}
-
-// Adds a new IMU tracker to SlimeVR server
-async function sendSensorInfoPacket(trackerName: string) {
-    return new Promise((resolve, reject) => {
-        packetCount += 1;
-
-        const imuNumber = connectedDevices.indexOf(trackerName);
-        if (imuNumber === -1) {
-            reject(`Tracker ${trackerName} not found in connected devices`);
-            return;
-        }
-
-        const buffer = ServerBoundSensorInfoPacket.encode(
-            BigInt(packetCount),
-            imuNumber,
-            SensorStatus.OK,
-            SensorType.UNKNOWN
-        );
-
-        sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-            if (err) {
-                error(`Error sending sensor info packet: ${err}`);
-                reject(false);
-            } else {
-                log(`Added device ${trackerName} to SlimeVR server as IMU ${imuNumber}`);
-                packetCount += 1;
-                resolve(true);
-            }
-        });
-    });
-}
-
-// Sends an acceleration packet to SlimeVR server
-function sendAccelPacket(acceleration: Gravity, deviceID: number) {
-    packetCount += 1;
-
-    const buffer = ServerBoundAccelPacket.encode(BigInt(packetCount), deviceID, acceleration);
-
-    sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-        if (err) error(`Error sending acceleration packet for sensor ${deviceID}: ${err}`);
-    });
-}
-
-// Sends a rotation packet to SlimeVR server
-function sendRotationPacket(rotation: Rotation, deviceID: number) {
-    packetCount += 1;
-
-    const buffer = ServerBoundRotationDataPacket.encode(
-        BigInt(packetCount),
-        deviceID,
-        RotationDataType.NORMAL,
-        rotation,
-        0
-    );
-
-    sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-        if (err) error(`Error sending rotation packet for sensor ${deviceID}: ${err}`);
-    });
-}
-
-// Initialize arrays to store the last few percentages and voltages
-const lastPercentages: number[] = [];
-const lastVoltages: number[] = [];
-
-// Send battery info to SlimeVR server
-function sendBatteryLevel(percentage: number, voltage: number, deviceID: number) {
-    lastPercentages.push(percentage);
-    lastVoltages.push(voltage);
-
-    // Remove oldest element after max is reached
-    const maxElements = 5;
-    if (lastPercentages.length > maxElements) lastPercentages.shift();
-    if (lastVoltages.length > maxElements) lastVoltages.shift();
-
-    // Get the lowest non-zero percentage and voltage
-    const lowestPercentage = Math.min(...lastPercentages.filter((p) => p !== 0));
-    const lowestVoltage = Math.min(...lastVoltages.filter((v) => v !== 0));
-
-    if (lowestPercentage !== Infinity) lowestBatteryData.percentage = lowestPercentage;
-    if (lowestVoltage !== Infinity) lowestBatteryData.voltage = lowestVoltage;
-
-    log(
-        `Set lowest battery data: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage}V)`
-    );
-
-    packetCount += 1;
-    const buffer = ServerBoundBatteryLevelPacket.encode(
-        BigInt(packetCount),
-        lowestBatteryData.voltage,
-        lowestBatteryData.percentage
-    );
-
-    sock.send(buffer, 0, buffer.length, slimePort, slimeIP, (err) => {
-        if (err) {
-            error(`Error sending battery level packet for sensor ${deviceID}: ${err}`);
-        } else {
-            log(
-                `Sent battery data to SlimeVR server: ${lowestBatteryData.percentage}% (${lowestBatteryData.voltage}V)`
-            );
-        }
-    });
-}
-
-function sendPacketToServer(actionCode: number, logMessage: string) {
-    packetCount += 1;
-    var buffer = new ArrayBuffer(128);
-    var view = new DataView(buffer);
-    view.setInt32(0, 21);
-    view.setBigInt64(4, BigInt(packetCount));
-    view.setInt8(12, actionCode);
-    const sendBuffer = new Uint8Array(buffer);
-    sock.send(sendBuffer, 0, sendBuffer.length, slimePort, slimeIP, (err) => {
-        if (err) {
-            console.error(`Error sending packet:`, err);
-        } else {
-            log(logMessage);
-        }
-    });
-}
-
-function sendFullReset() {
-    sendPacketToServer(2, "Sending full reset packet to SlimeVR server");
-}
-
-function sendYawReset() {
-    sendPacketToServer(3, "Sending yaw reset packet to SlimeVR server");
-}
-
-function sendMountingReset() {
-    sendPacketToServer(4, "Sending mounting reset packet to SlimeVR server");
-}
-
-function sendPauseTracking() {
-    sendPacketToServer(5, "Sending pause tracking packet to SlimeVR server");
-}
 
 /*
  * Logging
