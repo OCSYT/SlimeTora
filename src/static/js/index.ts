@@ -859,6 +859,8 @@ function addEventListeners() {
                 },
             },
         });
+
+        setElementDisabledState(document.getElementById("wired-tracker-switch"), bluetoothEnabled);
     });
 
     document.getElementById("com-switch").addEventListener("change", function () {
