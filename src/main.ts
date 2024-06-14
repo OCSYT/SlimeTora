@@ -4,7 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 // @ts-ignore
-import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
+import { HaritoraX } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
 import * as fs from "fs";
@@ -327,20 +327,24 @@ ipcMain.on("start-connection", async (_event, arg) => {
 });
 
 ipcMain.on("stop-connection", (_event, arg: string) => {
-    if (arg.includes("bluetooth") && device.getConnectionModeActive("bluetooth")) {
-        device.stopConnection("bluetooth");
-        log("Stopped bluetooth connection");
-    } else if (arg.includes("com") && device.getConnectionModeActive("com")) {
-        device.stopConnection("com");
-        log("Stopped COM connection");
+    if (device) {
+        if (arg.includes("bluetooth") && device.getConnectionModeActive("bluetooth")) {
+            device.stopConnection("bluetooth");
+            log("Stopped bluetooth connection");
+        } else if (arg.includes("com") && device.getConnectionModeActive("com")) {
+            device.stopConnection("com");
+            log("Stopped COM connection");
+        } else {
+            log("No connection to stop");
+        }
     } else {
-        log("No connection to stop");
+        error(`Device instance wasn't started correctly`);
     }
 
     tracker.disconnectFromServer();
     tracker.clearSensors();
     connectedDevices.clear();
-    
+
     connectionActive = false;
 });
 
@@ -525,13 +529,21 @@ async function processQueue() {
     while (trackerQueue.length > 0) {
         const trackerName = trackerQueue.shift();
         if (connectedDevices.has(trackerName) && connectedDevices.get(trackerName)) continue;
-        connectedDevices.set(trackerName, await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK));
+        connectedDevices.set(
+            trackerName,
+            await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK)
+        );
 
         // Sort the connectedDevices map by keys
         connectedDevices = new Map([...connectedDevices.entries()].sort());
 
         log(`Connected to tracker: ${trackerName}`);
-        log("Connected devices: " + JSON.stringify(Array.from(connectedDevices.keys()).filter(key => connectedDevices.get(key))));
+        log(
+            "Connected devices: " +
+                JSON.stringify(
+                    Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key))
+                )
+        );
         mainWindow.webContents.send("connect", trackerName);
     }
 
@@ -540,7 +552,8 @@ async function processQueue() {
 
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
-        if ((connectedDevices.has(deviceID) && connectedDevices.get(deviceID)) || !connectionActive) return;
+        if ((connectedDevices.has(deviceID) && connectedDevices.get(deviceID)) || !connectionActive)
+            return;
         await addTracker(deviceID);
     });
 
@@ -552,7 +565,12 @@ function startDeviceListeners() {
         connectedDevices.set(deviceID, undefined);
 
         mainWindow.webContents.send("disconnect", deviceID);
-        log("Connected devices: " + JSON.stringify(Array.from(connectedDevices.keys()).filter(key => connectedDevices.get(key))));
+        log(
+            "Connected devices: " +
+                JSON.stringify(
+                    Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key))
+                )
+        );
     });
 
     device.on("mag", (trackerName: string, magStatus: string) => {
