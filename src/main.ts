@@ -616,18 +616,18 @@ function startDeviceListeners() {
 
         // Convert rotation to quaternion to euler angles in radians
         const quaternion = new Quaternion(
-            rawRotation.w,
             rawRotation.x,
             rawRotation.y,
-            rawRotation.z
+            rawRotation.z,
+            rawRotation.w
         );
 
         // Convert the to Euler angles then to degrees
         const eulerRadians = new BetterQuaternion(
+            quaternion.w,
             quaternion.x,
             quaternion.y,
-            quaternion.z,
-            quaternion.w
+            quaternion.z
         ).toEuler("XYZ");
         const rotation = {
             x: eulerRadians[0] * (180 / Math.PI),
