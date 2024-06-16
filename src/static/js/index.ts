@@ -184,13 +184,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const element = document.getElementById(id);
             setElementDisabledState(element, wiredTrackerEnabled);
         });
-
-        const switchesAndSelects = document
-            .getElementById("tracker-settings")
-            .querySelectorAll('[id$="-switch"], [id$="-select"]');
-        switchesAndSelects.forEach((element) => {
-            setElementDisabledState(element, wiredTrackerEnabled);
-        });
     }
 
     selectedComPorts.push(...selectedPorts);
@@ -835,13 +828,6 @@ function addEventListeners() {
         const ids = ["wireless-tracker-switch", "bluetooth-switch"];
         ids.forEach((id) => {
             const element = document.getElementById(id);
-            setElementDisabledState(element, wiredTrackerEnabled);
-        });
-
-        const switchesAndSelects = document
-            .getElementById("tracker-settings")
-            .querySelectorAll('[id$="-switch"], [id$="-select"]');
-        switchesAndSelects.forEach((element) => {
             setElementDisabledState(element, wiredTrackerEnabled);
         });
     });
