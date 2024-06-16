@@ -8,7 +8,7 @@
             "none": "N/A",
             "failed": "エラー",
             "searching": "検索中",
-            "searchingServer": "TO CHANGE",
+            "searchingServer": "SlimeVRを探しています",
             "connected": "接続済み",
             "comPortsMissing": "COMポートが見つかりません",
             "slimeVRMissing": "SlimeVRが見つかりません",
@@ -136,8 +136,8 @@
     },
     "dialogs": {
         "connectionFailed": {
-            "title": "TO CHANGE",
-            "message": "TO CHANGE"
+            "title": "接続に失敗しました",
+            "message": "選択した接続モードで接続を開始できませんでした。HaritoraConfiguratorを閉じていること、Bluetoothがオンになっていること(該当者のみ) 、正しいCOMポートが選択されていることを確認してください。"
         },
         "comPortsMissing": {
             "title": "COMポートが見つかりません",
