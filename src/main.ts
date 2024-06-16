@@ -327,12 +327,30 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     if (types.includes("bluetooth")) {
         log("Starting Bluetooth connection");
-        device.startConnection("bluetooth");
+        const connectionStarted = device.startConnection("bluetooth");
+        if (!connectionStarted) {
+            error("Failed to start BLE connection");
+            mainWindow.webContents.send("set-status", await translate("main.status.failed"));
+            dialog.showErrorBox(
+                await translate("dialogs.connectionFailed.title"),
+                await translate("dialogs.connectionFailed.message")
+            );
+            return false;
+        }
     }
 
     if (types.includes("com") && ports) {
         log("Starting COM connection with ports: " + JSON.stringify(ports));
-        device.startConnection("com", ports);
+        const connectionStarted = device.startConnection("com", ports);
+        if (!connectionStarted) {
+            error("Failed to start COM connection");
+            mainWindow.webContents.send("set-status", await translate("main.status.failed"));
+            dialog.showErrorBox(
+                await translate("dialogs.connectionFailed.title"),
+                await translate("dialogs.connectionFailed.message")
+            );
+            return false;
+        }
     }
 
     connectionActive = true;

@@ -6,7 +6,9 @@
         "status": {
             "statusText": "ステータス:",
             "none": "N/A",
+            "failed": "エラー",
             "searching": "検索中",
+            "searchingServer": "TO CHANGE",
             "connected": "接続済み",
             "comPortsMissing": "COMポートが見つかりません",
             "slimeVRMissing": "SlimeVRが見つかりません",
@@ -133,6 +135,10 @@
         "openLogsFolder": "ログの保存先を開く"
     },
     "dialogs": {
+        "connectionFailed": {
+            "title": "TO CHANGE",
+            "message": "TO CHANGE"
+        },
         "comPortsMissing": {
             "title": "COMポートが見つかりません",
             "message": "設定されたCOMポートが見つかりませんでした。ドングルとトラッカーが接続されていることを確認してください。"

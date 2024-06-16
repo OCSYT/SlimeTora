@@ -6,6 +6,7 @@
         "status": {
             "statusText": "Status:",
             "none": "N/A",
+            "failed": "error",
             "searching": "searching",
             "searchingServer": "searching for SlimeVR",
             "connected": "connected",
@@ -134,6 +135,10 @@
         "openLogsFolder": "Open logs folder"
     },
     "dialogs": {
+        "connectionFailed": {
+            "title": "Connection failed",
+            "message": "Failed to start a connection via the selected connection mode(s). Please make sure HaritoraConfigurator is closed and (if applicable), bluetooth is on and/or the correct COM ports are selected."
+        },
         "comPortsMissing": {
             "title": "COM ports missing",
             "message": "Some COM ports set in the config were not found, please make sure your dongle(s) and trackers are connected."
