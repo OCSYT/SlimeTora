@@ -30,7 +30,10 @@ import { EmulatedTracker } from "@slimevr/tracker-emulation";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
-let connectedDevices: Map<string, [EmulatedTracker, boolean]> = new Map<string, [EmulatedTracker, boolean]>();
+let connectedDevices: Map<string, [EmulatedTracker, boolean]> = new Map<
+    string,
+    [EmulatedTracker, boolean]
+>();
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
@@ -383,8 +386,11 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
         error(`Device instance wasn't started correctly`);
     }
 
-    heartbeatTracker.disconnectFromServer();
-    heartbeatTracker.clearSensors();
+    // For every tracker, de-initialize it
+    connectedDevices.forEach((value, _key) => {
+        if (value) value[0].deinit();
+    });
+
     connectedDevices.clear();
 
     connectionActive = false;
@@ -607,6 +613,8 @@ async function processQueue() {
         // Set boolean to true to indicate that the tracker is connected
         connectedDevices.set(trackerName, [newTracker, true]);
 
+        startTrackerListeners(newTracker);
+
         log(`Connected to tracker: ${trackerName}`);
         log(
             "Connected devices: " +
@@ -620,6 +628,18 @@ async function processQueue() {
     isProcessingQueue = false;
 }
 
+function startTrackerListeners(tracker: EmulatedTracker) {
+    tracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
+
+    tracker.on("unknown-incoming-packet", (packet: any) => {
+        log(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
+    });
+
+    tracker.on("unknown-incoming-packet", (buf: Buffer) =>
+        log(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
+    );
+}
+
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
         if ((connectedDevices.has(deviceID) && connectedDevices.get(deviceID)) || !connectionActive)
@@ -628,10 +648,10 @@ function startDeviceListeners() {
     });
 
     device.on("disconnect", (deviceID: string) => {
-        if (!connectedDevices.has(deviceID)) return;
+        if (!connectedDevices.get(deviceID)) return;
         log(`Disconnected from tracker: ${deviceID}`);
 
-        connectedDevices.delete(deviceID);
+        connectedDevices.get(deviceID)[0].disconnectFromServer();
         connectedDevices.set(deviceID, undefined);
 
         mainWindow.webContents.send("disconnect", deviceID);
@@ -714,11 +734,17 @@ function startDeviceListeners() {
 
         const gravity = new Vector(rawGravity.x, rawGravity.y, rawGravity.z);
 
-        const tracker = connectedDevices.get(trackerName)[0];
-        const trackerConnected = connectedDevices.get(trackerName)[1];
-        if (!trackerConnected) return;
-        tracker.sendRotationData(0, RotationDataType.NORMAL, quaternion, 0);
-        tracker.sendAcceleration(0, gravity);
+        let trackerData = connectedDevices.get(trackerName);
+        if (trackerData) {
+            const tracker = trackerData[0];
+            const trackerConnected = trackerData[1];
+
+            if (!trackerConnected) return;
+            tracker.sendRotationData(0, RotationDataType.NORMAL, quaternion, 0);
+            tracker.sendAcceleration(0, gravity);
+        } else {
+            return false;
+        }
 
         mainWindow.webContents.send("device-data", {
             trackerName,
@@ -736,10 +762,16 @@ function startDeviceListeners() {
             if (!connectedDevices.has(trackerName)) return;
             if (trackerName.startsWith("HaritoraX")) batteryVoltageInVolts = 0;
 
-            const tracker = connectedDevices.get(trackerName)[0];
-            const trackerConnected = connectedDevices.get(trackerName)[1];
-            if (!trackerConnected) return;
-            tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+            let trackerData = connectedDevices.get(trackerName);
+            if (trackerData) {
+                const tracker = trackerData[0];
+                const trackerConnected = trackerData[1];
+
+                if (!trackerConnected) return;
+                tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+            } else {
+                return false;
+            }
             mainWindow.webContents.send("device-battery", {
                 trackerName,
                 batteryRemaining,
