@@ -11,7 +11,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as _ from "lodash-es";
 
-import { fileURLToPath } from "url";
+import { fileURLToPath, format } from "url";
 import { dirname } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -105,11 +105,18 @@ const createWindow = () => {
             contextIsolation: true,
             nodeIntegration: true,
             preload: path.join(__dirname, "preload.mjs"),
+            backgroundThrottling: false,
+            spellcheck: false,
+            sandbox: false, // fixes startup crashes due to GPU process, shouldn't be too large of a security risk as we're not loading any external content/connect to internet
         },
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    mainWindow.loadURL("file://" + path.join(__dirname, "static/html/index.html"));
+    mainWindow.loadURL(format({
+        pathname: path.join(__dirname, "static/html/index.html"),
+        protocol: 'file:',
+        slashes: true
+    }));
 
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", await loadTranslations());
@@ -246,11 +253,18 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
             contextIsolation: true,
             nodeIntegration: true,
             preload: path.join(__dirname, "preload.mjs"),
+            backgroundThrottling: true,
+            spellcheck: false,
+            sandbox: false, // fixes startup crashes due to GPU process, shouldn't be too large of a security risk as we're not loading any external content/connect to internet
         },
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    trackerSettingsWindow.loadURL("file://" + path.join(__dirname, "static/html/settings.html"));
+    trackerSettingsWindow.loadURL(format({
+        pathname: path.join(__dirname, "static/html/settings.html"),
+        protocol: 'file:',
+        slashes: true
+    }));
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
         // send trackerName to window
@@ -614,7 +628,12 @@ function startDeviceListeners() {
     device.on("imu", async (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
         if (!connectedDevices.has(trackerName) || !rawRotation || !rawGravity) return;
 
-        // Convert rotation to quaternion to euler angles in radians
+        // YOU ARE NOT SERIOUS. ALRIGHT.
+        // I HAD BEEN TRYING TO SOLVE TRACKING ISSUES FOR AGES, AND IT TURNS OUT BOTH QUATERNIONS WERE USING DIFFERENT LAYOUTS
+        // ONE WAS XYZW AND THE OTHER WAS WXYZ. THAT'S WHY THERE WAS TRACKING ISSUES. WHY.
+        // -jovannmc
+
+        // Convert rotation to quaternion
         const quaternion = new Quaternion(
             rawRotation.x,
             rawRotation.y,
@@ -622,13 +641,15 @@ function startDeviceListeners() {
             rawRotation.w
         );
 
-        // Convert the to Euler angles then to degrees
+        // Convert the quaternion to Euler angles
         const eulerRadians = new BetterQuaternion(
             quaternion.w,
             quaternion.x,
             quaternion.y,
             quaternion.z
         ).toEuler("XYZ");
+
+        // Convert the rotation to degrees
         const rotation = {
             x: eulerRadians[0] * (180 / Math.PI),
             y: eulerRadians[1] * (180 / Math.PI),
