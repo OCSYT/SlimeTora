@@ -4,7 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 // @ts-ignore
-import { HaritoraX } from "haritorax-interpreter";
+import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
 import * as fs from "fs";
@@ -26,11 +26,11 @@ import {
     UserAction,
     FirmwareFeatureFlags,
 } from "@slimevr/firmware-protocol";
-import { EmulatedTracker, EmulatedSensor } from "@slimevr/tracker-emulation";
+import { EmulatedTracker } from "@slimevr/tracker-emulation";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
-let connectedDevices: Map<string, EmulatedSensor> = new Map<string, EmulatedSensor>();
+let connectedDevices: Map<string, [EmulatedTracker, boolean]> = new Map<string, [EmulatedTracker, boolean]>();
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
@@ -112,11 +112,13 @@ const createWindow = () => {
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    mainWindow.loadURL(format({
-        pathname: path.join(__dirname, "static/html/index.html"),
-        protocol: 'file:',
-        slashes: true
-    }));
+    mainWindow.loadURL(
+        format({
+            pathname: path.join(__dirname, "static/html/index.html"),
+            protocol: "file:",
+            slashes: true,
+        })
+    );
 
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", await loadTranslations());
@@ -198,7 +200,7 @@ ipcMain.handle("get-active-trackers", () => {
 
 ipcMain.handle("get-com-ports", async () => {
     const ports = await SerialPort.list();
-    return ports.map((port) => port.path).sort();
+    return ports.map((port: any) => port.path).sort();
 });
 
 ipcMain.handle("get-languages", async () => {
@@ -209,7 +211,7 @@ ipcMain.handle("get-languages", async () => {
 ipcMain.handle("search-for-server", async () => {
     if (foundSlimeVR) return true;
 
-    tracker.searchForServer();
+    heartbeatTracker.searchForServer();
     return await new Promise((resolve) => {
         setTimeout(() => {
             resolve(foundSlimeVR);
@@ -267,11 +269,13 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    trackerSettingsWindow.loadURL(format({
-        pathname: path.join(__dirname, "static/html/settings.html"),
-        protocol: 'file:',
-        slashes: true
-    }));
+    trackerSettingsWindow.loadURL(
+        format({
+            pathname: path.join(__dirname, "static/html/settings.html"),
+            protocol: "file:",
+            slashes: true,
+        })
+    );
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
         // send trackerName to window
@@ -379,8 +383,8 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
         error(`Device instance wasn't started correctly`);
     }
 
-    tracker.disconnectFromServer();
-    tracker.clearSensors();
+    heartbeatTracker.disconnectFromServer();
+    heartbeatTracker.clearSensors();
     connectedDevices.clear();
 
     connectionActive = false;
@@ -504,6 +508,10 @@ ipcMain.handle("get-settings", () => {
 });
 
 ipcMain.on("save-setting", (_event, data) => {
+    saveSetting(data);
+});
+
+function saveSetting(data: { [key: string]: any }) {
     const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     // Use lodash's mergeWith to merge the new data with the existing config (not merge as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
@@ -514,7 +522,7 @@ ipcMain.on("save-setting", (_event, data) => {
     });
 
     fs.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 4));
-});
+}
 
 ipcMain.handle("has-setting", (_event, name) => {
     const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
@@ -566,14 +574,38 @@ async function processQueue() {
 
     while (trackerQueue.length > 0) {
         const trackerName = trackerQueue.shift();
-        if (connectedDevices.has(trackerName) && connectedDevices.get(trackerName)) continue;
-        connectedDevices.set(
-            trackerName,
-            await tracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK)
+
+        // Check if tracker has a MAC address assigned already in the config
+        const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
+        let macAddress = MACAddress.random();
+        let macBytes = config.trackers?.[trackerName]?.macAddress?.bytes;
+        if (macBytes && macBytes.length === 6) {
+            macAddress = new MACAddress(macBytes);
+        }
+
+        let newTracker = new EmulatedTracker(
+            macAddress,
+            app.getVersion(),
+            new FirmwareFeatureFlags(new Map([])),
+            BoardType.CUSTOM,
+            MCUType.UNKNOWN
         );
+
+        if (connectedDevices.has(trackerName) && connectedDevices.get(trackerName)) continue;
+        connectedDevices.set(trackerName, [newTracker, false]);
+
+        await newTracker.init();
+        await newTracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK);
 
         // Sort the connectedDevices map by keys
         connectedDevices = new Map([...connectedDevices.entries()].sort());
+
+        // Set the MAC address in the config
+        saveSetting({ trackers: { [trackerName]: { macAddress } } });
+        log(`Set MAC address for ${trackerName} to ${macAddress}`);
+
+        // Set boolean to true to indicate that the tracker is connected
+        connectedDevices.set(trackerName, [newTracker, true]);
 
         log(`Connected to tracker: ${trackerName}`);
         log(
@@ -599,7 +631,7 @@ function startDeviceListeners() {
         if (!connectedDevices.has(deviceID)) return;
         log(`Disconnected from tracker: ${deviceID}`);
 
-        tracker.removeSensor(connectedDevices.get(deviceID));
+        connectedDevices.delete(deviceID);
         connectedDevices.set(deviceID, undefined);
 
         mainWindow.webContents.send("disconnect", deviceID);
@@ -633,16 +665,16 @@ function startDeviceListeners() {
         clickTimeouts[key] = setTimeout(() => {
             if (clickCounts[key] === 1) {
                 log(`Single click ${buttonPressed} button from ${trackerName}`);
-                tracker.sendUserAction(UserAction.RESET_YAW);
+                heartbeatTracker.sendUserAction(UserAction.RESET_YAW);
             } else if (clickCounts[key] === 2) {
                 log(`Double click ${buttonPressed} button from ${trackerName}`);
-                tracker.sendUserAction(UserAction.RESET_FULL);
+                heartbeatTracker.sendUserAction(UserAction.RESET_FULL);
             } else if (clickCounts[key] === 3) {
                 log(`Triple click ${buttonPressed} button from ${trackerName}`);
-                tracker.sendUserAction(UserAction.RESET_MOUNTING);
+                heartbeatTracker.sendUserAction(UserAction.RESET_MOUNTING);
             } else {
                 log(`Four click ${buttonPressed} button from ${trackerName}`);
-                tracker.sendUserAction(UserAction.PAUSE_TRACKING);
+                heartbeatTracker.sendUserAction(UserAction.PAUSE_TRACKING);
             }
 
             clickCounts[key] = 0;
@@ -682,13 +714,11 @@ function startDeviceListeners() {
 
         const gravity = new Vector(rawGravity.x, rawGravity.y, rawGravity.z);
 
-        tracker.sendRotationData(
-            Array.from(connectedDevices.keys()).indexOf(trackerName),
-            RotationDataType.NORMAL,
-            quaternion,
-            0
-        );
-        tracker.sendAcceleration(Array.from(connectedDevices.keys()).indexOf(trackerName), gravity);
+        const tracker = connectedDevices.get(trackerName)[0];
+        const trackerConnected = connectedDevices.get(trackerName)[1];
+        if (!trackerConnected) return;
+        tracker.sendRotationData(0, RotationDataType.NORMAL, quaternion, 0);
+        tracker.sendAcceleration(0, gravity);
 
         mainWindow.webContents.send("device-data", {
             trackerName,
@@ -706,6 +736,9 @@ function startDeviceListeners() {
             if (!connectedDevices.has(trackerName)) return;
             if (trackerName.startsWith("HaritoraX")) batteryVoltageInVolts = 0;
 
+            const tracker = connectedDevices.get(trackerName)[0];
+            const trackerConnected = connectedDevices.get(trackerName)[1];
+            if (!trackerConnected) return;
             tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
             mainWindow.webContents.send("device-battery", {
                 trackerName,
@@ -731,47 +764,40 @@ function startDeviceListeners() {
  * SlimeVR Forwarding
  */
 
-const tracker = new EmulatedTracker(
-    new MACAddress([0x01, 0x02, 0x03, 0x04, 0x05, 0x06]),
-    app.getVersion(),
+const heartbeatTracker = new EmulatedTracker(
+    new MACAddress([0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+    app.getVersion() + "-heartbeat",
     new FirmwareFeatureFlags(new Map([])),
     BoardType.CUSTOM,
     MCUType.UNKNOWN
 );
 
 const connectToServer = async () => {
-    tracker.on("ready", () => {
+    heartbeatTracker.on("ready", () => {
         log("Ready to search for SlimeVR server...");
     });
 
-    tracker.on("connected-to-server", async (ip: string, port: number) => {
+    heartbeatTracker.on("connected-to-server", async (ip: string, port: number) => {
         log(`Connected to SlimeVR server on ${ip}:${port}`);
         foundSlimeVR = true;
         mainWindow.webContents.send("set-slimevr-connected", true);
     });
 
-    tracker.on("searching-for-server", () => {
+    heartbeatTracker.on("searching-for-server", () => {
         log("Searching for SlimeVR server...");
     });
 
-    tracker.on("disconnected-from-server", (reason) => {
-        log(`Disconnected from SlimeVR server: ${reason}`);
-        foundSlimeVR = false;
-        mainWindow.webContents.send("set-slimevr-connected", false);
-        if (reason !== "manual") tracker.searchForServer();
-    });
+    heartbeatTracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
 
-    tracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
-
-    tracker.on("unknown-incoming-packet", (packet: any) => {
+    heartbeatTracker.on("unknown-incoming-packet", (packet: any) => {
         log(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
     });
 
-    tracker.on("unknown-incoming-packet", (buf: Buffer) =>
+    heartbeatTracker.on("unknown-incoming-packet", (buf: Buffer) =>
         log(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
     );
 
-    await tracker.init();
+    await heartbeatTracker.init();
 };
 
 connectToServer();
