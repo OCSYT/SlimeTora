@@ -7,6 +7,7 @@
             "statusText": "Status:",
             "none": "N/A",
             "searching": "searching",
+            "searchingServer": "searching for SlimeVR",
             "connected": "connected",
             "comPortsMissing": "COM ports missing",
             "slimeVRMissing": "SlimeVR not found",

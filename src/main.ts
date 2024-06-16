@@ -192,10 +192,6 @@ ipcMain.on("show-error", (_event, arg) => {
     dialog.showErrorBox(title, message);
 });
 
-ipcMain.handle("is-slimevr-connected", () => {
-    return foundSlimeVR;
-});
-
 ipcMain.handle("get-active-trackers", () => {
     return connectedDevices;
 });
@@ -208,6 +204,17 @@ ipcMain.handle("get-com-ports", async () => {
 ipcMain.handle("get-languages", async () => {
     const resources = await loadTranslations();
     return Object.keys(resources);
+});
+
+ipcMain.handle("search-for-server", async () => {
+    if (foundSlimeVR) return true;
+
+    tracker.searchForServer();
+    return await new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(foundSlimeVR);
+        }, 2000);
+    });
 });
 
 ipcMain.on("set-log-to-file", (_event, arg) => {
@@ -328,7 +335,6 @@ ipcMain.on("start-connection", async (_event, arg) => {
         device.startConnection("com", ports);
     }
 
-    tracker.searchForServer();
     connectionActive = true;
 
     const activeTrackers: string[] = device.getActiveTrackers();
@@ -723,6 +729,7 @@ const connectToServer = async () => {
     tracker.on("connected-to-server", async (ip: string, port: number) => {
         log(`Connected to SlimeVR server on ${ip}:${port}`);
         foundSlimeVR = true;
+        mainWindow.webContents.send("set-slimevr-connected", true);
     });
 
     tracker.on("searching-for-server", () => {
@@ -732,8 +739,8 @@ const connectToServer = async () => {
     tracker.on("disconnected-from-server", (reason) => {
         log(`Disconnected from SlimeVR server: ${reason}`);
         foundSlimeVR = false;
-        if (reason === "manual") return;
-        tracker.searchForServer();
+        mainWindow.webContents.send("set-slimevr-connected", false);
+        if (reason !== "manual") tracker.searchForServer();
     });
 
     tracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));

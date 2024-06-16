@@ -210,13 +210,25 @@ document.addEventListener("DOMContentLoaded", async function () {
 async function startConnection() {
     window.log("Starting connection...");
 
-    const slimeVRFound: boolean = await window.ipc.invoke("is-slimevr-connected", null);
+    setStatus(await window.translate("main.status.searchingServer"));
+    const slimeVRFound: boolean = await window.ipc.invoke("search-for-server", null);
     if (!slimeVRFound && !skipSlimeVRCheck) {
         window.error("Tried to start connection while not connected to SlimeVR");
         setStatus(await window.translate("main.status.slimeVRMissing"));
         return;
     } else if (!slimeVRFound && skipSlimeVRCheck) {
         window.log("SlimeVR check skipped");
+    }
+
+    // Check if any tracker model is enabled
+    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
+        window.error("No tracker model enabled");
+        setStatus(await window.translate("main.status.noTrackerModel"));
+        window.ipc.send("show-error", {
+            title: await window.translate("dialogs.noTrackerModel.title"),
+            message: await window.translate("dialogs.noTrackerModel.message"),
+        });
+        return false;
     }
 
     if (bluetoothEnabled && comEnabled) {
@@ -252,17 +264,6 @@ async function startConnection() {
         window.ipc.send("show-error", {
             title: await window.translate("dialogs.noConnectionMode.title"),
             message: await window.translate("dialogs.noConnectionMode.message"),
-        });
-        return false;
-    }
-
-    // Check if any tracker model is enabled
-    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
-        window.error("No tracker model enabled");
-        setStatus(await window.translate("main.status.noTrackerModel"));
-        window.ipc.send("show-error", {
-            title: await window.translate("dialogs.noTrackerModel.title"),
-            message: await window.translate("dialogs.noTrackerModel.message"),
         });
         return false;
     }
