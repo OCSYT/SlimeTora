@@ -141,44 +141,6 @@ app.on("window-all-closed", () => {
  * Renderer handlers
  */
 
-ipcMain.on("process-data", () => {
-    const dataPath = path.resolve(mainPath, "data.txt");
-
-    log("Processing data from data.txt...");
-
-    fs.readFile(dataPath, "utf8", function (err, data) {
-        if (err) {
-            return console.log(err);
-        }
-        let lines = data.split("\n");
-        const trackerNames = ["chest", "leftKnee", "leftAnkle", "rightKnee", "rightAnkle", "hip"];
-
-        log(`Processing ${lines.length} lines of data...`);
-        let i = 0;
-        function processLine() {
-            if (i >= lines.length) return;
-
-            const data = lines[i];
-            const buffer = Buffer.from(data, "base64");
-
-            if (buffer.length === 84 || buffer.length == 88) {
-                trackerNames.forEach((trackerName, index) => {
-                    const start = index * 14; // 14 bytes per tracker
-                    const trackerBuffer = buffer.slice(start, start + 14);
-                    device.parseIMUData(trackerBuffer, trackerName);
-                });
-            } else {
-                console.error("Unexpected data length:", buffer.length);
-            }
-
-            i++;
-            setTimeout(processLine, 0);
-        }
-
-        processLine();
-    });
-});
-
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
 });

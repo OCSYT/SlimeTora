@@ -526,6 +526,7 @@ async function addDeviceToList(deviceID: string) {
     if (wiredTrackerEnabled) {
         const settingsButton = newDevice.querySelector("#tracker-settings-button");
         if (settingsButton) settingsButton.setAttribute("disabled", "true");
+        window.log(`Disabled tracker settings button for ${deviceID} (wired tracker)`);
     }
 
     window.ipc.send("get-tracker-battery", deviceID);
@@ -1082,11 +1083,6 @@ function addEventListeners() {
     });
 }
 
-function processData() {
-    window.log("Processing data...");
-    window.ipc.send("process-data", null);
-}
-
 function setElementDisabledState(element: Element, isDisabled: boolean) {
     if (isDisabled) {
         element.setAttribute("disabled", "true");
@@ -1099,7 +1095,6 @@ window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.openLogsFolder = openLogsFolder;
 window.saveSettings = saveSettings;
-window.processData = processData;
 
 window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for ${deviceID}`);
