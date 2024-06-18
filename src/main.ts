@@ -37,6 +37,7 @@ let connectedDevices: Map<string, [EmulatedTracker, boolean]> = new Map<
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
+let heartbeatInterval = 2000;
 
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
@@ -96,6 +97,7 @@ const createWindow = () => {
         canLogToFile = config.global?.debug?.canLogToFile || false;
         wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled || false;
         wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled || false;
+        heartbeatInterval = config.global?.trackers?.heartbeatInterval || 2000;
         loggingMode = config.global?.debug?.loggingMode || 1;
     }
 
@@ -310,7 +312,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     if (types.includes("com") && ports) {
         log("Starting COM connection with ports: " + JSON.stringify(ports));
-        const connectionStarted = device.startConnection("com", ports);
+        const connectionStarted = device.startConnection("com", ports, heartbeatInterval);
         if (!connectionStarted) {
             error("Failed to start COM connection");
             mainWindow.webContents.send("set-status", await translate("main.status.failed"));
