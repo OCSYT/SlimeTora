@@ -691,7 +691,20 @@ window.ipc.on("device-battery", (_event, arg) => {
     if (!isActive || !trackerName || !batteryVoltage) return;
     const batteryText: HTMLElement = document.getElementById(trackerName).querySelector("#battery");
     if (!batteryText) return;
-    batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
+
+    if (trackerName === "HaritoraX" && wiredTrackerEnabled) {
+        // Wired tracker, set all trackers to the same battery
+        const devices = document.getElementById("device-list").querySelectorAll(".card");
+        devices.forEach((device) => {
+            const batteryText = device.querySelector("#battery");
+            if (batteryText) {
+                batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
+            }
+        });
+    } else {
+        batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
+    }
+
     window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`);
 });
 
