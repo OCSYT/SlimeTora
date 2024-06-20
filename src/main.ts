@@ -723,8 +723,8 @@ function startDeviceListeners() {
         "battery",
         (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
             let batteryVoltageInVolts = batteryVoltage ? batteryVoltage / 1000 : 0;
-            if (!connectedDevices.has(trackerName)) return;
-            if (trackerName.startsWith("HaritoraX")) batteryVoltageInVolts = 0;
+            if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired")) return;
+            if (trackerName.startsWith("HaritoraX") && wirelessTrackerEnabled) batteryVoltageInVolts = 0;
 
             let trackerData = connectedDevices.get(trackerName);
             if (trackerData) {
@@ -733,9 +733,15 @@ function startDeviceListeners() {
 
                 if (!trackerConnected) return;
                 tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+            } else if (trackerName.startsWith("HaritoraXWired")) {
+                // for all wired trackers connected, change battery info for each in SlimeVR
+                connectedDevices.forEach((value, _key) => {
+                    if (value) value[0].changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+                });
             } else {
                 return false;
             }
+
             mainWindow.webContents.send("device-battery", {
                 trackerName,
                 batteryRemaining,

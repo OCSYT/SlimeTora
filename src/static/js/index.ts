@@ -690,9 +690,9 @@ window.ipc.on("device-battery", (_event, arg) => {
     } = arg;
     if (!isActive || !trackerName || !batteryVoltage) return;
     const batteryText: HTMLElement = document.getElementById(trackerName).querySelector("#battery");
-    if (!batteryText) return;
+    if (!batteryText && !trackerName.startsWith("HaritoraXWired")) return;
 
-    if (trackerName === "HaritoraX" && wiredTrackerEnabled) {
+    if (trackerName === "HaritoraXWired") {
         // Wired tracker, set all trackers to the same battery
         const devices = document.getElementById("device-list").querySelectorAll(".card");
         devices.forEach((device) => {
