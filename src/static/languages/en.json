@@ -6,11 +6,15 @@
         "status": {
             "statusText": "Status:",
             "none": "N/A",
+            "failed": "error",
             "searching": "searching",
+            "searchingServer": "searching for SlimeVR",
             "connected": "connected",
             "comPortsMissing": "COM ports missing",
             "slimeVRMissing": "SlimeVR not found",
-            "noConnectionMode": "No connection mode enabled"
+            "noConnectionMode": "No connection mode enabled",
+            "noTrackerModel": "No tracker model selected",
+            "noComPorts": "No COM ports selected"
         }
     },
     "trackerInfo": {
@@ -51,26 +55,39 @@
             "debugging": {
                 "title": "Debugging",
                 "tooltip": "Some debugging options for this individual tracker.",
-                "saveSettings": "Save settings",
                 "resetSettings": "Reset settings",
                 "getSettings": "Get tracker settings"
             }
         }
     },
-    "settings": {
-        "title": "Global settings",
-        "text": "Change the global settings for the program and the trackers. Highly recommended to use HaritoraConfigurator for tracker settings instead as this may be unreliable.",
-        "tooltip": "Set the global settings for the trackers or the program. An option with yellow text requires a restart of the connection or program to fully apply.",
+    "programSettings": {
+        "title": "Program settings",
+        "tooltip": "Set the settings of the program. An option with yellow text requires a restart of the program to fully apply.",
+        "trackerModel": {
+            "title": "Tracker model",
+            "tooltip": "Select the model of HaritoraX trackers you have, the HaritoraX Wireless or HaritoraX Wired (1.1b/1.1/1.0).",
+            "wireless": "HaritoraX Wireless",
+            "wired": "HaritoraX 1.1b/1.1/1.0"
+        },
         "connectionMode": {
             "title": "Connection mode",
-            "tooltip": "Select the connection mode for the trackers. Multiple modes can be selected at once.",
-            "bluetooth": "Bluetooth",
-            "gx": "GX(6/2)"
+            "tooltip": "Select the connection mode used to connect to the trackers. Multiple modes can be used at the same time if wanted.",
+            "bluetooth": "Bluetooth (LE)",
+            "com": "COM / GX(6/2)"
         },
         "comPorts": {
-            "title": "COM ports (GX)",
-            "tooltip": "Select the COM ports your GX(6/2) dongles are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2) unless checks are bypassed."
+            "title": "COM ports",
+            "tooltip": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2) unless checks are bypassed."
         },
+        "other": {
+            "title": "Other settings",
+            "tooltip": "Other settings for the program that don't fit in the other categories.",
+            "trackerVisualizationFPS": "Tracker visualization FPS"
+        }
+    },
+    "trackerSettings": {
+        "title": "Tracker settings",
+        "tooltip": "Set the global settings for the trackers (can be overriden per-tracker). An option with yellow text requires a restart of the program to fully apply.",
         "fps": {
             "title": "FPS transfer rate",
             "tooltip": "Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.",
@@ -89,12 +106,6 @@
             "accelerometer": "Accelerometer",
             "gyroscope": "Gyroscope",
             "magnetometer": "Magnetometer"
-        },
-        "other": {
-            "title": "Other settings",
-            "tooltip": "Other settings for the program that don't fit in the other categories.",
-            "trackerVisualizationFPS": "Tracker visualization FPS",
-            "saveButton": "Save settings"
         }
     },
     "about": {
@@ -111,25 +122,42 @@
     "debugging": {
         "title": "Debugging",
         "tooltip": "An option with yellow text requires a restart of the connection or program to fully apply.",
-        "text": "Enable or disable debugging features for the program. Debugging tracker data will make log files huge, only use if requested or if you have tracker issues!",
+        "text": "Enable or disable debugging features for the program. Using logging mode 'All data (!!!)' will cause huge log files and lag, only use if asked or have tracker issues!",
         "writeToFile": "Write to log files",
         "skipSlimeVR": "Skip SlimeVR check",
         "bypassPortLimit": "Bypass port limit",
-        "debugTrackerData": "Debug tracker data",
+        "loggingMode": {
+            "title": "Logging mode",
+            "minimal": "Minimal data",
+            "extra": "Extra data",
+            "all": "All data (!!!)"
+        },
         "openLogsFolder": "Open logs folder"
     },
     "dialogs": {
+        "connectionFailed": {
+            "title": "Connection failed",
+            "message": "Failed to start a connection via the selected connection mode(s). Please make sure HaritoraConfigurator is closed and (if applicable), bluetooth is on and/or the correct COM ports are selected."
+        },
         "comPortsMissing": {
             "title": "COM ports missing",
-            "message": "Some COM ports set in the config were not found, please make sure your dongle(s) are connected."
+            "message": "Some COM ports set in the config were not found, please make sure your dongle(s) and trackers are connected."
         },
         "noLogsFolder": {
             "title": "No logs!",
-            "message": "You should probably enable debug logging first in settings."
+            "message": "You should probably enable debug logging first in debugging settings."
         },
         "noConnectionMode": {
             "title": "No connection mode enabled",
-            "message": "Please enable at least one connection mode (Bluetooth or GX) in the settings."
+            "message": "Please enable at least one connection mode in the program's settings."
+        },
+        "noTrackerModel": {
+            "title": "No tracker model selected",
+            "message": "Please select a device model in the program's settings."
+        },
+        "noComPorts": {
+            "title": "No COM ports selected",
+            "message": "Please select at least one COM port in the program's settings."
         }
     }
 }

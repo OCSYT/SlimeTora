@@ -88,6 +88,10 @@ typings/
 # Vite
 .vite/
 
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+.vscode
+
 dist/
 
 src/config.json

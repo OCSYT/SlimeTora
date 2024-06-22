@@ -13,8 +13,7 @@ html {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: auto;
     max-width: 100%;
     padding: 2rem;
@@ -26,6 +25,27 @@ code {
 
 br {
     user-select: none;
+}
+
+#save-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    padding: 10px;
+
+    #saveIcon {
+        width: 24px;
+        height: 24px;
+
+        img {
+            width: 24px;
+            height: 24px;
+        }
+    }
 }
 
 .section {
@@ -91,13 +111,12 @@ br {
 .icon img {
     width: 26px;
     height: 26px;
-    filter: invert(100%) sepia(2%) saturate(6692%) hue-rotate(194deg)
-        brightness(125%) contrast(97%);
+    filter: invert(100%) sepia(2%) saturate(6692%) hue-rotate(194deg) brightness(125%) contrast(97%);
 }
 
 .icon:hover img {
-    filter: invert(80%) sepia(24%) saturate(2320%) hue-rotate(169deg)
-        brightness(100%) contrast(102%);
+    filter: invert(80%) sepia(24%) saturate(2320%) hue-rotate(169deg) brightness(100%)
+        contrast(102%);
 }
 
 .vertical-settings-container {
@@ -106,6 +125,16 @@ br {
     justify-content: center;
     align-items: center;
     gap: 2rem;
+}
+
+.grid-settings-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    justify-items: center;
+    align-items: center;
+    gap: 0.2rem;
+    margin: auto;
 }
 
 /*
@@ -233,16 +262,6 @@ br {
 /*
  * Debugging
 */
-
-.debugging-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-}
-
-.debugging-container .switch-container {
-    flex: 1 0 50%;
-}
 
 .logs-folder-container {
     display: flex;

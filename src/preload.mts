@@ -6,12 +6,8 @@ import i18next from "i18next";
 // @ts-ignore
 import locI18next from "loc-i18next";
 
-import * as THREE from 'three'
+import * as THREE from "three";
 let localize: any = null;
-
-contextBridge.exposeInMainWorld("three", {
-    THREE
-});
 
 contextBridge.exposeInMainWorld("ipc", {
     send: (channel: string, data: any) => {
@@ -98,10 +94,7 @@ declare global {
         ipc: {
             invoke: (channel: string, args: any) => Promise<any>;
             send: (channel: string, args: any) => void;
-            on: (
-                channel: string,
-                listener: (_event: any, args: any) => void
-            ) => void;
+            on: (channel: string, listener: (_event: any, args: any) => void) => void;
         };
 
         log: (message: string) => void;
