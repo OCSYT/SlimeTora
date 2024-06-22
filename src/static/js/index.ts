@@ -697,9 +697,7 @@ window.ipc.on("device-battery", (_event, arg) => {
         const devices = document.getElementById("device-list").querySelectorAll(".card");
         devices.forEach((device) => {
             const batteryText = device.querySelector("#battery");
-            if (batteryText) {
-                batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
-            }
+            if (batteryText) batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
         });
     } else {
         batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;

@@ -4,7 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 // @ts-ignore
-import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
+import { HaritoraX } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
 import * as fs from "fs";
