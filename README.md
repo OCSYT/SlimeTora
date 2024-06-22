@@ -4,8 +4,7 @@
 
 
 # SlimeTora
-## v1.1.0 is nearing completion (on the v1.1.0 branch) and will finally add support for the HaritoraX wired models very soon with many other QoL features! Thanks for your patience!
-A program that connects the HaritoraX trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), currently supporting the `HaritoraX Wireless` with other trackers coming soon. Supports `Bluetooth` and the `GX(6/2)` communication dongles.
+A program that connects the HaritoraX trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting both the `HaritoraX ireless` and `HaritoraX Wired` (1.1b/1.1/1.0). Supports `Bluetooth` (low energy), `COM` connections, and the `GX(6/2)` communication dongles (w/ `COM`).
 
 Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
@@ -23,13 +22,14 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
 # Features
 + Use of [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter) package to process tracker data
-+ `Bluetooth` and `GX(6/2)` support (with all at the same time supported)
-+ Set tracker settings per-tracker
++ `Bluetooth` and `COM`/`GX(6/2)` support (with all at the same time supported)
++ Set tracker settings per-tracker (wireless only)
 + Localization support
   + You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 + Linux support
   + This was done as SlimeVR is supported on Linux, making this the first time HaritoraX trackers work on Linux!
-  + ..however this is not tested at all. Please let us know if there are issues.
+  + ..however this needs more testing. Please let us know if there are issues.
++ Button bindings to SlimeVR functions (e.g. resets)
 + Tracker visualization
 + Magnetometer statuses
 + Censor tracker serial numbers
@@ -37,11 +37,10 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 + ..and many more improvements coming soon!
 
 # Known issues
-- Battery information is slightly inaccurate on first connection
-  - Fixes after the tracker reports the battery information by itself
-- Battery data sent to SlimeVR server isn't per-tracker
-  - Cannot really fix this, instead the program sends the lowest battery data from all the trackers to the server
+- Battery information jumps to incorrect percentages/voltage randomly
+  - Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers themsleves.
+- Detection of being unable to access trackers unreliable(?)
 
-# Documentation
+# Documentation & Getting Started
 
 Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
