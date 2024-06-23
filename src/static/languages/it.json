@@ -1,0 +1,135 @@
+{
+    "main": {
+        "connectedTrackers": "Tracker Connessi:",
+        "startConnection": "Avvia Connessione",
+        "stopConnection": "Stoppa Connessione",
+        "status": {
+            "statusText": "Stato:",
+            "none": "N/D",
+            "searching": "Ricerca",
+            "connected": "Connesso",
+            "comPortsMissing": "Porta COM mancante",
+            "slimeVRMissing": "Server SlimeVR non trovato",
+            "noConnectionMode": "Nessuna modalità di connessione selezionata"
+        }
+    },
+    "trackerInfo": {
+        "title": "Informazioni Tracker ",
+        "tooltip": "Vedi le info sui tracker connessi. Le opzioni in giallo richiedono il riavvio.",
+        "censorSerialNumbers": "Nascondi S/N",
+        "trackerVisualization": "Visualizzazione Tracker",
+        "deviceName": "Device:",
+        "deviceID": "Device ID:",
+        "rotationData": "Dati Rotazione:",
+        "accelerationData": "Dati Accellerometro:",
+        "battery": "Batteria:",
+        "magStatus": "Stato Magnetometro:",
+        "edit": "Modifica",
+        "settings": "Sovrascrivi impostaz. tracker",
+        "trackerSettings": {
+            "title": "Impostazioni {trackerName}",
+            "text": "Override the global tracker settings for this tracker. This may be buggy and is not recommended for normal use.",
+            "fps": {
+                "title": "FPS (Vel. Trasferimento)",
+                "tooltip": "Selezione la velocità di trasferimento per i tracker. Se stai usando il bluetooth consigliamo di impostare su 50 FPS.",
+                "50": "50 FPS",
+                "100": "100 FPS"
+            },
+            "sensorMode": {
+                "title": "Modalità Sensori",
+                "tooltip": "Seleziona la modalità di utilizzo per i tracker. La Modalità 1 abilita il magnetometro ed è consigliato se hai condizioni magnetiche stabili. In caso contrario utilizza la modalità 2 ",
+                "1": "Modalità 1",
+                "2": "Modalità 2"
+            },
+            "sensorCorrection": {
+                "title": "Correzioni Sensori",
+                "tooltip": "Enable or disable sensor auto correction features. Usually not needed to be changed and results vary between environments.",
+                "accelerometer": "Accelerometro",
+                "gyroscope": "Giroscopio",
+                "magnetometer": "Magnetometro"
+            },
+            "debugging": {
+                "title": "Debugging",
+                "tooltip": "Opzioni di debug per i tracker",
+                "saveSettings": "Salva",
+                "resetSettings": "Reset impostazioni",
+                "getSettings": "Impostazioni Tracker"
+            }
+        }
+    },
+    "settings": {
+        "title": "Impostazioni Generali",
+        "text": "Cambia le impostazioni generali per i tracker. Raccomandiamo l'uso dell'HaritoraConfigurator per settare i tracker.",
+        "tooltip": "Set the global settings for the trackers or the program. An option with yellow text requires a restart of the connection or program to fully apply.",
+        "connectionMode": {
+            "title": "Modalità Connessione",
+            "tooltip": "Seleziona la modalità di comunicazione dei tracker. Possono essere abilitate simultaneamente entrambe le modalità.",
+            "bluetooth": "Bluetooth",
+            "gx": "GX(6/2)"
+        },
+        "comPorts": {
+            "title": "COM ports (GX)",
+            "tooltip": "Select the COM ports your GX(6/2) dongles are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2) unless checks are bypassed."
+        },
+        "fps": {
+            "title": "FPS (Vel. Trasferimento)",
+            "tooltip": "Selezione la velocità di trasferimento per i tracker. Se stai usando il bluetooth consigliamo di impostare su 50 FPS.",
+            "50": "50 FPS",
+            "100": "100 FPS"
+        },
+        "sensorMode": {
+                "title": "Modalità Sensori",
+                "tooltip": "Seleziona la modalità di utilizzo per i tracker. La Modalità 1 abilita il magnetometro ed è consigliato se hai condizioni magnetiche stabili. In caso contrario utilizza la modalità 2 ",
+                "1": "Modalità 1",
+                "2": "Modalità 2"
+        },
+        "sensorCorrection": {
+                "title": "Correzioni Sensori",
+                "tooltip": "Enable or disable sensor auto correction features. Usually not needed to be changed and results vary between environments.",
+                "accelerometer": "Accelerometro",
+                "gyroscope": "Giroscopio",
+                "magnetometer": "Magnetometro"
+        },
+        "other": {
+            "title": "Altre Impostazioni",
+            "tooltip": "Alre impostazioni che non rientrano nelle altre categorie",
+            "trackerVisualizationFPS": "Tracker visualization FPS",
+            "saveButton": "Salva"
+        }
+    },
+    "about": {
+        "title": "Info",
+        "text": " Il Progetto SlimeTora ti permette di utilizzare i tuoi tracker HaritoraX con il server di SlimeVR",
+        "authors": "Programmatori :",
+        "credits": {
+            "title": "Crediti"
+        },
+        "translations": {
+            "title": "Traduzioni"
+        }
+    },
+    "debugging": {
+        "title": "Debug",
+        "tooltip": "Le opzioni in giallo richiedono il riavvio del programma.",
+        "text": "Enable or disable debugging features for the program. Debugging tracker data will make log files huge, only use if requested or if you have tracker issues!",
+        "writeToFile": "Scrivi su file di log",
+        "skipSlimeVR": "Salta check SlimeVR",
+        "bypassPortLimit": "Bypassa limite porta",
+        "debugTrackerData": "Debug tracker data",
+        "openLogsFolder": "Apri cartella log"
+    },
+    "dialogs": {
+        "comPortsMissing": {
+            "title": "Porta COM Mancante",
+            "message": "Alcune porte COM non sono state trovate. Assicurati che tutti i dongle siano connessi."
+        },
+        "noLogsFolder": {
+            "title": "Nessun Log!",
+            "message": "Devi probabilmente abilitare il toggle dalle impostazioni"
+        },
+        "noConnectionMode": {
+            "title": "Nessuna Connessione!",
+            "message": "Imposta almeno una modalità di comunicazione (Bluetooth or GX) nelle impostazioni."
+        }
+    }
+}
