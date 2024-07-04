@@ -447,9 +447,10 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
     }
 
     const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
+    const uniqueActiveTrackers = Array.from(new Set(device.getActiveTrackers()));
 
     log(`Setting all tracker settings to:`);
-    log(`Active trackers: ${connectedDevices}`);
+    log(`Active trackers: ${JSON.stringify(uniqueActiveTrackers)}`);
     log(`Sensor mode: ${sensorMode}`);
     log(`FPS mode: ${fpsMode}`);
     log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);

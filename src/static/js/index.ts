@@ -570,13 +570,26 @@ window.ipc.on("connect", async (_event, deviceID) => {
     if (wiredTrackerEnabled) return;
 
     const settings = await window.ipc.invoke("get-settings", null);
-    const exists = settings.trackers?.[deviceID] !== undefined;
+    const exists = settings.trackers?.[deviceID].fpsMode !== undefined;
+    window.log(`Tracker settings for ${deviceID} exists: ${exists}`);
 
-    const trackerSettings = exists
-        ? settings.trackers[deviceID]
-        : await window.ipc.invoke("get-tracker-settings", {
-              trackerName: deviceID,
-          });
+    let trackerSettings = undefined;
+    if (exists) {
+        trackerSettings = settings.trackers[deviceID];
+    } else {
+        let sensorAutoCorrectionList = [];
+        if (accelerometerEnabled) sensorAutoCorrectionList.push("accel");
+        if (gyroscopeEnabled) sensorAutoCorrectionList.push("gyro");
+        if (magnetometerEnabled) sensorAutoCorrectionList.push("mag");
+
+        trackerSettings = {
+            sensorMode: sensorMode,
+            fpsMode: fpsMode,
+            sensorAutoCorrection: sensorAutoCorrectionList,
+        };
+    }
+    window.log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`);
+
     setTrackerSettings(deviceID, trackerSettings);
 
     window.ipc.invoke("get-tracker-battery", deviceID);
