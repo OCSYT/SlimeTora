@@ -205,7 +205,7 @@ async function startConnection() {
 }
 
 async function stopConnection() {
-    if (!isActive || (!bluetoothEnabled && !comEnabled)) {
+    if (!isActive) {
         window.error(
             "No connection to stop.. wait a second, you shouldn't be seeing this - get out of inspect element and stop trying to break the program!"
         );
@@ -215,8 +215,7 @@ async function stopConnection() {
 
     toggleConnectionButtons();
 
-    if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
-    if (comEnabled) window.ipc.send("stop-connection", "com");
+    window.ipc.send("stop-connection", null);
 
     setStatus("main.status.none");
     document.getElementById("tracker-count").textContent = "0";
@@ -383,7 +382,13 @@ window.ipc.on("device-data", async (_event: any, arg) => {
 
 window.ipc.on("device-battery", (_event, arg) => {
     const { trackerName, batteryRemaining, batteryVoltage } = arg;
-    if (!isActive || !trackerName || batteryRemaining === null || batteryVoltage === null) return;
+    if (
+        !isActive ||
+        !trackerName ||
+        (!batteryRemaining && batteryRemaining !== 0) ||
+        (!batteryVoltage && batteryVoltage !== 0)
+    )
+        return;
 
     if (trackerName === "HaritoraXWired") {
         updateAllTrackerBatteries(batteryRemaining, batteryVoltage);
@@ -419,7 +424,6 @@ window.ipc.on("device-mag", (_event, arg) => {
 });
 
 // Helper functions
-
 const deviceQueue: string[] = [];
 let isProcessingQueue = false;
 async function processQueue() {

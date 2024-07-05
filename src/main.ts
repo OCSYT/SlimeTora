@@ -367,23 +367,20 @@ async function logErrorAndNotify(message: string) {
     );
 }
 
-ipcMain.on("stop-connection", (_event, arg: string) => {
+ipcMain.on("stop-connection", () => {
     if (!device) {
         error("Device instance wasn't started correctly");
         return;
     }
 
     const stopConnectionIfActive = (mode: string) => {
-        if (arg.includes(mode) && device.getConnectionModeActive(mode)) {
-            device.stopConnection(mode);
-            log(`Stopped ${mode} connection`);
-        }
+        if (!device.getConnectionModeActive(mode)) return;
+        device.stopConnection(mode);
+        log(`Stopped ${mode} connection`);
     };
 
     stopConnectionIfActive("bluetooth");
     stopConnectionIfActive("com");
-
-    if (!arg.includes("bluetooth") && !arg.includes("com")) error("No connection to stop");
 
     // De-initialize every tracker
     connectedDevices.forEach((device) => device.deinit());
