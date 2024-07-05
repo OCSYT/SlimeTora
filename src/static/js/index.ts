@@ -315,6 +315,111 @@ function unsavedSettings(unsaved: boolean) {
     }
 }
 
+/*
+ * Tracker device (haritorax-interpreter) event listeners
+ */
+
+window.ipc.on("connect", async (_event, deviceID) => {
+    if (!isActive) return;
+
+    window.log(`Connected to ${deviceID}`);
+
+    if (!deviceQueue.includes(deviceID)) deviceQueue.push(deviceID);
+    processQueue();
+
+    setStatus("main.status.connected");
+
+    if (wiredTrackerEnabled) return;
+
+    const settings = await window.ipc.invoke("get-settings", null);
+    const exists = settings.trackers?.[deviceID].fpsMode !== undefined;
+    window.log(`Tracker settings for ${deviceID} exists: ${exists}`);
+
+    let trackerSettings = undefined;
+    if (exists) {
+        trackerSettings = settings.trackers[deviceID];
+    } else {
+        let sensorAutoCorrectionList = [];
+        if (accelerometerEnabled) sensorAutoCorrectionList.push("accel");
+        if (gyroscopeEnabled) sensorAutoCorrectionList.push("gyro");
+        if (magnetometerEnabled) sensorAutoCorrectionList.push("mag");
+
+        trackerSettings = {
+            sensorMode: sensorMode,
+            fpsMode: fpsMode,
+            sensorAutoCorrection: sensorAutoCorrectionList,
+        };
+    }
+    window.log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`);
+
+    setTrackerSettings(deviceID, trackerSettings);
+
+    window.ipc.invoke("get-tracker-battery", deviceID);
+    window.ipc.invoke("get-tracker-mag", deviceID);
+});
+
+window.ipc.on("disconnect", (_event, deviceID) => {
+    window.log(`Disconnected from ${deviceID}`);
+    document.getElementById(deviceID).remove();
+    document.getElementById("tracker-count").textContent = (
+        parseInt(document.getElementById("tracker-count").textContent) - 1
+    ).toString();
+
+    if (document.getElementById("tracker-count").textContent === "0") setStatus("searching");
+});
+
+window.ipc.on("device-data", async (_event: any, arg) => {
+    const { trackerName, rotation, gravity, rawRotation, rawGravity } = arg;
+    if (!isActive) return;
+    const trackerElement = document.getElementById(trackerName);
+    if (!trackerElement) {
+        handleMissingDevice(trackerName);
+        return;
+    }
+
+    updateTrackerData(trackerElement, rotation, gravity);
+    sendVisualizationData(trackerName, rawRotation, rawGravity);
+});
+
+window.ipc.on("device-battery", (_event, arg) => {
+    const { trackerName, batteryRemaining, batteryVoltage } = arg;
+    if (!isActive || !trackerName || !batteryVoltage) return;
+
+    if (trackerName === "HaritoraXWired") {
+        updateAllTrackerBatteries(batteryRemaining, batteryVoltage);
+    } else {
+        updateTrackerBattery(trackerName, batteryRemaining, batteryVoltage);
+    }
+
+    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`);
+});
+
+window.ipc.on("device-mag", (_event, arg) => {
+    const { trackerName, magStatus }: { trackerName: string; magStatus: string } = arg;
+    if (!isActive || !trackerName) return;
+
+    const trackerElement = document.getElementById(trackerName);
+    if (!trackerElement) return;
+
+    const magStatusElement: HTMLElement = trackerElement.querySelector("#mag-status");
+    if (!magStatusElement) return;
+
+    const statuses: { [key: string]: string } = {
+        green: "mag-status-green",
+        yellow: "mag-status-yellow",
+        red: "mag-status-red",
+        unknown: "mag-status-unknown",
+    };
+
+    for (let status in statuses) {
+        magStatusElement.classList.remove(statuses[status]);
+    }
+
+    magStatusElement.classList.add(statuses[magStatus]);
+});
+
+// Helper functions
+
 const deviceQueue: string[] = [];
 let isProcessingQueue = false;
 async function processQueue() {
@@ -467,110 +572,6 @@ async function addDeviceToList(deviceID: string) {
     window.localize();
 }
 
-/*
- * Tracker device (haritorax-interpreter) event listeners
- */
-
-window.ipc.on("connect", async (_event, deviceID) => {
-    if (!isActive) return;
-
-    window.log(`Connected to ${deviceID}`);
-
-    if (!deviceQueue.includes(deviceID)) deviceQueue.push(deviceID);
-    processQueue();
-
-    setStatus("main.status.connected");
-
-    if (wiredTrackerEnabled) return;
-
-    const settings = await window.ipc.invoke("get-settings", null);
-    const exists = settings.trackers?.[deviceID].fpsMode !== undefined;
-    window.log(`Tracker settings for ${deviceID} exists: ${exists}`);
-
-    let trackerSettings = undefined;
-    if (exists) {
-        trackerSettings = settings.trackers[deviceID];
-    } else {
-        let sensorAutoCorrectionList = [];
-        if (accelerometerEnabled) sensorAutoCorrectionList.push("accel");
-        if (gyroscopeEnabled) sensorAutoCorrectionList.push("gyro");
-        if (magnetometerEnabled) sensorAutoCorrectionList.push("mag");
-
-        trackerSettings = {
-            sensorMode: sensorMode,
-            fpsMode: fpsMode,
-            sensorAutoCorrection: sensorAutoCorrectionList,
-        };
-    }
-    window.log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`);
-
-    setTrackerSettings(deviceID, trackerSettings);
-
-    window.ipc.invoke("get-tracker-battery", deviceID);
-    window.ipc.invoke("get-tracker-mag", deviceID);
-});
-
-window.ipc.on("disconnect", (_event, deviceID) => {
-    window.log(`Disconnected from ${deviceID}`);
-    document.getElementById(deviceID).remove();
-    document.getElementById("tracker-count").textContent = (
-        parseInt(document.getElementById("tracker-count").textContent) - 1
-    ).toString();
-
-    if (document.getElementById("tracker-count").textContent === "0") setStatus("searching");
-});
-
-window.ipc.on("device-data", async (_event: any, arg) => {
-    const { trackerName, rotation, gravity, rawRotation, rawGravity } = arg;
-    if (!isActive) return;
-    const trackerElement = document.getElementById(trackerName);
-    if (!trackerElement) {
-        handleMissingDevice(trackerName);
-        return;
-    }
-
-    updateTrackerData(trackerElement, rotation, gravity);
-    sendVisualizationData(trackerName, rawRotation, rawGravity);
-});
-
-window.ipc.on("device-battery", (_event, arg) => {
-    const { trackerName, batteryRemaining, batteryVoltage } = arg;
-    if (!isActive || !trackerName || !batteryVoltage) return;
-
-    if (trackerName === "HaritoraXWired") {
-        updateAllTrackerBatteries(batteryRemaining, batteryVoltage);
-    } else {
-        updateTrackerBattery(trackerName, batteryRemaining, batteryVoltage);
-    }
-
-    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`);
-});
-
-window.ipc.on("device-mag", (_event, arg) => {
-    const { trackerName, magStatus }: { trackerName: string; magStatus: string } = arg;
-    if (!isActive || !trackerName) return;
-
-    const trackerElement = document.getElementById(trackerName);
-    if (!trackerElement) return;
-
-    const magStatusElement: HTMLElement = trackerElement.querySelector("#mag-status");
-    if (!magStatusElement) return;
-
-    const statuses: { [key: string]: string } = {
-        green: "mag-status-green",
-        yellow: "mag-status-yellow",
-        red: "mag-status-red",
-        unknown: "mag-status-unknown",
-    };
-
-    for (let status in statuses) {
-        magStatusElement.classList.remove(statuses[status]);
-    }
-
-    magStatusElement.classList.add(statuses[magStatus]);
-});
-
-// Helper functions
 function setTrackerSettings(deviceID: string, trackerSettings: any) {
     const sensorMode: number = trackerSettings.sensorMode !== -1 ? trackerSettings.sensorMode : 2;
     const fpsMode: number = trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;

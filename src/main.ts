@@ -31,10 +31,7 @@ import { PathLike } from "fs";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
-let connectedDevices: Map<string, EmulatedTracker> = new Map<
-    string,
-    EmulatedTracker
->();
+let connectedDevices: Map<string, EmulatedTracker> = new Map<string, EmulatedTracker>();
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
@@ -281,104 +278,116 @@ ipcMain.on("start-connection", async (_event, arg) => {
         arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
-    if (
-        !device ||
-        // new device instance if the tracker model is different
-        (device.getActiveTrackerModel() === "wired" && !wiredTrackerEnabled) ||
-        (device.getActiveTrackerModel() === "wireless" && !wirelessTrackerEnabled)
-    ) {
-        if (
-            (!wirelessTrackerEnabled && !wiredTrackerEnabled) ||
-            (types.includes("COM") && ports.length === 0)
-        )
-            return false;
-
-        const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
-
-        log(`Creating new HaritoraX ${trackerType} instance with logging mode ${loggingMode}...`);
-
-        if (loggingMode === 1) {
-            device = new HaritoraX(trackerType, 0, false);
-        } else if (loggingMode === 2) {
-            device = new HaritoraX(trackerType, 2, false);
-        } else if (loggingMode === 3) {
-            device = new HaritoraX(trackerType, 2, true);
-        }
-
-        startDeviceListeners();
-    }
-
     if (isActive) {
-        error("Tried to start connection while already active");
-        error(
-            "..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!"
-        );
+        logErrorAndNotify("Tried to start connection while already active");
         return false;
     }
 
-    mainWindow.webContents.send("set-status", "main.status.searching");
+    if (!isValidDeviceConfiguration(types, ports)) return false;
 
-    if (types.includes("bluetooth")) {
-        log("Starting Bluetooth connection");
-        const connectionStarted = device.startConnection("bluetooth");
-        if (!connectionStarted) {
-            error("Failed to start BLE connection");
-            mainWindow.webContents.send("set-status", "main.status.failed");
-            dialog.showErrorBox(
-                await translate("dialogs.connectionFailed.title"),
-                await translate("dialogs.connectionFailed.message")
-            );
-            return false;
-        }
+    if (shouldInitializeNewDevice()) {
+        initializeDevice();
+        startDeviceListeners();
     }
 
-    if (types.includes("com") && ports) {
-        log("Starting COM connection with ports: " + JSON.stringify(ports));
-        const connectionStarted = device.startConnection("com", ports, heartbeatInterval);
-        if (!connectionStarted) {
-            error("Failed to start COM connection");
-            mainWindow.webContents.send("set-status", "main.status.failed");
-            dialog.showErrorBox(
-                await translate("dialogs.connectionFailed.title"),
-                await translate("dialogs.connectionFailed.message")
-            );
-            return false;
-        }
-    }
-
-    connectionActive = true;
-
-    const activeTrackers: string[] = device.getActiveTrackers();
-    const uniqueActiveTrackers = Array.from(new Set(activeTrackers)); // Make sure they have unique entries
-    if (!uniqueActiveTrackers || uniqueActiveTrackers.length === 0) return;
-    uniqueActiveTrackers.forEach(async (trackerName) => {
-        await addTracker(trackerName);
-        log("Connected devices: " + JSON.stringify(uniqueActiveTrackers));
-    });
+    await attemptConnection(types, ports);
 });
 
+function isValidDeviceConfiguration(types: string[], ports?: string[]): boolean {
+    if (
+        (!wirelessTrackerEnabled && !wiredTrackerEnabled) ||
+        (types.includes("COM") && (!ports || ports.length === 0))
+    ) {
+        return false;
+    }
+    return true;
+}
+
+function shouldInitializeNewDevice(): boolean {
+    return (
+        !device ||
+        (device.getActiveTrackerModel() === "wired" && !wiredTrackerEnabled) ||
+        (device.getActiveTrackerModel() === "wireless" && !wirelessTrackerEnabled)
+    );
+}
+
+function initializeDevice(): void {
+    const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
+    log(`Creating new HaritoraX ${trackerType} instance with logging mode ${loggingMode}...`);
+    const loggingOptions = { 1: [0, false], 2: [2, false], 3: [2, true] };
+    const [logLevel, debug] = (loggingOptions as { [key: number]: (number | boolean)[] })[
+        loggingMode
+    ] || [0, false];
+    device = new HaritoraX(trackerType, logLevel as number, debug as boolean);
+}
+
+async function attemptConnection(types: string[], ports?: string[]): Promise<void> {
+    mainWindow.webContents.send("set-status", "main.status.searching");
+
+    if (types.includes("bluetooth") && !(await startBluetoothConnection())) return;
+    if (types.includes("com") && ports && !(await startComConnection(ports))) return;
+
+    connectionActive = true;
+    await notifyConnectedDevices();
+}
+
+async function startBluetoothConnection(): Promise<boolean> {
+    log("Starting Bluetooth connection");
+    if (!device.startConnection("bluetooth")) {
+        logErrorAndNotify("Failed to start BLE connection");
+        return false;
+    }
+    return true;
+}
+
+async function startComConnection(ports: string[]): Promise<boolean> {
+    log("Starting COM connection with ports: " + JSON.stringify(ports));
+    if (!device.startConnection("com", ports, heartbeatInterval)) {
+        logErrorAndNotify("Failed to start COM connection");
+        return false;
+    }
+    return true;
+}
+
+async function notifyConnectedDevices(): Promise<void> {
+    const activeTrackers = Array.from(new Set(device.getActiveTrackers()));
+    if (activeTrackers.length === 0) return;
+    for (const trackerName of activeTrackers) {
+        await addTracker(trackerName);
+    }
+    log("Connected devices: " + JSON.stringify(activeTrackers));
+}
+
+async function logErrorAndNotify(message: string) {
+    error(message);
+    mainWindow.webContents.send("set-status", "main.status.failed");
+    dialog.showErrorBox(
+        await translate("dialogs.connectionFailed.title"),
+        await translate("dialogs.connectionFailed.message")
+    );
+}
+
 ipcMain.on("stop-connection", (_event, arg: string) => {
-    if (device) {
-        if (arg.includes("bluetooth") && device.getConnectionModeActive("bluetooth")) {
-            device.stopConnection("bluetooth");
-            log("Stopped bluetooth connection");
-        } else if (arg.includes("com") && device.getConnectionModeActive("com")) {
-            device.stopConnection("com");
-            log("Stopped COM connection");
-        } else {
-            log("No connection to stop");
-        }
-    } else {
-        error(`Device instance wasn't started correctly`);
+    if (!device) {
+        error("Device instance wasn't started correctly");
+        return;
     }
 
-    // For every tracker, de-initialize it
-    connectedDevices.forEach((value, _key) => {
-        if (value) value.deinit();
-    });
+    const stopConnectionIfActive = (mode: string) => {
+        if (arg.includes(mode) && device.getConnectionModeActive(mode)) {
+            device.stopConnection(mode);
+            log(`Stopped ${mode} connection`);
+        }
+    };
 
+    stopConnectionIfActive("bluetooth");
+    stopConnectionIfActive("com");
+
+    if (!arg.includes("bluetooth") && !arg.includes("com")) error("No connection to stop");
+
+    // De-initialize every tracker
+    connectedDevices.forEach((device) => device.deinit());
     connectedDevices.clear();
-
     connectionActive = false;
 });
 
@@ -410,80 +419,60 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         sensorMode,
         fpsMode,
         sensorAutoCorrection,
-    }: {
-        deviceID: string;
-        sensorMode: number;
-        fpsMode: number;
-        sensorAutoCorrection: string[];
-    } = arg;
-    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
+    }: { deviceID: string; sensorMode: number; fpsMode: number; sensorAutoCorrection: string[] } =
+        arg;
+    // Validate input parameters
+    if (!sensorMode || !fpsMode || !sensorAutoCorrection || sensorAutoCorrection.length === 0) {
         error(`Invalid settings received: ${JSON.stringify(arg)}`);
         return;
     }
 
-    const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
+    // Log old tracker settings
+    const oldSettings = await device.getTrackerSettings(deviceID, true);
+    log(`Old tracker settings: ${JSON.stringify(oldSettings)}`);
 
+    // Make sure we get unique entries
+    const uniqueSensorAutoCorrection = [...new Set(sensorAutoCorrection)];
     log(`Setting tracker settings for ${deviceID} to:`);
     log(`Sensor mode: ${sensorMode}`);
     log(`FPS mode: ${fpsMode}`);
-    log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
-    log(`Old tracker settings: ${JSON.stringify(await device.getTrackerSettings(deviceID, true))}`);
+    log(`Sensor auto correction: ${sensorAutoCorrection}`);
 
-    // Save the settings
-    await setTrackerSettings(deviceID, sensorMode, fpsMode, uniqueSensorAutoCorrection);
+    // Apply the new settings
+    device.setTrackerSettings(deviceID, sensorMode, fpsMode, uniqueSensorAutoCorrection, false);
 
-    log(`New tracker settings: ${JSON.stringify(await device.getTrackerSettings(deviceID, true))}`);
+    // Log new tracker settings
+    const newSettings = await device.getTrackerSettings(deviceID, true);
+    log(`New tracker settings: ${JSON.stringify(newSettings)}`);
 });
-
-// Helper for "set-tracker-settings" event
-async function setTrackerSettings(
-    deviceID: string,
-    sensorMode: number,
-    fpsMode: number,
-    sensorAutoCorrection: string[]
-) {
-    const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
-
-    device.setTrackerSettings(
-        deviceID,
-        sensorMode,
-        fpsMode,
-        uniqueSensorAutoCorrection,
-        false // we don't support ankle yet
-    );
-}
 
 ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
     const {
         sensorMode,
         fpsMode,
         sensorAutoCorrection,
-    }: {
-        sensorMode: number;
-        fpsMode: number;
-        sensorAutoCorrection: string[];
-    } = arg;
-    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
+    }: { sensorMode: number; fpsMode: number; sensorAutoCorrection: string[] } = arg;
+
+    // Validate input settings
+    if (!sensorMode || !fpsMode || !sensorAutoCorrection || sensorAutoCorrection.length === 0) {
         error(`Invalid settings received: ${JSON.stringify(arg)}`);
         return;
     }
 
-    const uniqueSensorAutoCorrection = Array.from(new Set(sensorAutoCorrection));
-    const uniqueActiveTrackers = Array.from(new Set(device.getActiveTrackers()));
+    // Make sure we get unique entries
+    const uniqueSensorAutoCorrection = [...new Set(sensorAutoCorrection)];
+    const uniqueActiveTrackers = [...new Set(device.getActiveTrackers())];
 
-    log(`Setting all tracker settings to:`);
-    log(`Active trackers: ${JSON.stringify(uniqueActiveTrackers)}`);
-    log(`Sensor mode: ${sensorMode}`);
-    log(`FPS mode: ${fpsMode}`);
-    log(`Sensor auto correction: ${uniqueSensorAutoCorrection}`);
-
-    // Save the settings
-    device.setAllTrackerSettings(
-        sensorMode,
-        fpsMode,
-        uniqueSensorAutoCorrection,
-        false // we don't support ankle yet
+    log(
+        `Setting all tracker settings to: ${{
+            ActiveTrackers: uniqueActiveTrackers,
+            SensorMode: sensorMode,
+            FPSMode: fpsMode,
+            SensorAutoCorrection: uniqueSensorAutoCorrection,
+        }}`
     );
+
+    device.setAllTrackerSettings(sensorMode, fpsMode, uniqueSensorAutoCorrection, false);
 });
 
 /*
@@ -565,9 +554,7 @@ async function processQueue() {
     if (isProcessingQueue || trackerQueue.length === 0) return;
     isProcessingQueue = true;
 
-    const config: { [key: string]: any } = JSON.parse(
-        fsSync.readFileSync(configPath).toString()
-    );
+    const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
 
     while (trackerQueue.length > 0) {
         const trackerName = trackerQueue.shift();
@@ -724,12 +711,10 @@ function startDeviceListeners() {
         const gravity = new Vector(rawGravity.x, rawGravity.y, rawGravity.z);
 
         let tracker = connectedDevices.get(trackerName);
-        if (tracker) {
-            tracker.sendRotationData(0, RotationDataType.NORMAL, quaternion, 0);
-            tracker.sendAcceleration(0, gravity);
-        } else {
-            return false;
-        }
+        if (!tracker) return false;
+
+        tracker.sendRotationData(0, RotationDataType.NORMAL, quaternion, 0);
+        tracker.sendAcceleration(0, gravity);
 
         mainWindow.webContents.send("device-data", {
             trackerName,
@@ -743,22 +728,25 @@ function startDeviceListeners() {
     device.on(
         "battery",
         (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
-            let batteryVoltageInVolts = batteryVoltage ? batteryVoltage / 1000 : 0;
             if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired"))
                 return;
-            if (trackerName.startsWith("HaritoraX") && wirelessTrackerEnabled)
-                batteryVoltageInVolts = 0;
 
-            let tracker = connectedDevices.get(trackerName);
-            if (tracker) {
-                tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
-            } else if (trackerName.startsWith("HaritoraXWired")) {
-                // for all wired trackers connected, change battery info for each in SlimeVR
-                connectedDevices.forEach((value, _key) => {
-                    if (value) value.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+            // Set batteryVoltageInVolts to 0 for BT wireless tracker
+            const batteryVoltageInVolts =
+                trackerName.startsWith("HaritoraX") && wirelessTrackerEnabled
+                    ? 0
+                    : batteryVoltage / 1000;
+
+            if (trackerName.startsWith("HaritoraXWired")) {
+                // Change battery info for all trackers (wired)
+                connectedDevices.forEach((tracker) => {
+                    if (tracker)
+                        tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
                 });
             } else {
-                return false;
+                // Change battery info for the specific tracker
+                const tracker = connectedDevices.get(trackerName);
+                if (tracker) tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
             }
 
             mainWindow.webContents.send("device-battery", {
@@ -766,6 +754,7 @@ function startDeviceListeners() {
                 batteryRemaining,
                 batteryVoltage: batteryVoltageInVolts,
             });
+
             log(
                 `Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltageInVolts}V)`
             );
@@ -829,6 +818,32 @@ connectToServer();
 
 let hasInitializedLogDir = false;
 
+async function logMessage(level: string, msg: string, where: string) {
+    const date = new Date();
+    const formattedDate = formatDate(date);
+    const logLevel = level.toUpperCase();
+    const consoleLogFn = logLevel === "ERROR" ? console.error : console.log;
+    const formattedMessage = `${formattedDate} -- ${logLevel} -- (${where}): ${msg}`;
+
+    consoleLogFn(formattedMessage);
+
+    if (!canLogToFile) return;
+
+    const logDir = path.resolve(mainPath, "logs");
+    await initializeLogDirectory(logDir);
+
+    const logPath = path.join(logDir, `log-${formatDateForFile(date)}.txt`);
+    await logToFile(logPath, `${formattedMessage}\n`);
+}
+
+function log(msg: string, where = "main") {
+    logMessage("info", msg, where);
+}
+
+function error(msg: string, where = "main") {
+    logMessage("error", msg, where);
+}
+
 async function initializeLogDirectory(logDir: PathLike) {
     if (hasInitializedLogDir) return;
     try {
@@ -847,34 +862,16 @@ async function logToFile(logPath: PathLike, message: string) {
     }
 }
 
-async function logMessage(level: string, msg: string, where: string) {
-    const date = new Date();
-    const logLevel = level.toUpperCase();
-    const consoleLogFn = logLevel === "ERROR" ? console.error : console.log;
-    consoleLogFn(`${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}`);
-
-    if (!canLogToFile) return;
-
-    const logDir = path.resolve(mainPath, "logs");
-    await initializeLogDirectory(logDir);
-
-    const logPath = path.join(
-        logDir,
-        `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
-            "0" + date.getDate()
-        ).slice(-2)}.txt`
-    );
-
-    const logMessage = `${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}\n`;
-    await logToFile(logPath, logMessage);
+function formatDate(date: Date): string {
+    return `${date.toTimeString()} -- ${date.getFullYear()}-${("0" + (date.getMonth() + 1)).slice(
+        -2
+    )}-${("0" + date.getDate()).slice(-2)}`;
 }
 
-function log(msg: string, where = "main") {
-    logMessage("info", msg, where);
-}
-
-function error(msg: string, where = "main") {
-    logMessage("error", msg, where);
+function formatDateForFile(date: Date): string {
+    return `${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
+        "0" + date.getDate()
+    ).slice(-2)}`;
 }
 
 /*
