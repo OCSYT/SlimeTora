@@ -6,7 +6,8 @@ import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import { HaritoraX } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
-import fs from "fs/promises";
+import fs from 'fs/promises';
+import * as fsSync from 'fs';
 import path from "path";
 import * as _ from "lodash-es";
 
@@ -173,6 +174,10 @@ ipcMain.on("show-message", (_event, arg) => {
 ipcMain.on("show-error", (_event, arg) => {
     const { title, message }: { title: string; message: string } = arg;
     dialog.showErrorBox(title, message);
+});
+
+ipcMain.handle("translate", async (_event, arg: string) => {
+    return await translate(arg);
 });
 
 ipcMain.handle("get-active-trackers", () => {
@@ -499,7 +504,7 @@ ipcMain.on("save-setting", (_event, data) => {
 });
 
 function saveSetting(data: { [key: string]: any }) {
-    const config: { [key: string]: any } = JSON.parse(fs.readFile(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
 
     // Use lodash's mergeWith to merge the new data with the existing config (not merge as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
     const mergedConfig = _.mergeWith(config, data, (objValue: any, srcValue: any) => {
@@ -512,7 +517,7 @@ function saveSetting(data: { [key: string]: any }) {
 }
 
 ipcMain.handle("has-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(fs.readFile(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
 
     const properties = name.split(".");
     let current = config;
@@ -528,7 +533,7 @@ ipcMain.handle("has-setting", (_event, name) => {
 });
 
 ipcMain.handle("get-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(fs.readFile(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
 
     const properties = name.split(".");
     let current = config;
@@ -563,7 +568,7 @@ async function processQueue() {
         const trackerName = trackerQueue.shift();
 
         // Check if tracker has a MAC address assigned already in the config
-        const config: { [key: string]: any } = JSON.parse(fs.readFile(configPath).toString());
+        const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
         let macAddress = MACAddress.random();
         let macBytes = config.trackers?.[trackerName]?.macAddress?.bytes;
         if (macBytes && macBytes.length === 6) {
