@@ -26,6 +26,7 @@ import {
     FirmwareFeatureFlags,
 } from "@slimevr/firmware-protocol";
 import { EmulatedTracker } from "@slimevr/tracker-emulation";
+import { PathLike } from "fs";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
@@ -826,60 +827,61 @@ connectToServer();
  * Logging
  */
 
-async function log(msg: string, where = "main") {
-    const date = new Date();
-    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
+let logQueue = Promise.resolve();
+let hasInitializedLogDir = false;
 
-    if (!canLogToFile) return;
-
-    const logDir = path.resolve(mainPath, "logs");
-    const logPath = path.join(
-        logDir,
-        `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
-            "0" + date.getDate()
-        ).slice(-2)}.txt`
-    );
-
+async function initializeLogDirectory(logDir: PathLike) {
+    if (hasInitializedLogDir) return;
     try {
-        // Create the directory if it doesn't exist
-        await fs.access(logDir).catch(() => fs.mkdir(logDir, { recursive: true }));
+        await fs.access(logDir);
+    } catch {
+        await fs.mkdir(logDir, { recursive: true });
+    }
+    hasInitializedLogDir = true;
+}
 
-        // Create the file if it doesn't exist
-        await fs.access(logPath).catch(() => fs.writeFile(logPath, ""));
-
-        await fs.appendFile(logPath, `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`);
+async function logToFile(logPath: PathLike, message: string) {
+    try {
+        await fs.appendFile(logPath, message);
     } catch (error) {
         console.error("Error logging to file:", error);
     }
 }
 
-async function error(msg: string, where = "main") {
-    const date = new Date();
-    console.error(`${date.toTimeString()} -- ERROR -- (${where}): ${msg}`);
+async function enqueueLogOperation(operation: () => Promise<void>) {
+    logQueue = logQueue.then(operation).catch(console.error);
+}
 
-    if (!canLogToFile) return;
+async function logMessage(level: string, msg: string, where: string) {
+    enqueueLogOperation(async () => {
+        const date = new Date();
+        const logLevel = level.toUpperCase();
+        const consoleLogFn = logLevel === "ERROR" ? console.error : console.log;
+        consoleLogFn(`${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}`);
 
-    const logDir = path.resolve(mainPath, "logs");
-    const logPath = path.join(
-        logDir,
-        `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
-            "0" + date.getDate()
-        ).slice(-2)}.txt`
-    );
+        if (!canLogToFile) return;
 
-    try {
-        // Create the directory if it doesn't exist
-        await fs.access(logDir).catch(() => fs.mkdir(logDir, { recursive: true }));
+        const logDir = path.resolve(mainPath, "logs");
+        await initializeLogDirectory(logDir);
 
-        // Create the file if it doesn't exist
-        await fs.access(logPath).catch(() => fs.writeFile(logPath, ""));
+        const logPath = path.join(
+            logDir,
+            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
+                "0" + date.getDate()
+            ).slice(-2)}.txt`
+        );
 
-        if (where !== "interpreter" || loggingMode !== 1) {
-            await fs.appendFile(logPath, `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`);
-        }
-    } catch (error) {
-        console.error("Error logging to file:", error);
-    }
+        const logMessage = `${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}\n`;
+        await logToFile(logPath, logMessage);
+    });
+}
+
+function log(msg: string, where = "main") {
+    logMessage("info", msg, where);
+}
+
+function error(msg: string, where = "main") {
+    logMessage("error", msg, where);
 }
 
 /*
