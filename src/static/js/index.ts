@@ -34,10 +34,30 @@ let loggingMode = 1;
 document.addEventListener("DOMContentLoaded", async function () {
     window.log("DOM loaded");
 
-    // Populate COM port switches
+    function appendOptions(selectElement: HTMLElement, options: string[]) {
+        const fragment = document.createDocumentFragment();
+        options.forEach((optionValue) => {
+            const option = document.createElement("option");
+            option.value = optionValue;
+            option.text = optionValue;
+            fragment.appendChild(option);
+        });
+        selectElement.appendChild(fragment);
+    }
+
+    function setSwitchState(switchId: string, state: any) {
+        const switchElement = document.getElementById(switchId) as HTMLInputElement;
+        if (switchElement) switchElement.checked = state;
+    }
+
+    function setSelectValue(selectId: string, value: string) {
+        const selectElement = document.getElementById(selectId) as HTMLSelectElement;
+        if (selectElement) selectElement.value = value;
+    }
+
+    // Populate COM ports
     const comPortList = document.getElementById("com-ports");
     const comPorts: string[] = await window.ipc.invoke("get-com-ports", null);
-
     window.log(`COM ports: ${JSON.stringify(comPorts)}`);
 
     let rowHTML = '<div class="com-port-row">';
@@ -65,13 +85,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Populate language select
     const languageSelect = document.getElementById("language-select") as HTMLSelectElement;
     const languages: string[] = await window.ipc.invoke("get-languages", null);
-
-    languages.forEach((language: string) => {
-        const option = document.createElement("option");
-        option.value = language;
-        option.text = language;
-        languageSelect.appendChild(option);
-    });
+    appendOptions(languageSelect, languages);
 
     // Get settings from config file
     const settings: { [key: string]: any } = await window.ipc.invoke("get-settings", null);
@@ -93,52 +107,31 @@ document.addEventListener("DOMContentLoaded", async function () {
     skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck || false;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit || false;
 
-    // Get the checkbox elements
-    const censorSerialNumbersSwitch = document.getElementById(
-        "censor-serial-switch"
-    ) as HTMLInputElement;
-    const trackerVisualizationSwitch = document.getElementById(
-        "visualization-switch"
-    ) as HTMLInputElement;
-    const wirelessTrackerSwitch = document.getElementById(
-        "wireless-tracker-switch"
-    ) as HTMLInputElement;
-    const wiredTrackerSwitch = document.getElementById("wired-tracker-switch") as HTMLInputElement;
-    const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
-    const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
-    const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
-    const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
-    const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
-    const logToFileSwitch = document.getElementById("log-to-file-switch") as HTMLInputElement;
-    const skipSlimeVRSwitch = document.getElementById("skip-slimevr-switch") as HTMLInputElement;
-    const bypassCOMPortLimitSwitch = document.getElementById(
-        "bypass-com-limit-switch"
-    ) as HTMLInputElement;
+    // Set switch states based on settings
+    setSwitchState("censor-serial-switch", censorSerialNumbers);
+    setSwitchState("visualization-switch", trackerVisualization);
+    setSwitchState("wireless-tracker-switch", wirelessTrackerEnabled);
+    setSwitchState("wired-tracker-switch", wiredTrackerEnabled);
+    setSwitchState("bluetooth-switch", bluetoothEnabled);
+    setSwitchState("com-switch", comEnabled);
+    setSwitchState("accelerometer-switch", accelerometerEnabled);
+    setSwitchState("gyroscope-switch", gyroscopeEnabled);
+    setSwitchState("magnetometer-switch", magnetometerEnabled);
+    setSwitchState("log-to-file-switch", canLogToFile);
+    setSwitchState("skip-slimevr-switch", skipSlimeVRCheck);
+    setSwitchState("bypass-com-limit-switch", bypassCOMPortLimit);
 
-    // Set the checked property based on the settings
-    censorSerialNumbersSwitch.checked = censorSerialNumbers;
-    trackerVisualizationSwitch.checked = trackerVisualization;
-    wirelessTrackerSwitch.checked = wirelessTrackerEnabled;
-    wiredTrackerSwitch.checked = wiredTrackerEnabled;
-    bluetoothSwitch.checked = bluetoothEnabled;
-    comSwitch.checked = comEnabled;
-    accelerometerSwitch.checked = accelerometerEnabled;
-    gyroscopeSwitch.checked = gyroscopeEnabled;
-    magnetometerSwitch.checked = magnetometerEnabled;
-    logToFileSwitch.checked = canLogToFile;
-    skipSlimeVRSwitch.checked = skipSlimeVRCheck;
-    bypassCOMPortLimitSwitch.checked = bypassCOMPortLimit;
+    // Set select values based on settings
+    setSelectValue("fps-mode-select", fpsMode.toString());
+    setSelectValue("sensor-mode-select", sensorMode.toString());
+    setSelectValue("language-select", language.toString());
+    setSelectValue("logging-mode-select", loggingMode.toString());
 
-    // Get the select elements
-    const fpsSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
-    const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
-    const loggingModeSelect = document.getElementById("logging-mode-select") as HTMLSelectElement;
-
-    // Set the selected option based on the settings
-    fpsSelect.value = fpsMode.toString();
-    sensorModeSelect.value = sensorMode.toString();
-    languageSelect.value = language.toString();
-    loggingModeSelect.value = loggingMode.toString();
+    // Set input values based on settings
+    const trackerVisualizationFPSInput = document.getElementById(
+        "tracker-visualization-fps"
+    ) as HTMLInputElement;
+    trackerVisualizationFPSInput.value = trackerVisualizationFPS.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(
@@ -147,16 +140,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const selectedPorts: string[] = settings.global?.connectionMode?.comPorts || [];
 
     comPortsSwitches.forEach((port) => {
-        if (selectedPorts.includes(port.id)) {
-            port.checked = true;
-        }
+        if (selectedPorts.includes(port.id)) port.checked = true;
     });
-
-    // Set input values
-    const trackerVisualizationFPSInput = document.getElementById(
-        "tracker-visualization-fps"
-    ) as HTMLInputElement;
-    trackerVisualizationFPSInput.value = trackerVisualizationFPS.toString();
 
     // Check if the selected COM ports are still available
     let isMissingPorts = false;
@@ -169,13 +154,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     if (isMissingPorts) {
-        setStatus(await window.translate("main.status.comPortsMissing"));
+        setStatus("main.status.comPortsMissing");
         window.ipc.send("show-error", {
             title: await window.translate("dialogs.comPortsMissing.title"),
             message: await window.translate("dialogs.comPortsMissing.message"),
         });
     }
 
+    selectedComPorts.push(...selectedPorts);
+
+    // Disable unsupported settings
     if (wirelessTrackerEnabled && !wiredTrackerEnabled) {
         setElementDisabledState(document.getElementById("wired-tracker-switch"), true);
     } else if (wiredTrackerEnabled && !wirelessTrackerEnabled) {
@@ -186,177 +174,133 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    selectedComPorts.push(...selectedPorts);
+    window.changeLanguage(language);
 
-    window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
-
-    setStatus(await window.translate("main.status.none"));
+    // Set program statuses
+    setStatus("main.status.none");
     document.getElementById("tracker-count").textContent = document
         .getElementById("tracker-count")
         .textContent.replace("{trackerCount}", "0");
 
-    window.changeLanguage(language);
+    window.log(`Language set to: ${language}`);
+    window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
 
     addEventListeners();
 });
 
+/*
+ * Connection handling
+ */
+
 async function startConnection() {
     window.log("Starting connection...");
+    setStatus("main.status.searchingServer");
 
-    setStatus(await window.translate("main.status.searchingServer"));
     const slimeVRFound: boolean = await window.ipc.invoke("search-for-server", null);
-    if (!slimeVRFound && !skipSlimeVRCheck) {
-        window.error("Tried to start connection while not connected to SlimeVR");
-        setStatus(await window.translate("main.status.slimeVRMissing"));
-        return;
-    } else if (!slimeVRFound && skipSlimeVRCheck) {
-        window.log("SlimeVR check skipped");
-    }
+    if (!(await handleSlimeVRCheck(slimeVRFound))) return false;
+    if (!(await handleTrackerModelCheck())) return false;
+    if (!(await handleConnectionType())) return false;
 
-    // Check if any tracker model is enabled
-    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
-        window.error("No tracker model enabled");
-        setStatus(await window.translate("main.status.noTrackerModel"));
-        window.ipc.send("show-error", {
-            title: await window.translate("dialogs.noTrackerModel.title"),
-            message: await window.translate("dialogs.noTrackerModel.message"),
-        });
-        return false;
-    }
-
-    if (bluetoothEnabled && comEnabled) {
-        window.ipc.send("start-connection", {
-            types: ["bluetooth", "com"],
-            ports: selectedComPorts,
-            isActive,
-        });
-        window.log(`Starting Bluetooth and COM connection with ports: ${selectedComPorts}`);
-    } else if (bluetoothEnabled) {
-        window.ipc.send("start-connection", { types: ["bluetooth"], isActive });
-        window.log("Starting Bluetooth connection");
-    } else if (comEnabled) {
-        if (selectedComPorts.length === 0) {
-            window.error("No COM ports selected");
-            setStatus(await window.translate("main.status.noComPorts"));
-            window.ipc.send("show-error", {
-                title: await window.translate("dialogs.noComPorts.title"),
-                message: await window.translate("dialogs.noComPorts.message"),
-            });
-            return false;
-        }
-
-        window.ipc.send("start-connection", {
-            types: ["com"],
-            ports: selectedComPorts,
-            isActive,
-        });
-        window.log(`Starting COM connection with ports: ${selectedComPorts}`);
-    } else {
-        window.error("No connection mode enabled");
-        setStatus(await window.translate("main.status.noConnectionMode"));
-        window.ipc.send("show-error", {
-            title: await window.translate("dialogs.noConnectionMode.title"),
-            message: await window.translate("dialogs.noConnectionMode.message"),
-        });
-        return false;
-    }
-
-    // Disable start connection button and enable stop connection button
-    document.getElementById("start-connection-button").setAttribute("disabled", "true");
-    document.getElementById("stop-connection-button").removeAttribute("disabled");
-
-    isActive = true;
+    toggleConnectionButtons();
 }
 
 async function stopConnection() {
     if (!isActive || (!bluetoothEnabled && !comEnabled)) {
-        window.error("No connection to stop");
         window.error(
-            "..wait a second, you shouldn't be seeing this! get out of inspect element and stop trying to break the program!"
+            "No connection to stop.. wait a second, you shouldn't be seeing this - get out of inspect element and stop trying to break the program!"
         );
         return;
     }
     window.log("Stopping connection(s)...");
 
-    // Enable start connection button and disable stop connection button
-    document.getElementById("start-connection-button").removeAttribute("disabled");
-    document.getElementById("stop-connection-button").setAttribute("disabled", "true");
+    toggleConnectionButtons();
 
     if (bluetoothEnabled) window.ipc.send("stop-connection", "bluetooth");
     if (comEnabled) window.ipc.send("stop-connection", "com");
 
-    setStatus(await window.translate("main.status.none"));
+    setStatus("main.status.none");
     document.getElementById("tracker-count").textContent = "0";
     document.getElementById("device-list").textContent = "";
-    isActive = false;
 }
 
-function openLogsFolder() {
-    window.log("Opening logs folder...");
-    window.ipc.send("open-logs-folder", null);
+// Helper functions
+function toggleConnectionButtons() {
+    isActive = !isActive;
+    document.getElementById("start-connection-button").toggleAttribute("disabled");
+    document.getElementById("stop-connection-button").toggleAttribute("disabled");
 }
 
-// "Save settings" (manual save) button
-function saveSettings() {
-    window.log("Saving settings...");
-    unsavedSettings(false);
-
-    // Grab all com-port inputs
-    const comPorts: HTMLInputElement[] = Array.from(
-        document.getElementById("com-ports").querySelectorAll("input")
-    );
-    const selectedPorts: string[] = [];
-
-    comPorts.forEach((port) => {
-        if (port.checked) {
-            selectedPorts.push(port.id);
+async function handleSlimeVRCheck(slimeVRFound: boolean) {
+    if (!slimeVRFound) {
+        const errorKey = skipSlimeVRCheck
+            ? "SlimeVR check skipped"
+            : "Tried to start connection while not connected to SlimeVR";
+        window.log(errorKey);
+        if (!skipSlimeVRCheck) {
+            setStatus("main.status.slimeVRMissing");
+            return false;
         }
-    });
-
-    window.log(`Selected COM ports: ${selectedPorts}`);
-
-    // Save settings to config file
-    window.ipc.send("save-setting", {
-        global: {
-            censorSerialNumbers: censorSerialNumbers,
-            trackerVisualization: trackerVisualization,
-            trackerVisualizationFPS: trackerVisualizationFPS,
-            connectionMode: {
-                bluetoothEnabled: bluetoothEnabled,
-                comEnabled: comEnabled,
-                comPorts: selectedPorts,
-            },
-            trackers: {
-                fpsMode: fpsMode,
-                sensorMode: sensorMode,
-                accelerometerEnabled: accelerometerEnabled,
-                gyroscopeEnabled: gyroscopeEnabled,
-                magnetometerEnabled: magnetometerEnabled,
-            },
-            debug: {
-                canLogToFile: canLogToFile,
-                skipSlimeVRCheck: skipSlimeVRCheck,
-                bypassCOMPortLimit: bypassCOMPortLimit,
-                loggingMode: loggingMode,
-            },
-        },
-    });
-
-    // Send tracker settings to connected trackers
-    let sensorAutoCorrection: string[] = [];
-    if (accelerometerEnabled) sensorAutoCorrection.push("accel");
-    if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
-    if (magnetometerEnabled) sensorAutoCorrection.push("mag");
-
-    if (isActive) {
-        window.ipc.send("set-all-tracker-settings", {
-            sensorMode,
-            fpsMode,
-            sensorAutoCorrection,
-        });
     }
+    return true;
+}
 
-    window.log("Settings saved");
+async function handleTrackerModelCheck() {
+    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
+        window.error("No tracker model enabled");
+        setStatus("main.status.noTrackerModel");
+        await showErrorDialog("dialogs.noTrackerModel.title", "dialogs.noTrackerModel.message");
+        return false;
+    }
+    return true;
+}
+
+async function handleConnectionType() {
+    if (bluetoothEnabled || comEnabled) {
+        let types = [];
+        if (bluetoothEnabled) types.push("bluetooth");
+        if (comEnabled) {
+            if (selectedComPorts.length === 0) {
+                window.error("No COM ports selected");
+                setStatus("main.status.noComPorts");
+                await showErrorDialog("dialogs.noComPorts.title", "dialogs.noComPorts.message");
+                return false;
+            }
+            types.push("com");
+        }
+        window.ipc.send("start-connection", { types, ports: selectedComPorts, isActive });
+        window.log(`Starting ${types.join(" and ")} connection with ports: ${selectedComPorts}`);
+    } else {
+        window.error("No connection mode enabled");
+        setStatus("main.status.noConnectionMode");
+        await showErrorDialog("dialogs.noConnectionMode.title", "dialogs.noConnectionMode.message");
+        return false;
+    }
+    return true;
+}
+
+/*
+ * Renderer helper functions
+ */
+
+async function setStatus(status: string) {
+    const translatedStatus = await window.translate(status);
+    document.getElementById("status").textContent = translatedStatus;
+    window.log(`Set status to: ${translatedStatus}`);
+}
+
+async function showErrorDialog(titleKey: string, messageKey: string) {
+    window.ipc.send("show-error", {
+        title: await window.translate(titleKey),
+        message: await window.translate(messageKey),
+    });
+}
+
+function setElementDisabledState(element: Element, isDisabled: boolean) {
+    if (isDisabled) {
+        element.setAttribute("disabled", "true");
+    } else {
+        element.removeAttribute("disabled");
+    }
 }
 
 // Set settings button indicator (if changes need a manual save)
@@ -371,16 +315,6 @@ function unsavedSettings(unsaved: boolean) {
     }
 }
 
-/*
- * Renderer helper functions
- */
-
-function setStatus(status: string) {
-    document.getElementById("status").textContent = status;
-    window.log(`Set status to: ${status}`);
-}
-
-// Use a queue to handle adding device to the list, prevents async issues
 const deviceQueue: string[] = [];
 let isProcessingQueue = false;
 async function processQueue() {
@@ -517,10 +451,7 @@ async function addDeviceToList(deviceID: string) {
 
     // add to tracker count
     const trackerCount = document.getElementById("tracker-count");
-    if (trackerCount)
-        trackerCount.textContent = (
-            parseInt(document.getElementById("tracker-count").textContent) + 1
-        ).toString();
+    trackerCount.textContent = (parseInt(trackerCount.textContent) + 1).toString();
 
     // Disable tracker settings button if wired tracker is enabled
     if (wiredTrackerEnabled) {
@@ -537,23 +468,6 @@ async function addDeviceToList(deviceID: string) {
 }
 
 /*
- * Event listeners
- */
-
-window.ipc.on("localize", (_event, resources) => {
-    window.localize(resources);
-});
-
-window.ipc.on("version", (_event, version) => {
-    document.getElementById("version").textContent = version;
-    window.log(`Got app version: ${version}`);
-});
-
-window.ipc.on("set-status", (_event, msg) => {
-    setStatus(msg);
-});
-
-/*
  * Tracker device (haritorax-interpreter) event listeners
  */
 
@@ -565,7 +479,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
     if (!deviceQueue.includes(deviceID)) deviceQueue.push(deviceID);
     processQueue();
 
-    setStatus(await window.translate("main.status.connected"));
+    setStatus("main.status.connected");
 
     if (wiredTrackerEnabled) return;
 
@@ -596,7 +510,67 @@ window.ipc.on("connect", async (_event, deviceID) => {
     window.ipc.invoke("get-tracker-mag", deviceID);
 });
 
-// Helper for "connect" event
+window.ipc.on("disconnect", (_event, deviceID) => {
+    window.log(`Disconnected from ${deviceID}`);
+    document.getElementById(deviceID).remove();
+    document.getElementById("tracker-count").textContent = (
+        parseInt(document.getElementById("tracker-count").textContent) - 1
+    ).toString();
+
+    if (document.getElementById("tracker-count").textContent === "0") setStatus("searching");
+});
+
+window.ipc.on("device-data", async (_event: any, arg) => {
+    const { trackerName, rotation, gravity, rawRotation, rawGravity } = arg;
+    if (!isActive) return;
+    const trackerElement = document.getElementById(trackerName);
+    if (!trackerElement) {
+        handleMissingDevice(trackerName);
+        return;
+    }
+
+    updateTrackerData(trackerElement, rotation, gravity);
+    sendVisualizationData(trackerName, rawRotation, rawGravity);
+});
+
+window.ipc.on("device-battery", (_event, arg) => {
+    const { trackerName, batteryRemaining, batteryVoltage } = arg;
+    if (!isActive || !trackerName || !batteryVoltage) return;
+
+    if (trackerName === "HaritoraXWired") {
+        updateAllTrackerBatteries(batteryRemaining, batteryVoltage);
+    } else {
+        updateTrackerBattery(trackerName, batteryRemaining, batteryVoltage);
+    }
+
+    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`);
+});
+
+window.ipc.on("device-mag", (_event, arg) => {
+    const { trackerName, magStatus }: { trackerName: string; magStatus: string } = arg;
+    if (!isActive || !trackerName) return;
+
+    const trackerElement = document.getElementById(trackerName);
+    if (!trackerElement) return;
+
+    const magStatusElement: HTMLElement = trackerElement.querySelector("#mag-status");
+    if (!magStatusElement) return;
+
+    const statuses: { [key: string]: string } = {
+        green: "mag-status-green",
+        yellow: "mag-status-yellow",
+        red: "mag-status-red",
+        unknown: "mag-status-unknown",
+    };
+
+    for (let status in statuses) {
+        magStatusElement.classList.remove(statuses[status]);
+    }
+
+    magStatusElement.classList.add(statuses[magStatus]);
+});
+
+// Helper functions
 function setTrackerSettings(deviceID: string, trackerSettings: any) {
     const sensorMode: number = trackerSettings.sensorMode !== -1 ? trackerSettings.sensorMode : 2;
     const fpsMode: number = trackerSettings.fpsMode !== -1 ? trackerSettings.fpsMode : 50;
@@ -629,121 +603,77 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
     });
 }
 
-window.ipc.on("disconnect", (_event, deviceID) => {
-    window.log(`Disconnected from ${deviceID}`);
-    document.getElementById(deviceID).remove();
-    document.getElementById("tracker-count").textContent = (
-        parseInt(document.getElementById("tracker-count").textContent) - 1
-    ).toString();
-
-    if (document.getElementById("tracker-count").textContent === "0") setStatus("searching");
-});
-
-window.ipc.on("device-data", async (_event: any, arg) => {
-    const {
-        trackerName,
-        rotation,
-        gravity,
-        rawRotation,
-        rawGravity,
-    }: {
-        trackerName: string;
-        rotation: Rotation;
-        gravity: Gravity;
-        rawRotation: Rotation;
-        rawGravity: Gravity;
-    } = arg;
-    if (!isActive) return;
-    if (!document.getElementById(trackerName)) {
-        if (!deviceQueue.includes(trackerName)) {
-            window.ipc.send("log", `Device ${trackerName} not found in DOM, adding to queue`);
-            deviceQueue.push(trackerName);
-        }
-        await processQueue();
-        return;
+async function handleMissingDevice(trackerName: string) {
+    if (!deviceQueue.includes(trackerName)) {
+        window.ipc.send("log", `Device ${trackerName} not found in DOM, adding to queue`);
+        deviceQueue.push(trackerName);
     }
+    await processQueue();
+}
 
-    const rotationText = `${rotation.x.toFixed(0)}, ${rotation.y.toFixed(0)}, ${rotation.z.toFixed(
-        0
-    )}`;
-    const gravityText = `${gravity.x.toFixed(0)}, ${gravity.y.toFixed(0)}, ${gravity.z.toFixed(0)}`;
+function updateTrackerData(trackerElement: HTMLElement, rotation: Rotation, gravity: Gravity) {
+    const rotationText = formatVector(rotation);
+    const gravityText = formatVector(gravity);
 
-    const rotationDataElement = document
-        .getElementById(trackerName)
-        .querySelector("#rotation-data");
-    const accelerationDataElement = document
-        .getElementById(trackerName)
-        .querySelector("#acceleration-data");
+    trackerElement.querySelector("#rotation-data").textContent = rotationText;
+    trackerElement.querySelector("#acceleration-data").textContent = gravityText;
+}
 
-    if (!rotationDataElement || !accelerationDataElement) return;
-
-    rotationDataElement.textContent = rotationText;
-    accelerationDataElement.textContent = gravityText;
-
-    // check if {trackerID}-visualization exists, and if so, send data to it
+function sendVisualizationData(trackerName: string, rawRotation: Rotation, rawGravity: Gravity) {
     const visualizationIframe = document.getElementById(
         `${trackerName}-visualization`
-    ) as HTMLIFrameElement;
-    if (visualizationIframe)
-        visualizationIframe.contentWindow.postMessage(
-            { rotation: rawRotation, gravity: rawGravity },
-            "*"
-        );
-});
+    ) as HTMLIFrameElement | null;
+    visualizationIframe?.contentWindow?.postMessage(
+        { rotation: rawRotation, gravity: rawGravity },
+        "*"
+    );
+}
 
-window.ipc.on("device-battery", (_event, arg) => {
-    const {
-        trackerName,
-        batteryRemaining,
-        batteryVoltage,
-    }: {
-        trackerName: string;
-        batteryRemaining: number;
-        batteryVoltage: number;
-    } = arg;
-    if (!isActive || !trackerName || !batteryVoltage) return;
-    const batteryText: HTMLElement = document.getElementById(trackerName).querySelector("#battery");
-    if (!batteryText && !trackerName.startsWith("HaritoraXWired")) return;
+function updateAllTrackerBatteries(batteryRemaining: number, batteryVoltage: number) {
+    const devices = document.querySelectorAll("#device-list .card");
+    devices.forEach((device) => {
+        const batteryText = device.querySelector("#battery");
+        if (batteryText)
+            batteryText.textContent = formatBatteryText(batteryRemaining, batteryVoltage);
+    });
+}
 
-    if (trackerName === "HaritoraXWired") {
-        // Wired tracker, set all trackers to the same battery
-        const devices = document.getElementById("device-list").querySelectorAll(".card");
-        devices.forEach((device) => {
-            const batteryText = device.querySelector("#battery");
-            if (batteryText) batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
-        });
-    } else {
-        batteryText.textContent = `${batteryRemaining}% (${batteryVoltage}V)`;
+function updateTrackerBattery(
+    trackerName: string,
+    batteryRemaining: number,
+    batteryVoltage: number
+) {
+    const batteryText = document.querySelector(`#${trackerName} #battery`);
+    if (batteryText || !trackerName.startsWith("HaritoraXWired")) {
+        batteryText.textContent = formatBatteryText(batteryRemaining, batteryVoltage);
     }
+}
 
-    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`);
+function formatVector({ x, y, z }: { x: number; y: number; z: number }): string {
+    return `${x.toFixed(0)}, ${y.toFixed(0)}, ${z.toFixed(0)}`;
+}
+
+function formatBatteryText(batteryRemaining: number, batteryVoltage: number): string {
+    return `${batteryRemaining}% (${batteryVoltage}V)`;
+}
+
+/*
+ * Renderer event listeners
+ */
+
+window.ipc.on("localize", (_event, resources) => {
+    window.localize(resources);
 });
 
-window.ipc.on("device-mag", (_event, arg) => {
-    const { trackerName, magStatus }: { trackerName: string; magStatus: string } = arg;
-    if (!isActive || !trackerName) return;
-
-    const trackerElement = document.getElementById(trackerName);
-    if (!trackerElement) return;
-
-    const magStatusElement: HTMLElement = trackerElement.querySelector("#mag-status");
-    if (!magStatusElement) return;
-
-    const statuses: { [key: string]: string } = {
-        green: "mag-status-green",
-        yellow: "mag-status-yellow",
-        red: "mag-status-red",
-        unknown: "mag-status-unknown",
-    };
-
-    for (let status in statuses) {
-        magStatusElement.classList.remove(statuses[status]);
-    }
-
-    magStatusElement.classList.add(statuses[magStatus]);
+window.ipc.on("version", (_event, version) => {
+    document.getElementById("version").textContent = version;
+    window.log(`Got app version: ${version}`);
 });
 
-// Add event listeners for the document
+window.ipc.on("set-status", (_event, msg) => {
+    setStatus(msg);
+});
+
 function addEventListeners() {
     /*
      * "Tracker info" event listeners
@@ -1107,20 +1037,81 @@ function addEventListeners() {
     });
 }
 
-function setElementDisabledState(element: Element, isDisabled: boolean) {
-    if (isDisabled) {
-        element.setAttribute("disabled", "true");
-    } else {
-        element.removeAttribute("disabled");
-    }
-}
+/*
+ * Export functions to window
+ */
 
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
-window.openLogsFolder = openLogsFolder;
-window.saveSettings = saveSettings;
+
+window.saveSettings = () => {
+    window.log("Saving settings...");
+    unsavedSettings(false);
+
+    // Grab all com-port inputs
+    const comPorts: HTMLInputElement[] = Array.from(
+        document.getElementById("com-ports").querySelectorAll("input")
+    );
+    const selectedPorts: string[] = [];
+
+    comPorts.forEach((port) => {
+        if (port.checked) {
+            selectedPorts.push(port.id);
+        }
+    });
+
+    window.log(`Selected COM ports: ${selectedPorts}`);
+
+    // Save settings to config file
+    window.ipc.send("save-setting", {
+        global: {
+            censorSerialNumbers: censorSerialNumbers,
+            trackerVisualization: trackerVisualization,
+            trackerVisualizationFPS: trackerVisualizationFPS,
+            connectionMode: {
+                bluetoothEnabled: bluetoothEnabled,
+                comEnabled: comEnabled,
+                comPorts: selectedPorts,
+            },
+            trackers: {
+                fpsMode: fpsMode,
+                sensorMode: sensorMode,
+                accelerometerEnabled: accelerometerEnabled,
+                gyroscopeEnabled: gyroscopeEnabled,
+                magnetometerEnabled: magnetometerEnabled,
+            },
+            debug: {
+                canLogToFile: canLogToFile,
+                skipSlimeVRCheck: skipSlimeVRCheck,
+                bypassCOMPortLimit: bypassCOMPortLimit,
+                loggingMode: loggingMode,
+            },
+        },
+    });
+
+    // Send tracker settings to connected trackers
+    let sensorAutoCorrection: string[] = [];
+    if (accelerometerEnabled) sensorAutoCorrection.push("accel");
+    if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
+    if (magnetometerEnabled) sensorAutoCorrection.push("mag");
+
+    if (isActive) {
+        window.ipc.send("set-all-tracker-settings", {
+            sensorMode,
+            fpsMode,
+            sensorAutoCorrection,
+        });
+    }
+
+    window.log("Settings saved");
+};
 
 window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for ${deviceID}`);
     window.ipc.send("open-tracker-settings", deviceID);
+};
+
+window.openLogsFolder = () => {
+    window.log("Opening logs folder...");
+    window.ipc.send("open-logs-folder", null);
 };

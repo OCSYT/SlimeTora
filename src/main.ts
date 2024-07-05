@@ -31,9 +31,9 @@ import { PathLike } from "fs";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
-let connectedDevices: Map<string, [EmulatedTracker, boolean]> = new Map<
+let connectedDevices: Map<string, EmulatedTracker> = new Map<
     string,
-    [EmulatedTracker, boolean]
+    EmulatedTracker
 >();
 let canLogToFile = false;
 let loggingMode = 1;
@@ -316,14 +316,14 @@ ipcMain.on("start-connection", async (_event, arg) => {
         return false;
     }
 
-    mainWindow.webContents.send("set-status", await translate("main.status.searching"));
+    mainWindow.webContents.send("set-status", "main.status.searching");
 
     if (types.includes("bluetooth")) {
         log("Starting Bluetooth connection");
         const connectionStarted = device.startConnection("bluetooth");
         if (!connectionStarted) {
             error("Failed to start BLE connection");
-            mainWindow.webContents.send("set-status", await translate("main.status.failed"));
+            mainWindow.webContents.send("set-status", "main.status.failed");
             dialog.showErrorBox(
                 await translate("dialogs.connectionFailed.title"),
                 await translate("dialogs.connectionFailed.message")
@@ -337,7 +337,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
         const connectionStarted = device.startConnection("com", ports, heartbeatInterval);
         if (!connectionStarted) {
             error("Failed to start COM connection");
-            mainWindow.webContents.send("set-status", await translate("main.status.failed"));
+            mainWindow.webContents.send("set-status", "main.status.failed");
             dialog.showErrorBox(
                 await translate("dialogs.connectionFailed.title"),
                 await translate("dialogs.connectionFailed.message")
@@ -374,7 +374,7 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
 
     // For every tracker, de-initialize it
     connectedDevices.forEach((value, _key) => {
-        if (value) value[0].deinit();
+        if (value) value.deinit();
     });
 
     connectedDevices.clear();
@@ -565,13 +565,14 @@ async function processQueue() {
     if (isProcessingQueue || trackerQueue.length === 0) return;
     isProcessingQueue = true;
 
+    const config: { [key: string]: any } = JSON.parse(
+        fsSync.readFileSync(configPath).toString()
+    );
+
     while (trackerQueue.length > 0) {
         const trackerName = trackerQueue.shift();
 
         // Check if tracker has a MAC address assigned already in the config
-        const config: { [key: string]: any } = JSON.parse(
-            fsSync.readFileSync(configPath).toString()
-        );
         let macAddress = MACAddress.random();
         let macBytes = config.trackers?.[trackerName]?.macAddress?.bytes;
         if (macBytes && macBytes.length === 6) {
@@ -586,33 +587,32 @@ async function processQueue() {
             MCUType.UNKNOWN
         );
 
-        if (connectedDevices.has(trackerName) && connectedDevices.get(trackerName)) continue;
-        connectedDevices.set(trackerName, [newTracker, false]);
+        if (connectedDevices.get(trackerName)) continue;
 
         await newTracker.init();
         await newTracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK);
-
-        // Sort the connectedDevices map by keys
-        connectedDevices = new Map([...connectedDevices.entries()].sort());
 
         // Set the MAC address in the config
         saveSetting({ trackers: { [trackerName]: { macAddress } } });
         log(`Set MAC address for ${trackerName} to ${macAddress}`);
 
-        // Set boolean to true to indicate that the tracker is connected
-        connectedDevices.set(trackerName, [newTracker, true]);
+        connectedDevices.set(trackerName, newTracker);
 
         startTrackerListeners(newTracker);
 
         log(`Connected to tracker: ${trackerName}`);
-        log(
-            "Connected devices: " +
-                JSON.stringify(
-                    Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key))
-                )
-        );
         mainWindow.webContents.send("connect", trackerName);
     }
+
+    // Sort the connectedDevices map by keys
+    connectedDevices = new Map([...connectedDevices.entries()].sort());
+
+    log(
+        "Connected devices: " +
+            JSON.stringify(
+                Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key))
+            )
+    );
 
     isProcessingQueue = false;
 }
@@ -640,7 +640,7 @@ function startDeviceListeners() {
         if (!connectedDevices.get(deviceID)) return;
         log(`Disconnected from tracker: ${deviceID}`);
 
-        connectedDevices.get(deviceID)[0].disconnectFromServer();
+        connectedDevices.get(deviceID).disconnectFromServer();
         connectedDevices.set(deviceID, undefined);
 
         mainWindow.webContents.send("disconnect", deviceID);
@@ -723,12 +723,8 @@ function startDeviceListeners() {
 
         const gravity = new Vector(rawGravity.x, rawGravity.y, rawGravity.z);
 
-        let trackerData = connectedDevices.get(trackerName);
-        if (trackerData) {
-            const tracker = trackerData[0];
-            const trackerConnected = trackerData[1];
-
-            if (!trackerConnected) return;
+        let tracker = connectedDevices.get(trackerName);
+        if (tracker) {
             tracker.sendRotationData(0, RotationDataType.NORMAL, quaternion, 0);
             tracker.sendAcceleration(0, gravity);
         } else {
@@ -753,17 +749,13 @@ function startDeviceListeners() {
             if (trackerName.startsWith("HaritoraX") && wirelessTrackerEnabled)
                 batteryVoltageInVolts = 0;
 
-            let trackerData = connectedDevices.get(trackerName);
-            if (trackerData) {
-                const tracker = trackerData[0];
-                const trackerConnected = trackerData[1];
-
-                if (!trackerConnected) return;
+            let tracker = connectedDevices.get(trackerName);
+            if (tracker) {
                 tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
             } else if (trackerName.startsWith("HaritoraXWired")) {
                 // for all wired trackers connected, change battery info for each in SlimeVR
                 connectedDevices.forEach((value, _key) => {
-                    if (value) value[0].changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+                    if (value) value.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
                 });
             } else {
                 return false;
