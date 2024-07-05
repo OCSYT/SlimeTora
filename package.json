@@ -18,6 +18,7 @@
     ],
     "main": "dist/main.js",
     "scripts": {
+        "preinstall": "npx only-allow pnpm",
         "start": "npm run preload && electron .",
         "dev": "tsc && npm run copy-files && electron .",
         "build": "npm run preload && electron-packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar",
