@@ -3,12 +3,11 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
-// @ts-ignore
 import { HaritoraX } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs/promises";
+import path from "path";
 import * as _ from "lodash-es";
 
 import { fileURLToPath, format } from "url";
@@ -57,23 +56,30 @@ const configPath = path.resolve(mainPath, "config.json");
 async function loadTranslations() {
     const languagesDir = path.join(mainPath, "languages");
 
-    if (!fs.existsSync(languagesDir)) {
-        fs.mkdirSync(languagesDir);
+    try {
+        await fs.access(languagesDir);
+    } catch (error) {
+        await fs.mkdir(languagesDir, { recursive: true });
     }
 
     const srcLanguagesDir = path.join(__dirname, "static", "languages");
-    const srcFiles = fs.readdirSync(srcLanguagesDir);
+    const srcFiles = await fs.readdir(srcLanguagesDir);
 
     for (const file of srcFiles) {
-        fs.copyFileSync(path.join(srcLanguagesDir, file), path.join(languagesDir, file));
+        const srcFilePath = path.join(srcLanguagesDir, file);
+        const destFilePath = path.join(languagesDir, file);
+        const content = await fs.readFile(srcFilePath);
+        await fs.writeFile(destFilePath, content);
     }
 
-    const files = fs.readdirSync(languagesDir);
+    const files = await fs.readdir(languagesDir);
     const resources: any = {};
 
     for (const file of files) {
         const lang = path.basename(file, ".json");
-        const translations = JSON.parse(fs.readFileSync(path.join(languagesDir, file), "utf-8"));
+        const filePath = path.join(languagesDir, file);
+        const fileContent = await fs.readFile(filePath, "utf-8");
+        const translations = JSON.parse(fileContent);
 
         resources[lang] = { translation: translations };
     }
@@ -89,16 +95,23 @@ async function translate(key: string) {
  * Renderer
  */
 
-const createWindow = () => {
-    // check if certain settings are set in the config before creating the window
-    if (fs.existsSync(configPath)) {
-        const data = fs.readFileSync(configPath);
-        const config: { [key: string]: any } = JSON.parse(data.toString());
+const createWindow = async () => {
+    try {
+        // Check if the config file is accessible
+        await fs.access(configPath);
+
+        // Read and parse the config file
+        const data = await fs.readFile(configPath, "utf8");
+        const config: { [key: string]: any } = JSON.parse(data);
+
+        // Set configuration variables
         canLogToFile = config.global?.debug?.canLogToFile || false;
         wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled || false;
         wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled || false;
         heartbeatInterval = config.global?.trackers?.heartbeatInterval || 2000;
         loggingMode = config.global?.debug?.loggingMode || 1;
+    } catch (err) {
+        error(`Error accessing or reading the config file: ${error}`);
     }
 
     mainWindow = new BrowserWindow({
@@ -208,10 +221,11 @@ ipcMain.on("set-wired-tracker", (_event, arg) => {
 
 ipcMain.on("open-logs-folder", async () => {
     const logDir = path.resolve(mainPath, "logs");
-    if (fs.existsSync(logDir)) {
-        shell.openPath(logDir);
-    } else {
-        error("Logs directory does not exist");
+    try {
+        await fs.access(logDir);
+        await shell.openPath(logDir);
+    } catch (err) {
+        error(`Logs directory does not exist ${err}`);
         dialog.showErrorBox(
             await translate("dialogs.noLogsFolder.title"),
             await translate("dialogs.noLogsFolder.message")
@@ -468,12 +482,13 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
  * Config handlers
  */
 
-ipcMain.handle("get-settings", () => {
-    if (fs.existsSync(configPath)) {
-        const data = fs.readFileSync(configPath);
-        return JSON.parse(data.toString());
-    } else {
-        fs.writeFileSync(configPath, "{}");
+ipcMain.handle("get-settings", async () => {
+    try {
+        await fs.access(configPath);
+        const data = await fs.readFile(configPath, "utf8");
+        return JSON.parse(data);
+    } catch (error) {
+        await fs.writeFile(configPath, "{}");
         return {};
     }
 });
@@ -483,7 +498,7 @@ ipcMain.on("save-setting", (_event, data) => {
 });
 
 function saveSetting(data: { [key: string]: any }) {
-    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFile(configPath).toString());
 
     // Use lodash's mergeWith to merge the new data with the existing config (not merge as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
     const mergedConfig = _.mergeWith(config, data, (objValue: any, srcValue: any) => {
@@ -492,11 +507,11 @@ function saveSetting(data: { [key: string]: any }) {
         }
     });
 
-    fs.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 4));
+    fs.writeFile(configPath, JSON.stringify(mergedConfig, null, 4));
 }
 
 ipcMain.handle("has-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFile(configPath).toString());
 
     const properties = name.split(".");
     let current = config;
@@ -512,7 +527,7 @@ ipcMain.handle("has-setting", (_event, name) => {
 });
 
 ipcMain.handle("get-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFile(configPath).toString());
 
     const properties = name.split(".");
     let current = config;
@@ -547,7 +562,7 @@ async function processQueue() {
         const trackerName = trackerQueue.shift();
 
         // Check if tracker has a MAC address assigned already in the config
-        const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
+        const config: { [key: string]: any } = JSON.parse(fs.readFile(configPath).toString());
         let macAddress = MACAddress.random();
         let macBytes = config.trackers?.[trackerName]?.macAddress?.bytes;
         if (macBytes && macBytes.length === 6) {
@@ -724,8 +739,10 @@ function startDeviceListeners() {
         "battery",
         (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
             let batteryVoltageInVolts = batteryVoltage ? batteryVoltage / 1000 : 0;
-            if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired")) return;
-            if (trackerName.startsWith("HaritoraX") && wirelessTrackerEnabled) batteryVoltageInVolts = 0;
+            if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired"))
+                return;
+            if (trackerName.startsWith("HaritoraX") && wirelessTrackerEnabled)
+                batteryVoltageInVolts = 0;
 
             let trackerData = connectedDevices.get(trackerName);
             if (trackerData) {
@@ -809,59 +826,60 @@ connectToServer();
  * Logging
  */
 
-function log(msg: string, where = "main") {
+async function log(msg: string, where = "main") {
     const date = new Date();
+    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
 
-    if (canLogToFile) {
-        const logDir = path.resolve(mainPath, "logs");
-        const logPath = path.join(
-            logDir,
-            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
-                "0" + date.getDate()
-            ).slice(-2)}.txt`
-        );
+    if (!canLogToFile) return;
 
+    const logDir = path.resolve(mainPath, "logs");
+    const logPath = path.join(
+        logDir,
+        `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
+            "0" + date.getDate()
+        ).slice(-2)}.txt`
+    );
+
+    try {
         // Create the directory if it doesn't exist
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
-        }
+        await fs.access(logDir).catch(() => fs.mkdir(logDir, { recursive: true }));
 
         // Create the file if it doesn't exist
-        if (!fs.existsSync(logPath)) {
-            fs.writeFileSync(logPath, "");
-        }
+        await fs.access(logPath).catch(() => fs.writeFile(logPath, ""));
 
-        fs.appendFileSync(logPath, `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`);
+        await fs.appendFile(logPath, `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`);
+    } catch (error) {
+        console.error("Error logging to file:", error);
     }
-    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
 }
 
-function error(msg: string, where = "main") {
+async function error(msg: string, where = "main") {
     const date = new Date();
-    if (canLogToFile) {
-        const logDir = path.resolve(mainPath, "logs");
-        const logPath = path.join(
-            logDir,
-            `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
-                "0" + date.getDate()
-            ).slice(-2)}.txt`
-        );
+    console.error(`${date.toTimeString()} -- ERROR -- (${where}): ${msg}`);
 
+    if (!canLogToFile) return;
+
+    const logDir = path.resolve(mainPath, "logs");
+    const logPath = path.join(
+        logDir,
+        `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
+            "0" + date.getDate()
+        ).slice(-2)}.txt`
+    );
+
+    try {
         // Create the directory if it doesn't exist
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
-        }
+        await fs.access(logDir).catch(() => fs.mkdir(logDir, { recursive: true }));
 
         // Create the file if it doesn't exist
-        if (!fs.existsSync(logPath)) {
-            fs.writeFileSync(logPath, "");
+        await fs.access(logPath).catch(() => fs.writeFile(logPath, ""));
+
+        if (where !== "interpreter" || loggingMode !== 1) {
+            await fs.appendFile(logPath, `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`);
         }
-
-        if (where === "interpreter" && loggingMode === 1) return;
-
-        fs.appendFileSync(logPath, `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`);
+    } catch (error) {
+        console.error("Error logging to file:", error);
     }
-    console.error(`${date.toTimeString()} -- ERROR -- (${where}): ${msg}`);
 }
 
 /*
