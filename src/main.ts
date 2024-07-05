@@ -6,8 +6,8 @@ import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import { HaritoraX } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
-import fs from 'fs/promises';
-import * as fsSync from 'fs';
+import fs from "fs/promises";
+import * as fsSync from "fs";
 import path from "path";
 import * as _ from "lodash-es";
 
@@ -27,6 +27,7 @@ import {
     FirmwareFeatureFlags,
 } from "@slimevr/firmware-protocol";
 import { EmulatedTracker } from "@slimevr/tracker-emulation";
+import { PathLike } from "fs";
 
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
@@ -567,7 +568,9 @@ async function processQueue() {
         const trackerName = trackerQueue.shift();
 
         // Check if tracker has a MAC address assigned already in the config
-        const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
+        const config: { [key: string]: any } = JSON.parse(
+            fsSync.readFileSync(configPath).toString()
+        );
         let macAddress = MACAddress.random();
         let macBytes = config.trackers?.[trackerName]?.macAddress?.bytes;
         if (macBytes && macBytes.length === 6) {
@@ -831,40 +834,37 @@ connectToServer();
  * Logging
  */
 
-async function log(msg: string, where = "main") {
-    const date = new Date();
-    console.log(`${date.toTimeString()} -- INFO -- (${where}): ${msg}`);
+let hasInitializedLogDir = false;
 
-    if (!canLogToFile) return;
-
-    const logDir = path.resolve(mainPath, "logs");
-    const logPath = path.join(
-        logDir,
-        `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
-            "0" + date.getDate()
-        ).slice(-2)}.txt`
-    );
-
+async function initializeLogDirectory(logDir: PathLike) {
+    if (hasInitializedLogDir) return;
     try {
-        // Create the directory if it doesn't exist
-        await fs.access(logDir).catch(() => fs.mkdir(logDir, { recursive: true }));
+        await fs.access(logDir);
+    } catch {
+        await fs.mkdir(logDir, { recursive: true });
+    }
+    hasInitializedLogDir = true;
+}
 
-        // Create the file if it doesn't exist
-        await fs.access(logPath).catch(() => fs.writeFile(logPath, ""));
-
-        await fs.appendFile(logPath, `${date.toTimeString()} -- INFO -- (${where}): ${msg}\n`);
+async function logToFile(logPath: PathLike, message: string) {
+    try {
+        await fs.appendFile(logPath, message);
     } catch (error) {
         console.error("Error logging to file:", error);
     }
 }
 
-async function error(msg: string, where = "main") {
+async function logMessage(level: string, msg: string, where: string) {
     const date = new Date();
-    console.error(`${date.toTimeString()} -- ERROR -- (${where}): ${msg}`);
+    const logLevel = level.toUpperCase();
+    const consoleLogFn = logLevel === "ERROR" ? console.error : console.log;
+    consoleLogFn(`${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}`);
 
     if (!canLogToFile) return;
 
     const logDir = path.resolve(mainPath, "logs");
+    await initializeLogDirectory(logDir);
+
     const logPath = path.join(
         logDir,
         `log-${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
@@ -872,19 +872,16 @@ async function error(msg: string, where = "main") {
         ).slice(-2)}.txt`
     );
 
-    try {
-        // Create the directory if it doesn't exist
-        await fs.access(logDir).catch(() => fs.mkdir(logDir, { recursive: true }));
+    const logMessage = `${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}\n`;
+    await logToFile(logPath, logMessage);
+}
 
-        // Create the file if it doesn't exist
-        await fs.access(logPath).catch(() => fs.writeFile(logPath, ""));
+function log(msg: string, where = "main") {
+    logMessage("info", msg, where);
+}
 
-        if (where !== "interpreter" || loggingMode !== 1) {
-            await fs.appendFile(logPath, `${date.toTimeString()} -- ERROR -- (${where}): ${msg}\n`);
-        }
-    } catch (error) {
-        console.error("Error logging to file:", error);
-    }
+function error(msg: string, where = "main") {
+    logMessage("error", msg, where);
 }
 
 /*
