@@ -383,7 +383,7 @@ window.ipc.on("device-data", async (_event: any, arg) => {
 
 window.ipc.on("device-battery", (_event, arg) => {
     const { trackerName, batteryRemaining, batteryVoltage } = arg;
-    if (!isActive || !trackerName || !batteryVoltage) return;
+    if (!isActive || !trackerName || batteryRemaining === null || batteryVoltage === null) return;
 
     if (trackerName === "HaritoraXWired") {
         updateAllTrackerBatteries(batteryRemaining, batteryVoltage);

@@ -57,7 +57,7 @@ async function loadTranslations() {
 
     try {
         await fs.access(languagesDir);
-    } catch (error) {
+    } catch (err) {
         await fs.mkdir(languagesDir, { recursive: true });
     }
 
@@ -392,9 +392,12 @@ ipcMain.on("stop-connection", (_event, arg: string) => {
 });
 
 ipcMain.handle("get-tracker-battery", async (_event, arg: string) => {
-    let { batteryRemaining } = await device.getBatteryInfo(arg);
-    if (!batteryRemaining) return;
-    device.emit("battery", arg, batteryRemaining, 0); // BT doesn't support voltage (afaik)
+    try {
+        let { batteryRemaining } = await device.getBatteryInfo(arg);
+        device.emit("battery", arg, batteryRemaining, 0); // BT doesn't support voltage (afaik)
+    } catch (err) {
+        error(`Error getting tracker battery: ${err}`);
+    }
 });
 
 ipcMain.handle("get-tracker-mag", async (_event, arg: string) => {
