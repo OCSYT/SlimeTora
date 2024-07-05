@@ -850,8 +850,8 @@ async function initializeLogDirectory(logDir: PathLike) {
 async function logToFile(logPath: PathLike, message: string) {
     try {
         await fs.appendFile(logPath, message);
-    } catch (error) {
-        console.error("Error logging to file:", error);
+    } catch (err) {
+        error(`Error logging to file: ${err}`);
     }
 }
 

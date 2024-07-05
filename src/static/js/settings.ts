@@ -100,8 +100,8 @@ async function loadSettings(deviceID: string) {
     // Set the selected option based on the settings
     fpsSelect.value = settingsFPSMode.toString();
     sensorModeSelect.value = settingsSensorMode.toString();
-    console.log(`Setting sensor mode to: ${settingsSensorMode} for ${sensorModeSelect}`);
-    console.log(`Setting fps mode to: ${settingsFPSMode} for ${fpsSelect}`);
+    window.log(`Setting sensor mode to: ${settingsSensorMode} for ${sensorModeSelect}`);
+    window.log(`Setting fps mode to: ${settingsFPSMode} for ${fpsSelect}`);
 
     document.getElementById("accelerometer-switch").addEventListener("change", async function () {
         settingsAccelerometerEnabled = !settingsAccelerometerEnabled;
@@ -237,7 +237,7 @@ async function resetSettings() {
     // Grab the global settings from config file and set the values
     const settings: { [key: string]: any } = await window.ipc.invoke("get-settings", null);
 
-    console.log(`Old settings: ${JSON.stringify(settings)}`);
+    window.log(`Old settings: ${JSON.stringify(settings)}`);
 
     settingsFPSMode = settings.global?.trackers?.fpsMode || 50;
     settingsSensorMode = settings.global?.trackers?.sensorMode || 2;
@@ -251,7 +251,7 @@ async function resetSettings() {
     fpsSelect.value = settingsFPSMode.toString();
     sensorModeSelect.value = settingsSensorMode.toString();
 
-    console.log(`New settings: ${JSON.stringify(settings)}`);
+    window.log(`New settings: ${JSON.stringify(settings)}`);
 
     let sensorAutoCorrection: string[] = [];
     if (settingsAccelerometerEnabled) sensorAutoCorrection.push("accel");
