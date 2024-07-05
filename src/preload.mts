@@ -40,7 +40,6 @@ contextBridge.exposeInMainWorld("localize", (resources?: any) => {
             .init({
                 lng: "en",
                 resources,
-                debug: true,
             })
             .then(() => {
                 localize = locI18next.init(i18next);
