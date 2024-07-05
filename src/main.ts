@@ -113,7 +113,9 @@ const createWindow = async () => {
         heartbeatInterval = config.global?.trackers?.heartbeatInterval || 2000;
         loggingMode = config.global?.debug?.loggingMode || 1;
     } catch (err) {
-        error(`Error accessing or reading the config file: ${error}`);
+        // If the config file doesn't exist, create it
+        await fs.writeFile(configPath, "{}");
+        log("Config file not found, creating new one.");
     }
 
     mainWindow = new BrowserWindow({
@@ -488,13 +490,12 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
  * Config handlers
  */
 
-ipcMain.handle("get-settings", async () => {
-    try {
-        await fs.access(configPath);
-        const data = await fs.readFile(configPath, "utf8");
-        return JSON.parse(data);
-    } catch (error) {
-        await fs.writeFile(configPath, "{}");
+ipcMain.handle("get-settings", () => {
+    if (fsSync.existsSync(configPath)) {
+        const data = fsSync.readFileSync(configPath);
+        return JSON.parse(data.toString());
+    } else {
+        fsSync.writeFileSync(configPath, "{}");
         return {};
     }
 });
@@ -513,7 +514,7 @@ function saveSetting(data: { [key: string]: any }) {
         }
     });
 
-    fs.writeFile(configPath, JSON.stringify(mergedConfig, null, 4));
+    fsSync.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 4));
 }
 
 ipcMain.handle("has-setting", (_event, name) => {
