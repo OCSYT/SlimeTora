@@ -62,46 +62,57 @@ async function loadSettings(deviceID: string) {
         trackerName: deviceID,
     });
 
-    settingsFPSMode =
-        trackerSettings.fpsMode && trackerSettings.fpsMode !== -1
-            ? await getSetting(`trackers.${deviceID}.fpsMode`, trackerSettings.fpsMode || 50)
-            : settingsFPSMode;
-    settingsSensorMode =
-        trackerSettings.sensorMode && trackerSettings.sensorMode !== -1
-            ? await getSetting(`trackers.${deviceID}.sensorMode`, trackerSettings.sensorMode || 2)
-            : settingsSensorMode;
-    settingsAccelerometerEnabled = await getSetting(
-        `trackers.${deviceID}.accelerometerEnabled`,
-        trackerSettings.sensorAutoCorrection?.includes("accel") || false
-    );
-    settingsGyroscopeEnabled = await getSetting(
-        `trackers.${deviceID}.gyroscopeEnabled`,
-        trackerSettings.sensorAutoCorrection?.includes("gyro") || false
-    );
-    settingsMagnetometerEnabled = await getSetting(
-        `trackers.${deviceID}.magnetometerEnabled`,
-        trackerSettings.sensorAutoCorrection?.includes("mag") || false
-    );
+    if (trackerSettings) {
+        settingsFPSMode =
+            trackerSettings.fpsMode && trackerSettings.fpsMode !== -1
+                ? await getSetting(`trackers.${deviceID}.fpsMode`, trackerSettings.fpsMode || 50)
+                : settingsFPSMode;
+        settingsSensorMode =
+            trackerSettings.sensorMode && trackerSettings.sensorMode !== -1
+                ? await getSetting(
+                      `trackers.${deviceID}.sensorMode`,
+                      trackerSettings.sensorMode || 2
+                  )
+                : settingsSensorMode;
+        settingsAccelerometerEnabled = await getSetting(
+            `trackers.${deviceID}.accelerometerEnabled`,
+            trackerSettings.sensorAutoCorrection?.includes("accel") || false
+        );
+        settingsGyroscopeEnabled = await getSetting(
+            `trackers.${deviceID}.gyroscopeEnabled`,
+            trackerSettings.sensorAutoCorrection?.includes("gyro") || false
+        );
+        settingsMagnetometerEnabled = await getSetting(
+            `trackers.${deviceID}.magnetometerEnabled`,
+            trackerSettings.sensorAutoCorrection?.includes("mag") || false
+        );
 
-    // Get the checkbox elements
-    const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
-    const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
-    const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
+        // Get the checkbox elements
+        const accelerometerSwitch = document.getElementById(
+            "accelerometer-switch"
+        ) as HTMLInputElement;
+        const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
+        const magnetometerSwitch = document.getElementById(
+            "magnetometer-switch"
+        ) as HTMLInputElement;
 
-    // Set the checked property based on the settings
-    accelerometerSwitch.checked = settingsAccelerometerEnabled;
-    gyroscopeSwitch.checked = settingsGyroscopeEnabled;
-    magnetometerSwitch.checked = settingsMagnetometerEnabled;
+        // Set the checked property based on the settings
+        accelerometerSwitch.checked = settingsAccelerometerEnabled;
+        gyroscopeSwitch.checked = settingsGyroscopeEnabled;
+        magnetometerSwitch.checked = settingsMagnetometerEnabled;
 
-    // Get the select elements
-    const fpsSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
-    const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
+        // Get the select elements
+        const fpsSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
+        const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
 
-    // Set the selected option based on the settings
-    fpsSelect.value = settingsFPSMode.toString();
-    sensorModeSelect.value = settingsSensorMode.toString();
-    window.log(`Setting sensor mode to: ${settingsSensorMode} for ${sensorModeSelect}`);
-    window.log(`Setting fps mode to: ${settingsFPSMode} for ${fpsSelect}`);
+        // Set the selected option based on the settings
+        fpsSelect.value = settingsFPSMode.toString();
+        sensorModeSelect.value = settingsSensorMode.toString();
+        window.log(`Setting sensor mode to: ${settingsSensorMode} for ${sensorModeSelect}`);
+        window.log(`Setting fps mode to: ${settingsFPSMode} for ${fpsSelect}`);
+    } else {
+        window.log(`No settings found for ${deviceID}`);
+    }
 
     document.getElementById("accelerometer-switch").addEventListener("change", async function () {
         settingsAccelerometerEnabled = !settingsAccelerometerEnabled;

@@ -3,7 +3,7 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
-import { HaritoraX } from "haritorax-interpreter";
+import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
 import fs from "fs/promises";
@@ -52,6 +52,19 @@ const configPath = path.resolve(mainPath, "config.json");
  * Grabs the available translations in the program directory's "languages" folder to add as an option in renderer process
  */
 
+async function readJSONWithRetries(filePath: string, retries = 3, delayMs = 100): Promise<any> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const fileContent = await fs.readFile(filePath, "utf-8");
+            return JSON.parse(fileContent);
+        } catch (err: any) {
+            if (err.code === "ENOENT" || attempt === retries) throw error;
+            console.log(`Attempt ${attempt} failed, retrying after ${delayMs}ms...`);
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+    }
+}
+
 async function loadTranslations() {
     const languagesDir = path.join(mainPath, "languages");
 
@@ -77,8 +90,7 @@ async function loadTranslations() {
     for (const file of files) {
         const lang = path.basename(file, ".json");
         const filePath = path.join(languagesDir, file);
-        const fileContent = await fs.readFile(filePath, "utf-8");
-        const translations = JSON.parse(fileContent);
+        const translations = await readJSONWithRetries(filePath);
 
         resources[lang] = { translation: translations };
     }
@@ -150,6 +162,13 @@ app.on("ready", createWindow);
 app.on("window-all-closed", () => {
     if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
     if (device && device.getConnectionModeActive("com")) device.stopConnection("com");
+
+    connectedDevices.forEach((device) => device.deinit());
+    connectedDevices.clear();
+
+    device = undefined;
+    mainWindow = null;
+
     app.quit();
 });
 
@@ -314,11 +333,11 @@ function shouldInitializeNewDevice(): boolean {
 function initializeDevice(): void {
     const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
     log(`Creating new HaritoraX ${trackerType} instance with logging mode ${loggingMode}...`);
-    const loggingOptions = { 1: [0, false], 2: [2, false], 3: [2, true] };
-    const [logLevel, debug] = (loggingOptions as { [key: number]: (number | boolean)[] })[
-        loggingMode
-    ] || [0, false];
-    device = new HaritoraX(trackerType, logLevel as number, debug as boolean);
+    const loggingOptions = { 1: [false, false], 2: [true, false], 3: [true, true] };
+    const [logging, imuProcessing] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
+        loggingMode.toString()
+    ] || [false, false];
+    device = new HaritoraX(trackerType, logging, imuProcessing);
 }
 
 async function attemptConnection(types: string[], ports?: string[]): Promise<void> {
@@ -728,7 +747,10 @@ function startDeviceListeners() {
     device.on(
         "battery",
         (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
-            if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired"))
+            if (
+                trackerName === null ||
+                (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired"))
+            )
                 return;
 
             // Set batteryVoltageInVolts to 0 for BT wireless tracker

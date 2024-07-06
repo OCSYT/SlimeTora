@@ -6,6 +6,7 @@
         "outDir": "./dist",
         "strict": true,
         "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
         "strictNullChecks": false
     },
     "include": ["src/**/*.ts", "src/preload.mts"],
