@@ -22787,4 +22787,20 @@ input:disabled + .slider:after {
   border-radius: 34px;
 }
 
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #00080f;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #0a253b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #071a2a;
+}
+
 /*# sourceMappingURL=index.css.map */
