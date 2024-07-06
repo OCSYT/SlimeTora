@@ -2,7 +2,7 @@
     "name": "slimetora",
     "productName": "slimetora",
     "type": "module",
-    "version": "1.1.0",
+    "version": "1.2.0-beta1",
     "description": "A program that connects the HaritoraX full body trackers to the SlimeVR server",
     "private": true,
     "author": {
@@ -13,15 +13,14 @@
         {
             "name": "JovannMC",
             "email": "jovannmc@femboyfurry.net",
-            "url": "https://femboyfurry.net"
+            "url": "https://jovann.me"
         }
     ],
     "main": "dist/main.js",
     "scripts": {
-        "preinstall": "npx only-allow pnpm",
         "start": "npm run preload && electron .",
         "dev": "tsc && npm run copy-files && electron .",
-        "build": "npm run preload && electron-packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar",
+        "build": "npm run preload && npx @electron/rebuild && npx @electron/packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar",
         "preload": "del-cli dist/ && tsc && npm run copy-files",
         "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.png\" \"src/**/*.svg\" \"src/**/*.fbx\" \"src/static/languages/**/*\"  dist/",
         "build-bulma": "npx sass --watch ./src/static/css/index.scss ./src/static/css/index.css",
@@ -54,7 +53,6 @@
         "loc-i18next": "^0.1.6",
         "lodash-es": "^4.17.21",
         "quaternion": "^1.5.1",
-        "serialport": "^12.0.0",
         "three": "^0.165.0"
     }
 }

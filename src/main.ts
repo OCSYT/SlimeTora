@@ -3,6 +3,7 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
+// @ts-ignore
 import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
@@ -337,6 +338,7 @@ function initializeDevice(): void {
     const [logging, imuProcessing] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
         loggingMode.toString()
     ] || [false, false];
+    // @ts-ignore
     device = new HaritoraX(trackerType, logging, imuProcessing);
 }
 
@@ -428,7 +430,7 @@ ipcMain.handle("get-tracker-mag", async (_event, arg: string) => {
 ipcMain.handle("get-tracker-settings", async (_event, arg) => {
     const { trackerName, forceBLE }: { trackerName: string; forceBLE: boolean } = arg;
     let settings = await device.getTrackerSettings(trackerName, forceBLE);
-    log("Got settings: " + JSON.stringify(settings));
+    log("Got tracker settings: " + JSON.stringify(settings));
     return settings;
 });
 
