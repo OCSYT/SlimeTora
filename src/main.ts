@@ -409,22 +409,12 @@ ipcMain.on("stop-connection", () => {
     connectionActive = false;
 });
 
-ipcMain.handle("get-tracker-battery", async (_event, arg: string) => {
-    try {
-        let { batteryRemaining } = await device.getBatteryInfo(arg);
-        device.emit("battery", arg, batteryRemaining, 0); // BT doesn't support voltage (afaik)
-    } catch (err) {
-        error(`Error getting tracker battery: ${err}`);
-    }
+ipcMain.handle("fire-tracker-battery", (_event, arg: string) => {
+    device.fireTrackerBattery(arg);
 });
 
-ipcMain.handle("get-tracker-mag", async (_event, arg: string) => {
-    let magInfo = await device.getTrackerMag(arg);
-    mainWindow.webContents.send("device-mag", {
-        trackerName: arg,
-        magStatus: magInfo,
-    });
-    return magInfo;
+ipcMain.handle("fire-tracker-mag", (_event, arg: string) => {
+    device.fireTrackerMag(arg);
 });
 
 ipcMain.handle("get-tracker-settings", async (_event, arg) => {
@@ -844,10 +834,9 @@ let hasInitializedLogDir = false;
 
 async function logMessage(level: string, msg: string, where: string) {
     const date = new Date();
-    const formattedDate = formatDate(date);
     const logLevel = level.toUpperCase();
     const consoleLogFn = logLevel === "ERROR" ? console.error : console.log;
-    const formattedMessage = `${formattedDate} -- ${logLevel} -- (${where}): ${msg}`;
+    const formattedMessage = `${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}`;
 
     consoleLogFn(formattedMessage);
 
@@ -884,12 +873,6 @@ async function logToFile(logPath: PathLike, message: string) {
     } catch (err) {
         error(`Error logging to file: ${err}`);
     }
-}
-
-function formatDate(date: Date): string {
-    return `${date.toTimeString()} -- ${date.getFullYear()}-${("0" + (date.getMonth() + 1)).slice(
-        -2
-    )}-${("0" + date.getDate()).slice(-2)}`;
 }
 
 function formatDateForFile(date: Date): string {

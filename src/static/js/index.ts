@@ -353,8 +353,11 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     setTrackerSettings(deviceID, trackerSettings);
 
-    window.ipc.invoke("get-tracker-battery", deviceID);
-    window.ipc.invoke("get-tracker-mag", deviceID);
+    // if BLE, wait before sending battery request (so that the device can initialize properly)
+    if (bluetoothEnabled && deviceID.startsWith("HaritoraX")) await new Promise((r) => setTimeout(r, 6000));
+
+    window.ipc.invoke("fire-tracker-battery", deviceID);
+    window.ipc.invoke("fire-tracker-mag", deviceID);
 });
 
 window.ipc.on("disconnect", (_event, deviceID) => {
