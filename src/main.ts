@@ -33,7 +33,9 @@ import { PathLike } from "fs";
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
 let connectedDevices: Map<string, EmulatedTracker> = new Map<string, EmulatedTracker>();
-let deviceBattery: { [key: string]: { batteryRemaining: number; batteryVoltage: number } } = {};
+let deviceBattery: {
+    [key: string]: { batteryRemaining: number; batteryVoltage: number };
+} = {};
 
 let canLogToFile = false;
 let loggingMode = 1;
@@ -295,8 +297,7 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
  */
 
 ipcMain.on("start-connection", async (_event, arg) => {
-    const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } =
-        arg;
+    const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (isActive) {
@@ -335,7 +336,11 @@ function shouldInitializeNewDevice(): boolean {
 function initializeDevice(): void {
     const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
     log(`Creating new HaritoraX ${trackerType} instance with logging mode ${loggingMode}...`);
-    const loggingOptions = { 1: [false, false], 2: [true, false], 3: [true, true] };
+    const loggingOptions = {
+        1: [false, false],
+        2: [true, false],
+        3: [true, true],
+    };
     const [logging, imuProcessing] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
         loggingMode.toString()
     ] || [false, false];
@@ -440,8 +445,12 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         sensorMode,
         fpsMode,
         sensorAutoCorrection,
-    }: { deviceID: string; sensorMode: number; fpsMode: number; sensorAutoCorrection: string[] } =
-        arg;
+    }: {
+        deviceID: string;
+        sensorMode: number;
+        fpsMode: number;
+        sensorAutoCorrection: string[];
+    } = arg;
     // Validate input parameters
     if (!sensorMode || !fpsMode || !sensorAutoCorrection || sensorAutoCorrection.length === 0) {
         error(`Invalid settings received: ${JSON.stringify(arg)}`);
@@ -617,9 +626,7 @@ async function processQueue() {
 
     log(
         "Connected devices: " +
-            JSON.stringify(
-                Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key))
-            )
+            JSON.stringify(Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key)))
     );
 
     isProcessingQueue = false;
@@ -639,8 +646,7 @@ function startTrackerListeners(tracker: EmulatedTracker) {
 
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
-        if ((connectedDevices.has(deviceID) && connectedDevices.get(deviceID)) || !connectionActive)
-            return;
+        if ((connectedDevices.has(deviceID) && connectedDevices.get(deviceID)) || !connectionActive) return;
         await addTracker(deviceID);
     });
 
@@ -654,9 +660,7 @@ function startDeviceListeners() {
         mainWindow.webContents.send("disconnect", deviceID);
         log(
             "Connected devices: " +
-                JSON.stringify(
-                    Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key))
-                )
+                JSON.stringify(Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key)))
         );
     });
 
@@ -704,20 +708,12 @@ function startDeviceListeners() {
         // -jovannmc
 
         // Convert rotation to quaternion
-        const quaternion = new Quaternion(
-            rawRotation.x,
-            rawRotation.y,
-            rawRotation.z,
-            rawRotation.w
-        );
+        const quaternion = new Quaternion(rawRotation.x, rawRotation.y, rawRotation.z, rawRotation.w);
 
         // Convert the quaternion to Euler angles
-        const eulerRadians = new BetterQuaternion(
-            quaternion.w,
-            quaternion.x,
-            quaternion.y,
-            quaternion.z
-        ).toEuler("XYZ");
+        const eulerRadians = new BetterQuaternion(quaternion.w, quaternion.x, quaternion.y, quaternion.z).toEuler(
+            "XYZ"
+        );
 
         // Convert the rotation to degrees
         const rotation = {
@@ -743,48 +739,40 @@ function startDeviceListeners() {
         });
     });
 
-    device.on(
-        "battery",
-        (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
-            if (!trackerName) return;
+    device.on("battery", (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
+        if (!trackerName) return;
 
-            if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired")) {
-                // Store battery info for COM wireless tracker to be used later when the tracker is connected
-                // Doing this because the GX dongles immediately report the last known battery info when the COM port opens
-                deviceBattery[trackerName] = { batteryRemaining, batteryVoltage };
-            }
-
-            // Set batteryVoltageInVolts to 0 for BT wireless tracker
-            const batteryVoltageInVolts =
-                trackerName.startsWith("HaritoraX") &&
-                trackerName !== "HaritoraXWired" &&
-                wirelessTrackerEnabled
-                    ? 0
-                    : batteryVoltage / 1000;
-
-            if (trackerName.startsWith("HaritoraXWired")) {
-                // Change battery info for all trackers (wired)
-                connectedDevices.forEach((tracker) => {
-                    if (tracker)
-                        tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
-                });
-            } else {
-                // Change battery info for the specific tracker
-                const tracker = connectedDevices.get(trackerName);
-                if (tracker) tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
-            }
-
-            mainWindow.webContents.send("device-battery", {
-                trackerName,
-                batteryRemaining,
-                batteryVoltage: batteryVoltageInVolts,
-            });
-
-            log(
-                `Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltageInVolts}V)`
-            );
+        if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired")) {
+            // Store battery info for COM wireless tracker to be used later when the tracker is connected
+            // Doing this because the GX dongles immediately report the last known battery info when the COM port opens
+            deviceBattery[trackerName] = { batteryRemaining, batteryVoltage };
         }
-    );
+
+        // Set batteryVoltageInVolts to 0 for BT wireless tracker
+        const batteryVoltageInVolts =
+            trackerName.startsWith("HaritoraX") && trackerName !== "HaritoraXWired" && wirelessTrackerEnabled
+                ? 0
+                : batteryVoltage / 1000;
+
+        if (trackerName.startsWith("HaritoraXWired")) {
+            // Change battery info for all trackers (wired)
+            connectedDevices.forEach((tracker) => {
+                if (tracker) tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+            });
+        } else {
+            // Change battery info for the specific tracker
+            const tracker = connectedDevices.get(trackerName);
+            if (tracker) tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+        }
+
+        mainWindow.webContents.send("device-battery", {
+            trackerName,
+            batteryRemaining,
+            batteryVoltage: batteryVoltageInVolts,
+        });
+
+        log(`Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltageInVolts}V)`);
+    });
 
     device.on("log", (msg: string) => {
         log(msg);
@@ -887,9 +875,7 @@ async function logToFile(logPath: PathLike, message: string) {
 }
 
 function formatDateForFile(date: Date): string {
-    return `${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${(
-        "0" + date.getDate()
-    ).slice(-2)}`;
+    return `${date.getFullYear()}${("0" + (date.getMonth() + 1)).slice(-2)}${("0" + date.getDate()).slice(-2)}`;
 }
 
 /*

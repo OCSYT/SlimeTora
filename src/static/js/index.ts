@@ -128,15 +128,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSelectValue("logging-mode-select", loggingMode.toString());
 
     // Set input values based on settings
-    const trackerVisualizationFPSInput = document.getElementById(
-        "tracker-visualization-fps"
-    ) as HTMLInputElement;
+    const trackerVisualizationFPSInput = document.getElementById("tracker-visualization-fps") as HTMLInputElement;
     trackerVisualizationFPSInput.value = trackerVisualizationFPS.toString();
 
     // Set the selected COM ports
-    const comPortsSwitches = Array.from(
-        document.getElementById("com-ports").querySelectorAll("input")
-    );
+    const comPortsSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
     const selectedPorts: string[] = settings.global?.connectionMode?.comPorts || [];
 
     comPortsSwitches.forEach((port) => {
@@ -455,8 +451,7 @@ async function addDeviceToList(deviceID: string) {
 
     // Check if device has a user-specified name
     const deviceName: string = settings.trackers?.[deviceID]?.name || deviceID;
-    if (deviceName !== deviceID)
-        window.log(`Got user-specified name for ${deviceID}: ${deviceName}`);
+    if (deviceName !== deviceID) window.log(`Got user-specified name for ${deviceID}: ${deviceName}`);
 
     // Fill the div with device data
     newDevice.innerHTML = `
@@ -597,11 +592,7 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
         window.log("Added mag to sensor auto correction");
     }
 
-    window.log(
-        `Set sensor auto correction for ${deviceID} to: ${Array.from(sensorAutoCorrection).join(
-            ","
-        )}`
-    );
+    window.log(`Set sensor auto correction for ${deviceID} to: ${Array.from(sensorAutoCorrection).join(",")}`);
 
     window.ipc.send("set-tracker-settings", {
         deviceID,
@@ -628,29 +619,19 @@ function updateTrackerData(trackerElement: HTMLElement, rotation: Rotation, grav
 }
 
 function sendVisualizationData(trackerName: string, rawRotation: Rotation, rawGravity: Gravity) {
-    const visualizationIframe = document.getElementById(
-        `${trackerName}-visualization`
-    ) as HTMLIFrameElement | null;
-    visualizationIframe?.contentWindow?.postMessage(
-        { rotation: rawRotation, gravity: rawGravity },
-        "*"
-    );
+    const visualizationIframe = document.getElementById(`${trackerName}-visualization`) as HTMLIFrameElement | null;
+    visualizationIframe?.contentWindow?.postMessage({ rotation: rawRotation, gravity: rawGravity }, "*");
 }
 
 function updateAllTrackerBatteries(batteryRemaining: number, batteryVoltage: number) {
     const devices = document.querySelectorAll("#device-list .card");
     devices.forEach((device) => {
         const batteryText = device.querySelector("#battery");
-        if (batteryText)
-            batteryText.textContent = formatBatteryText(batteryRemaining, batteryVoltage);
+        if (batteryText) batteryText.textContent = formatBatteryText(batteryRemaining, batteryVoltage);
     });
 }
 
-function updateTrackerBattery(
-    trackerName: string,
-    batteryRemaining: number,
-    batteryVoltage: number
-) {
+function updateTrackerBattery(trackerName: string, batteryRemaining: number, batteryVoltage: number) {
     const batteryText = document.querySelector(`#${trackerName} #battery`);
     if (batteryText || !trackerName.startsWith("HaritoraXWired")) {
         batteryText.textContent = formatBatteryText(batteryRemaining, batteryVoltage);
@@ -826,9 +807,7 @@ function addEventListeners() {
     });
 
     document.getElementById("com-ports").addEventListener("change", () => {
-        const comPorts: HTMLInputElement[] = Array.from(
-            document.getElementById("com-ports").querySelectorAll("input")
-        );
+        const comPorts: HTMLInputElement[] = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
         selectedComPorts.length = 0;
         comPorts.forEach((port) => {
             if (port.checked) {
@@ -864,23 +843,20 @@ function addEventListeners() {
      * Other settings event listeners
      */
 
-    document
-        .getElementById("tracker-visualization-fps")
-        .addEventListener("change", async function () {
-            trackerVisualizationFPS = parseInt(
-                (document.getElementById("tracker-visualization-fps") as HTMLInputElement).value
-            );
-            window.log(`Selected tracker visualization FPS: ${trackerVisualizationFPS}`);
-            window.ipc.send("save-setting", {
-                global: {
-                    trackerVisualizationFPS: trackerVisualizationFPS,
-                },
-            });
+    document.getElementById("tracker-visualization-fps").addEventListener("change", async function () {
+        trackerVisualizationFPS = parseInt(
+            (document.getElementById("tracker-visualization-fps") as HTMLInputElement).value
+        );
+        window.log(`Selected tracker visualization FPS: ${trackerVisualizationFPS}`);
+        window.ipc.send("save-setting", {
+            global: {
+                trackerVisualizationFPS: trackerVisualizationFPS,
+            },
         });
+    });
 
     document.getElementById("language-select").addEventListener("change", async function () {
-        const language: string = (document.getElementById("language-select") as HTMLSelectElement)
-            .value;
+        const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
         window.log(`Changed selected language: ${language}`);
         window.changeLanguage(language);
         window.ipc.send("save-setting", {
@@ -905,9 +881,7 @@ function addEventListeners() {
     });
 
     document.getElementById("sensor-mode-select").addEventListener("change", async function () {
-        sensorMode = parseInt(
-            (document.getElementById("sensor-mode-select") as HTMLSelectElement).value
-        );
+        sensorMode = parseInt((document.getElementById("sensor-mode-select") as HTMLSelectElement).value);
         window.log(`Selected sensor mode: ${sensorMode}`);
         window.ipc.send("save-setting", {
             global: {
@@ -1006,9 +980,7 @@ function addEventListeners() {
             },
         });
 
-        const comPorts: HTMLInputElement[] = Array.from(
-            document.getElementById("com-ports").querySelectorAll("input")
-        );
+        const comPorts: HTMLInputElement[] = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
 
         if (bypassCOMPortLimit) {
             comPorts.forEach((port) => {
@@ -1030,9 +1002,7 @@ function addEventListeners() {
     });
 
     document.getElementById("logging-mode-select").addEventListener("change", async function () {
-        loggingMode = parseInt(
-            (document.getElementById("logging-mode-select") as HTMLSelectElement).value
-        );
+        loggingMode = parseInt((document.getElementById("logging-mode-select") as HTMLSelectElement).value);
         window.log(`Selected logging mode: ${loggingMode}`);
         window.ipc.send("set-logging", canLogToFile);
         window.ipc.send("save-setting", {
@@ -1057,9 +1027,7 @@ window.saveSettings = () => {
     unsavedSettings(false);
 
     // Grab all com-port inputs
-    const comPorts: HTMLInputElement[] = Array.from(
-        document.getElementById("com-ports").querySelectorAll("input")
-    );
+    const comPorts: HTMLInputElement[] = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
     const selectedPorts: string[] = [];
 
     comPorts.forEach((port) => {

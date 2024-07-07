@@ -39,17 +39,11 @@ window.ipc.on("trackerName", (_event, arg) => {
                     );
                 }
             } else {
-                trackerNameElement.textContent = trackerNameElement.textContent.replace(
-                    "{trackerName}",
-                    deviceID
-                );
+                trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", deviceID);
             }
         });
     } else {
-        trackerNameElement.textContent = trackerNameElement.textContent.replace(
-            "{trackerName}",
-            deviceID
-        );
+        trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", deviceID);
     }
 
     // Load settings
@@ -69,10 +63,7 @@ async function loadSettings(deviceID: string) {
                 : settingsFPSMode;
         settingsSensorMode =
             trackerSettings.sensorMode && trackerSettings.sensorMode !== -1
-                ? await getSetting(
-                      `trackers.${deviceID}.sensorMode`,
-                      trackerSettings.sensorMode || 2
-                  )
+                ? await getSetting(`trackers.${deviceID}.sensorMode`, trackerSettings.sensorMode || 2)
                 : settingsSensorMode;
         settingsAccelerometerEnabled = await getSetting(
             `trackers.${deviceID}.accelerometerEnabled`,
@@ -88,13 +79,9 @@ async function loadSettings(deviceID: string) {
         );
 
         // Get the checkbox elements
-        const accelerometerSwitch = document.getElementById(
-            "accelerometer-switch"
-        ) as HTMLInputElement;
+        const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
         const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
-        const magnetometerSwitch = document.getElementById(
-            "magnetometer-switch"
-        ) as HTMLInputElement;
+        const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
 
         // Set the checked property based on the settings
         accelerometerSwitch.checked = settingsAccelerometerEnabled;
@@ -169,9 +156,7 @@ async function loadSettings(deviceID: string) {
     });
 
     document.getElementById("fps-mode-select").addEventListener("change", async function () {
-        settingsFPSMode = parseInt(
-            (document.getElementById("fps-mode-select") as HTMLSelectElement).value
-        );
+        settingsFPSMode = parseInt((document.getElementById("fps-mode-select") as HTMLSelectElement).value);
         window.log(`Changed FPS mode: ${settingsFPSMode}`);
         window.ipc.send("save-setting", {
             trackers: {
@@ -189,9 +174,7 @@ async function loadSettings(deviceID: string) {
     });
 
     document.getElementById("sensor-mode-select").addEventListener("change", async function () {
-        settingsSensorMode = parseInt(
-            (document.getElementById("sensor-mode-select") as HTMLSelectElement).value
-        );
+        settingsSensorMode = parseInt((document.getElementById("sensor-mode-select") as HTMLSelectElement).value);
         window.log(`Changed sensor mode: ${settingsSensorMode}`);
         window.ipc.send("save-setting", {
             trackers: {

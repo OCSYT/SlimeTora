@@ -64,10 +64,7 @@ contextBridge.exposeInMainWorld("changeLanguage", (lng: string) => {
 
 contextBridge.exposeInMainWorld("translate", async (key: string) => {
     if (!localize) {
-        const result = await ipcRenderer.invoke(
-            "translate",
-            key
-        );
+        const result = await ipcRenderer.invoke("translate", key);
         return result;
     } else {
         return i18next.t(key);
