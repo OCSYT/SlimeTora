@@ -33,11 +33,12 @@ import { PathLike } from "fs";
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
 let connectedDevices: Map<string, EmulatedTracker> = new Map<string, EmulatedTracker>();
+let deviceBattery: { [key: string]: { batteryRemaining: number; batteryVoltage: number } } = {};
+
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
 let heartbeatInterval = 2000;
-
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
 // this variable is literally only used so i can fix a stupid issue where with both BT+COM enabled, it sometimes connects the BT trackers again directly after again, breaking the program
@@ -409,12 +410,21 @@ ipcMain.on("stop-connection", () => {
     connectionActive = false;
 });
 
-ipcMain.handle("fire-tracker-battery", (_event, arg: string) => {
-    device.fireTrackerBattery(arg);
+ipcMain.handle("fire-tracker-battery", (_event, trackerName: string) => {
+    // For COM wireless trackers, set battery info immediately after connecting
+    if (deviceBattery[trackerName]) {
+        mainWindow.webContents.send("device-battery", {
+            trackerName,
+            batteryRemaining: deviceBattery[trackerName]?.batteryRemaining || 0,
+            batteryVoltage: deviceBattery[trackerName]?.batteryVoltage || 0,
+        });
+    }
+
+    device.fireTrackerBattery(trackerName);
 });
 
-ipcMain.handle("fire-tracker-mag", (_event, arg: string) => {
-    device.fireTrackerMag(arg);
+ipcMain.handle("fire-tracker-mag", (_event, trackerName: string) => {
+    device.fireTrackerMag(trackerName);
 });
 
 ipcMain.handle("get-tracker-settings", async (_event, arg) => {
@@ -662,10 +672,7 @@ function startDeviceListeners() {
 
         let key = `${trackerName}-${buttonPressed}`;
 
-        if (!clickCounts[key]) {
-            clickCounts[key] = 0;
-        }
-
+        if (!clickCounts[key]) clickCounts[key] = 0;
         clickCounts[key]++;
         if (clickTimeouts[key] !== undefined) clearTimeout(clickTimeouts[key]);
 
@@ -739,15 +746,19 @@ function startDeviceListeners() {
     device.on(
         "battery",
         (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
-            if (
-                trackerName === null ||
-                (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired"))
-            )
-                return;
+            if (!trackerName) return;
+
+            if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired")) {
+                // Store battery info for COM wireless tracker to be used later when the tracker is connected
+                // Doing this because the GX dongles immediately report the last known battery info when the COM port opens
+                deviceBattery[trackerName] = { batteryRemaining, batteryVoltage };
+            }
 
             // Set batteryVoltageInVolts to 0 for BT wireless tracker
             const batteryVoltageInVolts =
-                trackerName.startsWith("HaritoraX") && wirelessTrackerEnabled
+                trackerName.startsWith("HaritoraX") &&
+                trackerName !== "HaritoraXWired" &&
+                wirelessTrackerEnabled
                     ? 0
                     : batteryVoltage / 1000;
 
