@@ -4,7 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 // @ts-ignore
-import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
+import { HaritoraX } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
 import fs from "fs/promises";
@@ -97,45 +97,26 @@ const configPath = path.resolve(mainPath, "config.json");
  * Grabs the available translations in the program directory's "languages" folder to add as an option in renderer process
  */
 
-async function readJSONWithRetries(filePath: string, retries = 3, delayMs = 100): Promise<any> {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            const fileContent = await fs.readFile(filePath, "utf-8");
-            return JSON.parse(fileContent);
-        } catch (err: any) {
-            if (err.code === "ENOENT" || attempt === retries) throw error;
-            console.log(`Attempt ${attempt} failed, retrying after ${delayMs}ms...`);
-            await new Promise((resolve) => setTimeout(resolve, delayMs));
-        }
-    }
-}
-
 async function loadTranslations() {
     const languagesDir = path.join(mainPath, "languages");
 
-    try {
-        await fs.access(languagesDir);
-    } catch (err) {
-        await fs.mkdir(languagesDir, { recursive: true });
+    if (!fsSync.existsSync(languagesDir)) {
+        fsSync.mkdirSync(languagesDir);
     }
 
     const srcLanguagesDir = path.join(__dirname, "static", "languages");
-    const srcFiles = await fs.readdir(srcLanguagesDir);
+    const srcFiles = fsSync.readdirSync(srcLanguagesDir);
 
     for (const file of srcFiles) {
-        const srcFilePath = path.join(srcLanguagesDir, file);
-        const destFilePath = path.join(languagesDir, file);
-        const content = await fs.readFile(srcFilePath);
-        await fs.writeFile(destFilePath, content);
+        fsSync.copyFileSync(path.join(srcLanguagesDir, file), path.join(languagesDir, file));
     }
 
-    const files = await fs.readdir(languagesDir);
+    const files = fsSync.readdirSync(languagesDir);
     const resources: any = {};
 
     for (const file of files) {
         const lang = path.basename(file, ".json");
-        const filePath = path.join(languagesDir, file);
-        const translations = await readJSONWithRetries(filePath);
+        const translations = JSON.parse(fsSync.readFileSync(path.join(languagesDir, file), "utf-8"));
 
         resources[lang] = { translation: translations };
     }
@@ -434,10 +415,12 @@ ipcMain.handle("fire-tracker-battery", (_event, trackerName: string) => {
         });
     }
 
+    // @ts-ignore
     device.fireTrackerBattery(trackerName);
 });
 
 ipcMain.handle("fire-tracker-mag", (_event, trackerName: string) => {
+    // @ts-ignore
     device.fireTrackerMag(trackerName);
 });
 
