@@ -66,7 +66,7 @@ const lastErrorShownTime: Record<ErrorType, number> = {
     [ErrorType.SendHeartbeatError]: 0,
     [ErrorType.IMUProcessError]: 0,
     [ErrorType.BluetoothCloseError]: 0,
-    [ErrorType.SerialUnexpectedError]: 0
+    [ErrorType.SerialUnexpectedError]: 0,
 };
 
 const errorCooldownPeriod = 500;
@@ -180,6 +180,11 @@ const createWindow = async () => {
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", await loadTranslations());
         mainWindow.webContents.send("version", app.getVersion());
+    });
+
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: "deny" };
     });
 };
 
