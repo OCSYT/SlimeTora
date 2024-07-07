@@ -30,6 +30,47 @@ import {
 import { EmulatedTracker } from "@slimevr/tracker-emulation";
 import { PathLike } from "fs";
 
+enum ErrorType {
+    IMUProcessError = "Error decoding IMU packet",
+    MagProcessError = "Error processing mag data",
+    SettingsProcessError = "Error processing settings data",
+    ButtonProcessError = "Error processing button data",
+
+    BluetoothScanError = "Error starting bluetooth scanning",
+    BluetoothDiscoveryError = "Error during discovery/connection process",
+    BluetoothCloseError = "Error while closing bluetooth connection",
+
+    SerialWriteError = "Error writing data to serial port",
+    SerialUnexpectedError = "Error on port",
+
+    JSONParseError = "JSON",
+    SendHeartbeatError = "Error while sending heartbeat",
+    UnexpectedError = "An unexpected error occurred",
+
+    TrackerSettingsWriteError = "Error sending tracker settings",
+    ConnectionStartError = "Opening COM",
+    // TODO: add more error types
+}
+
+const lastErrorShownTime: Record<ErrorType, number> = {
+    [ErrorType.ConnectionStartError]: 0,
+    [ErrorType.TrackerSettingsWriteError]: 0,
+    [ErrorType.MagProcessError]: 0,
+    [ErrorType.SettingsProcessError]: 0,
+    [ErrorType.ButtonProcessError]: 0,
+    [ErrorType.SerialWriteError]: 0,
+    [ErrorType.BluetoothScanError]: 0,
+    [ErrorType.BluetoothDiscoveryError]: 0,
+    [ErrorType.JSONParseError]: 0,
+    [ErrorType.UnexpectedError]: 0,
+    [ErrorType.SendHeartbeatError]: 0,
+    [ErrorType.IMUProcessError]: 0,
+    [ErrorType.BluetoothCloseError]: 0,
+    [ErrorType.SerialUnexpectedError]: 0
+};
+
+const errorCooldownPeriod = 500;
+
 let mainWindow: BrowserWindow | null = null;
 let device: HaritoraX = undefined;
 let connectedDevices: Map<string, EmulatedTracker> = new Map<string, EmulatedTracker>();
@@ -301,18 +342,23 @@ ipcMain.on("start-connection", async (_event, arg) => {
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (isActive) {
-        logErrorAndNotify("Tried to start connection while already active");
+        error("Tried to start connection while already active");
         return false;
     }
 
-    if (!isValidDeviceConfiguration(types, ports)) return false;
+    if (!isValidDeviceConfiguration(types, ports)) error("Invalid device configuration");
 
     if (shouldInitializeNewDevice()) {
         initializeDevice();
         startDeviceListeners();
     }
 
-    await attemptConnection(types, ports);
+    mainWindow.webContents.send("set-status", "main.status.searching");
+    if (types.includes("bluetooth")) device.startConnection("bluetooth");
+    if (types.includes("com") && ports) device.startConnection("com", ports, heartbeatInterval);
+    connectionActive = true;
+
+    await notifyConnectedDevices();
 });
 
 function isValidDeviceConfiguration(types: string[], ports?: string[]): boolean {
@@ -348,34 +394,6 @@ function initializeDevice(): void {
     device = new HaritoraX(trackerType, logging, imuProcessing);
 }
 
-async function attemptConnection(types: string[], ports?: string[]): Promise<void> {
-    mainWindow.webContents.send("set-status", "main.status.searching");
-
-    if (types.includes("bluetooth") && !(await startBluetoothConnection())) return;
-    if (types.includes("com") && ports && !(await startComConnection(ports))) return;
-
-    connectionActive = true;
-    await notifyConnectedDevices();
-}
-
-async function startBluetoothConnection(): Promise<boolean> {
-    log("Starting Bluetooth connection");
-    if (!device.startConnection("bluetooth")) {
-        logErrorAndNotify("Failed to start BLE connection");
-        return false;
-    }
-    return true;
-}
-
-async function startComConnection(ports: string[]): Promise<boolean> {
-    log("Starting COM connection with ports: " + JSON.stringify(ports));
-    if (!device.startConnection("com", ports, heartbeatInterval)) {
-        logErrorAndNotify("Failed to start COM connection");
-        return false;
-    }
-    return true;
-}
-
 async function notifyConnectedDevices(): Promise<void> {
     const activeTrackers = Array.from(new Set(device.getActiveTrackers()));
     if (activeTrackers.length === 0) return;
@@ -383,15 +401,6 @@ async function notifyConnectedDevices(): Promise<void> {
         await addTracker(trackerName);
     }
     log("Connected devices: " + JSON.stringify(activeTrackers));
-}
-
-async function logErrorAndNotify(message: string) {
-    error(message);
-    mainWindow.webContents.send("set-status", "main.status.failed");
-    dialog.showErrorBox(
-        await translate("dialogs.connectionFailed.title"),
-        await translate("dialogs.connectionFailed.message")
-    );
 }
 
 ipcMain.on("stop-connection", () => {
@@ -778,9 +787,34 @@ function startDeviceListeners() {
         log(msg);
     });
 
-    device.on("error", (msg: string) => {
-        error(msg);
+    device.on("error", (msg: string, exceptional: boolean) => {
+        if (exceptional) {
+            if (msg.includes(ErrorType.ConnectionStartError)) {
+                handleError(msg, ErrorType.ConnectionStartError, handleConnectionStartError);
+            }
+
+            // TODO: add more error handling
+        } else {
+            error(msg, "haritorax-interpreter");
+        }
     });
+}
+
+function handleError(msg: string, errorType: ErrorType, handler: (msg: string) => void) {
+    const now = Date.now();
+    if (now - lastErrorShownTime[errorType] >= errorCooldownPeriod) {
+        lastErrorShownTime[errorType] = now;
+        handler(msg);
+    }
+}
+
+async function handleConnectionStartError(err: any) {
+    error(`Failed to start tracker connection: ${err}`, "haritorax-interpreter");
+    mainWindow.webContents.send("set-status", "main.status.failed");
+    dialog.showErrorBox(
+        await translate("dialogs.connectionFailed.title"),
+        await translate("dialogs.connectionFailed.message")
+    );
 }
 
 /*
@@ -813,11 +847,11 @@ const connectToServer = async () => {
     heartbeatTracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
 
     heartbeatTracker.on("unknown-incoming-packet", (packet: any) => {
-        log(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
+        error(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
     });
 
     heartbeatTracker.on("unknown-incoming-packet", (buf: Buffer) =>
-        log(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
+        error(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
     );
 
     await heartbeatTracker.init();
@@ -834,7 +868,7 @@ let hasInitializedLogDir = false;
 async function logMessage(level: string, msg: string, where: string) {
     const date = new Date();
     const logLevel = level.toUpperCase();
-    const consoleLogFn = logLevel === "ERROR" ? console.error : console.log;
+    const consoleLogFn = logLevel === "ERROR" || "SEVERE" ? console.error : console.log;
     const formattedMessage = `${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}`;
 
     consoleLogFn(formattedMessage);
@@ -852,8 +886,13 @@ function log(msg: string, where = "main") {
     logMessage("info", msg, where);
 }
 
-function error(msg: string, where = "main") {
-    logMessage("error", msg, where);
+function error(msg: string, where = "main", exceptional = false) {
+    if (exceptional) {
+        logMessage("severe", msg, where);
+        throw new Error(msg);
+    } else {
+        logMessage("error", msg, where);
+    }
 }
 
 async function initializeLogDirectory(logDir: PathLike) {

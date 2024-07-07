@@ -192,10 +192,15 @@ async function startConnection() {
     window.log("Starting connection...");
     setStatus("main.status.searchingServer");
 
-    const slimeVRFound: boolean = await window.ipc.invoke("search-for-server", null);
-    if (!(await handleSlimeVRCheck(slimeVRFound))) return false;
-    if (!(await handleTrackerModelCheck())) return false;
-    if (!(await handleConnectionType())) return false;
+    try {
+        const slimeVRFound: boolean = await window.ipc.invoke("search-for-server", null);
+        if (!(await handleSlimeVRCheck(slimeVRFound))) return false;
+        if (!(await handleTrackerModelCheck())) return false;
+        if (!(await handleConnectionType())) return false;
+    } catch (err) {
+        window.error(`Error starting connection: ${err}`);
+        return false;
+    }
 
     toggleConnectionButtons();
 }
@@ -250,27 +255,31 @@ async function handleTrackerModelCheck() {
 }
 
 async function handleConnectionType() {
-    if (bluetoothEnabled || comEnabled) {
-        let types = [];
-        if (bluetoothEnabled) types.push("bluetooth");
-        if (comEnabled) {
-            if (selectedComPorts.length === 0) {
-                window.error("No COM ports selected");
-                setStatus("main.status.noComPorts");
-                await showErrorDialog("dialogs.noComPorts.title", "dialogs.noComPorts.message");
-                return false;
+    try {
+        if (bluetoothEnabled || comEnabled) {
+            let types = [];
+            if (bluetoothEnabled) types.push("bluetooth");
+            if (comEnabled) {
+                if (selectedComPorts.length === 0) {
+                    window.error("No COM ports selected");
+                    setStatus("main.status.noComPorts");
+                    await showErrorDialog("dialogs.noComPorts.title", "dialogs.noComPorts.message");
+                    return false;
+                }
+                types.push("com");
             }
-            types.push("com");
+            window.ipc.send("start-connection", { types, ports: selectedComPorts, isActive });
+            window.log(`Starting ${types.join(" and ")} connection with ports: ${selectedComPorts}`);
+            return true;
+        } else {
+            window.error("No connection mode enabled");
+            setStatus("main.status.noConnectionMode");
+            await showErrorDialog("dialogs.noConnectionMode.title", "dialogs.noConnectionMode.message");
+            return false;
         }
-        window.ipc.send("start-connection", { types, ports: selectedComPorts, isActive });
-        window.log(`Starting ${types.join(" and ")} connection with ports: ${selectedComPorts}`);
-    } else {
-        window.error("No connection mode enabled");
-        setStatus("main.status.noConnectionMode");
-        await showErrorDialog("dialogs.noConnectionMode.title", "dialogs.noConnectionMode.message");
-        return false;
+    } catch (err) {
+        return err;
     }
-    return true;
 }
 
 /*
