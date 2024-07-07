@@ -8,6 +8,8 @@ A program that connects the HaritoraX trackers to the [SlimeVR server](https://d
 
 Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
+### For support, join the Discord server: https://discord.gg/XdfnKD9QVM
+
 </div>
 
 # Screenshots
@@ -40,11 +42,15 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
 # Known issues
 - Battery and mag info for `HaritoraX Wireless` trackers (connected via BT) not displaying
-  - Fixed with next release (v1.2.0)
+  - Fixed with `v1.2.0-beta1`, check [releases](https://github.com/OCSYT/SlimeTora/releases).
+- Detection of being unable to access trackers unreliable
+  - Fixed with `v1.2.0-beta1`, check [releases](https://github.com/OCSYT/SlimeTora/releases).
 - Battery information jumps to incorrect percentages/voltage randomly
   - Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers themsleves.
-- Detection of being unable to access trackers unreliable
+
 
 # Documentation & Getting Started
 
 Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
+
+For support, join the Discord server: https://discord.gg/XdfnKD9QVM
