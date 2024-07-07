@@ -39,9 +39,11 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 + ..and many more improvements coming soon!
 
 # Known issues
+- Battery and mag info for `HaritoraX Wireless` trackers (connected via BT) not displaying
+  - Fixed with next release (v1.2.0)
 - Battery information jumps to incorrect percentages/voltage randomly
   - Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers themsleves.
-- Detection of being unable to access trackers unreliable(?)
+- Detection of being unable to access trackers unreliable
 
 # Documentation & Getting Started
 
