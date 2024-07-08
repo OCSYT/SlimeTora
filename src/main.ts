@@ -191,11 +191,11 @@ const createWindow = async () => {
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
-    if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
-    if (device && device.getConnectionModeActive("com")) device.stopConnection("com");
-
     connectedDevices.forEach((device) => device.deinit());
     connectedDevices.clear();
+    
+    if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
+    if (device && device.getConnectionModeActive("com")) device.stopConnection("com");
 
     device = undefined;
     mainWindow = null;
