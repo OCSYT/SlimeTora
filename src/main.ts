@@ -191,7 +191,17 @@ const createWindow = async () => {
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
-    connectedDevices.forEach((device) => device.deinit());
+    connectedDevices.forEach((device, deviceId) => {
+        if (device === undefined) {
+            connectedDevices.delete(deviceId);
+        } else {
+            try {
+                device.deinit();
+            } catch (err) {
+                error(`Failed to de-initialize device: ${err}`);
+            }
+        }
+    });
     connectedDevices.clear();
     
     if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
