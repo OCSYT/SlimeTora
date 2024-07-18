@@ -390,6 +390,7 @@ window.ipc.on("device-data", async (_event: any, arg) => {
 
 window.ipc.on("device-battery", (_event, arg) => {
     const { trackerName, batteryRemaining, batteryVoltage } = arg;
+    let batteryVoltageInVolts = 0;
     if (
         !isActive ||
         !trackerName ||
@@ -398,13 +399,15 @@ window.ipc.on("device-battery", (_event, arg) => {
     )
         return;
 
+    if (batteryVoltage) batteryVoltageInVolts = batteryVoltage / 1000;
+
     if (trackerName === "HaritoraXWired") {
-        updateAllTrackerBatteries(batteryRemaining, batteryVoltage);
+        updateAllTrackerBatteries(batteryRemaining, batteryVoltageInVolts);
     } else {
-        updateTrackerBattery(trackerName, batteryRemaining, batteryVoltage);
+        updateTrackerBattery(trackerName, batteryRemaining, batteryVoltageInVolts);
     }
 
-    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`);
+    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltageInVolts}V)`);
 });
 
 window.ipc.on("device-mag", (_event, arg) => {
