@@ -193,8 +193,11 @@ async function startConnection() {
     setStatus("main.status.searchingServer");
 
     try {
-        const slimeVRFound: boolean = await window.ipc.invoke("search-for-server", null);
-        if (!(await handleSlimeVRCheck(slimeVRFound))) return false;
+        if (!skipSlimeVRCheck) {
+            const slimeVRFound: boolean = await window.ipc.invoke("search-for-server", null);
+            if (!(await handleSlimeVRCheck(slimeVRFound))) return false;
+        }
+        
         if (!(await handleTrackerModelCheck())) return false;
         if (!(await handleConnectionType())) return false;
     } catch (err) {
