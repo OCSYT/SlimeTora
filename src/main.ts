@@ -2,13 +2,12 @@
  * Global imports and variables
  */
 
-import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
 // @ts-ignore
 import { HaritoraX } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
 import BetterQuaternion from "quaternion";
-import fs from "fs/promises";
-import * as fsSync from "fs";
+import fs from "fs";
 import path from "path";
 import * as _ from "lodash-es";
 
@@ -91,6 +90,9 @@ let connectionActive = false;
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
+const languagesPath = path.resolve(mainPath, "resources", "languages");
+
+const resources = await loadTranslations();
 
 /*
  * Translations (i18next)
@@ -98,25 +100,13 @@ const configPath = path.resolve(mainPath, "config.json");
  */
 
 async function loadTranslations() {
-    const languagesDir = path.join(mainPath, "languages");
-
-    if (!fsSync.existsSync(languagesDir)) {
-        fsSync.mkdirSync(languagesDir);
-    }
-
-    const srcLanguagesDir = path.join(__dirname, "static", "languages");
-    const srcFiles = fsSync.readdirSync(srcLanguagesDir);
-
-    for (const file of srcFiles) {
-        fsSync.copyFileSync(path.join(srcLanguagesDir, file), path.join(languagesDir, file));
-    }
-
-    const files = fsSync.readdirSync(languagesDir);
+    const files = await fs.promises.readdir(languagesPath);
     const resources: any = {};
+    log(`Loading translations from ${languagesPath}`);
 
     for (const file of files) {
         const lang = path.basename(file, ".json");
-        const translations = JSON.parse(fsSync.readFileSync(path.join(languagesDir, file), "utf-8"));
+        const translations = JSON.parse(await fs.promises.readFile(path.join(languagesPath, file), "utf-8"));
 
         resources[lang] = { translation: translations };
     }
@@ -135,10 +125,10 @@ async function translate(key: string) {
 const createWindow = async () => {
     try {
         // Check if the config file is accessible
-        await fs.access(configPath);
+        await fs.promises.access(configPath);
 
         // Read and parse the config file
-        const data = await fs.readFile(configPath, "utf8");
+        const data = await fs.promises.readFile(configPath, "utf8");
         const config: { [key: string]: any } = JSON.parse(data);
 
         // Set configuration variables
@@ -149,7 +139,7 @@ const createWindow = async () => {
         loggingMode = config.global?.debug?.loggingMode || 1;
     } catch (err) {
         // If the config file doesn't exist, create it
-        await fs.writeFile(configPath, "{}");
+        await fs.promises.writeFile(configPath, "{}");
         log("Config file not found, creating new one.");
     }
 
@@ -162,7 +152,6 @@ const createWindow = async () => {
             contextIsolation: true,
             nodeIntegration: true,
             preload: path.join(__dirname, "preload.mjs"),
-            backgroundThrottling: false,
             spellcheck: false,
             sandbox: false, // fixes startup crashes due to GPU process, shouldn't be too large of a security risk as we're not loading any external content/connect to internet
         },
@@ -178,7 +167,7 @@ const createWindow = async () => {
     );
 
     mainWindow.webContents.on("did-finish-load", async () => {
-        mainWindow.webContents.send("localize", await loadTranslations());
+        mainWindow.webContents.send("localize", resources);
         mainWindow.webContents.send("version", app.getVersion());
     });
 
@@ -188,9 +177,7 @@ const createWindow = async () => {
     });
 };
 
-app.on("ready", createWindow);
-
-app.on("window-all-closed", () => {
+const closeApp = () => {
     connectedDevices.forEach((device, deviceId) => {
         if (device === undefined) {
             connectedDevices.delete(deviceId);
@@ -203,7 +190,7 @@ app.on("window-all-closed", () => {
         }
     });
     connectedDevices.clear();
-    
+
     if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
     if (device && device.getConnectionModeActive("com")) device.stopConnection("com");
 
@@ -211,7 +198,15 @@ app.on("window-all-closed", () => {
     mainWindow = null;
 
     app.quit();
-});
+};
+
+// Force iGPU
+app.commandLine.appendSwitch("force_low_power_gpu");
+
+Menu.setApplicationMenu(null);
+
+app.on("ready", createWindow);
+app.on("window-all-closed", closeApp);
 
 /*
  * Renderer handlers
@@ -249,7 +244,6 @@ ipcMain.handle("get-com-ports", async () => {
 });
 
 ipcMain.handle("get-languages", async () => {
-    const resources = await loadTranslations();
     return Object.keys(resources);
 });
 
@@ -287,7 +281,7 @@ ipcMain.on("set-wired-tracker", (_event, arg) => {
 ipcMain.on("open-logs-folder", async () => {
     const logDir = path.resolve(mainPath, "logs");
     try {
-        await fs.access(logDir);
+        await fs.promises.access(logDir);
         await shell.openPath(logDir);
     } catch (err) {
         error(`Logs directory does not exist ${err}`);
@@ -308,7 +302,6 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
             contextIsolation: true,
             nodeIntegration: true,
             preload: path.join(__dirname, "preload.mjs"),
-            backgroundThrottling: true,
             spellcheck: false,
             sandbox: false, // fixes startup crashes due to GPU process, shouldn't be too large of a security risk as we're not loading any external content/connect to internet
         },
@@ -342,7 +335,10 @@ ipcMain.on("start-connection", async (_event, arg) => {
         return false;
     }
 
-    if (!isValidDeviceConfiguration(types, ports)) error("Invalid device configuration");
+    if (!isValidDeviceConfiguration(types, ports)) {
+        error("Invalid device configuration");
+        return false;
+    }
 
     if (shouldInitializeNewDevice()) {
         initializeDevice();
@@ -517,11 +513,11 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
  */
 
 ipcMain.handle("get-settings", () => {
-    if (fsSync.existsSync(configPath)) {
-        const data = fsSync.readFileSync(configPath);
+    if (fs.existsSync(configPath)) {
+        const data = fs.readFileSync(configPath);
         return JSON.parse(data.toString());
     } else {
-        fsSync.writeFileSync(configPath, "{}");
+        fs.writeFileSync(configPath, "{}");
         return {};
     }
 });
@@ -531,7 +527,7 @@ ipcMain.on("save-setting", (_event, data) => {
 });
 
 function saveSetting(data: { [key: string]: any }) {
-    const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     // Use lodash's mergeWith to merge the new data with the existing config (not merge as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
     const mergedConfig = _.mergeWith(config, data, (objValue: any, srcValue: any) => {
@@ -540,11 +536,11 @@ function saveSetting(data: { [key: string]: any }) {
         }
     });
 
-    fsSync.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 4));
+    fs.writeFileSync(configPath, JSON.stringify(mergedConfig, null, 4));
 }
 
 ipcMain.handle("has-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     const properties = name.split(".");
     let current = config;
@@ -560,7 +556,7 @@ ipcMain.handle("has-setting", (_event, name) => {
 });
 
 ipcMain.handle("get-setting", (_event, name) => {
-    const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     const properties = name.split(".");
     let current = config;
@@ -591,7 +587,7 @@ async function processQueue() {
     if (isProcessingQueue || trackerQueue.length === 0) return;
     isProcessingQueue = true;
 
-    const config: { [key: string]: any } = JSON.parse(fsSync.readFileSync(configPath).toString());
+    const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     while (trackerQueue.length > 0) {
         const trackerName = trackerQueue.shift();
@@ -896,16 +892,16 @@ function error(msg: string, where = "main", exceptional = false) {
 async function initializeLogDirectory(logDir: PathLike) {
     if (hasInitializedLogDir) return;
     try {
-        await fs.access(logDir);
+        await fs.promises.access(logDir);
     } catch {
-        await fs.mkdir(logDir, { recursive: true });
+        await fs.promises.mkdir(logDir, { recursive: true });
     }
     hasInitializedLogDir = true;
 }
 
 async function logToFile(logPath: PathLike, message: string) {
     try {
-        await fs.appendFile(logPath, message);
+        await fs.promises.appendFile(logPath, message);
     } catch (err) {
         error(`Error logging to file: ${err}`);
     }
