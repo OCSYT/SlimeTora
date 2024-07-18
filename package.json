@@ -19,7 +19,7 @@
     "main": "dist/main.js",
     "scripts": {
         "start": "npm run preload && electron .",
-        "dev": "tsc && npm run copy-files && electron .",
+        "dev": "cross-env FORCE_PACKAGED=true tsc && npm run copy-files && electron .",
         "build": "npm run preload && npx @electron/rebuild && npx @electron/packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar --extra-resource=src/languages",
         "preload": "del-cli dist/ && tsc && npm run copy-files",
         "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.png\" \"src/**/*.svg\" \"src/**/*.fbx\" src/languages/* dist/",
@@ -48,6 +48,7 @@
         "@slimevr/common": "^0.1.2",
         "@slimevr/firmware-protocol": "^0.6.3",
         "@slimevr/tracker-emulation": "^0.2.2",
+        "cross-env": "^7.0.3",
         "haritorax-interpreter": "^2.0.1",
         "i18next": "^23.11.1",
         "loc-i18next": "^0.1.6",

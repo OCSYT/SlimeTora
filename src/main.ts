@@ -6,77 +6,26 @@ import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
 // @ts-ignore
 import { HaritoraX } from "haritorax-interpreter";
 import { SerialPort } from "serialport";
-import BetterQuaternion from "quaternion";
-import fs from "fs";
-import path from "path";
-import * as _ from "lodash-es";
-
+import fs, { PathLike } from "fs";
+import path, { dirname } from "path";
 import { fileURLToPath, format } from "url";
-import { dirname } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import { MACAddress, Quaternion, Vector } from "@slimevr/common";
-import {
-    RotationDataType,
-    BoardType,
-    MCUType,
-    SensorStatus,
-    SensorType,
-    UserAction,
-    FirmwareFeatureFlags,
-} from "@slimevr/firmware-protocol";
-import { EmulatedTracker } from "@slimevr/tracker-emulation";
-import { PathLike } from "fs";
+const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
+const configPath = path.resolve(mainPath, "config.json");
+const languagesPath = path.resolve(mainPath, "resources", "languages");
 
-enum ErrorType {
-    IMUProcessError = "Error decoding IMU packet",
-    MagProcessError = "Error processing mag data",
-    SettingsProcessError = "Error processing settings data",
-    ButtonProcessError = "Error processing button data",
-
-    BluetoothScanError = "Error starting bluetooth scanning",
-    BluetoothDiscoveryError = "Error during discovery/connection process",
-    BluetoothCloseError = "Error while closing bluetooth connection",
-
-    SerialWriteError = "Error writing data to serial port",
-    SerialUnexpectedError = "Error on port",
-
-    JSONParseError = "JSON",
-    SendHeartbeatError = "Error while sending heartbeat",
-    UnexpectedError = "An unexpected error occurred",
-
-    TrackerSettingsWriteError = "Error sending tracker settings",
-    ConnectionStartError = "Opening COM",
-    // TODO: add more error types
-}
-
-const lastErrorShownTime: Record<ErrorType, number> = {
-    [ErrorType.ConnectionStartError]: 0,
-    [ErrorType.TrackerSettingsWriteError]: 0,
-    [ErrorType.MagProcessError]: 0,
-    [ErrorType.SettingsProcessError]: 0,
-    [ErrorType.ButtonProcessError]: 0,
-    [ErrorType.SerialWriteError]: 0,
-    [ErrorType.BluetoothScanError]: 0,
-    [ErrorType.BluetoothDiscoveryError]: 0,
-    [ErrorType.JSONParseError]: 0,
-    [ErrorType.UnexpectedError]: 0,
-    [ErrorType.SendHeartbeatError]: 0,
-    [ErrorType.IMUProcessError]: 0,
-    [ErrorType.BluetoothCloseError]: 0,
-    [ErrorType.SerialUnexpectedError]: 0,
-};
-
-const errorCooldownPeriod = 500;
-
-let mainWindow: BrowserWindow | null = null;
-let device: HaritoraX = undefined;
-let connectedDevices: Map<string, EmulatedTracker> = new Map<string, EmulatedTracker>();
+let mainWindow: BrowserWindow;
+let device: HaritoraX;
+let connectedDevices = new Map<string, EmulatedTracker>();
 let deviceBattery: {
     [key: string]: { batteryRemaining: number; batteryVoltage: number };
-} = {};
+};
 
+/*
+ * Renderer variables
+ */
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
@@ -88,15 +37,10 @@ let wiredTrackerEnabled = false;
 // -jovannmc
 let connectionActive = false;
 
-const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
-const configPath = path.resolve(mainPath, "config.json");
-const languagesPath = path.resolve(mainPath, "resources", "languages");
-
 const resources = await loadTranslations();
 
 /*
  * Translations (i18next)
- * Grabs the available translations in the program directory's "languages" folder to add as an option in renderer process
  */
 
 async function loadTranslations() {
@@ -200,9 +144,11 @@ const closeApp = () => {
     app.quit();
 };
 
-// Force iGPU
+// Force iGPU if available
 app.commandLine.appendSwitch("force_low_power_gpu");
 
+// Don't show the menu bar for performance (this disables the dev tools though, may remove this later)
+// could also set this depending on "logging mode" setting in config
 Menu.setApplicationMenu(null);
 
 app.on("ready", createWindow);
@@ -526,6 +472,7 @@ ipcMain.on("save-setting", (_event, data) => {
     saveSetting(data);
 });
 
+import * as _ from "lodash-es";
 function saveSetting(data: { [key: string]: any }) {
     const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
@@ -574,6 +521,61 @@ ipcMain.handle("get-setting", (_event, name) => {
 /*
  * Interpreter event listeners
  */
+
+import { MACAddress, Quaternion, Vector } from "@slimevr/common";
+import {
+    RotationDataType,
+    BoardType,
+    MCUType,
+    SensorStatus,
+    SensorType,
+    UserAction,
+    FirmwareFeatureFlags,
+} from "@slimevr/firmware-protocol";
+import { EmulatedTracker } from "@slimevr/tracker-emulation";
+import BetterQuaternion from "quaternion";
+
+// For haritorax-interpreter
+enum ErrorType {
+    IMUProcessError = "Error decoding IMU packet",
+    MagProcessError = "Error processing mag data",
+    SettingsProcessError = "Error processing settings data",
+    ButtonProcessError = "Error processing button data",
+
+    BluetoothScanError = "Error starting bluetooth scanning",
+    BluetoothDiscoveryError = "Error during discovery/connection process",
+    BluetoothCloseError = "Error while closing bluetooth connection",
+
+    SerialWriteError = "Error writing data to serial port",
+    SerialUnexpectedError = "Error on port",
+
+    JSONParseError = "JSON",
+    SendHeartbeatError = "Error while sending heartbeat",
+    UnexpectedError = "An unexpected error occurred",
+
+    TrackerSettingsWriteError = "Error sending tracker settings",
+    ConnectionStartError = "Opening COM",
+    // TODO: add more error types
+}
+
+const lastErrorShownTime: Record<ErrorType, number> = {
+    [ErrorType.ConnectionStartError]: 0,
+    [ErrorType.TrackerSettingsWriteError]: 0,
+    [ErrorType.MagProcessError]: 0,
+    [ErrorType.SettingsProcessError]: 0,
+    [ErrorType.ButtonProcessError]: 0,
+    [ErrorType.SerialWriteError]: 0,
+    [ErrorType.BluetoothScanError]: 0,
+    [ErrorType.BluetoothDiscoveryError]: 0,
+    [ErrorType.JSONParseError]: 0,
+    [ErrorType.UnexpectedError]: 0,
+    [ErrorType.SendHeartbeatError]: 0,
+    [ErrorType.IMUProcessError]: 0,
+    [ErrorType.BluetoothCloseError]: 0,
+    [ErrorType.SerialUnexpectedError]: 0,
+};
+
+const errorCooldownPeriod = 500;
 
 let trackerQueue: string[] = [];
 let isProcessingQueue = false;
