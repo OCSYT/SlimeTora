@@ -14,14 +14,17 @@ const __dirname = dirname(__filename);
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
-const languagesPath = path.resolve(mainPath, "resources", "languages");
+const languagesPath = path.resolve(
+    mainPath,
+    app.isPackaged || process.env.DEVELOPMENT ? "resources/languages" : "languages"
+);
 
 let mainWindow: BrowserWindow;
 let device: HaritoraX;
 let connectedDevices = new Map<string, EmulatedTracker>();
 let deviceBattery: {
     [key: string]: { batteryRemaining: number; batteryVoltage: number };
-};
+} = {};
 
 /*
  * Renderer variables
