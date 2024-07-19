@@ -69,6 +69,21 @@ async function translate(key: string) {
  * Renderer
  */
 
+function clearTrackers() {
+    connectedDevices.forEach((device, deviceId) => {
+        if (device === undefined) {
+            connectedDevices.delete(deviceId);
+        } else {
+            try {
+                device.deinit();
+            } catch (err) {
+                error(`Failed to de-initialize device: ${err}`);
+            }
+        }
+    });
+    connectedDevices.clear();
+}
+
 const createWindow = async () => {
     try {
         // Check if the config file is accessible
@@ -125,18 +140,7 @@ const createWindow = async () => {
 };
 
 const closeApp = () => {
-    connectedDevices.forEach((device, deviceId) => {
-        if (device === undefined) {
-            connectedDevices.delete(deviceId);
-        } else {
-            try {
-                device.deinit();
-            } catch (err) {
-                error(`Failed to de-initialize device: ${err}`);
-            }
-        }
-    });
-    connectedDevices.clear();
+    clearTrackers();
 
     if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
     if (device && device.getConnectionModeActive("com")) device.stopConnection("com");
@@ -359,9 +363,8 @@ ipcMain.on("stop-connection", () => {
     stopConnectionIfActive("bluetooth");
     stopConnectionIfActive("com");
 
-    // De-initialize every tracker
-    connectedDevices.forEach((device) => device.deinit());
-    connectedDevices.clear();
+    clearTrackers();
+
     connectionActive = false;
 });
 
@@ -386,6 +389,7 @@ ipcMain.handle("fire-tracker-mag", (_event, trackerName: string) => {
 
 ipcMain.handle("get-tracker-settings", async (_event, arg) => {
     const { trackerName, forceBLE }: { trackerName: string; forceBLE: boolean } = arg;
+    if (!isActive) return;
     let settings = await device.getTrackerSettings(trackerName, forceBLE);
     log("Got tracker settings: " + JSON.stringify(settings));
     return settings;
@@ -654,7 +658,8 @@ function startTrackerListeners(tracker: EmulatedTracker) {
 
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
-        if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID))) return;
+        if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
+            return;
         await addTracker(deviceID);
     });
 
@@ -681,7 +686,7 @@ function startDeviceListeners() {
     let clickTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
     device.on("button", (trackerName: string, buttonPressed: string, isOn: boolean) => {
-        if (!trackerName || !buttonPressed || !isOn ) return;
+        if (!trackerName || !buttonPressed || !isOn) return;
 
         let key = `${trackerName}-${buttonPressed}`;
 
