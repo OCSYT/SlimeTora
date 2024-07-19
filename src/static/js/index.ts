@@ -359,18 +359,20 @@ window.ipc.on("connect", async (_event, deviceID) => {
     }
     window.log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`);
 
-    setTrackerSettings(deviceID, trackerSettings);
-
-    // if BLE, wait before sending battery request (so that the device can initialize properly)
+    // if BLE, wait before sending BLE data (so that the device can initialize properly), else send data immediately to COM
     if (bluetoothEnabled && deviceID.startsWith("HaritoraX")) await new Promise((r) => setTimeout(r, 8000));
 
+    // Check isActive again in case connection is stopped while waiting to prevent errors
+    if (!isActive) return;
+
+    setTrackerSettings(deviceID, trackerSettings);
     window.ipc.invoke("fire-tracker-battery", deviceID);
     window.ipc.invoke("fire-tracker-mag", deviceID);
 });
 
 window.ipc.on("disconnect", (_event, deviceID) => {
-    if (!deviceID) return;
-    
+    if (!deviceID || !isActive) return;
+
     window.log(`Disconnected from ${deviceID}`);
     document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").textContent = (
@@ -382,6 +384,8 @@ window.ipc.on("disconnect", (_event, deviceID) => {
 
 window.ipc.on("device-data", async (_event: any, arg) => {
     const { trackerName, rotation, gravity, rawRotation, rawGravity } = arg;
+
+    if (!isActive) return;
 
     const trackerElement = document.getElementById(trackerName);
     if (!trackerElement) {
@@ -576,8 +580,6 @@ async function addDeviceToList(deviceID: string) {
         if (settingsButton) settingsButton.setAttribute("disabled", "true");
         window.log(`Disabled tracker settings button for ${deviceID} (wired tracker)`);
     }
-
-    window.ipc.send("get-tracker-battery", deviceID);
 
     deviceList.appendChild(newDevice);
 

@@ -389,7 +389,6 @@ ipcMain.handle("fire-tracker-mag", (_event, trackerName: string) => {
 
 ipcMain.handle("get-tracker-settings", async (_event, arg) => {
     const { trackerName, forceBLE }: { trackerName: string; forceBLE: boolean } = arg;
-    if (!isActive) return;
     let settings = await device.getTrackerSettings(trackerName, forceBLE);
     log("Got tracker settings: " + JSON.stringify(settings));
     return settings;
