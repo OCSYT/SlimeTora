@@ -654,12 +654,12 @@ function startTrackerListeners(tracker: EmulatedTracker) {
 
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
-        if ((connectedDevices.has(deviceID) && connectedDevices.get(deviceID)) || !connectionActive) return;
+        if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID))) return;
         await addTracker(deviceID);
     });
 
     device.on("disconnect", (deviceID: string) => {
-        if (!connectedDevices.get(deviceID)) return;
+        if (!deviceID || !connectedDevices.get(deviceID)) return;
         log(`Disconnected from tracker: ${deviceID}`);
 
         connectedDevices.get(deviceID).disconnectFromServer();
@@ -673,6 +673,7 @@ function startDeviceListeners() {
     });
 
     device.on("mag", (trackerName: string, magStatus: string) => {
+        if (!trackerName || !magStatus) return;
         mainWindow.webContents.send("device-mag", { trackerName, magStatus });
     });
 
@@ -680,7 +681,7 @@ function startDeviceListeners() {
     let clickTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
     device.on("button", (trackerName: string, buttonPressed: string, isOn: boolean) => {
-        if (!trackerName || !isOn || !buttonPressed) return;
+        if (!trackerName || !buttonPressed || !isOn ) return;
 
         let key = `${trackerName}-${buttonPressed}`;
 
@@ -708,7 +709,7 @@ function startDeviceListeners() {
     });
 
     device.on("imu", async (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
-        if (!connectedDevices.has(trackerName) || !rawRotation || !rawGravity) return;
+        if (!trackerName || !rawRotation || !rawGravity || !connectedDevices.has(trackerName)) return;
 
         // YOU ARE NOT SERIOUS. ALRIGHT.
         // I HAD BEEN TRYING TO SOLVE TRACKING ISSUES FOR AGES, AND IT TURNS OUT BOTH QUATERNIONS WERE USING DIFFERENT LAYOUTS
@@ -733,7 +734,10 @@ function startDeviceListeners() {
         const gravity = new Vector(rawGravity.x, rawGravity.y, rawGravity.z);
 
         let tracker = connectedDevices.get(trackerName);
-        if (!tracker) return false;
+        if (!tracker || !rotation || !gravity || !quaternion || !eulerRadians) {
+            error(`Error processing IMU data for ${trackerName}, skipping...`);
+            return;
+        }
 
         tracker.sendRotationData(0, RotationDataType.NORMAL, quaternion, 0);
         tracker.sendAcceleration(0, gravity);
@@ -748,7 +752,7 @@ function startDeviceListeners() {
     });
 
     device.on("battery", (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
-        if (!trackerName) return;
+        if (!trackerName || !batteryRemaining) return;
 
         if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired")) {
             // Store battery info for COM wireless tracker to be used later when the tracker is connected

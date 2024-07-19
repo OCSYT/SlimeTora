@@ -197,7 +197,7 @@ async function startConnection() {
             const slimeVRFound: boolean = await window.ipc.invoke("search-for-server", null);
             if (!(await handleSlimeVRCheck(slimeVRFound))) return false;
         }
-        
+
         if (!(await handleTrackerModelCheck())) return false;
         if (!(await handleConnectionType())) return false;
     } catch (err) {
@@ -327,7 +327,7 @@ function unsavedSettings(unsaved: boolean) {
  */
 
 window.ipc.on("connect", async (_event, deviceID) => {
-    if (!isActive) return;
+    if (!deviceID || !isActive) return;
 
     window.log(`Connected to ${deviceID}`);
 
@@ -362,13 +362,15 @@ window.ipc.on("connect", async (_event, deviceID) => {
     setTrackerSettings(deviceID, trackerSettings);
 
     // if BLE, wait before sending battery request (so that the device can initialize properly)
-    if (bluetoothEnabled && deviceID.startsWith("HaritoraX")) await new Promise((r) => setTimeout(r, 6000));
+    if (bluetoothEnabled && deviceID.startsWith("HaritoraX")) await new Promise((r) => setTimeout(r, 8000));
 
     window.ipc.invoke("fire-tracker-battery", deviceID);
     window.ipc.invoke("fire-tracker-mag", deviceID);
 });
 
 window.ipc.on("disconnect", (_event, deviceID) => {
+    if (!deviceID) return;
+    
     window.log(`Disconnected from ${deviceID}`);
     document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").textContent = (
@@ -380,7 +382,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
 
 window.ipc.on("device-data", async (_event: any, arg) => {
     const { trackerName, rotation, gravity, rawRotation, rawGravity } = arg;
-    if (!isActive) return;
+
     const trackerElement = document.getElementById(trackerName);
     if (!trackerElement) {
         handleMissingDevice(trackerName);
@@ -393,13 +395,7 @@ window.ipc.on("device-data", async (_event: any, arg) => {
 
 window.ipc.on("device-battery", (_event, arg) => {
     let { trackerName, batteryRemaining, batteryVoltage } = arg;
-    if (
-        !isActive ||
-        !trackerName ||
-        (!batteryRemaining && batteryRemaining !== 0) ||
-        (!batteryVoltage && batteryVoltage !== 0)
-    )
-        return;
+    if (!isActive || (!batteryRemaining && batteryRemaining !== 0) || (!batteryVoltage && batteryVoltage !== 0)) return;
 
     if (batteryVoltage > 10) batteryVoltage = batteryVoltage / 1000;
 
@@ -414,7 +410,7 @@ window.ipc.on("device-battery", (_event, arg) => {
 
 window.ipc.on("device-mag", (_event, arg) => {
     const { trackerName, magStatus }: { trackerName: string; magStatus: string } = arg;
-    if (!isActive || !trackerName) return;
+    if (!isActive) return;
 
     const trackerElement = document.getElementById(trackerName);
     if (!trackerElement) return;
@@ -429,11 +425,11 @@ window.ipc.on("device-mag", (_event, arg) => {
         unknown: "mag-status-unknown",
     };
 
-    for (let status in statuses) {
-        magStatusElement.classList.remove(statuses[status]);
-    }
+    const statusClass = statuses[magStatus] || statuses.unknown;
 
-    magStatusElement.classList.add(statuses[magStatus]);
+    Object.values(statuses).forEach((status) => magStatusElement.classList.remove(status));
+
+    magStatusElement.classList.add(statusClass);
 });
 
 // Helper functions
