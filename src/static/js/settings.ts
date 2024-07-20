@@ -6,42 +6,65 @@ let settingsAccelerometerEnabled = false;
 let settingsGyroscopeEnabled = false;
 let settingsMagnetometerEnabled = false;
 
-document.addEventListener("DOMContentLoaded", async () => {
-    // get all elements with data-i18n and get the attribute value. after, replace the textContent with the translation
-    const i18nElements = document.querySelectorAll("[data-i18n]");
-    i18nElements.forEach(async (element) => {
-        const key = element.getAttribute("data-i18n");
-        element.textContent = await window.translate(key);
+let settingsHasLoaded = false;
+
+function waitForSettingsToLoad() {
+    return new Promise<void>((resolve) => {
+        function checkSettings() {
+            if (settingsHasLoaded) {
+                resolve();
+            } else {
+                setTimeout(checkSettings, 100);
+            }
+        }
+        checkSettings();
     });
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const i18nElements = document.querySelectorAll("[data-i18n]");
+    const translationPromises: Promise<void>[] = [];
+
+    i18nElements.forEach((element) => {
+        const key = element.getAttribute("data-i18n");
+        const translationPromise = window.translate(key).then((translation) => {
+            element.textContent = translation;
+        });
+        translationPromises.push(translationPromise);
+    });
+
+    await Promise.all(translationPromises);
+    settingsHasLoaded = true;
 });
 
 // Set tracker name and variable
-window.ipc.on("trackerName", (_event, arg) => {
+window.ipc.on("trackerName", async (_event, arg) => {
     window.log(`Opened per-tracker settings for: ${arg}`);
     deviceID = arg;
 
     const trackerNameElement = document.getElementById("tracker-name");
 
+    await waitForSettingsToLoad();
+
     if (deviceID.startsWith("HaritoraX")) {
         // Check if censor serial numbers is enabled
-        const settings = window.ipc.invoke("get-settings", null);
-        settings.then((settings) => {
-            if (settings.global?.censorSerialNumbers) {
-                if (deviceID.startsWith("HaritoraX")) {
-                    trackerNameElement.textContent = trackerNameElement.textContent.replace(
-                        "{trackerName}",
-                        "HaritoraX-XXXXXX"
-                    );
-                } else if (deviceID.startsWith("HaritoraXW")) {
-                    trackerNameElement.textContent = trackerNameElement.textContent.replace(
-                        "{trackerName}",
-                        "HaritoraXW-XXXXXX"
-                    );
-                }
-            } else {
-                trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", deviceID);
+        const settings = await window.ipc.invoke("get-settings", null);
+        
+        if (settings.global?.censorSerialNumbers) {
+            if (deviceID.startsWith("HaritoraX")) {
+                trackerNameElement.textContent = trackerNameElement.textContent.replace(
+                    "{trackerName}",
+                    "HaritoraX-XXXXXX"
+                );
+            } else if (deviceID.startsWith("HaritoraXW")) {
+                trackerNameElement.textContent = trackerNameElement.textContent.replace(
+                    "{trackerName}",
+                    "HaritoraXW-XXXXXX"
+                );
             }
-        });
+        } else {
+            trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", deviceID);
+        }
     } else {
         trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", deviceID);
     }
@@ -95,8 +118,11 @@ async function loadSettings(deviceID: string) {
         // Set the selected option based on the settings
         fpsSelect.value = settingsFPSMode.toString();
         sensorModeSelect.value = settingsSensorMode.toString();
-        window.log(`Setting sensor mode to: ${settingsSensorMode} for ${sensorModeSelect}`);
-        window.log(`Setting fps mode to: ${settingsFPSMode} for ${fpsSelect}`);
+        window.log(`Setting sensor mode to: ${settingsSensorMode}`);
+        window.log(`Setting FPS mode to: ${settingsFPSMode}`);
+        window.log(`Setting accelerometer to: ${settingsAccelerometerEnabled}`);
+        window.log(`Setting gyroscope to: ${settingsGyroscopeEnabled}`);
+        window.log(`Setting magnetometer to: ${settingsMagnetometerEnabled}`);
     } else {
         window.log(`No settings found for ${deviceID}`);
     }

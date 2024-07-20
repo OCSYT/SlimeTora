@@ -811,7 +811,7 @@ function startDeviceListeners() {
     });
 
     device.on("log", (msg: string) => {
-        log(msg);
+        log(msg, "haritorax-interpreter");
     });
 
     device.on("error", (msg: string, exceptional: boolean) => {
