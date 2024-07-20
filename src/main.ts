@@ -778,39 +778,62 @@ function startDeviceListeners() {
         });
     });
 
+    // Assuming a constant that defines how many battery readings to store
+    const MAX_BATTERY_READINGS = 5;
+
+    // Map to store the last X battery readings for each tracker
+    const batteryReadingsMap = new Map<string, { percentages: number[]; voltages: number[] }>();
+
     device.on("battery", (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
         if (!trackerName || !batteryRemaining) return;
 
-        if (!connectedDevices.has(trackerName) && !trackerName.startsWith("HaritoraXWired")) {
-            // Store battery info for COM wireless tracker to be used later when the tracker is connected
+        if (!connectedDevices.has(trackerName) && trackerName !== "HaritoraXWired") {
+            // If tracker is not connected, store battery info for COM wireless tracker to be used later when the tracker is connected
             // Doing this because the GX dongles immediately report the last known battery info when the COM port opens
             deviceBattery[trackerName] = { batteryRemaining, batteryVoltage };
         }
 
-        // Set batteryVoltageInVolts to 0 for BT wireless tracker
-        const batteryVoltageInVolts =
-            trackerName.startsWith("HaritoraX") && trackerName !== "HaritoraXWired" && wirelessTrackerEnabled
-                ? 0
-                : batteryVoltage / 1000;
+        if (!batteryReadingsMap.has(trackerName)) batteryReadingsMap.set(trackerName, { percentages: [], voltages: [] });
+        const readings = batteryReadingsMap.get(trackerName);
+    
+        readings.percentages.push(batteryRemaining);
+        readings.voltages.push(batteryVoltage);
+        if (readings.percentages.length > MAX_BATTERY_READINGS) {
+            // Remove oldest readings
+            readings.percentages.shift();
+            readings.voltages.shift();
+        }
+    
+        // Calculate the "stable average" battery percentage and voltage
+        const averageBatteryRemaining = readings.percentages.reduce((a, b) => a + b, 0) / readings.percentages.length;
+        const averageBatteryVoltage = readings.voltages.reduce((a, b) => a + b, 0) / readings.voltages.length;
+    
+        // keeping this here just in case i want to switch to it since i need to do testing
+        // below is the code for lowest battery remaining and voltage instead of a "stable average"
+        // const lowestBatteryRemaining = Math.min(...readings.percentages);
+        // const lowestBatteryVoltage = Math.min(...readings.voltages);
+    
+        const stableBatteryRemaining = parseFloat(averageBatteryRemaining.toFixed(2));
+        const stableBatteryVoltage = averageBatteryVoltage / 1000;
 
-        if (trackerName.startsWith("HaritoraXWired")) {
+        if (trackerName === "HaritoraXWired") {
             // Change battery info for all trackers (wired)
             connectedDevices.forEach((tracker) => {
-                if (tracker) tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+                if (tracker) tracker.changeBatteryLevel(stableBatteryVoltage, stableBatteryRemaining);
             });
         } else {
             // Change battery info for the specific tracker
             const tracker = connectedDevices.get(trackerName);
-            if (tracker) tracker.changeBatteryLevel(batteryVoltageInVolts, batteryRemaining);
+            if (tracker) tracker.changeBatteryLevel(stableBatteryVoltage, stableBatteryRemaining);
         }
 
         mainWindow.webContents.send("device-battery", {
             trackerName,
-            batteryRemaining,
-            batteryVoltage: batteryVoltageInVolts,
+            batteryRemaining: stableBatteryRemaining,
+            batteryVoltage: stableBatteryVoltage,
         });
 
-        log(`Received battery data for ${trackerName}: ${batteryRemaining}% (${batteryVoltageInVolts}V)`);
+        log(`Received battery data for ${trackerName}: ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`);
     });
 
     device.on("log", (msg: string) => {

@@ -641,7 +641,7 @@ function updateAllTrackerBatteries(batteryRemaining: number, batteryVoltage: num
 
 function updateTrackerBattery(trackerName: string, batteryRemaining: number, batteryVoltage: number) {
     const batteryText = document.querySelector(`#${trackerName} #battery`);
-    if (batteryText || !trackerName.startsWith("HaritoraXWired")) {
+    if (batteryText || trackerName !== "HaritoraXWired") {
         batteryText.textContent = formatBatteryText(batteryRemaining, batteryVoltage);
     }
 }
