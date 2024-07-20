@@ -5,7 +5,8 @@
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
 // @ts-ignore
 import { HaritoraX } from "haritorax-interpreter";
-import { SerialPort } from "serialport";
+import { autoDetect } from "@serialport/bindings-cpp";
+const Binding = autoDetect();
 import fs, { PathLike } from "fs";
 import path, { dirname } from "path";
 import { fileURLToPath, format } from "url";
@@ -226,7 +227,7 @@ ipcMain.handle("get-active-trackers", () => {
 });
 
 ipcMain.handle("get-com-ports", async () => {
-    const ports = await SerialPort.list();
+    const ports = await Binding.list();
     return ports.map((port: any) => port.path).sort();
 });
 
