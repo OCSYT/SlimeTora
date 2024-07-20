@@ -283,6 +283,8 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         autoHideMenuBar: true,
         width: 850,
         height: 650,
+        modal: true, // prevent interaction with "parent" window until closed
+        parent: mainWindow,
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,

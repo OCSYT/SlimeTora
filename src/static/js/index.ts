@@ -336,6 +336,10 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     setStatus("main.status.connected");
 
+    // TODO: unknown if wired trackers report these immediately when COM port opens, check with users
+    window.ipc.invoke("fire-tracker-battery", deviceID);
+    window.ipc.invoke("fire-tracker-mag", deviceID);
+
     if (wiredTrackerEnabled) return;
 
     const settings = await window.ipc.invoke("get-settings", null);
@@ -359,15 +363,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
     }
     window.log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`);
 
-    // if BLE, wait before sending BLE data (so that the device can initialize properly), else send data immediately to COM
-    if (bluetoothEnabled && deviceID.startsWith("HaritoraX")) await new Promise((r) => setTimeout(r, 8000));
-
-    // Check isActive again in case connection is stopped while waiting to prevent errors
-    if (!isActive) return;
-
     setTrackerSettings(deviceID, trackerSettings);
-    window.ipc.invoke("fire-tracker-battery", deviceID);
-    window.ipc.invoke("fire-tracker-mag", deviceID);
 });
 
 window.ipc.on("disconnect", (_event, deviceID) => {
