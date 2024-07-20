@@ -525,7 +525,7 @@ ipcMain.handle("get-setting", (_event, name) => {
 });
 
 /*
- * Interpreter event listeners
+ * haritorax-interpreter event listeners
  */
 
 import { MACAddress, Quaternion, Vector } from "@slimevr/common";
@@ -600,6 +600,8 @@ async function processQueue() {
     while (trackerQueue.length > 0) {
         const trackerName = trackerQueue.shift();
 
+        if (connectedDevices.get(trackerName) !== undefined) return;
+
         // Check if tracker has a MAC address assigned already in the config
         let macAddress = MACAddress.random();
         let macBytes = config.trackers?.[trackerName]?.macAddress?.bytes;
@@ -615,8 +617,6 @@ async function processQueue() {
             MCUType.UNKNOWN
         );
 
-        if (connectedDevices.get(trackerName)) continue;
-
         await newTracker.init();
         await newTracker.addSensor(SensorType.UNKNOWN, SensorStatus.OK);
 
@@ -626,7 +626,7 @@ async function processQueue() {
 
         connectedDevices.set(trackerName, newTracker);
 
-        startTrackerListeners(newTracker);
+        setupTrackerEvents(newTracker);
 
         log(`Connected to tracker: ${trackerName}`);
         mainWindow.webContents.send("connect", trackerName);
@@ -643,18 +643,6 @@ async function processQueue() {
     isProcessingQueue = false;
 }
 
-function startTrackerListeners(tracker: EmulatedTracker) {
-    tracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
-
-    tracker.on("unknown-incoming-packet", (packet: any) => {
-        log(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
-    });
-
-    tracker.on("unknown-incoming-packet", (buf: Buffer) =>
-        log(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
-    );
-}
-
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
         if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
@@ -666,7 +654,8 @@ function startDeviceListeners() {
         if (!deviceID || !connectedDevices.get(deviceID)) return;
         log(`Disconnected from tracker: ${deviceID}`);
 
-        connectedDevices.get(deviceID).disconnectFromServer();
+        connectedDevices.get(deviceID).deinit();
+        connectedDevices.get(deviceID).removeAllListeners();
         connectedDevices.set(deviceID, undefined);
 
         mainWindow.webContents.send("disconnect", deviceID);
@@ -828,6 +817,50 @@ async function handleConnectionStartError(err: any) {
  * SlimeVR Forwarding
  */
 
+function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
+    const trackerName =
+        Array.from(connectedDevices.keys()).find((key) => connectedDevices.get(key) === tracker) ||
+        (isHeartbeat ? "(HEARTBEAT)" : undefined);
+
+    tracker.on("ready", () => {
+        log(`Tracker ${trackerName} is ready to search for SlimeVR server...`, "@slimevr/emulated-tracker");
+    });
+
+    tracker.on("searching-for-server", () => {
+        log(`Tracker ${trackerName} is searching for SlimeVR server...`, "@slimevr/emulated-tracker");
+    });
+
+    tracker.on("connected-to-server", (ip: string, port: number) => {
+        log(`Tracker ${trackerName} connected to SlimeVR server on ${ip}:${port}`, "@slimevr/emulated-tracker");
+
+        if (!isHeartbeat) return;
+        foundSlimeVR = true;
+        mainWindow.webContents.send("set-slimevr-connected", true);
+    });
+
+    tracker.on("disconnected-from-server", (reason) => {
+        log(`Tracker ${trackerName} disconnected from SlimeVR server due to: ${reason}`, "@slimevr/emulated-tracker");
+    });
+
+    tracker.on("error", (err: Error) => {
+        error(`Tracker ${trackerName} error: ${err}}`, "@slimevr/emulated-tracker");
+    });
+
+    tracker.on("unknown-incoming-packet", (packet: any) => {
+        error(`Tracker ${trackerName} unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
+    });
+
+    tracker.on("unknown-incoming-packet", (buf: Buffer) =>
+        error(`Tracker ${trackerName} unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker")
+    );
+
+    if (loggingMode === 3) {
+        tracker.on("outgoing-packet", (packet: any) => {
+            log(`Tracker ${trackerName} outgoing packet: ${packet}`, "@slimevr/emulated-tracker");
+        });
+    }
+}
+
 const heartbeatTracker = new EmulatedTracker(
     new MACAddress([0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
     app.getVersion() + "-heartbeat",
@@ -836,35 +869,8 @@ const heartbeatTracker = new EmulatedTracker(
     MCUType.UNKNOWN
 );
 
-const connectToServer = async () => {
-    heartbeatTracker.on("ready", () => {
-        log("Ready to search for SlimeVR server...");
-    });
-
-    heartbeatTracker.on("connected-to-server", async (ip: string, port: number) => {
-        log(`Connected to SlimeVR server on ${ip}:${port}`);
-        foundSlimeVR = true;
-        mainWindow.webContents.send("set-slimevr-connected", true);
-    });
-
-    heartbeatTracker.on("searching-for-server", () => {
-        log("Searching for SlimeVR server...");
-    });
-
-    heartbeatTracker.on("error", (err: Error) => error(err.message, "@slimevr/emulated-tracker"));
-
-    heartbeatTracker.on("unknown-incoming-packet", (packet: any) => {
-        error(`Unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
-    });
-
-    heartbeatTracker.on("unknown-incoming-packet", (buf: Buffer) =>
-        error(`Unknown incoming packet: ${buf}`, "@slimevr/emulated-tracker")
-    );
-
-    await heartbeatTracker.init();
-};
-
-connectToServer();
+setupTrackerEvents(heartbeatTracker, true);
+await heartbeatTracker.init();
 
 /*
  * Logging
