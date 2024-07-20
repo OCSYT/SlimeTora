@@ -165,6 +165,20 @@ app.on("window-all-closed", closeApp);
  * Renderer handlers
  */
 
+async function showMessage(title: string, message: string, translateMessage = true) {
+    const translatedTitle = translateMessage ? await translate(title) : title;
+    const translatedMessage = translateMessage ? await translate(message) : message;
+
+    dialog.showMessageBox({ title: translatedTitle, message: translatedMessage });
+}
+
+async function showError(title: string, message: string, translateMessage = true) {
+    const translatedTitle = translateMessage ? await translate(title) : title;
+    const translatedMessage = translateMessage ? await translate(message) : message;
+
+    dialog.showErrorBox(translatedTitle, translatedMessage);
+}
+
 ipcMain.on("log", (_event, arg: string) => {
     log(arg, "renderer");
 });
@@ -173,14 +187,24 @@ ipcMain.on("error", (_event, arg: string) => {
     error(arg, "renderer");
 });
 
-ipcMain.on("show-message", (_event, arg) => {
-    const { title, message }: { title: string; message: string } = arg;
-    dialog.showMessageBox({ title, message });
+ipcMain.on("show-message", async (_event, arg) => {
+    const {
+        title,
+        message,
+        translateMessage = true,
+    }: { title: string; message: string; translateMessage: boolean } = arg;
+
+    await showMessage(title, message, translateMessage);
 });
 
-ipcMain.on("show-error", (_event, arg) => {
-    const { title, message }: { title: string; message: string } = arg;
-    dialog.showErrorBox(title, message);
+ipcMain.on("show-error", async (_event, arg) => {
+    const {
+        title,
+        message,
+        translateMessage = true,
+    }: { title: string; message: string; translateMessage: boolean } = arg;
+
+    await showError(title, message, translateMessage);
 });
 
 ipcMain.handle("translate", async (_event, arg: string) => {
@@ -238,10 +262,7 @@ ipcMain.on("open-logs-folder", async () => {
         await shell.openPath(logDir);
     } catch (err) {
         error(`Logs directory does not exist ${err}`);
-        dialog.showErrorBox(
-            await translate("dialogs.noLogsFolder.title"),
-            await translate("dialogs.noLogsFolder.message")
-        );
+        await showError("dialogs.noLogsFolder.title", "dialogs.noLogsFolder.message");
     }
 });
 

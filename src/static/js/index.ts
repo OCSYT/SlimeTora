@@ -152,8 +152,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (isMissingPorts) {
         setStatus("main.status.comPortsMissing");
         window.ipc.send("show-error", {
-            title: await window.translate("dialogs.comPortsMissing.title"),
-            message: await window.translate("dialogs.comPortsMissing.message"),
+            title: "dialogs.comPortsMissing.title",
+            message: "dialogs.comPortsMissing.message",
         });
     }
 
@@ -297,8 +297,8 @@ async function setStatus(status: string) {
 
 async function showErrorDialog(titleKey: string, messageKey: string) {
     window.ipc.send("show-error", {
-        title: await window.translate(titleKey),
-        message: await window.translate(messageKey),
+        title: titleKey,
+        message: messageKey,
     });
 }
 
