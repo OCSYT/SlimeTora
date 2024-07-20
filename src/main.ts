@@ -14,6 +14,7 @@ const __dirname = dirname(__filename);
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
+// don't mess with this or languages will fail to load cause of how the project is structured, lol
 const languagesPath = path.resolve(
     mainPath,
     app.isPackaged || process.env.DEVELOPMENT ? "resources/languages" : "languages"
@@ -41,6 +42,10 @@ let wiredTrackerEnabled = false;
 let connectionActive = false;
 
 const resources = await loadTranslations();
+
+function isDevelopment() {
+    return process.env.DEVELOPMENT || !app.isPackaged;
+}
 
 /*
  * Translations (i18next)
@@ -156,7 +161,12 @@ app.commandLine.appendSwitch("force_low_power_gpu");
 
 // Don't show the menu bar for performance (this disables the dev tools though, may remove this later)
 // could also set this depending on "logging mode" setting in config
-Menu.setApplicationMenu(null);
+if (!isDevelopment) {
+    log("Development mode disabled, hiding menu bar");
+    Menu.setApplicationMenu(null);
+} else {
+    log("Development mode enabled, showing menu bar");
+}
 
 app.on("ready", createWindow);
 app.on("window-all-closed", closeApp);
