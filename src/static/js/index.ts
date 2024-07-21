@@ -291,7 +291,11 @@ async function handleConnectionType() {
 
 async function setStatus(status: string) {
     const translatedStatus = await window.translate(status);
-    document.getElementById("status").textContent = translatedStatus;
+    const statusElement = document.getElementById("status");
+    if (!statusElement) return;
+
+    statusElement.setAttribute("data-i18n", status);
+    statusElement.textContent = translatedStatus;
     window.log(`Set status to: ${translatedStatus}`);
 }
 
