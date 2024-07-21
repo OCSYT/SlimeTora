@@ -778,12 +778,8 @@ function startDeviceListeners() {
         });
     });
 
-    // Assuming a constant that defines how many battery readings to store
     const MAX_BATTERY_READINGS = 5;
-
-    // Map to store the last X battery readings for each tracker
     const batteryReadingsMap = new Map<string, { percentages: number[]; voltages: number[] }>();
-
     device.on("battery", (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
         if (!trackerName || !batteryRemaining) return;
 
@@ -793,9 +789,10 @@ function startDeviceListeners() {
             deviceBattery[trackerName] = { batteryRemaining, batteryVoltage };
         }
 
-        if (!batteryReadingsMap.has(trackerName)) batteryReadingsMap.set(trackerName, { percentages: [], voltages: [] });
+        if (!batteryReadingsMap.has(trackerName))
+            batteryReadingsMap.set(trackerName, { percentages: [], voltages: [] });
         const readings = batteryReadingsMap.get(trackerName);
-    
+
         readings.percentages.push(batteryRemaining);
         readings.voltages.push(batteryVoltage);
         if (readings.percentages.length > MAX_BATTERY_READINGS) {
@@ -803,18 +800,17 @@ function startDeviceListeners() {
             readings.percentages.shift();
             readings.voltages.shift();
         }
-    
+
         // Calculate the "stable average" battery percentage and voltage
         const averageBatteryRemaining = readings.percentages.reduce((a, b) => a + b, 0) / readings.percentages.length;
         const averageBatteryVoltage = readings.voltages.reduce((a, b) => a + b, 0) / readings.voltages.length;
-    
+
         // keeping this here just in case i want to switch to it since i need to do testing
         // below is the code for lowest battery remaining and voltage instead of a "stable average"
         // const lowestBatteryRemaining = Math.min(...readings.percentages);
         // const lowestBatteryVoltage = Math.min(...readings.voltages);
-    
         const stableBatteryRemaining = parseFloat(averageBatteryRemaining.toFixed(2));
-        const stableBatteryVoltage = averageBatteryVoltage / 1000;
+        const stableBatteryVoltage = parseFloat((averageBatteryVoltage / 1000).toFixed(4));
 
         if (trackerName === "HaritoraXWired") {
             // Change battery info for all trackers (wired)
@@ -890,6 +886,9 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
     tracker.on("connected-to-server", (ip: string, port: number) => {
         log(`Tracker ${trackerName} connected to SlimeVR server on ${ip}:${port}`, "@slimevr/emulated-tracker");
         mainWindow.webContents.send("device-connected-to-server", trackerName);
+
+        tracker.sendTemperature(0, 420.69);
+        tracker.sendSignalStrength(0, 69);
 
         if (!isHeartbeat) return;
         foundSlimeVR = true;
