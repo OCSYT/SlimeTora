@@ -336,10 +336,6 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     setStatus("main.status.connected");
 
-    // TODO: unknown if wired trackers report these immediately when COM port opens, check with users
-    window.ipc.invoke("fire-tracker-battery", deviceID);
-    window.ipc.invoke("fire-tracker-mag", deviceID);
-
     if (wiredTrackerEnabled) return;
 
     const settings = await window.ipc.invoke("get-settings", null);
@@ -376,6 +372,15 @@ window.ipc.on("disconnect", (_event, deviceID) => {
     ).toString();
 
     if (document.getElementById("tracker-count").textContent === "0") setStatus("searching");
+});
+
+window.ipc.on("device-connected-to-server", (_event, deviceID) => {
+    if (!deviceID || !isActive) return;
+
+    window.log(`Tracker ${deviceID} connected to server, firing battery and mag events...`);
+    // TODO: unknown if wired trackers report these immediately when COM port opens, check with users
+    window.ipc.invoke("fire-tracker-battery", deviceID);
+    window.ipc.invoke("fire-tracker-mag", deviceID);
 });
 
 window.ipc.on("device-data", async (_event: any, arg) => {

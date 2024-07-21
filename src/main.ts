@@ -889,10 +889,10 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
 
     tracker.on("connected-to-server", (ip: string, port: number) => {
         log(`Tracker ${trackerName} connected to SlimeVR server on ${ip}:${port}`, "@slimevr/emulated-tracker");
+        mainWindow.webContents.send("device-connected-to-server", trackerName);
 
         if (!isHeartbeat) return;
         foundSlimeVR = true;
-        mainWindow.webContents.send("set-slimevr-connected", true);
     });
 
     tracker.on("disconnected-from-server", (reason) => {
