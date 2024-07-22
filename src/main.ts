@@ -4,7 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
 // @ts-ignore
-import { HaritoraX } from "haritorax-interpreter";
+import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
@@ -43,6 +43,7 @@ let wiredTrackerEnabled = false;
 let connectionActive = false;
 
 const resources = await loadTranslations();
+let comPorts = await Binding.list();
 
 function isDevelopment() {
     return process.env.DEVELOPMENT || !app.isPackaged;
@@ -222,13 +223,19 @@ ipcMain.handle("translate", async (_event, arg: string) => {
     return await translate(arg);
 });
 
-ipcMain.handle("get-active-trackers", () => {
-    return connectedDevices;
+ipcMain.handle("get-com-ports", async (_event, arg: string) => {
+    if (!arg) return comPorts.map((port: any) => port.path).sort();
+
+    if (!device) {
+        initializeDevice();
+        const ports = await device.getDevicePorts(arg);
+        device = undefined;
+        return ports;
+    }
 });
 
-ipcMain.handle("get-com-ports", async () => {
-    const ports = await Binding.list();
-    return ports.map((port: any) => port.path).sort();
+ipcMain.handle("get-active-trackers", () => {
+    return connectedDevices;
 });
 
 ipcMain.handle("get-languages", async () => {
@@ -272,7 +279,7 @@ ipcMain.on("open-logs-folder", async () => {
         await fs.promises.access(logDir);
         await shell.openPath(logDir);
     } catch (err) {
-        error(`Logs directory does not exist ${err}`);
+        error(`Logs directory does not exist: ${err}`);
         await showError("dialogs.noLogsFolder.title", "dialogs.noLogsFolder.message");
     }
 });
@@ -313,6 +320,21 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
  * Renderer tracker/device handlers
  */
 
+ipcMain.handle("autodetect", async () => {
+    log("Starting auto-detection...");
+    device = undefined;
+
+    log("Initializing new HaritoraX instance...");
+    initializeDevice();
+
+    // @ts-ignore
+    const devices = await device.getAvailableDevices();
+    device.removeAllListeners();
+    device = undefined;
+
+    return devices;
+});
+
 ipcMain.on("start-connection", async (_event, arg) => {
     const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
     log(`Start connection with: ${JSON.stringify(arg)}`);
@@ -334,6 +356,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     mainWindow.webContents.send("set-status", "main.status.searching");
     if (types.includes("bluetooth")) device.startConnection("bluetooth");
+    // @ts-ignore
     if (types.includes("com") && ports) device.startConnection("com", ports, heartbeatInterval);
     connectionActive = true;
 

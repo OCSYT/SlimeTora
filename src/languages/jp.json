@@ -76,13 +76,14 @@
             "com": "COMポート / GXドングル(6/2)"
         },
         "comPorts": {
-            "title": "COMポート (GX)",
+            "title": "COMポート",
             "tooltip": "GX(6/2)ドングルまたはHaritoraX 1.1b/1.1/1.0が使用しているCOMポートを選択します。チェックがバイパスされない限り、最大4ポートまで選択できます。（GX6は3ポート、GX2は1ポート）"
         },
         "other": {
             "title": "その他の設定",
             "tooltip": "他のカテゴリーに当てはまらないその他の設定。",
-            "trackerVisualizationFPS": "トラッカーモデルのフレームレート"
+            "trackerVisualizationFPS": "トラッカーモデルのフレームレート",
+            "autodetect": "TO CHANGE"
         }
     },
     "trackerSettings": {

@@ -83,6 +83,7 @@ declare global {
 
         startConnection: () => void;
         stopConnection: () => void;
+        autodetect: () => void;
         openLogsFolder: () => void;
         saveSettings: () => void;
         openTrackerSettings: (deviceID: string) => void;

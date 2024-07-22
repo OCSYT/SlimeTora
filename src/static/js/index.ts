@@ -188,6 +188,159 @@ document.addEventListener("DOMContentLoaded", async function () {
  * Connection handling
  */
 
+async function autodetect() {
+    window.log("Running auto-detection...");
+
+    const autodetectButton = document.getElementById("automatic-setup-button") as HTMLButtonElement;
+    autodetectButton.disabled = true;
+
+    const devices: string[] = await window.ipc.invoke("autodetect", null);
+
+    if (devices.includes("HaritoraX Wireless")) {
+        wirelessTrackerEnabled = true;
+
+        const wirelessTrackerSwitch = document.getElementById("wireless-tracker-switch") as HTMLInputElement;
+        wirelessTrackerSwitch.checked = true;
+
+        window.log("Auto-detect: found HaritoraX Wireless");
+
+        // Only enable bluetooth in-app if wireless tracker was found
+        // Most people have Bluetooth anyways, so make sure we don't enable it accidentally for wired trackers (which requires COM as it is BT SPP)
+        if (devices.includes("Bluetooth")) {
+            bluetoothEnabled = true;
+
+            const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
+            bluetoothSwitch.checked = true;
+
+            window.log("Auto-detect: enabling Bluetooth");
+        }
+    }
+
+    if (devices.includes("HaritoraX Wired")) {
+        wiredTrackerEnabled = true;
+
+        const wiredTrackerSwitch = document.getElementById("wired-tracker-switch") as HTMLInputElement;
+        wiredTrackerSwitch.checked = true;
+
+        // Get the COM port for HaritoraX Wired
+        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "HaritoraX Wired");
+        selectedComPorts.push(...comPorts);
+
+        const comPortSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
+        comPortSwitches.forEach((port) => {
+            if (comPorts.includes(port.id)) port.checked = true;
+        });
+
+        window.log("Auto-detect: found HaritoraX Wired");
+        window.log("Auto-detect: enabling COM");
+        window.log(`Auto-detect: COM ports for HaritoraX Wired: ${comPorts}`);
+    }
+
+    if (devices.includes("HaritoraX Wireless") && !devices.includes("GX6")) {
+        // If HaritoraX Wireless was found but not GX6, enable Bluetooth
+        bluetoothEnabled = true;
+
+        const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
+        bluetoothSwitch.checked = true;
+
+        window.log("Auto-detect: found HaritoraX Wireless");
+        window.log("Auto-detect: enabling Bluetooth");
+    }
+
+    if (devices.includes("HaritoraX Wireless") && !devices.includes("GX6") && devices.includes("GX2")) {
+        // If HaritoraX Wireless was found with no GX6 but with GX2, enable Bluetooth and COM
+        bluetoothEnabled = true;
+        comEnabled = true;
+
+        const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
+        bluetoothSwitch.checked = true;
+
+        const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
+        comSwitch.checked = true;
+
+        // Find COM ports for GX2
+        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "GX2");
+        selectedComPorts.push(...comPorts);
+
+        const comPortSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
+        comPortSwitches.forEach((port) => {
+            if (comPorts.includes(port.id)) port.checked = true;
+        });
+
+        window.log("Auto-detect: found HaritoraX Wireless and GX2");
+        window.log("Auto-detect: enabling Bluetooth and COM");
+        window.log(`Auto-detect: COM ports for GX2: ${comPorts}`);
+    }
+
+    if (devices.includes("HaritoraX Wireless") && devices.includes("GX2")) {
+        // If HaritoraX Wireless and GX2 were found, enable Bluetooth and COM
+        bluetoothEnabled = true;
+        comEnabled = true;
+
+        const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
+        bluetoothSwitch.checked = true;
+
+        const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
+        comSwitch.checked = true;
+
+        // Find COM ports for GX2
+        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "GX2");
+        selectedComPorts.push(...comPorts);
+
+        const comPortSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
+        comPortSwitches.forEach((port) => {
+            if (comPorts.includes(port.id)) port.checked = true;
+        });
+
+        window.log("Auto-detect: found HaritoraX Wireless and GX2");
+        window.log("Auto-detect: enabling Bluetooth and COM");
+        window.log(`Auto-detect: COM ports for GX2: ${comPorts}`);
+    }
+
+    if (devices.includes("GX6")) {
+        comEnabled = true;
+
+        const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
+        comSwitch.checked = true;
+
+        // Find COM ports for GX6
+        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "GX6");
+        selectedComPorts.push(...comPorts);
+
+        const comPortSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
+        comPortSwitches.forEach((port) => {
+            if (comPorts.includes(port.id)) port.checked = true;
+        });
+
+        window.log("Auto-detect: found GX6");
+        window.log(`Auto-detect: enabling COM`);
+        window.log(`Auto-detect: COM ports for GX6: ${comPorts}`);
+    }
+
+    if (devices.includes("GX2")) {
+        comEnabled = true;
+
+        const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
+        comSwitch.checked = true;
+
+        // Find COM ports for GX2
+        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "GX2");
+        selectedComPorts.push(...comPorts);
+
+        const comPortSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
+        comPortSwitches.forEach((port) => {
+            if (comPorts.includes(port.id)) port.checked = true;
+        });
+
+        window.log("Auto-detect: found GX2");
+        window.log(`Auto-detect: enabling COM`);
+        window.log(`Auto-detect: COM ports for GX2: ${comPorts}`);
+    }
+
+    // TODO: auto-detect tracker settings?
+    autodetectButton.disabled = false;
+}
+
 async function startConnection() {
     window.log("Starting connection...");
     setStatus("main.status.searchingServer");
@@ -1038,6 +1191,7 @@ function addEventListeners() {
 
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
+window.autodetect = autodetect;
 
 window.saveSettings = () => {
     window.log("Saving settings...");

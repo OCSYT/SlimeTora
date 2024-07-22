@@ -82,7 +82,8 @@
         "other": {
             "title": "Other settings",
             "tooltip": "Other settings for the program that don't fit in the other categories.",
-            "trackerVisualizationFPS": "Tracker visualization FPS"
+            "trackerVisualizationFPS": "Tracker visualization FPS",
+            "autodetect": "Auto-detect settings"
         }
     },
     "trackerSettings": {
