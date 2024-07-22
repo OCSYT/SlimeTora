@@ -307,6 +307,7 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
             pathname: path.join(__dirname, "static/html/settings.html"),
             protocol: "file:",
             slashes: true,
+            query: { trackerName: arg },
         })
     );
 

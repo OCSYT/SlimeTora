@@ -1,5 +1,3 @@
-let deviceID = "";
-
 let settingsFPSMode = 50;
 let settingsSensorMode = 2;
 let settingsAccelerometerEnabled = false;
@@ -8,20 +6,12 @@ let settingsMagnetometerEnabled = false;
 
 let settingsHasLoaded = false;
 
-function waitForSettingsToLoad() {
-    return new Promise<void>((resolve) => {
-        function checkSettings() {
-            if (settingsHasLoaded) {
-                resolve();
-            } else {
-                setTimeout(checkSettings, 100);
-            }
-        }
-        checkSettings();
-    });
-}
+const params = new URLSearchParams(window.location.search);
+const trackerName = params.get('trackerName');
 
 document.addEventListener("DOMContentLoaded", async () => {
+    window.log(`Opened per-tracker settings for: ${trackerName}`);
+
     const i18nElements = document.querySelectorAll("[data-i18n]");
     const translationPromises: Promise<void>[] = [];
 
@@ -34,70 +24,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     await Promise.all(translationPromises);
-    settingsHasLoaded = true;
-});
-
-// Set tracker name and variable
-window.ipc.on("trackerName", async (_event, arg) => {
-    window.log(`Opened per-tracker settings for: ${arg}`);
-    deviceID = arg;
 
     const trackerNameElement = document.getElementById("tracker-name");
-
-    await waitForSettingsToLoad();
-
-    if (deviceID.startsWith("HaritoraX")) {
+    if (trackerName.startsWith("HaritoraX")) {
         // Check if censor serial numbers is enabled
         const settings = await window.ipc.invoke("get-settings", null);
         
         if (settings.global?.censorSerialNumbers) {
-            if (deviceID.startsWith("HaritoraX")) {
+            if (trackerName.startsWith("HaritoraX")) {
                 trackerNameElement.textContent = trackerNameElement.textContent.replace(
                     "{trackerName}",
                     "HaritoraX-XXXXXX"
                 );
-            } else if (deviceID.startsWith("HaritoraXW")) {
+            } else if (trackerName.startsWith("HaritoraXW")) {
                 trackerNameElement.textContent = trackerNameElement.textContent.replace(
                     "{trackerName}",
                     "HaritoraXW-XXXXXX"
                 );
             }
         } else {
-            trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", deviceID);
+            trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", trackerName);
         }
     } else {
-        trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", deviceID);
+        trackerNameElement.textContent = trackerNameElement.textContent.replace("{trackerName}", trackerName);
     }
 
     // Load settings
-    loadSettings(deviceID);
+    loadSettings(trackerName);
 });
 
-async function loadSettings(deviceID: string) {
+async function loadSettings(trackerName: string) {
     // Get settings from config file
     const trackerSettings: TrackerSettings = await window.ipc.invoke("get-tracker-settings", {
-        trackerName: deviceID,
+        trackerName: trackerName,
     });
 
     if (trackerSettings) {
         settingsFPSMode =
             trackerSettings.fpsMode && trackerSettings.fpsMode !== -1
-                ? await getSetting(`trackers.${deviceID}.fpsMode`, trackerSettings.fpsMode || 50)
+                ? await getSetting(`trackers.${trackerName}.fpsMode`, trackerSettings.fpsMode || 50)
                 : settingsFPSMode;
         settingsSensorMode =
             trackerSettings.sensorMode && trackerSettings.sensorMode !== -1
-                ? await getSetting(`trackers.${deviceID}.sensorMode`, trackerSettings.sensorMode || 2)
+                ? await getSetting(`trackers.${trackerName}.sensorMode`, trackerSettings.sensorMode || 2)
                 : settingsSensorMode;
         settingsAccelerometerEnabled = await getSetting(
-            `trackers.${deviceID}.accelerometerEnabled`,
+            `trackers.${trackerName}.accelerometerEnabled`,
             trackerSettings.sensorAutoCorrection?.includes("accel") || false
         );
         settingsGyroscopeEnabled = await getSetting(
-            `trackers.${deviceID}.gyroscopeEnabled`,
+            `trackers.${trackerName}.gyroscopeEnabled`,
             trackerSettings.sensorAutoCorrection?.includes("gyro") || false
         );
         settingsMagnetometerEnabled = await getSetting(
-            `trackers.${deviceID}.magnetometerEnabled`,
+            `trackers.${trackerName}.magnetometerEnabled`,
             trackerSettings.sensorAutoCorrection?.includes("mag") || false
         );
 
@@ -124,7 +104,7 @@ async function loadSettings(deviceID: string) {
         window.log(`Setting gyroscope to: ${settingsGyroscopeEnabled}`);
         window.log(`Setting magnetometer to: ${settingsMagnetometerEnabled}`);
     } else {
-        window.log(`No settings found for ${deviceID}`);
+        window.log(`No settings found for ${trackerName}`);
     }
 
     document.getElementById("accelerometer-switch").addEventListener("change", async function () {
@@ -132,7 +112,7 @@ async function loadSettings(deviceID: string) {
         window.log(`Switched accelerometer to: ${settingsAccelerometerEnabled}`);
         window.ipc.send("save-setting", {
             trackers: {
-                [deviceID]: {
+                [trackerName]: {
                     sensorMode: settingsSensorMode,
                     fpsMode: settingsFPSMode,
                     accelerometerEnabled: settingsAccelerometerEnabled,
@@ -150,7 +130,7 @@ async function loadSettings(deviceID: string) {
         window.log(`Switched gyroscope enabled: ${settingsGyroscopeEnabled}`);
         window.ipc.send("save-setting", {
             trackers: {
-                [deviceID]: {
+                [trackerName]: {
                     sensorMode: settingsSensorMode,
                     fpsMode: settingsFPSMode,
                     accelerometerEnabled: settingsAccelerometerEnabled,
@@ -168,7 +148,7 @@ async function loadSettings(deviceID: string) {
         window.log(`Switched magnetometer enabled: ${settingsMagnetometerEnabled}`);
         window.ipc.send("save-setting", {
             trackers: {
-                [deviceID]: {
+                [trackerName]: {
                     sensorMode: settingsSensorMode,
                     fpsMode: settingsFPSMode,
                     accelerometerEnabled: settingsAccelerometerEnabled,
@@ -186,7 +166,7 @@ async function loadSettings(deviceID: string) {
         window.log(`Changed FPS mode: ${settingsFPSMode}`);
         window.ipc.send("save-setting", {
             trackers: {
-                [deviceID]: {
+                [trackerName]: {
                     sensorMode: settingsSensorMode,
                     fpsMode: settingsFPSMode,
                     accelerometerEnabled: settingsAccelerometerEnabled,
@@ -204,7 +184,7 @@ async function loadSettings(deviceID: string) {
         window.log(`Changed sensor mode: ${settingsSensorMode}`);
         window.ipc.send("save-setting", {
             trackers: {
-                [deviceID]: {
+                [trackerName]: {
                     sensorMode: settingsSensorMode,
                     fpsMode: settingsFPSMode,
                     accelerometerEnabled: settingsAccelerometerEnabled,
@@ -222,7 +202,7 @@ async function saveTrackerSettings() {
     settingsUnsavedSettings(false);
     window.ipc.send("save-setting", {
         trackers: {
-            [deviceID]: {
+            [trackerName]: {
                 sensorMode: settingsSensorMode,
                 fpsMode: settingsFPSMode,
                 accelerometerEnabled: settingsAccelerometerEnabled,
@@ -238,13 +218,13 @@ async function saveTrackerSettings() {
     if (settingsMagnetometerEnabled) sensorAutoCorrection.push("mag");
 
     window.ipc.send("set-tracker-settings", {
-        deviceID,
+        trackerName,
         sensorMode: settingsSensorMode,
         fpsMode: settingsFPSMode,
         sensorAutoCorrection: sensorAutoCorrection,
     });
 
-    window.log(`Saved settings for ${deviceID}`);
+    window.log(`Saved settings for ${trackerName}`);
 }
 
 async function resetSettings() {
@@ -279,27 +259,27 @@ async function resetSettings() {
     if (settingsMagnetometerEnabled) sensorAutoCorrection.push("mag");
 
     window.ipc.send("save-tracker-settings", {
-        deviceID,
+        trackerName,
         sensorMode: settingsSensorMode,
         fpsMode: settingsFPSMode,
         sensorAutoCorrection: sensorAutoCorrection,
     });
 
-    window.log(`Reset settings for ${deviceID} to default`);
+    window.log(`Reset settings for ${trackerName} to default`);
 }
 
 async function getSettings() {
     const currentSettings = await window.ipc.invoke("get-tracker-settings", {
-        trackerName: deviceID,
+        trackerName: trackerName,
     });
     const sensorMode = currentSettings.sensorMode;
     const fpsMode = currentSettings.fpsMode;
     const sensorAutoCorrection = currentSettings.sensorAutoCorrection;
     const ankleMotionDetection = currentSettings.ankleMotionDetection;
 
-    window.log(`Current settings for ${deviceID}: ${JSON.stringify(currentSettings)}`);
+    window.log(`Current settings for ${trackerName}: ${JSON.stringify(currentSettings)}`);
     window.ipc.send("show-message", {
-        title: `Current settings for ${deviceID}`,
+        title: `Current settings for ${trackerName}`,
         message: `Sensor Mode: ${sensorMode} \nFPS Mode: ${fpsMode} \nSensor Auto Correction: ${sensorAutoCorrection.join(
             ", "
         )} \nAnkle Motion Detection: ${ankleMotionDetection}`,
