@@ -337,7 +337,8 @@ ipcMain.handle("autodetect", async () => {
 });
 
 ipcMain.on("start-connection", async (_event, arg) => {
-    const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
+    const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean} = arg;
+
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
     if (isActive) {
