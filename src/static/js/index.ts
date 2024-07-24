@@ -195,10 +195,15 @@ async function autodetect() {
     const autodetectButton = document.getElementById("autodetect-button") as HTMLButtonElement;
     autodetectButton.disabled = true;
 
-    const devices: string[] = await window.ipc.invoke("autodetect", null);
+    const autodetectObject = await window.ipc.invoke("autodetect", null)
+    const devices: string[] = autodetectObject.devices;
+    const trackerSettings = autodetectObject.trackerSettings;
+
+    window.log(`Auto-detect: found devices: ${devices.join(", ")}`);
+    window.log(`Auto-detect: found tracker settings: ${JSON.stringify(trackerSettings)}`);
+
     let detectedTrackerModel = "";
     let detectedConnectionModes = [];
-    let detectedTrackerSettings = {};
     let wirelessHandled = false;
     let gx2Handled = false;
 
@@ -281,11 +286,17 @@ async function autodetect() {
         const connectionModes = detectedConnectionModes.join(", ");
         const comPorts = selectedComPorts.join(", ");
 
-        // Placeholder for tracker settings
-        const fps = "Placeholder for FPS";
-        const sensorMode = "Placeholder for sensor mode";
-        const sensorAutoCorrectionList = "Placeholder for sensor auto correction list";
-        const ankle = "Placeholder for ankle motion detection";
+        let fps = "N/A";
+        let sensorMode = "N/A";
+        let sensorAutoCorrectionList = "N/A";
+        let ankle = "N/A";
+
+        if (trackerSettings) {
+            fps = trackerSettings.fpsMode;
+            sensorMode = trackerSettings.sensorMode;
+            sensorAutoCorrectionList = trackerSettings.sensorAutoCorrection.join(", ");
+            ankle = trackerSettings.ankleMotionDetection;
+        }
 
         const newMessage = message.replace(
             "{settings}",

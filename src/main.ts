@@ -229,7 +229,7 @@ ipcMain.handle("get-com-ports", async (_event, arg: string) => {
     if (!arg) return comPorts.map((port: any) => port.path).sort();
 
     if (!device) {
-        initializeDevice();
+        initializeDevice(true);
         const ports = await device.getDevicePorts(arg);
         device = undefined;
         return ports;
@@ -324,18 +324,63 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
  */
 
 ipcMain.handle("autodetect", async () => {
-    log("Starting auto-detection...");
+    log("Auto-detect: starting auto-detection...");
     device = undefined;
 
-    log("Initializing new HaritoraX instance...");
-    initializeDevice();
+    log("Auto-detect: initializing new HaritoraX instance...");
+    initializeDevice(true);
 
-    // @ts-ignore
     const devices = await device.getAvailableDevices();
+
+    const waitForTrackerSettings = new Promise(async (resolve) => {
+        log("Auto-detect: waiting for tracker settings...");
+
+        let comPorts;
+        if (devices.includes("Bluetooth")) {
+            log("Auto-detect: bluetooth device found, starting connection...");
+            device.startConnection("bluetooth");
+        }
+        if (devices.includes("GX6")) {
+            log("Auto-detect: GX6 device found, starting connection...");
+            comPorts = await device.getDevicePorts("GX6");
+            device.startConnection("com", comPorts, heartbeatInterval);
+        }
+        if (devices.includes("GX2")) {
+            log("Auto-detect: GX2 device found, starting connection...");
+            comPorts = await device.getDevicePorts("GX2");
+            device.startConnection("com", comPorts, heartbeatInterval);
+        }
+        if (devices.includes("HaritoraX Wired")) {
+            log("Auto-detect: HaritoraX Wired device found, starting connection...");
+            comPorts = await device.getDevicePorts("HaritoraX Wired");
+            device.startConnection("com", comPorts, heartbeatInterval);
+        }
+
+        const timeoutTime = devices.includes("Bluetooth") ? 5000 : 1000;
+        let timeoutId = setTimeout(() => {
+            log("Auto-detect: no tracker settings received, resolving with null");
+            device.stopConnection("com");
+            device.stopConnection("bluetooth");
+            resolve(null);
+        }, timeoutTime);
+
+        device.once("connect", async (deviceID: string) => {
+            log(`Auto-detect: connected to tracker ${deviceID}, getting settings...`);
+            const trackerSettings = await device.getTrackerSettings(deviceID, true);
+            clearTimeout(timeoutId);
+            device.stopConnection("com");
+            device.stopConnection("bluetooth");
+            resolve(trackerSettings);
+        });
+    });
+
+    // Wait for the promise to resolve with the tracker settings
+    const trackerSettings = await waitForTrackerSettings;
+
     device.removeAllListeners();
     device = undefined;
 
-    return devices;
+    return { devices, trackerSettings };
 });
 
 ipcMain.on("start-connection", async (_event, arg) => {
@@ -385,16 +430,17 @@ function shouldInitializeNewDevice(): boolean {
     );
 }
 
-function initializeDevice(): void {
+function initializeDevice(forceDisableLogging: boolean = false): void {
     const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
-    log(`Creating new HaritoraX ${trackerType} instance with logging mode ${loggingMode}...`);
+    const effectiveLoggingMode = forceDisableLogging ? 1 : loggingMode;
+    log(`Creating new HaritoraX ${trackerType} instance with logging mode ${effectiveLoggingMode}...`);
     const loggingOptions = {
         1: [false, false],
         2: [true, false],
         3: [true, true],
     };
     const [logging, imuProcessing] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
-        loggingMode.toString()
+        effectiveLoggingMode.toString()
     ] || [false, false];
     // @ts-ignore
     device = new HaritoraX(trackerType, logging, imuProcessing);
