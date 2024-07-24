@@ -195,7 +195,7 @@ async function autodetect() {
     const autodetectButton = document.getElementById("autodetect-button") as HTMLButtonElement;
     autodetectButton.disabled = true;
 
-    const autodetectObject = await window.ipc.invoke("autodetect", null)
+    const autodetectObject = await window.ipc.invoke("autodetect", null);
     const devices: Set<string> = new Set(autodetectObject.devices);
     const trackerSettings = autodetectObject.trackerSettings;
 
@@ -207,12 +207,10 @@ async function autodetect() {
     let gx2Handled = false;
 
     function simulateChangeEvent(element: HTMLInputElement, value: boolean) {
-        const event = new Event("change");
-        if (element.checked !== value) {
-            element.checked = value;
-            element.dispatchEvent(event);
-            window.log(`Auto-detect: ${value ? "enabling" : "disabling"} element ${element.id}`);
-        }
+        if (element.checked === value) return;
+        element.checked = value;
+        element.dispatchEvent(new Event("change"));
+        window.log(`Auto-detect: ${value ? "enabling" : "disabling"} element ${element.id}`);
     }
 
     async function handleComPorts(deviceName: string) {
@@ -311,6 +309,27 @@ Sensor mode: ${sensorMode}
 Sensor auto correction: ${sensorAutoCorrectionList}
 Ankle motion detection: ${ankle}`
         );
+
+        // Set tracker settings
+        const fpsModeSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
+        const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
+        const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
+        const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
+        const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
+
+        if (fpsModeSelect) {
+            fpsModeSelect.value = fps;
+            fpsModeSelect.dispatchEvent(new Event("change"));
+        }
+        if (sensorModeSelect) {
+            sensorModeSelect.value = sensorMode;
+            sensorModeSelect.dispatchEvent(new Event("change"));
+        }
+        if (sensorAutoCorrectionList.includes("accel")) simulateChangeEvent(accelerometerSwitch, true);
+        if (sensorAutoCorrectionList.includes("gyro")) simulateChangeEvent(gyroscopeSwitch, true);
+        if (sensorAutoCorrectionList.includes("mag")) simulateChangeEvent(magnetometerSwitch, true);
+
+        saveSettings();
 
         showMessageBox("dialogs.autodetect.success.title", newMessage, true, false);
         setStatus("main.status.autodetect.success");
@@ -1202,15 +1221,7 @@ function addEventListeners() {
     });
 }
 
-/*
- * Export functions to window
- */
-
-window.startConnection = startConnection;
-window.stopConnection = stopConnection;
-window.autodetect = autodetect;
-
-window.saveSettings = () => {
+function saveSettings() {
     window.log("Saving settings...");
     unsavedSettings(false);
 
@@ -1268,7 +1279,16 @@ window.saveSettings = () => {
     }
 
     window.log("Settings saved");
-};
+}
+
+/*
+ * Export functions to window
+ */
+
+window.startConnection = startConnection;
+window.stopConnection = stopConnection;
+window.autodetect = autodetect;
+window.saveSettings = saveSettings;
 
 window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for ${deviceID}`);
