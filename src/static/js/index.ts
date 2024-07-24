@@ -196,10 +196,10 @@ async function autodetect() {
     autodetectButton.disabled = true;
 
     const autodetectObject = await window.ipc.invoke("autodetect", null)
-    const devices: string[] = autodetectObject.devices;
+    const devices: Set<string> = new Set(autodetectObject.devices);
     const trackerSettings = autodetectObject.trackerSettings;
 
-    window.log(`Auto-detect: found devices: ${devices.join(", ")}`);
+    window.log(`Auto-detect: found devices: ${Array.from(devices).join(", ")}`);
     window.log(`Auto-detect: found tracker settings: ${JSON.stringify(trackerSettings)}`);
 
     let detectedTrackerModel = "";
@@ -234,7 +234,7 @@ async function autodetect() {
     }
 
     // Enable BT and COM for HaritoraX Wireless w/ GX2 (no GX6)
-    if (devices.includes("HaritoraX Wireless") && !devices.includes("GX6") && devices.includes("GX2")) {
+    if (devices.has("HaritoraX Wireless") && !devices.has("GX6") && devices.has("GX2")) {
         simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
         simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
         await handleComPorts("GX2");
@@ -253,7 +253,7 @@ async function autodetect() {
             simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
             detectedTrackerModel = "HaritoraX Wireless";
 
-            if (!devices.includes("Bluetooth")) return;
+            if (!devices.has("Bluetooth")) return;
             simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
             detectedConnectionModes.push("Bluetooth");
         },
@@ -274,13 +274,13 @@ async function autodetect() {
 
     for (const device of devices) if (deviceHandlers[device]) await deviceHandlers[device]();
 
-    if (devices.length !== 1) {
+    if (devices.size === 0) {
         // If somehow, literally nothing is found...
         window.error("No devices found during auto-detection");
         showErrorDialog("dialogs.autodetectFailed.title", "dialogs.autodetect.failed.message");
         setStatus("main.status.autodetect.failed");
     } else {
-        window.log(`Auto-detect: completed, detected ${devices.join(", ")}`);
+        window.log(`Auto-detect: completed, detected ${Array.from(devices).join(", ")}`);
         const message = await window.translate("dialogs.autodetect.success.message");
 
         const trackerName = detectedTrackerModel;
