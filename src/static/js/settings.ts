@@ -283,6 +283,7 @@ async function getSettings() {
         message: `Sensor Mode: ${sensorMode} \nFPS Mode: ${fpsMode} \nSensor Auto Correction: ${sensorAutoCorrection.join(
             ", "
         )} \nAnkle Motion Detection: ${ankleMotionDetection}`,
+        translateTitle: false,
         translateMessage: false,
     });
 }

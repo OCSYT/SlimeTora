@@ -177,15 +177,15 @@ app.on("window-all-closed", closeApp);
  * Renderer handlers
  */
 
-async function showMessage(title: string, message: string, translateMessage = true) {
-    const translatedTitle = translateMessage ? await translate(title) : title;
+async function showMessage(title: string, message: string, translateTitle = true, translateMessage = true) {
+    const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
 
     dialog.showMessageBox({ title: translatedTitle, message: translatedMessage });
 }
 
-async function showError(title: string, message: string, translateMessage = true) {
-    const translatedTitle = translateMessage ? await translate(title) : title;
+async function showError(title: string, message: string, translateTitle = true, translateMessage = true) {
+    const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
 
     dialog.showErrorBox(translatedTitle, translatedMessage);
@@ -203,20 +203,22 @@ ipcMain.on("show-message", async (_event, arg) => {
     const {
         title,
         message,
+        translateTitle = true,
         translateMessage = true,
-    }: { title: string; message: string; translateMessage: boolean } = arg;
+    }: { title: string; message: string; translateTitle: boolean; translateMessage: boolean } = arg;
 
-    await showMessage(title, message, translateMessage);
+    await showMessage(title, message, translateTitle, translateMessage);
 });
 
 ipcMain.on("show-error", async (_event, arg) => {
     const {
         title,
         message,
+        translateTitle = true,
         translateMessage = true,
-    }: { title: string; message: string; translateMessage: boolean } = arg;
+    }: { title: string; message: string; translateTitle: boolean; translateMessage: boolean } = arg;
 
-    await showError(title, message, translateMessage);
+    await showError(title, message, translateTitle, translateMessage);
 });
 
 ipcMain.handle("translate", async (_event, arg: string) => {
@@ -337,7 +339,7 @@ ipcMain.handle("autodetect", async () => {
 });
 
 ipcMain.on("start-connection", async (_event, arg) => {
-    const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean} = arg;
+    const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
 
     log(`Start connection with: ${JSON.stringify(arg)}`);
 
@@ -401,9 +403,7 @@ function initializeDevice(): void {
 async function notifyConnectedDevices(): Promise<void> {
     const activeTrackers = Array.from(new Set(device.getActiveTrackers()));
     if (activeTrackers.length === 0) return;
-    for (const trackerName of activeTrackers) {
-        await addTracker(trackerName);
-    }
+    for (const trackerName of activeTrackers) await addTracker(trackerName);
     log("Connected devices: " + JSON.stringify(activeTrackers));
 }
 
@@ -558,9 +558,7 @@ ipcMain.handle("has-setting", (_event, name) => {
     let current = config;
 
     for (const property of properties) {
-        if (!current.hasOwnProperty(property)) {
-            return false;
-        }
+        if (!current.hasOwnProperty(property)) return false;
         current = current[property];
     }
 
@@ -574,9 +572,7 @@ ipcMain.handle("get-setting", (_event, name) => {
     let current = config;
 
     for (const property of properties) {
-        if (!current.hasOwnProperty(property)) {
-            return null;
-        }
+        if (!current.hasOwnProperty(property)) return null;
         current = current[property];
     }
 

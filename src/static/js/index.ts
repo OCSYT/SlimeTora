@@ -190,166 +190,125 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 async function autodetect() {
     window.log("Running auto-detection...");
+    setStatus("main.status.autodetect.running");
 
     const autodetectButton = document.getElementById("autodetect-button") as HTMLButtonElement;
     autodetectButton.disabled = true;
 
     const devices: string[] = await window.ipc.invoke("autodetect", null);
+    let detectedTrackerModel = "";
+    let detectedConnectionModes = [];
+    let detectedTrackerSettings = {};
+    let wirelessHandled = false;
+    let gx2Handled = false;
 
     function simulateChangeEvent(element: HTMLInputElement, value: boolean) {
-        const event = new Event('change');
-        if (element.checked && value === false) {
-            window.log(`Auto-detect: disabling element ${element.id}`);
-            element.checked = false;
+        const event = new Event("change");
+        if (element.checked !== value) {
+            element.checked = value;
             element.dispatchEvent(event);
-        } else if (!element.checked && value === true) {
-            window.log(`Auto-detect: enabling element ${element.id}`);
-            element.checked = true;
-            element.dispatchEvent(event);
+            window.log(`Auto-detect: ${value ? "enabling" : "disabling"} element ${element.id}`);
         }
     }
 
-    if (devices.includes("HaritoraX Wireless")) {
-        const wirelessTrackerSwitch = document.getElementById("wireless-tracker-switch") as HTMLInputElement;
-        simulateChangeEvent(wirelessTrackerSwitch, true);
-        window.log("Auto-detect: found HaritoraX Wireless");
-    
-        if (devices.includes("Bluetooth")) {
-            const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
-            simulateChangeEvent(bluetoothSwitch, true);
-            window.log("Auto-detect: enabling Bluetooth");
-        }
-    }
-    
-    if (devices.includes("HaritoraX Wired")) {
-        const wiredTrackerSwitch = document.getElementById("wired-tracker-switch") as HTMLInputElement;
-        simulateChangeEvent(wiredTrackerSwitch, true);
-    
-        // Get the COM port for HaritoraX Wired
-        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "HaritoraX Wired");
+    async function handleComPorts(deviceName: string) {
+        const comPorts: string[] = await window.ipc.invoke("get-com-ports", deviceName);
+        selectedComPorts.length = 0;
         selectedComPorts.push(...comPorts);
-    
+
+        comEnabled = true;
+        simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
+
         const comPortsParent = document.getElementById("com-ports");
-        const comPortSwitches = Array.from(comPortsParent.querySelectorAll("input"));
-        comPortSwitches.forEach((port) => {
-            port.checked = comPorts.includes(port.id);
-        });
-        const event = new Event('change');
-        comPortsParent.dispatchEvent(event);
-    
-        window.log("Auto-detect: found HaritoraX Wired");
-        window.log("Auto-detect: enabling COM");
-        window.log(`Auto-detect: COM ports for HaritoraX Wired: ${comPorts}`);
+        Array.from(comPortsParent.querySelectorAll("input")).forEach((port) =>
+            simulateChangeEvent(port, comPorts.includes(port.id))
+        );
+
+        window.log(`Auto-detect: found ${deviceName}`);
+        window.log(`Auto-detect: COM ports for ${deviceName}: ${comPorts}`);
     }
-    
-    if (devices.includes("HaritoraX Wireless") && !devices.includes("GX6")) {
-        // If HaritoraX Wireless was found but not GX6, enable Bluetooth
-        bluetoothEnabled = true;
-    
-        const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
-        simulateChangeEvent(bluetoothSwitch, true);
-    
-        window.log("Auto-detect: found HaritoraX Wireless");
-        window.log("Auto-detect: enabling Bluetooth");
-    }
-    
+
+    // Enable BT and COM for HaritoraX Wireless w/ GX2 (no GX6)
     if (devices.includes("HaritoraX Wireless") && !devices.includes("GX6") && devices.includes("GX2")) {
-        // If HaritoraX Wireless was found with no GX6 but with GX2, enable Bluetooth and COM
-        const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
-        simulateChangeEvent(bluetoothSwitch, true);
-    
-        const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
-        simulateChangeEvent(comSwitch, true);
-    
-        // Find COM ports for GX2
-        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "GX2");
-        selectedComPorts.push(...comPorts);
-    
-        const comPortsParent = document.getElementById("com-ports");
-        const comPortSwitches = Array.from(comPortsParent.querySelectorAll("input"));
-        comPortSwitches.forEach((port) => {
-            port.checked = comPorts.includes(port.id);
-        });
-        const event = new Event('change');
-        comPortsParent.dispatchEvent(event);
-    
-        window.log("Auto-detect: found HaritoraX Wireless and GX2");
-        window.log("Auto-detect: enabling Bluetooth and COM");
-        window.log(`Auto-detect: COM ports for GX2: ${comPorts}`);
+        simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
+        await handleComPorts("GX2");
+        gx2Handled = true;
+        wirelessHandled = true;
+
+        detectedTrackerModel = "HaritoraX Wireless";
+        detectedConnectionModes.push("Bluetooth", "GX2");
+
+        window.log("Auto-detect: found HaritoraX Wireless and GX2, enabling Bluetooth and COM");
     }
-    
-    if (devices.includes("HaritoraX Wireless") && devices.includes("GX2")) {
-        // If HaritoraX Wireless and GX2 were found, enable Bluetooth and COM
-        const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
-        simulateChangeEvent(bluetoothSwitch, true);
-    
-        const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
-        simulateChangeEvent(comSwitch, true);
-    
-        // Find COM ports for GX2
-        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "GX2");
-        selectedComPorts.push(...comPorts);
-    
-        const comPortsParent = document.getElementById("com-ports");
-        const comPortSwitches = Array.from(comPortsParent.querySelectorAll("input"));
-        comPortSwitches.forEach((port) => {
-            port.checked = comPorts.includes(port.id);
-        });
-        const event = new Event('change');
-        comPortsParent.dispatchEvent(event);
-    
-        window.log("Auto-detect: found HaritoraX Wireless and GX2");
-        window.log("Auto-detect: enabling Bluetooth and COM");
-        window.log(`Auto-detect: COM ports for GX2: ${comPorts}`);
-    }
-    
-    if (devices.includes("GX6")) {
-        const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
-        simulateChangeEvent(comSwitch, true);
-    
-        // Find COM ports for GX6
-        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "GX6");
-        selectedComPorts.push(...comPorts);
-    
-        const comPortsParent = document.getElementById("com-ports");
-        const comPortSwitches = Array.from(comPortsParent.querySelectorAll("input"));
-        comPortSwitches.forEach((port) => {
-            port.checked = comPorts.includes(port.id);
-        });
-        const event = new Event('change');
-        comPortsParent.dispatchEvent(event);
-    
-        window.log("Auto-detect: found GX6");
-        window.log(`Auto-detect: enabling COM`);
-        window.log(`Auto-detect: COM ports for GX6: ${comPorts}`);
-    }
-    
-    if (devices.includes("GX2")) {
-        const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
-        simulateChangeEvent(comSwitch, true);
-    
-        // Find COM ports for GX2
-        const comPorts: string[] = await window.ipc.invoke("get-com-ports", "GX2");
-        selectedComPorts.push(...comPorts);
-    
-        const comPortsParent = document.getElementById("com-ports");
-        const comPortSwitches = Array.from(comPortsParent.querySelectorAll("input"));
-        comPortSwitches.forEach((port) => {
-            port.checked = comPorts.includes(port.id);
-        });
-        const event = new Event('change');
-        comPortsParent.dispatchEvent(event);
-    
-        window.log("Auto-detect: found GX2");
-        window.log(`Auto-detect: enabling COM`);
-        window.log(`Auto-detect: COM ports for GX2: ${comPorts}`);
+
+    const deviceHandlers: { [key: string]: () => Promise<void> } = {
+        "HaritoraX Wireless": async () => {
+            if (wirelessHandled) return;
+            simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
+            detectedTrackerModel = "HaritoraX Wireless";
+
+            if (!devices.includes("Bluetooth")) return;
+            simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
+            detectedConnectionModes.push("Bluetooth");
+        },
+        "HaritoraX Wired": async () => {
+            detectedTrackerModel = "HaritoraX Wired (1.1b/1.1/1.0)";
+            await handleComPorts("HaritoraX Wired");
+        },
+        GX6: async () => {
+            detectedConnectionModes.push("GX6");
+            await handleComPorts("GX6");
+        },
+        GX2: async () => {
+            if (gx2Handled) return;
+            await handleComPorts("GX2");
+            detectedConnectionModes.push("GX2");
+        },
+    };
+
+    for (const device of devices) if (deviceHandlers[device]) await deviceHandlers[device]();
+
+    // If somehow, literally nothing is found...
+    if (devices.length === 1) {
+        window.error("No devices found during auto-detection");
+        showErrorDialog("dialogs.autodetectFailed.title", "dialogs.autodetect.failed.message");
+        setStatus("main.status.autodetect.failed");
+    } else {
+        window.log(`Auto-detect: completed, detected ${devices.join(", ")}`);
+        const message = await window.translate("dialogs.autodetect.success.message");
+
+        const trackerName = detectedTrackerModel;
+        const connectionModes = detectedConnectionModes.join(", ");
+        const comPorts = selectedComPorts.join(", ");
+
+        // Placeholder for tracker settings
+        const fps = "Placeholder for FPS";
+        const sensorMode = "Placeholder for sensor mode";
+        const sensorAutoCorrectionList = "Placeholder for sensor auto correction list";
+        const ankle = "Placeholder for ankle motion detection";
+
+        const newMessage = message.replace(
+            "{settings}",
+            `\n\r\n\r---- Connection settings ----
+Tracker model: ${trackerName}
+Connection mode: ${connectionModes}
+COM ports (if applicable): ${comPorts}
+
+---- Tracker settings ----
+FPS transfer rate: ${fps}
+Sensor mode: ${sensorMode}
+Sensor auto correction: ${sensorAutoCorrectionList}
+Ankle motion detection: ${ankle}`
+        );
+
+        showMessageBox("dialogs.autodetect.success.title", newMessage, true, false);
+        setStatus("main.status.autodetect.success");
     }
 
     // Simulate stop connection
-    const stopConnectionButton = document.getElementById("stop-connection-button") as HTMLButtonElement;
-    stopConnectionButton.click();
+    document.getElementById("stop-connection-button").click();
 
-    // TODO: auto-detect tracker settings?
+    // TODO: auto-detect tracker settings? (and apply to global tracker settings)
     autodetectButton.disabled = false;
 }
 
@@ -455,20 +414,54 @@ async function handleConnectionType() {
  * Renderer helper functions
  */
 
-async function setStatus(status: string) {
-    const translatedStatus = await window.translate(status);
+async function setStatus(status: string, translate: boolean = true) {
     const statusElement = document.getElementById("status");
     if (!statusElement) return;
 
-    statusElement.setAttribute("data-i18n", status);
-    statusElement.textContent = translatedStatus;
-    window.log(`Set status to: ${translatedStatus}`);
+    if (translate) {
+        const translatedStatus = await window.translate(status);
+
+        statusElement.setAttribute("data-i18n", status);
+        statusElement.textContent = translatedStatus;
+        window.log(`Set status to: ${translatedStatus}`);
+    } else {
+        statusElement.textContent = status;
+        window.log(`Set status to: ${status}`);
+        return;
+    }
 }
 
-async function showErrorDialog(titleKey: string, messageKey: string) {
+async function showMessageBox(
+    titleKey: string,
+    messageKey: string,
+    translateTitle: boolean = true,
+    translateMessage: boolean = true
+) {
+    const title = translateTitle ? await window.translate(titleKey) : titleKey;
+    const message = translateMessage ? await window.translate(messageKey) : messageKey;
+
+    window.ipc.send("show-message", {
+        title: title,
+        message: message,
+        translateTitle,
+        translateMessage,
+    });
+}
+
+async function showErrorDialog(
+    titleKey: string,
+    messageKey: string,
+    translateTitle: boolean = true,
+    translateMessage: boolean = true
+) {
+    const title = translateTitle ? await window.translate(titleKey) : titleKey;
+    const message = translateMessage ? await window.translate(messageKey) : messageKey;
+
     window.ipc.send("show-error", {
-        title: titleKey,
-        message: messageKey,
+        title: title,
+        message: message,
+        translateTitle,
+        translateMessage,
     });
 }
 

@@ -14,7 +14,12 @@
             "slimeVRMissing": "SlimeVR not found",
             "noConnectionMode": "No connection mode enabled",
             "noTrackerModel": "No tracker model selected",
-            "noComPorts": "No COM ports selected"
+            "noComPorts": "No COM ports selected",
+            "autodetect": {
+                "running": "running auto-detection...",
+                "success": "auto-detection complete",
+                "failed": "auto-detection failed" 
+            }
         }
     },
     "trackerInfo": {
@@ -159,6 +164,16 @@
         "noComPorts": {
             "title": "No COM ports selected",
             "message": "Please select at least one COM port in the program's settings."
+        },
+        "autodetect": {
+            "success": {
+                "title": "Auto-detect completed!",
+                "message": "Auto-detect completed successfully. Please review the settings that have been applied below: {settings}"
+            },
+            "failed": {
+                "title": "Auto-detect failed!",
+                "message": "Auto-detect failed. Please make sure you have your bluetooth/GX(6/2) dongles plugged in & turned on."
+            }
         }
     }
 }

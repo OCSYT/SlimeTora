@@ -1,4 +1,8 @@
-{
+{   
+    "needs to be completed": "needs to be completed",
+
+
+    
     "main": {
         "connectedTrackers": "Tracker Connessi:",
         "startConnection": "Avvia Connessione",
