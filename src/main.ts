@@ -356,21 +356,44 @@ ipcMain.handle("autodetect", async () => {
             device.startConnection("com", comPorts, heartbeatInterval);
         }
 
-        const timeoutTime = devices.includes("Bluetooth") ? 5000 : 1000;
-        let timeoutId = setTimeout(() => {
+        const timeoutTime = devices.includes("Bluetooth") ? 4000 : 1000;
+        let trackerSettingsTimeout = setTimeout(() => {
             log("Auto-detect: no tracker settings received, resolving with null");
             device.stopConnection("com");
             device.stopConnection("bluetooth");
             resolve(null);
         }, timeoutTime);
 
-        device.once("connect", async (deviceID: string) => {
-            log(`Auto-detect: connected to tracker ${deviceID}, getting settings...`);
-            const trackerSettings = await device.getTrackerSettings(deviceID, true);
-            clearTimeout(timeoutId);
-            device.stopConnection("com");
-            device.stopConnection("bluetooth");
-            resolve(trackerSettings);
+        device.on("connect", async (deviceID: string, connectionMode: string) => {
+            async function sendTrackerSettings(trackerName: string, connectionMode: string) {
+                log(`Auto-detect: connected to tracker ${trackerName} via ${connectionMode}, getting settings...`);
+                const trackerSettings = await device.getTrackerSettings(trackerName, true);
+                log(`Auto-detect: got tracker settings for ${trackerName}: ${JSON.stringify(trackerSettings)}`);
+
+                clearTimeout(trackerSettingsTimeout);
+
+                device.stopConnection("com");
+                device.stopConnection("bluetooth");
+
+                resolve(trackerSettings);
+            }
+
+            // Prefer bluetooth devices over COM (wireless) trackers
+            // done until haritorax-interpreter supports getting settings from COM (wireless) trackers properly without breaking (my fault)
+            if (connectionMode === "com" && trackerName !== "HaritoraXWired") {
+                setTimeout(async () => {
+                    if (!device) return;
+                    const activeTrackers = device.getActiveTrackers();
+                    if (activeTrackers && activeTrackers.some((tracker) => tracker.startsWith("HaritoraXW-"))) {
+                        await sendTrackerSettings(
+                            activeTrackers.find((tracker) => tracker.startsWith("HaritoraXW-")),
+                            "bluetooth"
+                        );
+                    }
+                }, 3000);
+            } else {
+                await sendTrackerSettings(deviceID, connectionMode);
+            }
         });
     });
 

@@ -200,7 +200,6 @@ async function autodetect() {
     const trackerSettings = autodetectObject.trackerSettings;
 
     window.log(`Auto-detect: found devices: ${Array.from(devices).join(", ")}`);
-    window.log(`Auto-detect: found tracker settings: ${JSON.stringify(trackerSettings)}`);
 
     let detectedTrackerModel = "";
     let detectedConnectionModes = [];
