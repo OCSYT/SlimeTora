@@ -221,13 +221,13 @@ async function autodetect() {
         selectedComPorts.length = 0;
         selectedComPorts.push(...comPorts);
 
-        comEnabled = true;
         simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
 
         const comPortsParent = document.getElementById("com-ports");
         Array.from(comPortsParent.querySelectorAll("input")).forEach((port) =>
             simulateChangeEvent(port, comPorts.includes(port.id))
         );
+        comPortsParent.dispatchEvent(new Event("change")); // simulate it here again since the actual code for handling COM port changes is in the parent element
 
         window.log(`Auto-detect: found ${deviceName}`);
         window.log(`Auto-detect: COM ports for ${deviceName}: ${comPorts}`);
@@ -235,6 +235,7 @@ async function autodetect() {
 
     // Enable BT and COM for HaritoraX Wireless w/ GX2 (no GX6)
     if (devices.includes("HaritoraX Wireless") && !devices.includes("GX6") && devices.includes("GX2")) {
+        simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
         simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
         await handleComPorts("GX2");
         gx2Handled = true;
@@ -273,8 +274,8 @@ async function autodetect() {
 
     for (const device of devices) if (deviceHandlers[device]) await deviceHandlers[device]();
 
-    // If somehow, literally nothing is found...
-    if (devices.length === 1) {
+    if (devices.length !== 1) {
+        // If somehow, literally nothing is found...
         window.error("No devices found during auto-detection");
         showErrorDialog("dialogs.autodetectFailed.title", "dialogs.autodetect.failed.message");
         setStatus("main.status.autodetect.failed");
