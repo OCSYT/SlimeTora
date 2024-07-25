@@ -177,11 +177,18 @@ app.on("window-all-closed", closeApp);
  * Renderer handlers
  */
 
-async function showMessage(title: string, message: string, translateTitle = true, translateMessage = true) {
+async function showMessage(
+    title: string,
+    message: string,
+    blocking = false,
+    translateTitle = true,
+    translateMessage = true
+) {
+    const show = blocking ? dialog.showMessageBoxSync : dialog.showMessageBox;
     const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
 
-    dialog.showMessageBox({ title: translatedTitle, message: translatedMessage });
+    show({ title: translatedTitle, message: translatedMessage });
 }
 
 async function showError(title: string, message: string, translateTitle = true, translateMessage = true) {
@@ -203,11 +210,12 @@ ipcMain.on("show-message", async (_event, arg) => {
     const {
         title,
         message,
+        blocking = false,
         translateTitle = true,
         translateMessage = true,
-    }: { title: string; message: string; translateTitle: boolean; translateMessage: boolean } = arg;
+    }: { title: string; message: string; blocking: boolean; translateTitle: boolean; translateMessage: boolean } = arg;
 
-    await showMessage(title, message, translateTitle, translateMessage);
+    await showMessage(title, message, blocking, translateTitle, translateMessage);
 });
 
 ipcMain.on("show-error", async (_event, arg) => {
@@ -330,14 +338,15 @@ ipcMain.handle("autodetect", async () => {
     log("Auto-detect: initializing new HaritoraX instance...");
     initializeDevice(true);
 
+    log("Auto-detect: getting available devices...");
     const devices = await device.getAvailableDevices();
 
-    const waitForTrackerSettings = new Promise(async (resolve) => {
-        log("Auto-detect: waiting for tracker settings...");
+    let trackerSettingsTimeout: NodeJS.Timeout = null;
 
+    const waitForTrackerSettings = new Promise(async (resolve) => {
         let comPorts;
-        if (devices.includes("Bluetooth")) {
-            log("Auto-detect: bluetooth device found, starting connection...");
+        if (devices.includes("Bluetooth") && devices.includes("HaritoraX Wireless")) {
+            log("Auto-detect: Bluetooth & HaritoraX Wireless devices found, starting connection...");
             device.startConnection("bluetooth");
         }
         if (devices.includes("GX6")) {
@@ -356,12 +365,12 @@ ipcMain.handle("autodetect", async () => {
             device.startConnection("com", comPorts, heartbeatInterval);
         }
 
-        let trackerSettingsTimeout = setTimeout(() => {
-            log("Auto-detect: no tracker settings received after 6 seconds, resolving with null");
+        trackerSettingsTimeout = setTimeout(() => {
+            log("Auto-detect: no tracker settings received after 5 seconds, resolving with null");
             device.stopConnection("com");
             device.stopConnection("bluetooth");
             resolve(null);
-        }, 6000);
+        }, 5000);
 
         device.once("connect", async (deviceID: string, connectionMode: string) => {
             log(`Auto-detect: connected to tracker ${deviceID} via ${connectionMode}, getting settings...`);
@@ -377,11 +386,18 @@ ipcMain.handle("autodetect", async () => {
         });
     });
 
-    // Wait for the promise to resolve with the tracker settings
-    const trackerSettings = await waitForTrackerSettings;
+    let trackerSettings = null;
+
+    if (devices.length !== 0) {
+        log("Auto-detect: waiting for tracker settings...");
+        trackerSettings = await waitForTrackerSettings;
+    } else {
+        log("Auto-detect: no devices found");
+        clearTimeout(trackerSettingsTimeout);
+    }
 
     device.removeAllListeners();
-    device = undefined;
+    device = null;
 
     return { devices, trackerSettings };
 });

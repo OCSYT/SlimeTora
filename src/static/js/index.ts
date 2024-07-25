@@ -189,6 +189,8 @@ document.addEventListener("DOMContentLoaded", async function () {
  */
 
 async function autodetect() {
+    window.showMessageBox("dialogs.autodetect.pre-check.title", "dialogs.autodetect.pre-check.message", true, true, true);
+
     window.log("Running auto-detection...");
     setStatus("main.status.autodetect.running");
 
@@ -202,9 +204,7 @@ async function autodetect() {
     window.log(`Auto-detect: found devices: ${Array.from(devices).join(", ")}`);
 
     let detectedTrackerModel = "";
-    let detectedConnectionModes = [];
-    let wirelessHandled = false;
-    let gx2Handled = false;
+    let detectedConnectionModes: string[] = [];
 
     function simulateChangeEvent(element: HTMLInputElement, value: boolean) {
         if (element.checked === value) return;
@@ -230,29 +230,10 @@ async function autodetect() {
         window.log(`Auto-detect: COM ports for ${deviceName}: ${comPorts}`);
     }
 
-    // Enable BT and COM for HaritoraX Wireless w/ GX2 (no GX6)
-    if (devices.has("HaritoraX Wireless") && !devices.has("GX6") && devices.has("GX2")) {
-        simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
-        simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
-        await handleComPorts("GX2");
-        gx2Handled = true;
-        wirelessHandled = true;
-
-        detectedTrackerModel = "HaritoraX Wireless";
-        detectedConnectionModes.push("Bluetooth", "GX2");
-
-        window.log("Auto-detect: found HaritoraX Wireless and GX2, enabling Bluetooth and COM");
-    }
-
     const deviceHandlers: { [key: string]: () => Promise<void> } = {
         "HaritoraX Wireless": async () => {
-            if (wirelessHandled) return;
             simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
             detectedTrackerModel = "HaritoraX Wireless";
-
-            if (!devices.has("Bluetooth")) return;
-            simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
-            detectedConnectionModes.push("Bluetooth");
         },
         "HaritoraX Wired": async () => {
             detectedTrackerModel = "HaritoraX Wired (1.1b/1.1/1.0)";
@@ -263,9 +244,25 @@ async function autodetect() {
             await handleComPorts("GX6");
         },
         GX2: async () => {
-            if (gx2Handled) return;
-            await handleComPorts("GX2");
             detectedConnectionModes.push("GX2");
+            await handleComPorts("GX2");
+
+            // Enable BT and COM for HaritoraX Wireless w/ GX2 (no GX6)
+            if (devices.has("HaritoraX Wireless") && !devices.has("GX6")) {
+                simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
+                detectedConnectionModes.push("Bluetooth");
+                window.log("Auto-detect: found HaritoraX Wireless and GX2, enabling Bluetooth and COM");
+            }
+        },
+        Bluetooth: async () => {
+            detectedConnectionModes.push("Bluetooth");
+            simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
+            if (!devices.has("HaritoraX Wireless") || !devices.has("HaritoraX Wired")) {
+                // Assume HaritoraX Wireless if no other devices are found
+                window.log("Auto-detect: no other devices found, assuming HaritoraX Wireless");
+                detectedTrackerModel = "HaritoraX Wireless";
+                simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
+            }
         },
     };
 
@@ -274,7 +271,7 @@ async function autodetect() {
     if (devices.size === 0) {
         // If somehow, literally nothing is found...
         window.error("No devices found during auto-detection");
-        showErrorDialog("dialogs.autodetectFailed.title", "dialogs.autodetect.failed.message");
+        showErrorDialog("dialogs.autodetect.failed.title", "dialogs.autodetect.failed.message");
         setStatus("main.status.autodetect.failed");
     } else {
         window.log(`Auto-detect: completed, detected ${Array.from(devices).join(", ")}`);
@@ -331,14 +328,13 @@ Ankle motion detection: ${ankle}`
 
         saveSettings();
 
-        showMessageBox("dialogs.autodetect.success.title", newMessage, true, false);
+        showMessageBox("dialogs.autodetect.success.title", newMessage, false, true, false);
         setStatus("main.status.autodetect.success");
     }
 
     // Simulate stop connection
     document.getElementById("stop-connection-button").click();
 
-    // TODO: auto-detect tracker settings? (and apply to global tracker settings)
     autodetectButton.disabled = false;
 }
 
@@ -464,15 +460,14 @@ async function setStatus(status: string, translate: boolean = true) {
 async function showMessageBox(
     titleKey: string,
     messageKey: string,
+    blocking: boolean = false,
     translateTitle: boolean = true,
     translateMessage: boolean = true
 ) {
-    const title = translateTitle ? await window.translate(titleKey) : titleKey;
-    const message = translateMessage ? await window.translate(messageKey) : messageKey;
-
     window.ipc.send("show-message", {
-        title: title,
-        message: message,
+        title: titleKey,
+        message: messageKey,
+        blocking,
         translateTitle,
         translateMessage,
     });

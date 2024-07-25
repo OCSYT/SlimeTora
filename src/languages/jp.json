@@ -166,6 +166,10 @@
             "message": "アプリケーション設定で、少なくとも1つのCOMポートを選択してください。"
         },
         "autodetect": {
+            "pre-check": {
+                "title": "TO CHANGE",
+                "message": "TO CHANGE"
+            },
             "success": {
                 "title": "TO CHANGE",
                 "message": "TO CHANGE"

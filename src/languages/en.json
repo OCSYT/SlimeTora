@@ -166,13 +166,17 @@
             "message": "Please select at least one COM port in the program's settings."
         },
         "autodetect": {
+            "pre-check": {
+                "title": "Auto-detect pre-check",
+                "message": "This feature will attempt to automatically detect your trackers (wired unsupported in this beta), connection mode, and tracker settings to apply the settings in the program for you.\r\n\r\nMake sure HaritoraConfigurator is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
+            },
             "success": {
                 "title": "Auto-detect completed!",
-                "message": "Auto-detect completed successfully. Please review the settings that have been applied below: {settings}"
+                "message": "Auto-detect completed successfully. Remember this may not be accurate, so please review the settings that have been applied below: {settings}"
             },
             "failed": {
                 "title": "Auto-detect failed!",
-                "message": "Auto-detect failed. Please make sure you have your bluetooth/GX(6/2) dongles plugged in & turned on."
+                "message": "Auto-detect failed. Please make sure you have your Bluetooth/GX(6/2) dongles plugged in & turned on."
             }
         }
     }
