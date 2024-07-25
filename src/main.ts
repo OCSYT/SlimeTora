@@ -4,7 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
 // @ts-ignore
-import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
+import { HaritoraX } from "haritorax-interpreter";
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
