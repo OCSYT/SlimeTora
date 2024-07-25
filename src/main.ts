@@ -45,10 +45,6 @@ let connectionActive = false;
 const resources = await loadTranslations();
 let comPorts = await Binding.list();
 
-function isDevelopment() {
-    return process.env.DEVELOPMENT || !app.isPackaged;
-}
-
 /*
  * Translations (i18next)
  */
@@ -163,7 +159,7 @@ app.commandLine.appendSwitch("force_low_power_gpu");
 
 // Don't show the menu bar for performance (this disables the dev tools though, may remove this later)
 // could also set this depending on "logging mode" setting in config
-if (!isDevelopment) {
+if (!process.env.DEVELOPMENT && app.isPackaged) {
     log("Development mode disabled, hiding menu bar");
     Menu.setApplicationMenu(null);
 } else {
@@ -238,6 +234,7 @@ ipcMain.handle("get-com-ports", async (_event, arg: string) => {
 
     if (!device) {
         initializeDevice(true);
+        // @ts-ignore
         const ports = await device.getDevicePorts(arg);
         device = undefined;
         return ports;
@@ -339,6 +336,7 @@ ipcMain.handle("autodetect", async () => {
     initializeDevice(true);
 
     log("Auto-detect: getting available devices...");
+    // @ts-ignore
     const devices = await device.getAvailableDevices();
 
     let trackerSettingsTimeout: NodeJS.Timeout = null;
@@ -351,16 +349,19 @@ ipcMain.handle("autodetect", async () => {
         }
         if (devices.includes("GX6")) {
             log("Auto-detect: GX6 device found, starting connection...");
+            // @ts-ignore
             comPorts = await device.getDevicePorts("GX6");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
         if (devices.includes("GX2")) {
             log("Auto-detect: GX2 device found, starting connection...");
+            // @ts-ignore
             comPorts = await device.getDevicePorts("GX2");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
         if (devices.includes("HaritoraX Wired")) {
             log("Auto-detect: HaritoraX Wired device found, starting connection...");
+            // @ts-ignore
             comPorts = await device.getDevicePorts("HaritoraX Wired");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
