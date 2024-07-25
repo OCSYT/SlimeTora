@@ -294,6 +294,25 @@ async function autodetect() {
             sensorMode = trackerSettings.sensorMode;
             sensorAutoCorrectionList = trackerSettings.sensorAutoCorrection.join(", ");
             ankle = trackerSettings.ankleMotionDetection;
+
+            // Set tracker settings
+            const fpsModeSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
+            const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
+            const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
+            const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
+            const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
+
+            if (fpsModeSelect) {
+                fpsModeSelect.value = fps;
+                fpsModeSelect.dispatchEvent(new Event("change"));
+            }
+            if (sensorModeSelect) {
+                sensorModeSelect.value = sensorMode;
+                sensorModeSelect.dispatchEvent(new Event("change"));
+            }
+            if (sensorAutoCorrectionList.includes("accel")) simulateChangeEvent(accelerometerSwitch, true);
+            if (sensorAutoCorrectionList.includes("gyro")) simulateChangeEvent(gyroscopeSwitch, true);
+            if (sensorAutoCorrectionList.includes("mag")) simulateChangeEvent(magnetometerSwitch, true);
         }
 
         const newMessage = message.replace(
@@ -309,25 +328,6 @@ Sensor mode: ${sensorMode}
 Sensor auto correction: ${sensorAutoCorrectionList}
 Ankle motion detection: ${ankle}`
         );
-
-        // Set tracker settings
-        const fpsModeSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
-        const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
-        const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
-        const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
-        const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
-
-        if (fpsModeSelect) {
-            fpsModeSelect.value = fps;
-            fpsModeSelect.dispatchEvent(new Event("change"));
-        }
-        if (sensorModeSelect) {
-            sensorModeSelect.value = sensorMode;
-            sensorModeSelect.dispatchEvent(new Event("change"));
-        }
-        if (sensorAutoCorrectionList.includes("accel")) simulateChangeEvent(accelerometerSwitch, true);
-        if (sensorAutoCorrectionList.includes("gyro")) simulateChangeEvent(gyroscopeSwitch, true);
-        if (sensorAutoCorrectionList.includes("mag")) simulateChangeEvent(magnetometerSwitch, true);
 
         saveSettings();
 
