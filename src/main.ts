@@ -134,6 +134,14 @@ const createWindow = async () => {
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", resources);
         mainWindow.webContents.send("version", app.getVersion());
+
+        // Don't show the menu bar for performance if not on development mode and if loggingMode is 1 (this disables the dev tools though)
+        if (!process.env.DEVELOPMENT && app.isPackaged && loggingMode === 1) {
+            log("Development mode disabled, hiding menu bar");
+            Menu.setApplicationMenu(null);
+        } else {
+            log("Development mode enabled, showing menu bar");
+        }
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -156,15 +164,6 @@ const closeApp = () => {
 
 // Force iGPU if available
 app.commandLine.appendSwitch("force_low_power_gpu");
-
-// Don't show the menu bar for performance (this disables the dev tools though, may remove this later)
-// could also set this depending on "logging mode" setting in config
-if (!process.env.DEVELOPMENT && app.isPackaged) {
-    log("Development mode disabled, hiding menu bar");
-    Menu.setApplicationMenu(null);
-} else {
-    log("Development mode enabled, showing menu bar");
-}
 
 app.on("ready", createWindow);
 app.on("window-all-closed", closeApp);
