@@ -1,13 +1,11 @@
-let settingsFPSMode = 50;
-let settingsSensorMode = 2;
-let settingsAccelerometerEnabled = false;
-let settingsGyroscopeEnabled = false;
-let settingsMagnetometerEnabled = false;
-
-let settingsHasLoaded = false;
+let fpsMode = 50;
+let sensorMode = 2;
+let accelerometerEnabled = false;
+let gyroscopeEnabled = false;
+let magnetometerEnabled = false;
 
 const params = new URLSearchParams(window.location.search);
-const trackerName = params.get('trackerName');
+const trackerName = params.get("trackerName");
 
 document.addEventListener("DOMContentLoaded", async () => {
     window.log(`Opened per-tracker settings for: ${trackerName}`);
@@ -29,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (trackerName.startsWith("HaritoraX")) {
         // Check if censor serial numbers is enabled
         const settings = await window.ipc.invoke("get-settings", null);
-        
+
         if (settings.global?.censorSerialNumbers) {
             if (trackerName.startsWith("HaritoraX")) {
                 trackerNameElement.textContent = trackerNameElement.textContent.replace(
@@ -50,33 +48,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Load settings
-    loadSettings(trackerName);
+    loadConfigSettings(trackerName);
 });
 
-async function loadSettings(trackerName: string) {
+async function loadConfigSettings(trackerName: string) {
     // Get settings from config file
     const trackerSettings: TrackerSettings = await window.ipc.invoke("get-tracker-settings", {
         trackerName: trackerName,
     });
 
     if (trackerSettings) {
-        settingsFPSMode =
+        fpsMode =
             trackerSettings.fpsMode && trackerSettings.fpsMode !== -1
                 ? await getSetting(`trackers.${trackerName}.fpsMode`, trackerSettings.fpsMode || 50)
-                : settingsFPSMode;
-        settingsSensorMode =
+                : fpsMode;
+        sensorMode =
             trackerSettings.sensorMode && trackerSettings.sensorMode !== -1
                 ? await getSetting(`trackers.${trackerName}.sensorMode`, trackerSettings.sensorMode || 2)
-                : settingsSensorMode;
-        settingsAccelerometerEnabled = await getSetting(
+                : sensorMode;
+        accelerometerEnabled = await getSetting(
             `trackers.${trackerName}.accelerometerEnabled`,
             trackerSettings.sensorAutoCorrection?.includes("accel") || false
         );
-        settingsGyroscopeEnabled = await getSetting(
+        gyroscopeEnabled = await getSetting(
             `trackers.${trackerName}.gyroscopeEnabled`,
             trackerSettings.sensorAutoCorrection?.includes("gyro") || false
         );
-        settingsMagnetometerEnabled = await getSetting(
+        magnetometerEnabled = await getSetting(
             `trackers.${trackerName}.magnetometerEnabled`,
             trackerSettings.sensorAutoCorrection?.includes("mag") || false
         );
@@ -87,147 +85,149 @@ async function loadSettings(trackerName: string) {
         const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
 
         // Set the checked property based on the settings
-        accelerometerSwitch.checked = settingsAccelerometerEnabled;
-        gyroscopeSwitch.checked = settingsGyroscopeEnabled;
-        magnetometerSwitch.checked = settingsMagnetometerEnabled;
+        accelerometerSwitch.checked = accelerometerEnabled;
+        gyroscopeSwitch.checked = gyroscopeEnabled;
+        magnetometerSwitch.checked = magnetometerEnabled;
 
         // Get the select elements
         const fpsSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
         const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
 
         // Set the selected option based on the settings
-        fpsSelect.value = settingsFPSMode.toString();
-        sensorModeSelect.value = settingsSensorMode.toString();
-        window.log(`Setting sensor mode to: ${settingsSensorMode}`);
-        window.log(`Setting FPS mode to: ${settingsFPSMode}`);
-        window.log(`Setting accelerometer to: ${settingsAccelerometerEnabled}`);
-        window.log(`Setting gyroscope to: ${settingsGyroscopeEnabled}`);
-        window.log(`Setting magnetometer to: ${settingsMagnetometerEnabled}`);
+        fpsSelect.value = fpsMode.toString();
+        sensorModeSelect.value = sensorMode.toString();
+        window.log(`Setting sensor mode to: ${sensorMode}`);
+        window.log(`Setting FPS mode to: ${fpsMode}`);
+        window.log(`Setting accelerometer to: ${accelerometerEnabled}`);
+        window.log(`Setting gyroscope to: ${gyroscopeEnabled}`);
+        window.log(`Setting magnetometer to: ${magnetometerEnabled}`);
     } else {
         window.log(`No settings found for ${trackerName}`);
     }
 
     document.getElementById("accelerometer-switch").addEventListener("change", async function () {
-        settingsAccelerometerEnabled = !settingsAccelerometerEnabled;
-        window.log(`Switched accelerometer to: ${settingsAccelerometerEnabled}`);
+        accelerometerEnabled = !accelerometerEnabled;
+        window.log(`Switched accelerometer to: ${accelerometerEnabled}`);
         window.ipc.send("save-setting", {
             trackers: {
                 [trackerName]: {
-                    sensorMode: settingsSensorMode,
-                    fpsMode: settingsFPSMode,
-                    accelerometerEnabled: settingsAccelerometerEnabled,
-                    gyroscopeEnabled: settingsGyroscopeEnabled,
-                    magnetometerEnabled: settingsMagnetometerEnabled,
+                    sensorMode: sensorMode,
+                    fpsMode: fpsMode,
+                    accelerometerEnabled: accelerometerEnabled,
+                    gyroscopeEnabled: gyroscopeEnabled,
+                    magnetometerEnabled: magnetometerEnabled,
                 },
             },
         });
 
-        settingsUnsavedSettings(true);
+        unsavedSettings(true);
     });
 
     document.getElementById("gyroscope-switch").addEventListener("change", async function () {
-        settingsGyroscopeEnabled = !settingsGyroscopeEnabled;
-        window.log(`Switched gyroscope enabled: ${settingsGyroscopeEnabled}`);
+        gyroscopeEnabled = !gyroscopeEnabled;
+        window.log(`Switched gyroscope enabled: ${gyroscopeEnabled}`);
         window.ipc.send("save-setting", {
             trackers: {
                 [trackerName]: {
-                    sensorMode: settingsSensorMode,
-                    fpsMode: settingsFPSMode,
-                    accelerometerEnabled: settingsAccelerometerEnabled,
-                    gyroscopeEnabled: settingsGyroscopeEnabled,
-                    magnetometerEnabled: settingsMagnetometerEnabled,
+                    sensorMode: sensorMode,
+                    fpsMode: fpsMode,
+                    accelerometerEnabled: accelerometerEnabled,
+                    gyroscopeEnabled: gyroscopeEnabled,
+                    magnetometerEnabled: magnetometerEnabled,
                 },
             },
         });
 
-        settingsUnsavedSettings(true);
+        unsavedSettings(true);
     });
 
     document.getElementById("magnetometer-switch").addEventListener("change", async function () {
-        settingsMagnetometerEnabled = !settingsMagnetometerEnabled;
-        window.log(`Switched magnetometer enabled: ${settingsMagnetometerEnabled}`);
+        magnetometerEnabled = !magnetometerEnabled;
+        window.log(`Switched magnetometer enabled: ${magnetometerEnabled}`);
         window.ipc.send("save-setting", {
             trackers: {
                 [trackerName]: {
-                    sensorMode: settingsSensorMode,
-                    fpsMode: settingsFPSMode,
-                    accelerometerEnabled: settingsAccelerometerEnabled,
-                    gyroscopeEnabled: settingsGyroscopeEnabled,
-                    magnetometerEnabled: settingsMagnetometerEnabled,
+                    sensorMode: sensorMode,
+                    fpsMode: fpsMode,
+                    accelerometerEnabled: accelerometerEnabled,
+                    gyroscopeEnabled: gyroscopeEnabled,
+                    magnetometerEnabled: magnetometerEnabled,
                 },
             },
         });
 
-        settingsUnsavedSettings(true);
+        unsavedSettings(true);
     });
 
     document.getElementById("fps-mode-select").addEventListener("change", async function () {
-        settingsFPSMode = parseInt((document.getElementById("fps-mode-select") as HTMLSelectElement).value);
-        window.log(`Changed FPS mode: ${settingsFPSMode}`);
+        fpsMode = parseInt((document.getElementById("fps-mode-select") as HTMLSelectElement).value);
+        window.log(`Changed FPS mode: ${fpsMode}`);
         window.ipc.send("save-setting", {
             trackers: {
                 [trackerName]: {
-                    sensorMode: settingsSensorMode,
-                    fpsMode: settingsFPSMode,
-                    accelerometerEnabled: settingsAccelerometerEnabled,
-                    gyroscopeEnabled: settingsGyroscopeEnabled,
-                    magnetometerEnabled: settingsMagnetometerEnabled,
+                    sensorMode: sensorMode,
+                    fpsMode: fpsMode,
+                    accelerometerEnabled: accelerometerEnabled,
+                    gyroscopeEnabled: gyroscopeEnabled,
+                    magnetometerEnabled: magnetometerEnabled,
                 },
             },
         });
 
-        settingsUnsavedSettings(true);
+        unsavedSettings(true);
     });
 
     document.getElementById("sensor-mode-select").addEventListener("change", async function () {
-        settingsSensorMode = parseInt((document.getElementById("sensor-mode-select") as HTMLSelectElement).value);
-        window.log(`Changed sensor mode: ${settingsSensorMode}`);
+        sensorMode = parseInt((document.getElementById("sensor-mode-select") as HTMLSelectElement).value);
+        window.log(`Changed sensor mode: ${sensorMode}`);
         window.ipc.send("save-setting", {
             trackers: {
                 [trackerName]: {
-                    sensorMode: settingsSensorMode,
-                    fpsMode: settingsFPSMode,
-                    accelerometerEnabled: settingsAccelerometerEnabled,
-                    gyroscopeEnabled: settingsGyroscopeEnabled,
-                    magnetometerEnabled: settingsMagnetometerEnabled,
+                    sensorMode: sensorMode,
+                    fpsMode: fpsMode,
+                    accelerometerEnabled: accelerometerEnabled,
+                    gyroscopeEnabled: gyroscopeEnabled,
+                    magnetometerEnabled: magnetometerEnabled,
                 },
             },
         });
 
-        settingsUnsavedSettings(true);
+        unsavedSettings(true);
     });
 }
 
+// Exposed to the window object
+
 async function saveTrackerSettings() {
-    settingsUnsavedSettings(false);
+    unsavedSettings(false);
     window.ipc.send("save-setting", {
         trackers: {
             [trackerName]: {
-                sensorMode: settingsSensorMode,
-                fpsMode: settingsFPSMode,
-                accelerometerEnabled: settingsAccelerometerEnabled,
-                gyroscopeEnabled: settingsGyroscopeEnabled,
-                magnetometerEnabled: settingsMagnetometerEnabled,
+                sensorMode: sensorMode,
+                fpsMode: fpsMode,
+                accelerometerEnabled: accelerometerEnabled,
+                gyroscopeEnabled: gyroscopeEnabled,
+                magnetometerEnabled: magnetometerEnabled,
             },
         },
     });
 
     let sensorAutoCorrection: string[] = [];
-    if (settingsAccelerometerEnabled) sensorAutoCorrection.push("accel");
-    if (settingsGyroscopeEnabled) sensorAutoCorrection.push("gyro");
-    if (settingsMagnetometerEnabled) sensorAutoCorrection.push("mag");
+    if (accelerometerEnabled) sensorAutoCorrection.push("accel");
+    if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
+    if (magnetometerEnabled) sensorAutoCorrection.push("mag");
 
     window.ipc.send("set-tracker-settings", {
-        trackerName,
-        sensorMode: settingsSensorMode,
-        fpsMode: settingsFPSMode,
+        deviceID: trackerName,
+        sensorMode: sensorMode,
+        fpsMode: fpsMode,
         sensorAutoCorrection: sensorAutoCorrection,
     });
 
     window.log(`Saved settings for ${trackerName}`);
 }
 
-async function resetSettings() {
+async function resetTrackerSettings() {
     const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
     const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
     const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
@@ -239,36 +239,36 @@ async function resetSettings() {
 
     window.log(`Old settings: ${JSON.stringify(settings)}`);
 
-    settingsFPSMode = settings.global?.trackers?.fpsMode || 50;
-    settingsSensorMode = settings.global?.trackers?.sensorMode || 2;
-    settingsAccelerometerEnabled = settings.global?.trackers?.accelerometerEnabled || false;
-    settingsGyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
-    settingsMagnetometerEnabled = settings.global?.trackers?.magnetometerEnabled || false;
+    fpsMode = settings.global?.trackers?.fpsMode || 50;
+    sensorMode = settings.global?.trackers?.sensorMode || 2;
+    accelerometerEnabled = settings.global?.trackers?.accelerometerEnabled || false;
+    gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
+    magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled || false;
 
-    accelerometerSwitch.checked = settingsAccelerometerEnabled;
-    gyroscopeSwitch.checked = settingsGyroscopeEnabled;
-    magnetometerSwitch.checked = settingsMagnetometerEnabled;
-    fpsSelect.value = settingsFPSMode.toString();
-    sensorModeSelect.value = settingsSensorMode.toString();
+    accelerometerSwitch.checked = accelerometerEnabled;
+    gyroscopeSwitch.checked = gyroscopeEnabled;
+    magnetometerSwitch.checked = magnetometerEnabled;
+    fpsSelect.value = fpsMode.toString();
+    sensorModeSelect.value = sensorMode.toString();
 
     window.log(`New settings: ${JSON.stringify(settings)}`);
 
     let sensorAutoCorrection: string[] = [];
-    if (settingsAccelerometerEnabled) sensorAutoCorrection.push("accel");
-    if (settingsGyroscopeEnabled) sensorAutoCorrection.push("gyro");
-    if (settingsMagnetometerEnabled) sensorAutoCorrection.push("mag");
+    if (accelerometerEnabled) sensorAutoCorrection.push("accel");
+    if (gyroscopeEnabled) sensorAutoCorrection.push("gyro");
+    if (magnetometerEnabled) sensorAutoCorrection.push("mag");
 
-    window.ipc.send("save-tracker-settings", {
-        trackerName,
-        sensorMode: settingsSensorMode,
-        fpsMode: settingsFPSMode,
+    window.ipc.send("set-tracker-settings", {
+        deviceID: trackerName,
+        sensorMode: sensorMode,
+        fpsMode: fpsMode,
         sensorAutoCorrection: sensorAutoCorrection,
     });
 
     window.log(`Reset settings for ${trackerName} to default`);
 }
 
-async function getSettings() {
+async function getTrackerSettings() {
     const currentSettings = await window.ipc.invoke("get-tracker-settings", {
         trackerName: trackerName,
     });
@@ -289,7 +289,7 @@ async function getSettings() {
 }
 
 // Set settings button indicator
-function settingsUnsavedSettings(unsaved: boolean) {
+function unsavedSettings(unsaved: boolean) {
     const saveButton = document.getElementById("save-button");
     if (unsaved && !saveButton.classList.contains("is-danger")) {
         saveButton.classList.add("is-danger");
@@ -305,3 +305,9 @@ async function getSetting(key: string, defaultValue: any) {
     window.log(`Setting ${key} exists: ${exists}`);
     return exists ? await window.ipc.invoke("get-setting", key) : defaultValue;
 }
+
+window.saveTrackerSettings = saveTrackerSettings;
+window.getTrackerSettings = getTrackerSettings;
+window.resetTrackerSettings = resetTrackerSettings;
+
+export {};

@@ -531,7 +531,7 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         sensorAutoCorrection: string[];
     } = arg;
     // Validate input parameters
-    if (!sensorMode || !fpsMode || !sensorAutoCorrection || sensorAutoCorrection.length === 0) {
+    if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
         error(`Invalid settings received: ${JSON.stringify(arg)}`);
         return;
     }

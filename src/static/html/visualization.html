@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
         <title>Tracker visualization</title>
         <style>
             body {
@@ -45,12 +45,7 @@
             console.log("Initialized visualization with fps: " + fps);
 
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(
-                45,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                1000
-            );
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 5;
 
             const renderer = new THREE.WebGLRenderer({ alpha: true }); // Set alpha to true for a transparent background
@@ -157,11 +152,7 @@
                     event.data.rotation.w
                 );
 
-                const gravity = new THREE.Vector3(
-                    event.data.gravity.x,
-                    event.data.gravity.y,
-                    event.data.gravity.z
-                );
+                const gravity = new THREE.Vector3(event.data.gravity.x, event.data.gravity.y, event.data.gravity.z);
 
                 quaternion.normalize();
 

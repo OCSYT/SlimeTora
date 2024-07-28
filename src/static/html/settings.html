@@ -3,9 +3,9 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
         <link rel="stylesheet" href="../css/index.css" />
-        <script src="../js/settings.js"></script>
+        <script type="module" src="../js/settings.js"></script>
     </head>
 
     <body>
@@ -20,18 +20,15 @@
                     {trackerName} settings
                 </h1>
                 <h3 class="subtitle has-text-centered" data-i18n="trackerInfo.trackerSettings.text">
-                    Override the global tracker settings for this tracker. This may be buggy and is
-                    not recommended for normal use.
+                    Override the global tracker settings for this tracker. This may be buggy and is not recommended for
+                    normal use.
                 </h3>
                 <br />
                 <div class="columns is-multiline has-text-centered">
                     <!-- FPS settings -->
                     <div class="column is-6">
                         <div class="with-tooltip">
-                            <h3
-                                class="title is-4 is-spaced"
-                                data-i18n="trackerInfo.trackerSettings.fps.title"
-                            >
+                            <h3 class="title is-4 is-spaced" data-i18n="trackerInfo.trackerSettings.fps.title">
                                 FPS transfer rate
                             </h3>
                             <div class="tooltip-container">
@@ -41,26 +38,16 @@
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
                                     data-i18n="trackerInfo.trackerSettings.fps.tooltip"
-                                    >Select the FPS transfer rate for the trackers. If using
-                                    Bluetooth, 50FPS may be more stable.</span
+                                    >Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be
+                                    more stable.</span
                                 >
                             </div>
                         </div>
                         <div class="settings-container">
                             <div class="select is-info">
                                 <select id="fps-mode-select">
-                                    <option
-                                        value="50"
-                                        data-i18n="trackerInfo.trackerSettings.fps.50"
-                                    >
-                                        50 FPS
-                                    </option>
-                                    <option
-                                        value="100"
-                                        data-i18n="trackerInfo.trackerSettings.fps.100"
-                                    >
-                                        100 FPS
-                                    </option>
+                                    <option value="50" data-i18n="trackerInfo.trackerSettings.fps.50">50 FPS</option>
+                                    <option value="100" data-i18n="trackerInfo.trackerSettings.fps.100">100 FPS</option>
                                 </select>
                             </div>
                         </div>
@@ -69,10 +56,7 @@
                     <!-- Sensor mode setting -->
                     <div class="column is-6">
                         <div class="with-tooltip">
-                            <h3
-                                class="title is-4 is-spaced"
-                                data-i18n="trackerInfo.trackerSettings.sensorMode.title"
-                            >
+                            <h3 class="title is-4 is-spaced" data-i18n="trackerInfo.trackerSettings.sensorMode.title">
                                 Sensor mode
                             </h3>
                             <div class="tooltip-container">
@@ -82,25 +66,18 @@
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
                                     data-i18n="trackerInfo.trackerSettings.sensorMode.tooltip"
-                                    >Select the sensor mode for the trackers. Mode 1 enables the
-                                    magnetometer which is best if you have a stable geomagnetic
-                                    environment.</span
+                                    >Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is
+                                    best if you have a stable geomagnetic environment.</span
                                 >
                             </div>
                         </div>
                         <div class="settings-container">
                             <div class="select">
                                 <select id="sensor-mode-select">
-                                    <option
-                                        value="1"
-                                        data-i18n="trackerInfo.trackerSettings.sensorMode.1"
-                                    >
+                                    <option value="1" data-i18n="trackerInfo.trackerSettings.sensorMode.1">
                                         Mode 1
                                     </option>
-                                    <option
-                                        value="2"
-                                        data-i18n="trackerInfo.trackerSettings.sensorMode.2"
-                                    >
+                                    <option value="2" data-i18n="trackerInfo.trackerSettings.sensorMode.2">
                                         Mode 2
                                     </option>
                                 </select>
@@ -124,9 +101,8 @@
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
                                     data-i18n="trackerInfo.trackerSettings.sensorCorrection.tooltip"
-                                    >Enable or disable sensor auto correction features. Usually not
-                                    needed to be changed and results vary between
-                                    environments.</span
+                                    >Enable or disable sensor auto correction features. Usually not needed to be changed
+                                    and results vary between environments.</span
                                 >
                             </div>
                         </div>
@@ -193,7 +169,7 @@
                         <div class="settings-container">
                             <button
                                 class="button is-info"
-                                onclick="getSettings()"
+                                onclick="getTrackerSettings()"
                                 data-i18n="trackerInfo.trackerSettings.debugging.getSettings"
                             >
                                 Get tracker settings
@@ -203,7 +179,7 @@
                         <div class="settings-container">
                             <button
                                 class="button is-info"
-                                onclick="resetSettings()"
+                                onclick="resetTrackerSettings()"
                                 data-i18n="trackerInfo.trackerSettings.debugging.resetSettings"
                             >
                                 Reset settings
@@ -215,7 +191,7 @@
         </div>
 
         <button class="button is-info" id="save-button" onclick="saveTrackerSettings()">
-            <img src="../images/save.svg" id="saveIcon" alt="Save icon"/>
+            <img src="../images/save.svg" id="saveIcon" alt="Save icon" />
         </button>
     </body>
 </html>

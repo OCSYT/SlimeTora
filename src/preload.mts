@@ -81,12 +81,18 @@ declare global {
             THREE: typeof THREE;
         };
 
+        // index.ts
         startConnection: () => void;
         stopConnection: () => void;
         autodetect: () => void;
         openLogsFolder: () => void;
         saveSettings: () => void;
         openTrackerSettings: (deviceID: string) => void;
+
+        // settings.ts
+        saveTrackerSettings: () => void;
+        getTrackerSettings: () => void;
+        resetTrackerSettings: () => void;
 
         ipc: {
             invoke: (channel: string, args: any) => Promise<any>;

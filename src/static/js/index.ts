@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", async function () {
  */
 
 async function autodetect() {
-    window.showMessageBox("dialogs.autodetect.pre-check.title", "dialogs.autodetect.pre-check.message", true, true, true);
+    showMessageBox("dialogs.autodetect.pre-check.title", "dialogs.autodetect.pre-check.message", true, true, true);
 
     window.log("Running auto-detection...");
     setStatus("main.status.autodetect.running");
@@ -520,7 +520,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
     window.log(`Connected to ${deviceID}`);
 
     if (!deviceQueue.includes(deviceID)) deviceQueue.push(deviceID);
-    processQueue();
+    await processQueue();
 
     setStatus("main.status.connected");
 
@@ -1294,3 +1294,5 @@ window.openLogsFolder = () => {
     window.log("Opening logs folder...");
     window.ipc.send("open-logs-folder", null);
 };
+
+export {};
