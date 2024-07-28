@@ -185,6 +185,8 @@ function onboarding() {
         autoHideMenuBar: true,
         width: 1000,
         height: 700,
+        modal: true, // prevent interaction with "parent" window until closed
+        parent: mainWindow,
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,
@@ -202,10 +204,6 @@ function onboarding() {
             slashes: true,
         })
     );
-
-    onboardingWindow.webContents.on("did-finish-load", () => {
-        onboardingWindow.webContents.send("localize", resources);
-    });
 }
 
 async function showMessage(
