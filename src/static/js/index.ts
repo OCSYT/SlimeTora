@@ -1221,6 +1221,11 @@ function addEventListeners() {
     });
 }
 
+function showOnboarding() {
+    window.log("Reopening onboarding screen...");
+    window.ipc.send("show-onboarding", null);
+}
+
 function saveSettings() {
     window.log("Saving settings...");
     unsavedSettings(false);
@@ -1288,6 +1293,7 @@ function saveSettings() {
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.autodetect = autodetect;
+window.showOnboarding = showOnboarding;
 window.saveSettings = saveSettings;
 
 window.openTrackerSettings = async (deviceID: string) => {

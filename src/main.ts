@@ -31,6 +31,8 @@ let deviceBattery: {
 /*
  * Renderer variables
  */
+let firstLaunch = false;
+
 let canLogToFile = false;
 let loggingMode = 1;
 let foundSlimeVR = false;
@@ -104,8 +106,9 @@ const createWindow = async () => {
         loggingMode = config.global?.debug?.loggingMode || 1;
     } catch (err) {
         // If the config file doesn't exist, create it
+        log("First launch, creating config file and showing onboarding screen (after load)");
         await fs.promises.writeFile(configPath, "{}");
-        log("Config file not found, creating new one.");
+        firstLaunch = true;
     }
 
     mainWindow = new BrowserWindow({
@@ -142,6 +145,8 @@ const createWindow = async () => {
         } else {
             log("Development mode enabled, showing menu bar");
         }
+
+        if (firstLaunch) onboarding()
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -171,6 +176,37 @@ app.on("window-all-closed", closeApp);
 /*
  * Renderer handlers
  */
+
+function onboarding() {
+    log("Showing onboarding screen");
+
+    let onboardingWindow = new BrowserWindow({
+        title: "Onboarding",
+        autoHideMenuBar: true,
+        width: 1000,
+        height: 700,
+        webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: true,
+            preload: path.join(__dirname, "preload.mjs"),
+            spellcheck: false,
+            sandbox: false, // fixes startup crashes due to GPU process, shouldn't be too large of a security risk as we're not loading any external content/connect to internet
+        },
+        icon: path.join(__dirname, "static/images/icon.ico"),
+    });
+
+    onboardingWindow.loadURL(
+        format({
+            pathname: path.join(__dirname, "static/html/onboarding.html"),
+            protocol: "file:",
+            slashes: true,
+        })
+    );
+
+    onboardingWindow.webContents.on("did-finish-load", () => {
+        onboardingWindow.webContents.send("localize", resources);
+    });
+}
 
 async function showMessage(
     title: string,
@@ -222,6 +258,10 @@ ipcMain.on("show-error", async (_event, arg) => {
     }: { title: string; message: string; translateTitle: boolean; translateMessage: boolean } = arg;
 
     await showError(title, message, translateTitle, translateMessage);
+});
+
+ipcMain.on("show-onboarding", () => {
+    onboarding();
 });
 
 ipcMain.handle("translate", async (_event, arg: string) => {
