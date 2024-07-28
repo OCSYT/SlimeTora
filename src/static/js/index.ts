@@ -812,15 +812,20 @@ async function handleMissingDevice(trackerName: string) {
 }
 
 function updateTrackerData(trackerElement: HTMLElement, rotation: Rotation, gravity: Gravity) {
+    if (!rotation || !gravity) return;
+
+    const rotationElement = trackerElement.querySelector("#rotation-data");
+    const accelerationElement = trackerElement.querySelector("#acceleration-data");
     const rotationText = formatVector(rotation);
     const gravityText = formatVector(gravity);
 
-    trackerElement.querySelector("#rotation-data").textContent = rotationText;
-    trackerElement.querySelector("#acceleration-data").textContent = gravityText;
+    if (rotationElement) trackerElement.querySelector("#rotation-data").textContent = rotationText;
+    if (accelerationElement) trackerElement.querySelector("#acceleration-data").textContent = gravityText;
 }
 
 function sendVisualizationData(trackerName: string, rawRotation: Rotation, rawGravity: Gravity) {
     const visualizationIframe = document.getElementById(`${trackerName}-visualization`) as HTMLIFrameElement | null;
+    if (visualizationIframe === null) return;
     visualizationIframe?.contentWindow?.postMessage({ rotation: rawRotation, gravity: rawGravity }, "*");
 }
 
@@ -834,7 +839,7 @@ function updateAllTrackerBatteries(batteryRemaining: number, batteryVoltage: num
 
 function updateTrackerBattery(trackerName: string, batteryRemaining: number, batteryVoltage: number) {
     const batteryText = document.querySelector(`#${trackerName} #battery`);
-    if (batteryText || trackerName !== "HaritoraXWired") {
+    if (batteryText && trackerName !== "HaritoraXWired") {
         batteryText.textContent = formatBatteryText(batteryRemaining, batteryVoltage);
     }
 }
