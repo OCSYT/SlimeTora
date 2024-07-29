@@ -112,7 +112,7 @@ const createWindow = async () => {
     }
 
     mainWindow = new BrowserWindow({
-        title: "SlimeTora",
+        title: "SlimeTora: Main",
         autoHideMenuBar: true,
         width: 900,
         height: 700,
@@ -181,10 +181,10 @@ function onboarding() {
     log("Showing onboarding screen");
 
     let onboardingWindow = new BrowserWindow({
-        title: "Onboarding",
+        title: "SlimeTora: Onboarding",
         autoHideMenuBar: true,
-        width: 1000,
-        height: 700,
+        width: 950,
+        height: 750,
         modal: true, // prevent interaction with "parent" window until closed
         parent: mainWindow,
         webPreferences: {
@@ -330,7 +330,7 @@ ipcMain.on("open-logs-folder", async () => {
 
 ipcMain.on("open-tracker-settings", (_event, arg: string) => {
     let trackerSettingsWindow = new BrowserWindow({
-        title: `${arg} settings`,
+        title: `SlimeTora: ${arg} settings`,
         autoHideMenuBar: true,
         width: 850,
         height: 650,

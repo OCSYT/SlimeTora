@@ -21557,7 +21557,8 @@ html {
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: auto;
-  max-width: 100%;
+  width: 100vw;
+  height: 100vh;
   padding: 2rem;
 }
 
@@ -21588,11 +21589,23 @@ br {
   height: 24px;
 }
 
-.section, .hero.is-fullheight {
+.section, .container.is-fullheight {
   background-color: #081e30;
   border-radius: 0.5rem;
   color: white;
   padding: 3rem;
+}
+
+.container.is-fullheight {
+  height: 100%;
+}
+
+.onboarding-step {
+  width: 100%;
+  height: 100%;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
 }
 
 .inline-block {

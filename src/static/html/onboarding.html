@@ -9,51 +9,62 @@
     </head>
     <body>
         <!-- Onboarding section -->
-        <div class="hero is-fullheight" id="onboarding">
-            <div class="container">
-                <!-- Step 1: Initial Setup Choice -->
-                <div class="onboarding-step" id="step-1">
-                    <h2 class="title is-2 has-text-centered">Setup</h2>
+        <div class="container is-fullheight" id="onboarding">
+            <!-- Step 1: Initial Setup Choice -->
+            <div class="onboarding-step" id="step-1">
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Welcome to SlimeTora!</h2>
+                    <p class="subtitle has-text-centered">
+                        SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server,
+                        bypassing HaritoraConfigurator!<br />
+                        <br />
+                        To get started, select how you would like to set up the program.
+                    </p>
+                </div>
+                <div>
                     <div class="buttons is-centered">
                         <button class="button is-primary" id="automatic-setup-button">Automatic setup</button>
                         <button class="button is-primary" id="manual-setup-button">Manual setup</button>
                     </div>
+                    <div class="buttons is-centered">
+                        <button class="button is-danger" onclick="window.close()">Skip setup</button>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Automatic Setup Steps -->
-                <div class="onboarding-step" id="step-2-automatic" style="display: none">
-                    <h2 class="title is-2 has-text-centered">Automatic Setup - Step 1</h2>
-                    <p>Placeholder for automatic setup steps...</p>
-                    <div class="buttons is-centered">
-                        <button class="button is-primary" id="next-automatic-button">Next</button>
-                        <button class="button is-light" id="back-automatic-button">Back</button>
-                    </div>
+            <!-- Automatic Setup Steps -->
+            <div class="onboarding-step" id="step-2-automatic" style="display: none">
+                <h2 class="title is-2 has-text-centered">Automatic Setup - Step 1</h2>
+                <p>Placeholder for automatic setup steps...</p>
+                <div class="buttons is-centered">
+                    <button class="button is-primary" id="next-automatic-button">Next</button>
+                    <button class="button is-info" id="back-automatic-button">Back</button>
                 </div>
-                <div class="onboarding-step" id="step-3-automatic" style="display: none">
-                    <h2 class="title is-2 has-text-centered">Automatic Setup - Step 2</h2>
-                    <p>Placeholder for automatic setup steps...</p>
-                    <div class="buttons is-centered">
-                        <button class="button is-primary" id="finish-automatic-button">Finish</button>
-                        <button class="button is-light" id="back-automatic-step2-button">Back</button>
-                    </div>
+            </div>
+            <div class="onboarding-step" id="step-3-automatic" style="display: none">
+                <h2 class="title is-2 has-text-centered">Automatic Setup - Step 2</h2>
+                <p>Placeholder for automatic setup steps...</p>
+                <div class="buttons is-centered">
+                    <button class="button is-primary" id="finish-automatic-button">Finish</button>
+                    <button class="button is-info" id="back-automatic-step2-button">Back</button>
                 </div>
+            </div>
 
-                <!-- Manual Setup Steps -->
-                <div class="onboarding-step" id="step-2-manual" style="display: none">
-                    <h2 class="title is-2 has-text-centered">Manual Setup - Step 1</h2>
-                    <p>Placeholder for manual setup steps...</p>
-                    <div class="buttons is-centered">
-                        <button class="button is-primary" id="next-manual-button">Next</button>
-                        <button class="button is-light" id="back-manual-button">Back</button>
-                    </div>
+            <!-- Manual Setup Steps -->
+            <div class="onboarding-step" id="step-2-manual" style="display: none">
+                <h2 class="title is-2 has-text-centered">Manual Setup - Step 1</h2>
+                <p>Placeholder for manual setup steps...</p>
+                <div class="buttons is-centered">
+                    <button class="button is-primary" id="next-manual-button">Next</button>
+                    <button class="button is-info" id="back-manual-button">Back</button>
                 </div>
-                <div class="onboarding-step" id="step-3-manual" style="display: none">
-                    <h2 class="title is-2 has-text-centered">Manual Setup - Step 2</h2>
-                    <p>Placeholder for manual setup steps...</p>
-                    <div class="buttons is-centered">
-                        <button class="button is-primary" id="finish-manual-button">Finish</button>
-                        <button class="button is-light" id="back-manual-step2-button">Back</button>
-                    </div>
+            </div>
+            <div class="onboarding-step" id="step-3-manual" style="display: none">
+                <h2 class="title is-2 has-text-centered">Manual Setup - Step 2</h2>
+                <p>Placeholder for manual setup steps...</p>
+                <div class="buttons is-centered">
+                    <button class="button is-primary" id="finish-manual-button">Finish</button>
+                    <button class="button is-info" id="back-manual-step2-button">Back</button>
                 </div>
             </div>
         </div>

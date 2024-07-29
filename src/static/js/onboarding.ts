@@ -23,16 +23,16 @@ class Onboarding {
         this.steps.forEach((step, i) => {
             if (i === index) {
                 window.log(`Displaying element with ID: ${step.id}`);
-                step.style.display = "block";
+                step.style.display = "flex";
             } else {
                 step.style.display = "none";
             }
         });
         // Ensure the current step is visible
         const currentStep = this.steps[index];
-        if (currentStep && currentStep.style.display !== "block") {
+        if (currentStep && currentStep.style.display !== "flex") {
             window.log(`Step ${currentStep.id} is not visible, forcing display`);
-            currentStep.style.display = "block";
+            currentStep.style.display = "flex";
         }
     }
 
@@ -113,7 +113,6 @@ const onboardingConfig = {
 
 // Initialize the onboarding process
 document.addEventListener("DOMContentLoaded", () => {
-    window.log("DOM fully loaded and parsed");
     new Onboarding(onboardingConfig);
 });
 
