@@ -184,6 +184,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     addEventListeners();
 });
 
+window.addEventListener('storage', (event) => {
+    if (event.key === 'runAutodetect' && event.newValue === 'true') {
+        autodetect();
+        localStorage.setItem('runAutodetect', 'false');
+    }
+});
+
 /*
  * Connection handling
  */
@@ -193,9 +200,6 @@ async function autodetect() {
 
     window.log("Running auto-detection...");
     setStatus("main.status.autodetect.running");
-
-    const autodetectButton = document.getElementById("autodetect-button") as HTMLButtonElement;
-    autodetectButton.disabled = true;
 
     const autodetectObject = await window.ipc.invoke("autodetect", null);
     const devices: Set<string> = new Set(autodetectObject.devices);
@@ -334,8 +338,6 @@ Ankle motion detection: ${ankle}`
 
     // Simulate stop connection
     document.getElementById("stop-connection-button").click();
-
-    autodetectButton.disabled = false;
 }
 
 async function startConnection() {
@@ -358,7 +360,7 @@ async function startConnection() {
     toggleConnectionButtons();
 }
 
-async function stopConnection() {
+function stopConnection() {
     if (!isActive) {
         window.error(
             "No connection to stop.. wait a second, you shouldn't be seeing this - get out of inspect element and stop trying to break the program!"
@@ -381,7 +383,6 @@ function toggleConnectionButtons() {
     isActive = !isActive;
     document.getElementById("start-connection-button").toggleAttribute("disabled");
     document.getElementById("stop-connection-button").toggleAttribute("disabled");
-    document.getElementById("autodetect-button").toggleAttribute("disabled");
 }
 
 async function handleSlimeVRCheck(slimeVRFound: boolean) {
@@ -1292,7 +1293,6 @@ function saveSettings() {
 
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
-window.autodetect = autodetect;
 window.showOnboarding = showOnboarding;
 window.saveSettings = saveSettings;
 

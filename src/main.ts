@@ -146,7 +146,7 @@ const createWindow = async () => {
             log("Development mode enabled, showing menu bar");
         }
 
-        if (firstLaunch) onboarding()
+        if (firstLaunch) onboarding();
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -434,8 +434,10 @@ ipcMain.handle("autodetect", async () => {
         clearTimeout(trackerSettingsTimeout);
     }
 
-    device.removeAllListeners();
-    device = null;
+    if (device) {
+        device.removeAllListeners();
+        device = null;
+    }
 
     return { devices, trackerSettings };
 });
@@ -461,9 +463,9 @@ ipcMain.on("start-connection", async (_event, arg) => {
     }
 
     mainWindow.webContents.send("set-status", "main.status.searching");
-    if (types.includes("bluetooth")) device.startConnection("bluetooth");
+    if (types.includes("bluetooth")) await device.startConnection("bluetooth");
     // @ts-ignore
-    if (types.includes("com") && ports) device.startConnection("com", ports, heartbeatInterval);
+    if (types.includes("com") && ports) await device.startConnection("com", ports, heartbeatInterval);
     connectionActive = true;
 
     await notifyConnectedDevices();
@@ -492,15 +494,15 @@ function initializeDevice(forceDisableLogging: boolean = false): void {
     const effectiveLoggingMode = forceDisableLogging ? 1 : loggingMode;
     log(`Creating new HaritoraX ${trackerType} instance with logging mode ${effectiveLoggingMode}...`);
     const loggingOptions = {
-        1: [false, false],
-        2: [true, false],
-        3: [true, true],
+        1: [false, false, false],
+        2: [true, false, false],
+        3: [true, false, true],
     };
-    const [logging, imuProcessing] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
+    const [logging, imuProcessing, rawData] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
         effectiveLoggingMode.toString()
-    ] || [false, false];
+    ] || [false, false, false];
     // @ts-ignore
-    device = new HaritoraX(trackerType, logging, imuProcessing);
+    device = new HaritoraX(trackerType, logging, imuProcessing, rawData);
 }
 
 async function notifyConnectedDevices(): Promise<void> {

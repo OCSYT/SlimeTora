@@ -18,7 +18,8 @@
                         SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server,
                         bypassing HaritoraConfigurator!<br />
                         <br />
-                        To get started, select how you would like to set up the program.
+                        To get started, select how you would like to set up the program. After you set up the program,
+                        you will be guided on how to set up SlimeVR server.
                     </p>
                 </div>
                 <div>
@@ -34,36 +35,76 @@
 
             <!-- Automatic Setup Steps -->
             <div class="onboarding-step" id="step-2-automatic" style="display: none">
-                <h2 class="title is-2 has-text-centered">Automatic Setup - Step 1</h2>
-                <p>Placeholder for automatic setup steps...</p>
-                <div class="buttons is-centered">
-                    <button class="button is-primary" id="next-automatic-button">Next</button>
-                    <button class="button is-info" id="back-automatic-button">Back</button>
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup - Step 1</h2>
+                    <p class="subtitle has-text-centered">
+                        Automatic setup allows you to let the program try to automatically detect your settings and set
+                        up the program for you. It is the recommended mode and supports all tracker models and
+                        connection modes.<br />
+                        <br />
+                        It is recommended (but not necessary) to have at least one of your trackers turned on and connected
+                        to your computer before continuing. When you are ready, click the "Next" button.
+                    </p>
+                </div>
+                <div>
+                    <div class="buttons is-centered">
+                        <button class="button is-primary" id="next-automatic-button">Next</button>
+                        <button class="button is-info" id="back-automatic-button">Back</button>
+                    </div>
                 </div>
             </div>
             <div class="onboarding-step" id="step-3-automatic" style="display: none">
-                <h2 class="title is-2 has-text-centered">Automatic Setup - Step 2</h2>
-                <p>Placeholder for automatic setup steps...</p>
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup - Step 2</h2>
+                    <p class="subtitle has-text-centered">
+                        Press the button below to start the auto-detection process. The process may take up to 20
+                        seconds to complete, <strong>make sure HaritoraConfigurator is closed</strong>.<br />
+                        <br />
+                        After the process is complete, you will receive a pop-up with the results - make sure they are
+                        accurate. If the process fails, you can try again or switch to manual setup.<br />
+                    </p>
+                </div>
+                <button class="button is-primary" id="autodetect-button" onclick="autodetect()">
+                    Start auto-detection
+                </button>
+                <p class="subtitle has-text-centered">
+                    If you are happy with the results, click the "Finish SlimeTora Setup" button to continue. Otherwise, you may switch
+                    to manual setup.
+                </p>
                 <div class="buttons is-centered">
-                    <button class="button is-primary" id="finish-automatic-button">Finish</button>
+                    <button class="button is-primary" id="finish-automatic-button">Finish SlimeTora Setup</button>
                     <button class="button is-info" id="back-automatic-step2-button">Back</button>
                 </div>
             </div>
 
             <!-- Manual Setup Steps -->
             <div class="onboarding-step" id="step-2-manual" style="display: none">
-                <h2 class="title is-2 has-text-centered">Manual Setup - Step 1</h2>
-                <p>Placeholder for manual setup steps...</p>
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Manual Setup - Step 1</h2>
+                    <p class="subtitle has-text-centered">
+                        SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server,
+                        bypassing HaritoraConfigurator!<br />
+                        <br />
+                        To get started, select how you would like to set up the program.
+                    </p>
+                </div>
                 <div class="buttons is-centered">
                     <button class="button is-primary" id="next-manual-button">Next</button>
                     <button class="button is-info" id="back-manual-button">Back</button>
                 </div>
             </div>
             <div class="onboarding-step" id="step-3-manual" style="display: none">
-                <h2 class="title is-2 has-text-centered">Manual Setup - Step 2</h2>
-                <p>Placeholder for manual setup steps...</p>
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Manual Setup - Step 2</h2>
+                    <p class="subtitle has-text-centered">
+                        SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server,
+                        bypassing HaritoraConfigurator!<br />
+                        <br />
+                        To get started, select how you would like to set up the program.
+                    </p>
+                </div>
                 <div class="buttons is-centered">
-                    <button class="button is-primary" id="finish-manual-button">Finish</button>
+                    <button class="button is-primary" id="finish-manual-button">Finish SlimeTora Setup</button>
                     <button class="button is-info" id="back-manual-step2-button">Back</button>
                 </div>
             </div>

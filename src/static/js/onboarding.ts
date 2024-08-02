@@ -116,4 +116,12 @@ document.addEventListener("DOMContentLoaded", () => {
     new Onboarding(onboardingConfig);
 });
 
+// i can't believe this works lol
+// Sets a flag in localStorage to start the autodetection process (main window listens for this flag)
+function startAutoDetection() {
+    localStorage.setItem('runAutodetect', 'true');
+}
+
+window.autodetect = startAutoDetection;
+
 export {};
