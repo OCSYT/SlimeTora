@@ -8,6 +8,12 @@
  * Global
 */
 
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 html {
     background-color: #00101c;
 }
@@ -109,6 +115,12 @@ br {
 .tooltip-container:hover .tooltip-text {
     visibility: visible;
     opacity: 1;
+}
+
+.list.has-bullets {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    text-align: left;
 }
 
 .select select {

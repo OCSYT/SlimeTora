@@ -10,7 +10,6 @@
     <body>
         <!-- Onboarding section -->
         <div class="container is-fullheight" id="onboarding">
-            <!-- Step 1: Initial Setup Choice -->
             <div class="onboarding-step" id="step-1">
                 <div>
                     <h2 class="title is-2 has-text-centered is-spaced">Welcome to SlimeTora!</h2>
@@ -24,88 +23,152 @@
                 </div>
                 <div>
                     <div class="buttons is-centered">
-                        <button class="button is-primary" id="automatic-setup-button">Automatic setup</button>
-                        <button class="button is-primary" id="manual-setup-button">Manual setup</button>
-                    </div>
-                    <div class="buttons is-centered">
-                        <button class="button is-danger" onclick="window.close()">Skip setup</button>
+                        <button class="button is-primary" id="step1-button">Automatic setup</button>
+                        <button class="button is-danger" id="skip-button">Manual setup (skip)</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Automatic Setup Steps -->
-            <div class="onboarding-step" id="step-2-automatic" style="display: none">
+            <div class="onboarding-step" id="step-2" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup - Step 1</h2>
+                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup Information</h2>
                     <p class="subtitle has-text-centered">
                         Automatic setup allows you to let the program try to automatically detect your settings and set
                         up the program for you. It is the recommended mode and supports all tracker models and
                         connection modes.<br />
                         <br />
-                        It is recommended (but not necessary) to have at least one of your trackers turned on and connected
-                        to your computer before continuing. When you are ready, click the "Next" button.
+                        It is recommended (but not necessary) to have at least one of your trackers turned on and
+                        connected to your computer before continuing. When you are ready, click the "Next" button.
                     </p>
                 </div>
                 <div>
                     <div class="buttons is-centered">
-                        <button class="button is-primary" id="next-automatic-button">Next</button>
-                        <button class="button is-info" id="back-automatic-button">Back</button>
+                        <button class="button is-info" id="back-step2-button">Back</button>
+                        <button class="button is-primary" id="next-step2-button">Next</button>
                     </div>
                 </div>
             </div>
-            <div class="onboarding-step" id="step-3-automatic" style="display: none">
+            <div class="onboarding-step" id="step-3" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup - Step 2</h2>
+                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup</h2>
                     <p class="subtitle has-text-centered">
                         Press the button below to start the auto-detection process. The process may take up to 20
                         seconds to complete, <strong>make sure HaritoraConfigurator is closed</strong>.<br />
                         <br />
                         After the process is complete, you will receive a pop-up with the results - make sure they are
-                        accurate. If the process fails, you can try again or switch to manual setup.<br />
+                        accurate. If the process fails, you can try again or set up SlimeTora manually.<br />
                     </p>
                 </div>
                 <button class="button is-primary" id="autodetect-button" onclick="autodetect()">
                     Start auto-detection
                 </button>
                 <p class="subtitle has-text-centered">
-                    If you are happy with the results, click the "Finish SlimeTora Setup" button to continue. Otherwise, you may switch
-                    to manual setup.
+                    If you are happy with the results, click the "Finish SlimeTora Setup" button to continue. Otherwise,
+                    you may set up SlimeTora manually.
                 </p>
                 <div class="buttons is-centered">
-                    <button class="button is-primary" id="finish-automatic-button">Finish SlimeTora Setup</button>
-                    <button class="button is-info" id="back-automatic-step2-button">Back</button>
+                    <button class="button is-info" id="back-step3-button">Back</button>
+                    <button class="button is-primary" id="next-step3-button">Finish SlimeTora Setup</button>
                 </div>
             </div>
 
-            <!-- Manual Setup Steps -->
-            <div class="onboarding-step" id="step-2-manual" style="display: none">
+            <!-- SlimeVR setup -->
+            <div class="onboarding-step" id="step-4" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Manual Setup - Step 1</h2>
+                    <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Setup</h2>
                     <p class="subtitle has-text-centered">
-                        SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server,
-                        bypassing HaritoraConfigurator!<br />
-                        <br />
-                        To get started, select how you would like to set up the program.
+                        Now we're sure you know what SlimeVR is, right? It's the reason why you downloaded SlimeTora in
+                        the first place - it's a software that allows for communication between multiple
+                        sensors/trackers to use in SteamVR, like HaritoraConfigurator.
                     </p>
                 </div>
+                <a
+                    class="button is-primary"
+                    href="https://github.com/SlimeVR/SlimeVR-Server/releases/latest"
+                    target="_blank"
+                >
+                    Download SlimeVR Server
+                </a>
+                <p class="subtitle has-text-centered">
+                    To use SlimeTora, you need to have SlimeVR server installed on your computer. If you don't have it
+                    installed yet, click the button above to download and install it. After, press the "Next" button to
+                    learn how to set it up for SlimeTora.
+                </p>
                 <div class="buttons is-centered">
-                    <button class="button is-primary" id="next-manual-button">Next</button>
-                    <button class="button is-info" id="back-manual-button">Back</button>
+                    <button class="button is-info" id="back-step4-button">Back</button>
+                    <a class="button is-primary" id="next-step4-button">Next</a>
                 </div>
             </div>
-            <div class="onboarding-step" id="step-3-manual" style="display: none">
-                <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Manual Setup - Step 2</h2>
+
+            <div class="onboarding-step" id="step-5" style="display: none">
+                <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Setup</h2>
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                    <p class="subtitle has-text-centered" style="margin: 0">
+                        It's now time to put on your trackers! Open up the SlimeVR Server and make sure your trackers
+                        are on and connected to your computer. After, press the "Start connection" button to connect
+                        your trackers to SlimeVR Server.
+                    </p>
+                    <div class="is-flex is-flex-direction-column is-align-items-center" style="width: 100%">
+                        <div class="subtitle has-text-centered">
+                            <h3 class="inline-block" data-i18n="main.connectedTrackers">Connected trackers:</h3>
+                            <p class="inline-block" id="tracker-count">0</p>
+                        </div>
+                        <a
+                            class="button is-primary"
+                            href="https://github.com/SlimeVR/SlimeVR-Server/releases/latest"
+                            target="_blank"
+                        >
+                            Start connection
+                        </a>
+                    </div>
+                </div>
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                    <img
+                        width="300px"
+                        src="../images/slimevr_new_tracker.png"
+                        alt="SlimeVR Server pop-up stating a new tracker was found."
+                    />
                     <p class="subtitle has-text-centered">
-                        SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server,
-                        bypassing HaritoraConfigurator!<br />
-                        <br />
-                        To get started, select how you would like to set up the program.
+                        When you see all your trackers connected above, check SlimeVR Server and accept all "A new
+                        tracker was found" pop-ups. Click the "Next" button to continue to the next step.
                     </p>
                 </div>
                 <div class="buttons is-centered">
-                    <button class="button is-primary" id="finish-manual-button">Finish SlimeTora Setup</button>
-                    <button class="button is-info" id="back-manual-step2-button">Back</button>
+                    <button class="button is-info" id="back-step5-button">Back</button>
+                    <a class="button is-primary" id="next-step5-button">Next</a>
+                </div>
+            </div>
+
+            <div class="onboarding-step" id="step-6" style="display: none">
+                <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Setup</h2>
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                    <p class="subtitle has-text-centered" style="margin: 0">
+                        With your trackers connected, you can go through the initial setup of SlimeVR Server. Click
+                        "Let's get set up!", then "Skip Wi-Fi settings", and then "I put stickers and straps!". Next,
+                        assign your trackers to the correct body part.
+                    </p>
+                </div>
+                <img
+                    width="300px"
+                    src="../images/slimevr_new_tracker.png"
+                    alt="SlimeVR Server pop-up stating a new tracker was found."
+                />
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                    <p class="subtitle has-text-centered" style="margin: 0">
+                        After assigning the trackers, you will be brought to a reset tutorial. With SlimeTora (along
+                        with SlimeVR's built-in tap-to-reset), you may press any of the buttons a number of times
+                        (within 0.5s) on your trackers. See the list for the reset options:
+                    </p>
+                    <ul class="list has-bullets" style="width: 100%">
+                        <li>1 press is a yaw reset</li>
+                        <li>2 presses is a full reset</li>
+                        <li>3 presses is a mounting reset</li>
+                        <li>4 presses is to pause/unpause tracking</li>
+                    </ul>
+                </div>
+                <div class="buttons is-centered">
+                    <button class="button is-info" id="back-step6-button">Back</button>
+                    <a class="button is-primary" id="next-step6-button">Next</a>
                 </div>
             </div>
         </div>

@@ -204,6 +204,11 @@ function onboarding() {
             slashes: true,
         })
     );
+
+    onboardingWindow.webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: "deny" };
+    });
 }
 
 async function showMessage(

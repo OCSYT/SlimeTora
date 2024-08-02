@@ -54,7 +54,7 @@ class Onboarding {
                     button.addEventListener("click", () => {
                         window.log(`Button with ID ${buttonId} clicked`);
                         if (targetStepId === "finish") {
-                            alert(`${step.id.includes("automatic") ? "Automatic" : "Manual"} setup finished!`);
+                            alert(`Setup finished!`);
                         } else {
                             this.goToStep(targetStepId);
                         }
@@ -74,40 +74,50 @@ type Step = {
     buttons: { [key: string]: string };
 };
 
-const createSteps = (path: string): Step[] => {
-    return [
-        {
-            id: `step-1`,
-            next: `step-2-${path}`,
-            buttons: {
-                [`${path}-setup-button`]: `step-2-${path}`,
-                "manual-setup-button": "step-2-manual",
-            },
-        },
-        {
-            id: `step-2-${path}`,
-            next: `step-3-${path}`,
-            prev: "step-1",
-            buttons: {
-                [`next-${path}-button`]: `step-3-${path}`,
-                [`back-${path}-button`]: "step-1",
-            },
-        },
-        {
-            id: `step-3-${path}`,
-            prev: `step-2-${path}`,
-            buttons: {
-                [`finish-${path}-button`]: "finish",
-                [`back-${path}-step2-button`]: `step-2-${path}`,
-            },
-        },
-    ];
-};
-
 const onboardingConfig = {
     steps: [
-        ...createSteps("automatic"),
-        ...createSteps("manual"),
+        {
+            id: "step-1",
+            buttons: {
+                "step1-button": "step-2",
+                "skip-button": "step-4",
+            },
+        },
+        {
+            id: "step-2",
+            buttons: {
+                "next-step2-button": "step-3",
+                "back-step2-button": "step-1",
+            },
+        },
+        {
+            id: "step-3",
+            buttons: {
+                "next-step3-button": "step-4",
+                "back-step3-button": "step-2",
+            },
+        },
+        {
+            id: "step-4",
+            buttons: {
+                "next-step4-button": "step-5",
+                "back-step4-button": "step-3",
+            },
+        },
+        {
+            id: "step-5",
+            buttons: {
+                "next-step5-button": "step-6",
+                "back-step5-button": "step-4",
+            },
+        },
+        {
+            id: "step-6",
+            buttons: {
+                "next-step6-button": "step-7",
+                "back-step6-button": "step-5",
+            },
+        },
     ],
 };
 
@@ -117,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // i can't believe this works lol
-// Sets a flag in localStorage to start the autodetection process (main window listens for this flag)
+// Sets a flag in localStorage to start the auto-detection process (main window listens for this flag)
 function startAutoDetection() {
     localStorage.setItem('runAutodetect', 'true');
 }
