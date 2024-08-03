@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (isMissingPorts) {
         setStatus("main.status.comPortsMissing");
-        window.ipc.send("show-error", {
+        window.ipc.invoke("show-error", {
             title: "dialogs.comPortsMissing.title",
             message: "dialogs.comPortsMissing.message",
         });
@@ -275,7 +275,7 @@ async function autodetect() {
     if (devices.size === 0) {
         // If somehow, literally nothing is found...
         window.error("No devices found during auto-detection");
-        showErrorDialog("dialogs.autodetect.failed.title", "dialogs.autodetect.failed.message");
+        await showErrorDialog("dialogs.autodetect.failed.title", "dialogs.autodetect.failed.message");
         setStatus("main.status.autodetect.failed");
     } else {
         window.log(`Auto-detect: completed, detected ${Array.from(devices).join(", ")}`);
@@ -465,7 +465,7 @@ async function showMessageBox(
     translateTitle: boolean = true,
     translateMessage: boolean = true
 ) {
-    window.ipc.send("show-message", {
+    return await window.ipc.invoke("show-message", {
         title: titleKey,
         message: messageKey,
         blocking,
@@ -483,7 +483,7 @@ async function showErrorDialog(
     const title = translateTitle ? await window.translate(titleKey) : titleKey;
     const message = translateMessage ? await window.translate(messageKey) : messageKey;
 
-    window.ipc.send("show-error", {
+    return await window.ipc.invoke("show-error", {
         title: title,
         message: message,
         translateTitle,

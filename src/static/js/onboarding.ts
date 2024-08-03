@@ -51,10 +51,19 @@ class Onboarding {
             Object.entries(step.buttons).forEach(([buttonId, targetStepId]) => {
                 const button = document.getElementById(buttonId);
                 if (button) {
-                    button.addEventListener("click", () => {
+                    button.addEventListener("click", async () => {
                         window.log(`Button with ID ${buttonId} clicked`);
                         if (targetStepId === "finish") {
-                            alert(`Setup finished!`);
+                            window.log("Onboarding process complete");
+                            await showMessageBox(
+                                "dialogs.onboarding.complete.title",
+                                "dialogs.onboarding.complete.message",
+                                true,
+                                true,
+                                true
+                            );
+                            window.open("https://github.com/OCSYT/SlimeTora/wiki/", "_blank");
+                            window.close();
                         } else {
                             this.goToStep(targetStepId);
                         }
@@ -67,20 +76,13 @@ class Onboarding {
     }
 }
 
-type Step = {
-    id: string;
-    next?: string;
-    prev?: string;
-    buttons: { [key: string]: string };
-};
-
 const onboardingConfig = {
     steps: [
         {
             id: "step-1",
             buttons: {
                 "step1-button": "step-2",
-                "skip-button": "step-4",
+                "skip-button": "finish",
             },
         },
         {
@@ -121,6 +123,22 @@ const onboardingConfig = {
     ],
 };
 
+async function showMessageBox(
+    titleKey: string,
+    messageKey: string,
+    blocking: boolean = false,
+    translateTitle: boolean = true,
+    translateMessage: boolean = true
+) {
+    return await window.ipc.invoke("show-message", {
+        title: titleKey,
+        message: messageKey,
+        blocking,
+        translateTitle,
+        translateMessage,
+    });
+}
+
 // Initialize the onboarding process
 document.addEventListener("DOMContentLoaded", () => {
     new Onboarding(onboardingConfig);
@@ -129,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // i can't believe this works lol
 // Sets a flag in localStorage to start the auto-detection process (main window listens for this flag)
 function startAutoDetection() {
-    localStorage.setItem('runAutodetect', 'true');
+    localStorage.setItem("runAutodetect", "true");
 }
 
 window.autodetect = startAutoDetection;

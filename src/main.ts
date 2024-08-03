@@ -223,6 +223,7 @@ async function showMessage(
     const translatedMessage = translateMessage ? await translate(message) : message;
 
     show({ title: translatedTitle, message: translatedMessage });
+    return true;
 }
 
 async function showError(title: string, message: string, translateTitle = true, translateMessage = true) {
@@ -230,6 +231,7 @@ async function showError(title: string, message: string, translateTitle = true, 
     const translatedMessage = translateMessage ? await translate(message) : message;
 
     dialog.showErrorBox(translatedTitle, translatedMessage);
+    return true;
 }
 
 ipcMain.on("log", (_event, arg: string) => {
@@ -240,7 +242,7 @@ ipcMain.on("error", (_event, arg: string) => {
     error(arg, "renderer");
 });
 
-ipcMain.on("show-message", async (_event, arg) => {
+ipcMain.handle("show-message", async (_event, arg) => {
     const {
         title,
         message,
@@ -249,10 +251,10 @@ ipcMain.on("show-message", async (_event, arg) => {
         translateMessage = true,
     }: { title: string; message: string; blocking: boolean; translateTitle: boolean; translateMessage: boolean } = arg;
 
-    await showMessage(title, message, blocking, translateTitle, translateMessage);
+    return await showMessage(title, message, blocking, translateTitle, translateMessage);
 });
 
-ipcMain.on("show-error", async (_event, arg) => {
+ipcMain.handle("show-error", async (_event, arg) => {
     const {
         title,
         message,
@@ -260,7 +262,7 @@ ipcMain.on("show-error", async (_event, arg) => {
         translateMessage = true,
     }: { title: string; message: string; translateTitle: boolean; translateMessage: boolean } = arg;
 
-    await showError(title, message, translateTitle, translateMessage);
+    return await showError(title, message, translateTitle, translateMessage);
 });
 
 ipcMain.on("show-onboarding", () => {

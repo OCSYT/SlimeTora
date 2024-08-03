@@ -278,7 +278,7 @@ async function getTrackerSettings() {
     const ankleMotionDetection = currentSettings.ankleMotionDetection;
 
     window.log(`Current settings for ${trackerName}: ${JSON.stringify(currentSettings)}`);
-    window.ipc.send("show-message", {
+    window.ipc.invoke("show-message", {
         title: `Current settings for ${trackerName}`,
         message: `Sensor Mode: ${sensorMode} \nFPS Mode: ${fpsMode} \nSensor Auto Correction: ${sensorAutoCorrection.join(
             ", "
