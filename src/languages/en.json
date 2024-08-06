@@ -18,7 +18,7 @@
             "autodetect": {
                 "running": "running auto-detection...",
                 "success": "auto-detection complete",
-                "failed": "auto-detection failed" 
+                "failed": "auto-detection failed"
             }
         }
     },
@@ -140,6 +140,15 @@
         },
         "openLogsFolder": "Open logs folder"
     },
+    "onboarding": {
+        "title": "Welcome to SlimeTora!",
+        "text": "This is the first time you've opened SlimeTora, so let's get you started!",
+        "next": "Next",
+        "skip": "Skip",
+        "back": "Back",
+        "finish": "Finish",
+        "steps": {}
+    },
     "dialogs": {
         "connectionFailed": {
             "title": "Connection failed",
@@ -164,6 +173,16 @@
         "noComPorts": {
             "title": "No COM ports selected",
             "message": "Please select at least one COM port in the program's settings."
+        },
+        "onboarding": {
+            "complete": {
+                "title": "Onboarding complete!",
+                "message": "SlimeTora has been successfully set up! You can always reopen the onboarding screen in the program settings. After this dialog, the program will open the wiki page for you to read more information.\r\n\r\nEnjoy!"
+            },
+            "error": {
+                "title": "Onboarding error!",
+                "message": "An error occurred while trying to complete the onboarding. Please try again."
+            }
         },
         "autodetect": {
             "pre-check": {

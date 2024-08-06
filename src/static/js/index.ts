@@ -184,10 +184,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     addEventListeners();
 });
 
-window.addEventListener('storage', (event) => {
-    if (event.key === 'runAutodetect' && event.newValue === 'true') {
+window.addEventListener("storage", (event) => {
+    if (event.key === "runAutodetect" && event.newValue === "true") {
         autodetect();
-        localStorage.setItem('runAutodetect', 'false');
+        localStorage.setItem("runAutodetect", "false");
     }
 });
 
@@ -196,7 +196,7 @@ window.addEventListener('storage', (event) => {
  */
 
 async function autodetect() {
-    showMessageBox("dialogs.autodetect.pre-check.title", "dialogs.autodetect.pre-check.message", true, true, true);
+    showMessageBox("dialogs.autodetect.pre-check.title", "dialogs.autodetect.pre-check.message", true);
 
     window.log("Running auto-detection...");
     setStatus("main.status.autodetect.running");

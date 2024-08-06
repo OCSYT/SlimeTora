@@ -120,6 +120,34 @@ const onboardingConfig = {
                 "back-step6-button": "step-5",
             },
         },
+        {
+            id: "step-7",
+            buttons: {
+                "next-step7-button": "step-8",
+                "back-step7-button": "step-6",
+            },
+        },
+        {
+            id: "step-8",
+            buttons: {
+                "next-step8-button": "step-9",
+                "back-step8-button": "step-7",
+            },
+        },
+        {
+            id: "step-9",
+            buttons: {
+                "next-step9-button": "step-10",
+                "back-step9-button": "step-8",
+            },
+        },
+        {
+            id: "step-10",
+            buttons: {
+                "next-step10-button": "finish",
+                "back-step10-button": "step-9",
+            },
+        },
     ],
 };
 

@@ -55,7 +55,8 @@ br {
     }
 }
 
-.section, .container.is-fullheight {
+.section,
+.container.is-fullheight {
     background-color: #081e30;
     border-radius: 0.5rem;
     color: white;
@@ -70,7 +71,7 @@ br {
     width: 100%;
     height: 100%;
     // "display: flex;" is already applied
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
     flex-direction: column;
 }
@@ -119,8 +120,11 @@ br {
 
 .list.has-bullets {
     list-style-type: disc;
-    padding-left: 1.5rem;
     text-align: left;
+}
+
+.list.has-bullets li {
+    margin: 0.75rem;
 }
 
 .select select {
@@ -141,8 +145,7 @@ br {
 }
 
 .icon:hover img {
-    filter: invert(80%) sepia(24%) saturate(2320%) hue-rotate(169deg) brightness(100%)
-        contrast(102%);
+    filter: invert(80%) sepia(24%) saturate(2320%) hue-rotate(169deg) brightness(100%) contrast(102%);
 }
 
 .vertical-settings-container {

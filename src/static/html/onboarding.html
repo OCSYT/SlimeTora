@@ -8,8 +8,8 @@
         <script type="module" src="../js/onboarding.js"></script>
     </head>
     <body>
-        <!-- Onboarding section -->
         <div class="container is-fullheight" id="onboarding">
+            <!-- SlimeTora Setup -->
             <div class="onboarding-step" id="step-1">
                 <div>
                     <h2 class="title is-2 has-text-centered is-spaced">Welcome to SlimeTora!</h2>
@@ -31,7 +31,7 @@
 
             <div class="onboarding-step" id="step-2" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup Information</h2>
+                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup</h2>
                     <p class="subtitle has-text-centered">
                         Automatic setup allows you to let the program try to automatically detect your settings and set
                         up the program for you. It is the recommended mode and supports all tracker models and
@@ -50,7 +50,7 @@
             </div>
             <div class="onboarding-step" id="step-3" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup</h2>
+                    <h2 class="title is-2 has-text-centered is-spaced">Auto-detection</h2>
                     <p class="subtitle has-text-centered">
                         Press the button below to start the auto-detection process. The process may take up to 20
                         seconds to complete, <strong>make sure HaritoraConfigurator is closed</strong>.<br />
@@ -63,12 +63,12 @@
                     Start auto-detection
                 </button>
                 <p class="subtitle has-text-centered">
-                    If you are happy with the results, click the "Finish SlimeTora Setup" button to continue. Otherwise,
-                    you may set up SlimeTora manually.
+                    If you are happy with the results, click the "Next" button to continue. Otherwise, you may set up
+                    SlimeTora manually.
                 </p>
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step3-button">Back</button>
-                    <button class="button is-primary" id="next-step3-button">Finish SlimeTora Setup</button>
+                    <button class="button is-primary" id="next-step3-button">Next</button>
                 </div>
             </div>
 
@@ -80,6 +80,10 @@
                         Now we're sure you know what SlimeVR is, right? It's the reason why you downloaded SlimeTora in
                         the first place - it's a software that allows for communication between multiple
                         sensors/trackers to use in SteamVR, like HaritoraConfigurator.
+                        <strong
+                            >At this point, you will want to connect your VR headset to your PC for the rest of this
+                            setup.</strong
+                        >
                     </p>
                 </div>
                 <a
@@ -101,12 +105,12 @@
             </div>
 
             <div class="onboarding-step" id="step-5" style="display: none">
-                <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Setup</h2>
+                <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Connection</h2>
                 <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
                     <p class="subtitle has-text-centered" style="margin: 0">
                         It's now time to put on your trackers! Open up the SlimeVR Server and make sure your trackers
-                        are on and connected to your computer. After, press the "Start connection" button to connect
-                        your trackers to SlimeVR Server.
+                        (and VR headset) are on and connected to your computer. After, press the "Start connection"
+                        button to connect your trackers to SlimeVR Server.
                     </p>
                     <div class="is-flex is-flex-direction-column is-align-items-center" style="width: 100%">
                         <div class="subtitle has-text-centered">
@@ -125,7 +129,7 @@
                 <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
                     <img
                         width="300px"
-                        src="../images/slimevr_new_tracker.png"
+                        src="../images/onboarding/new_tracker.webp"
                         alt="SlimeVR Server pop-up stating a new tracker was found."
                     />
                     <p class="subtitle has-text-centered">
@@ -140,35 +144,145 @@
             </div>
 
             <div class="onboarding-step" id="step-6" style="display: none">
-                <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Setup</h2>
-                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
-                    <p class="subtitle has-text-centered" style="margin: 0">
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Tracker Assignment</h2>
+                    <p class="subtitle has-text-centered">
                         With your trackers connected, you can go through the initial setup of SlimeVR Server. Click
                         "Let's get set up!", then "Skip Wi-Fi settings", and then "I put stickers and straps!". Next,
-                        assign your trackers to the correct body part.
+                        assign your trackers to the correct body part - an example is shown in the screenshot below.
                     </p>
                 </div>
                 <img
-                    width="300px"
-                    src="../images/slimevr_new_tracker.png"
-                    alt="SlimeVR Server pop-up stating a new tracker was found."
+                    src="../images/onboarding/tracker_assign.webp"
+                    alt="Tracker assignment page in SlimeVR Server"
+                    style="height: 300px"
                 />
-                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
-                    <p class="subtitle has-text-centered" style="margin: 0">
-                        After assigning the trackers, you will be brought to a reset tutorial. With SlimeTora (along
-                        with SlimeVR's built-in tap-to-reset), you may press any of the buttons a number of times
-                        (within 0.5s) on your trackers. See the list for the reset options:
-                    </p>
-                    <ul class="list has-bullets" style="width: 100%">
-                        <li>1 press is a yaw reset</li>
-                        <li>2 presses is a full reset</li>
-                        <li>3 presses is a mounting reset</li>
-                        <li>4 presses is to pause/unpause tracking</li>
-                    </ul>
-                </div>
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step6-button">Back</button>
                     <a class="button is-primary" id="next-step6-button">Next</a>
+                </div>
+            </div>
+
+            <div class="onboarding-step" id="step-7" style="display: none">
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Mounting calibration</h2>
+                    <p class="subtitle has-text-centered">
+                        After assigning the trackers, you will be brought to the mounting calibration screen.
+                        <strong>Make sure you select "Automatic Mounting"</strong> and follow the on-screen instructions
+                        on how to do a mounting calibration. If it does not look right after the calibration, you can
+                        always redo it until it's accurate.
+                    </p>
+                </div>
+                <img
+                    src="../images/onboarding/mounting_calibration.webp"
+                    alt="Tracker assignment page in SlimeVR Server"
+                    style="height: 300px"
+                />
+                <div class="buttons is-centered">
+                    <button class="button is-info" id="back-step7-button">Back</button>
+                    <a class="button is-primary" id="next-step7-button">Next</a>
+                </div>
+            </div>
+
+            <div class="onboarding-step" id="step-8" style="display: none">
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Resets & calibration</h2>
+                    <p class="subtitle has-text-centered">
+                        You will now see a small tutorial on how to perform "resets" in SlimeVR. With SlimeTora (along
+                        with SlimeVR's built-in tap-to-reset), you may press any of the buttons a number of times
+                        (within 0.5s) on your trackers. See the list for the reset options:
+                    </p>
+                </div>
+
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                    <img
+                        src="../images/onboarding/reset.webp"
+                        alt="Tracker assignment page in SlimeVR Server"
+                        style="height: 300px"
+                    />
+                    <ul class="list has-bullets" style="width: 100%">
+                        <li class="subtitle is-5">1 press - yaw reset</li>
+                        <li class="subtitle is-5">2 presses - full reset</li>
+                        <li class="subtitle is-5">3 presses - mounting reset</li>
+                        <li class="subtitle is-5">4 presses - pause/unpause tracking</li>
+                    </ul>
+                </div>
+
+                <div class="buttons is-centered">
+                    <button class="button is-info" id="back-step8-button">Back</button>
+                    <a class="button is-primary" id="next-step8-button">Next</a>
+                </div>
+            </div>
+
+            <div class="onboarding-step" id="step-9" style="display: none">
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">When to reset</h2>
+                    <p class="subtitle has-text-centered">
+                        Here are the explanations of the three different resets and when they would be used:
+                    </p>
+                </div>
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                    <figure class="is-flex-grow-1">
+                        <img src="../images/onboarding/reset_pose.webp" alt="Full reset pose" style="height: 350px" />
+                        <!-- Image credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
+                        <figcaption class="subtitle is-6 has-text-centered">Full reset pose</figcaption>
+                    </figure>
+                    <div class="is-flex-shrink-5">
+                        <p class="subtitle has-text-centered">
+                            A <strong>yaw</strong> reset is the <strong>one you will use the most</strong>, it
+                            eliminates most (if not all) drift on one axis. This is less accurate but the fastest and
+                            most convenient. You only need to straighten your limbs - this can even be used while laying
+                            or sitting down!
+                        </p>
+                        <p class="subtitle has-text-centered">
+                            A <strong>full</strong> reset is the most accurate and completely resets the skeleton in
+                            SlimeVR. You must be standing up and straight while doing this reset.
+                        </p>
+                        <p class="subtitle has-text-centered">
+                            A <strong>mounting</strong> reset is used when the position of your trackers have physically
+                            moved (or mounting calibration is off). You must be in a "ski pose" while doing this reset.
+                        </p>
+                    </div>
+                    <figure class="is-flex-grow-1">
+                        <img
+                            src="../images/onboarding/mounting_reset_pose.webp"
+                            alt="Mounting reset pose"
+                            style="height: 350px"
+                        />
+                        <!-- Image credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
+                        <figcaption class="subtitle is-6 has-text-centered">Mounting reset pose</figcaption>
+                    </figure>
+                </div>
+                <div class="buttons is-centered">
+                    <button class="button is-info" id="back-step9-button">Back</button>
+                    <a class="button is-primary" id="next-step9-button">Next</a>
+                </div>
+            </div>
+
+            <div class="onboarding-step" id="step-10" style="display: none">
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced">Body Proportions</h2>
+                    <p class="subtitle has-text-centered">
+                        Now it's time to calculate your body proportions. SlimeVR applies your body proportions to a
+                        virtual skeleton to have much more accurate tracking if set up correctly. Select "Automatic
+                        proportions" and follow the on-screen instructions to perform the calibration by following a set
+                        of movements.
+                    </p>
+                </div>
+
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                    <img
+                        src="../images/onboarding/body_proportions.webp"
+                        alt="Tracker assignment page in SlimeVR Server"
+                        style="height: 300px"
+                    />
+                    <!-- Video credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
+                    <video src="../videos/autobone.webm" autoplay loop style="height: 350px"></video>
+                </div>
+
+                <div class="buttons is-centered">
+                    <button class="button is-info" id="back-step10-button">Back</button>
+                    <a class="button is-primary" id="next-step10-button">Finish</a>
                 </div>
             </div>
         </div>

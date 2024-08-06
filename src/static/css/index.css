@@ -21595,7 +21595,8 @@ br {
   height: 24px;
 }
 
-.section, .container.is-fullheight {
+.section,
+.container.is-fullheight {
   background-color: #081e30;
   border-radius: 0.5rem;
   color: white;
@@ -21609,7 +21610,7 @@ br {
 .onboarding-step {
   width: 100%;
   height: 100%;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
   flex-direction: column;
 }
@@ -21658,8 +21659,33 @@ br {
 
 .list.has-bullets {
   list-style-type: disc;
-  padding-left: 1.5rem;
   text-align: left;
+}
+
+.onboarding-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3rem;
+}
+
+.onboarding-container figure {
+  flex: 1;
+  text-align: center;
+}
+
+.onboarding-container img {
+  width: 100%;
+  height: auto;
+  min-height: 300px;
+}
+
+.onboarding-container .subtitle-container {
+  flex: 2;
+}
+
+.list.has-bullets li {
+  margin: 0.75rem;
 }
 
 .select select {
