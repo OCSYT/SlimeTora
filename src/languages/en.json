@@ -142,12 +142,65 @@
     },
     "onboarding": {
         "title": "Welcome to SlimeTora!",
-        "text": "This is the first time you've opened SlimeTora, so let's get you started!",
+        "text": "SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server, bypassing HaritoraConfigurator!<br /><br />To get started, select how you would like to set up the program. After you set up the program, you will be guided on how to set up SlimeVR server.",
         "next": "Next",
-        "skip": "Skip",
         "back": "Back",
         "finish": "Finish",
-        "steps": {}
+        "manual": "Manual setup (skip)",
+        "steps": {
+            "step-2": {
+                "title": "Automatic setup",
+                "text": "Automatic setup allows you to let the program try to automatically detect your settings and set up the program for you. It is the easiest way to get started and supports all tracker models and connection modes.<br /><br />It is recommended (but not necessary) to have at least one of your trackers turned on and connected to your computer before continuing. When you are ready, click the \"Next\" button."
+            },
+            "step-3": {
+                "title": "Auto-detection",
+                "text": "Press the button below to start the auto-detection process. The process may take up to 20 seconds to complete, <strong>make sure HaritoraConfigurator is closed</strong>.<br />After the process is complete, you will receive a pop-up with the results - make sure they are accurate. If the process fails, you can try again or set up SlimeTora manually.",
+                "autodetect": "Start auto-detection",
+                "text2": "If you are happy with the results, click the \"Next\" button to continue. Otherwise, you may set up SlimeTora manually."
+            },
+            "step-4": {
+                "title": "SlimeVR setup",
+                "text": "Now we're sure you know what SlimeVR is, right? It's the reason why you downloaded SlimeTora in the first place - it's a software that allows for communication between multiple sensors/trackers to use in SteamVR, like HaritoraConfigurator.",
+                "download": "Download SlimeVR Server",
+                "text2": "To use SlimeTora, you need to have SlimeVR server installed on your computer. If you don't have it installed yet, click the button above to download and install it. After, press the \"Next\" button to learn how to set it up for SlimeTora."
+            },
+            "step-5": {
+                "title": "SlimeVR connection",
+                "text": "At this point, you will now want to connect your VR headset to your PC - it's time to put on your trackers! Make sure your trackers (and VR headset) are connected and press the \"Start connection\" button to connect them to the SlimeVR Server.",
+                "text2": "When you see all your trackers connected above, check SlimeVR Server and accept all \"A new tracker was found\" pop-ups. Click the \"Next\" button to continue to the next step."
+            },
+            "step-6": {
+                "title": "Tracker assignment",
+                "text": "With your trackers connected, you can go through the initial setup of SlimeVR Server. Click \"Let's get set up!\", then \"Skip Wi-Fi settings\", and then \"I put stickers and straps!\". Next, assign your trackers to the correct body part - an example is shown in the screenshot below."
+            },
+            "step-7": {
+                "title": "Mounting calibration",
+                "text": "After assigning the trackers, you will be brought to the mounting calibration screen. <strong>Make sure you select \"Automatic Mounting\"</strong> and follow the on-screen instructions on how to do a mounting calibration. If it does not look right after the calibration, you can always redo it until it's accurate."
+            },
+            "step-8": {
+                "title": "Resets & calibration",
+                "text": "You will now see a small tutorial on how to perform \"resets\" in SlimeVR. With SlimeTora (along with SlimeVR's built-in tap-to-reset), you may press any of the buttons a number of times (within 0.5s) on your trackers. See the list for the reset options:",
+                "list": {
+                    "1": "1 press - yaw reset",
+                    "2": "2 presses - full reset",
+                    "3": "3 presses - mounting reset",
+                    "4": "4 presses - pause/unpause tracking"
+                }
+            },
+            "step-9": {
+                "title": "When to reset",
+                "text": "Here are the explanations of the three different resets and when they would be used:",
+                "text2": "A <strong>yaw</strong> reset is the <strong>one you will use the most</strong>, it eliminates most (if not all) drift on one axis. This is less accurate but the fastest and most convenient. You only need to straighten your limbs - this can even be used while laying or sitting down!",
+                "text3": "A <strong>full</strong> reset is the most accurate and completely resets the skeleton in SlimeVR. You must be standing up and straight while doing this reset.",
+                "text4": "A <strong>mounting</strong> reset is used when the position of your trackers have physically moved (or mounting calibration is off). You must be in a \"ski pose\" while doing this reset.",
+                "caption1": "Full reset pose",
+                "caption2": "Mounting reset pose"
+            },
+            "step-10": {
+                "title": "Body proportions",
+                "text": "Now it's time to calculate your body proportions. SlimeVR applies your body proportions to a virtual skeleton to have much more accurate tracking if set up correctly. Select \"Automatic proportions\" and follow the on-screen instructions to perform the calibration by following a set of movements."
+            }
+        }
     },
     "dialogs": {
         "connectionFailed": {
@@ -177,17 +230,13 @@
         "onboarding": {
             "complete": {
                 "title": "Onboarding complete!",
-                "message": "SlimeTora has been successfully set up! You can always reopen the onboarding screen in the program settings. After this dialog, the program will open the wiki page for you to read more information.\r\n\r\nEnjoy!"
-            },
-            "error": {
-                "title": "Onboarding error!",
-                "message": "An error occurred while trying to complete the onboarding. Please try again."
+                "message": "SlimeTora has been successfully set up! You can always reopen the onboarding screen in the program settings. After this dialog, the program will open the wiki page for you to read more information.<br /><br />Enjoy!"
             }
         },
         "autodetect": {
             "pre-check": {
                 "title": "Auto-detect pre-check",
-                "message": "This feature will attempt to automatically detect your trackers (wired unsupported in this beta), connection mode, and tracker settings to apply the settings in the program for you.\r\n\r\nMake sure HaritoraConfigurator is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
+                "message": "This feature will attempt to automatically detect your trackers (wired unsupported in this beta), connection mode, and tracker settings to apply the settings in the program for you.<br /><br />Make sure HaritoraConfigurator is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
             },
             "success": {
                 "title": "Auto-detect completed!",

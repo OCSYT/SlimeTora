@@ -197,7 +197,6 @@ window.addEventListener("storage", (event) => {
         stopConnection();
         localStorage.setItem("stopConnection", "false");
     } else if (event.key === "language") {
-        window.log(`1 Language changed to: ${event.newValue}`);
         selectLanguage(event.newValue);
     }
 });

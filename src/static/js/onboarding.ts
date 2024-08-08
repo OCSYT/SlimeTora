@@ -166,6 +166,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     new Onboarding(onboardingConfig);
 
+    await updateTranslations();
+
     addEventListeners();
 
     // Populate language select
@@ -178,6 +180,7 @@ function addEventListeners() {
     document.getElementById("language-select").addEventListener("change", async function () {
         const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
         localStorage.setItem("language", language);
+        await updateTranslations();
     });
 }
 
@@ -203,6 +206,22 @@ window.addEventListener("storage", (event) => {
         document.getElementById("stop-connection-button").toggleAttribute("disabled");
     }
 });
+
+async function updateTranslations() {
+    const i18nElements = document.querySelectorAll("[data-i18n]");
+    const translationPromises: Promise<void>[] = [];
+
+    i18nElements.forEach((element) => {
+        const key = element.getAttribute("data-i18n");
+        const translationPromise = window.translate(key).then((translation) => {
+            // could be a slight security risk, but makes it so much easier to format text
+            element.innerHTML = translation;
+        });
+        translationPromises.push(translationPromise);
+    });
+
+    return await Promise.all(translationPromises);
+}
 
 async function showMessageBox(
     titleKey: string,

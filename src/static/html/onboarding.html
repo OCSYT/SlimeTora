@@ -18,7 +18,9 @@
                             <img src="../images/logo.webp" alt="SlimeTora logo" />
                         </div>
                         <!-- Title -->
-                        <h2 class="title is-2 has-text-centered is-spaced">Welcome to SlimeTora!</h2>
+                        <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.title">
+                            Welcome to SlimeTora!
+                        </h2>
                         <!-- Language container -->
                         <div class="language-container" style="top: 0">
                             <div class="control has-icons-left">
@@ -36,7 +38,7 @@
                         </div>
                     </div>
                     <br />
-                    <p class="subtitle has-text-centered">
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.text">
                         SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server,
                         bypassing HaritoraConfigurator!<br />
                         <br />
@@ -46,18 +48,24 @@
                 </div>
                 <div>
                     <div class="buttons is-centered">
-                        <button class="button is-primary" id="step1-button">Automatic setup</button>
-                        <button class="button is-danger" id="skip-button">Manual setup (skip)</button>
+                        <button class="button is-primary" id="step1-button" data-i18n="onboarding.steps.step-2.title">
+                            Automatic setup
+                        </button>
+                        <button class="button is-danger" id="skip-button" data-i18n="onboarding.manual">
+                            Manual setup (skip)
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="onboarding-step" id="step-2" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Automatic Setup</h2>
-                    <p class="subtitle has-text-centered">
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-2.title">
+                        Automatic setup
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-2.text">
                         Automatic setup allows you to let the program try to automatically detect your settings and set
-                        up the program for you. It is the recommended mode and supports all tracker models and
+                        up the program for you. It is the easiest way to get started and supports all tracker models and
                         connection modes.<br />
                         <br />
                         It is recommended (but not necessary) to have at least one of your trackers turned on and
@@ -66,15 +74,19 @@
                 </div>
                 <div>
                     <div class="buttons is-centered">
-                        <button class="button is-info" id="back-step2-button">Back</button>
-                        <button class="button is-primary" id="next-step2-button">Next</button>
+                        <button class="button is-info" id="back-step2-button" data-i18n="onboarding.back">Back</button>
+                        <button class="button is-primary" id="next-step2-button" data-i18n="onboarding.next">
+                            Next
+                        </button>
                     </div>
                 </div>
             </div>
             <div class="onboarding-step" id="step-3" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Auto-detection</h2>
-                    <p class="subtitle has-text-centered">
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-3.title">
+                        Auto-detection
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-3.text">
                         Press the button below to start the auto-detection process. The process may take up to 20
                         seconds to complete, <strong>make sure HaritoraConfigurator is closed</strong>.<br />
                         <br />
@@ -82,24 +94,31 @@
                         accurate. If the process fails, you can try again or set up SlimeTora manually.<br />
                     </p>
                 </div>
-                <button class="button is-primary" id="autodetect-button" onclick="autodetect()">
+                <button
+                    class="button is-primary"
+                    id="autodetect-button"
+                    onclick="autodetect()"
+                    data-i18n="onboarding.steps.step-3.autodetect"
+                >
                     Start auto-detection
                 </button>
-                <p class="subtitle has-text-centered">
+                <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-3.text2">
                     If you are happy with the results, click the "Next" button to continue. Otherwise, you may set up
                     SlimeTora manually.
                 </p>
                 <div class="buttons is-centered">
-                    <button class="button is-info" id="back-step3-button">Back</button>
-                    <button class="button is-primary" id="next-step3-button">Next</button>
+                    <button class="button is-info" id="back-step3-button" data-i18n="onboarding.back">Back</button>
+                    <button class="button is-primary" id="next-step3-button" data-i18n="onboarding.next">Next</button>
                 </div>
             </div>
 
             <!-- SlimeVR setup -->
             <div class="onboarding-step" id="step-4" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Setup</h2>
-                    <p class="subtitle has-text-centered">
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-4.title">
+                        SlimeVR setup
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-4.text">
                         Now we're sure you know what SlimeVR is, right? It's the reason why you downloaded SlimeTora in
                         the first place - it's a software that allows for communication between multiple
                         sensors/trackers to use in SteamVR, like HaritoraConfigurator.
@@ -109,24 +128,27 @@
                     class="button is-primary"
                     href="https://github.com/SlimeVR/SlimeVR-Server/releases/latest"
                     target="_blank"
+                    data-i18n="onboarding.steps.step-4.download"
                 >
                     Download SlimeVR Server
                 </a>
-                <p class="subtitle has-text-centered">
+                <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-4.text2">
                     To use SlimeTora, you need to have SlimeVR server installed on your computer. If you don't have it
                     installed yet, click the button above to download and install it. After, press the "Next" button to
                     learn how to set it up for SlimeTora.
                 </p>
                 <div class="buttons is-centered">
-                    <button class="button is-info" id="back-step4-button">Back</button>
-                    <a class="button is-primary" id="next-step4-button">Next</a>
+                    <button class="button is-info" id="back-step4-button" data-i18n="onboarding.back">Back</button>
+                    <a class="button is-primary" id="next-step4-button" data-i18n="onboarding.next">Next</a>
                 </div>
             </div>
 
             <div class="onboarding-step" id="step-5" style="display: none">
-                <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Connection</h2>
+                <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-5.title">
+                    SlimeVR connection
+                </h2>
                 <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 2rem">
-                    <p class="subtitle has-text-centered" style="margin: 0">
+                    <p class="subtitle has-text-centered" style="margin: 0" data-i18n="onboarding.steps.step-5.text">
                         At this point, you will now want to connect your VR headset to your PC - it's time to put on
                         your trackers! Make sure your trackers (and VR headset) are connected and press the "Start
                         connection" button to connect them to the SlimeVR Server.
@@ -147,7 +169,12 @@
                     </div>
                 </div>
                 <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 1rem">
-                    <button class="button is-primary" id="start-connection-button" onclick="runStartConnection()">
+                    <button
+                        class="button is-primary"
+                        id="start-connection-button"
+                        onclick="runStartConnection()"
+                        data-i18n="main.startConnection"
+                    >
                         Start connection
                     </button>
                     <button
@@ -155,6 +182,7 @@
                         id="stop-connection-button"
                         onclick="runStopConnection()"
                         disabled="true"
+                        data-i18n="main.stopConnection"
                     >
                         Stop connection
                     </button>
@@ -165,21 +193,23 @@
                         src="../images/onboarding/new_tracker.webp"
                         alt="SlimeVR Server pop-up stating a new tracker was found."
                     />
-                    <p class="subtitle has-text-centered">
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-5.text2">
                         When you see all your trackers connected above, check SlimeVR Server and accept all "A new
                         tracker was found" pop-ups. Click the "Next" button to continue to the next step.
                     </p>
                 </div>
                 <div class="buttons is-centered">
-                    <button class="button is-info" id="back-step5-button">Back</button>
-                    <a class="button is-primary" id="next-step5-button">Next</a>
+                    <button class="button is-info" id="back-step5-button" data-i18n="onboarding.back">Back</button>
+                    <a class="button is-primary" id="next-step5-button" data-i18n="onboarding.next">Next</a>
                 </div>
             </div>
 
             <div class="onboarding-step" id="step-6" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Tracker Assignment</h2>
-                    <p class="subtitle has-text-centered">
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-6.title">
+                        Tracker Assignment
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-6.text">
                         With your trackers connected, you can go through the initial setup of SlimeVR Server. Click
                         "Let's get set up!", then "Skip Wi-Fi settings", and then "I put stickers and straps!". Next,
                         assign your trackers to the correct body part - an example is shown in the screenshot below.
@@ -191,15 +221,17 @@
                     style="height: 300px"
                 />
                 <div class="buttons is-centered">
-                    <button class="button is-info" id="back-step6-button">Back</button>
-                    <a class="button is-primary" id="next-step6-button">Next</a>
+                    <button class="button is-info" id="back-step6-button" data-i18n="onboarding.back">Back</button>
+                    <a class="button is-primary" id="next-step6-button" data-i18n="onboarding.next">Next</a>
                 </div>
             </div>
 
             <div class="onboarding-step" id="step-7" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Mounting calibration</h2>
-                    <p class="subtitle has-text-centered">
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-7.title">
+                        Mounting calibration
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-7.text">
                         After assigning the trackers, you will be brought to the mounting calibration screen.
                         <strong>Make sure you select "Automatic Mounting"</strong> and follow the on-screen instructions
                         on how to do a mounting calibration. If it does not look right after the calibration, you can
@@ -212,15 +244,17 @@
                     style="height: 300px"
                 />
                 <div class="buttons is-centered">
-                    <button class="button is-info" id="back-step7-button">Back</button>
-                    <a class="button is-primary" id="next-step7-button">Next</a>
+                    <button class="button is-info" id="back-step7-button" data-i18n="onboarding.back">Back</button>
+                    <a class="button is-primary" id="next-step7-button" data-i18n="onboarding.next">Next</a>
                 </div>
             </div>
 
             <div class="onboarding-step" id="step-8" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Resets & calibration</h2>
-                    <p class="subtitle has-text-centered">
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-8.title">
+                        Resets & calibration
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-8.text">
                         You will now see a small tutorial on how to perform "resets" in SlimeVR. With SlimeTora (along
                         with SlimeVR's built-in tap-to-reset), you may press any of the buttons a number of times
                         (within 0.5s) on your trackers. See the list for the reset options:
@@ -234,23 +268,29 @@
                         style="height: 300px"
                     />
                     <ul class="list has-bullets" style="width: 100%">
-                        <li class="subtitle is-5">1 press - yaw reset</li>
-                        <li class="subtitle is-5">2 presses - full reset</li>
-                        <li class="subtitle is-5">3 presses - mounting reset</li>
-                        <li class="subtitle is-5">4 presses - pause/unpause tracking</li>
+                        <li class="subtitle is-5" data-i18n="onboarding.steps.step-8.list.1">1 press - yaw reset</li>
+                        <li class="subtitle is-5" data-i18n="onboarding.steps.step-8.list.2">2 presses - full reset</li>
+                        <li class="subtitle is-5" data-i18n="onboarding.steps.step-8.list.3">
+                            3 presses - mounting reset
+                        </li>
+                        <li class="subtitle is-5" data-i18n="onboarding.steps.step-8.list.4">
+                            4 presses - pause/unpause tracking
+                        </li>
                     </ul>
                 </div>
 
                 <div class="buttons is-centered">
-                    <button class="button is-info" id="back-step8-button">Back</button>
-                    <a class="button is-primary" id="next-step8-button">Next</a>
+                    <button class="button is-info" id="back-step8-button" data-i18n="onboarding.back">Back</button>
+                    <a class="button is-primary" id="next-step8-button" data-i18n="onboarding.next">Next</a>
                 </div>
             </div>
 
             <div class="onboarding-step" id="step-9" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">When to reset</h2>
-                    <p class="subtitle has-text-centered">
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-9.title">
+                        When to reset
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-9.text">
                         Here are the explanations of the three different resets and when they would be used:
                     </p>
                 </div>
@@ -258,20 +298,25 @@
                     <figure class="is-flex-grow-1">
                         <img src="../images/onboarding/reset_pose.webp" alt="Full reset pose" style="height: 350px" />
                         <!-- Image credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
-                        <figcaption class="subtitle is-6 has-text-centered">Full reset pose</figcaption>
+                        <figcaption
+                            class="subtitle is-6 has-text-centered"
+                            data-i18n="onboarding.steps.step-9.caption1"
+                        >
+                            Full reset pose
+                        </figcaption>
                     </figure>
                     <div class="is-flex-shrink-5">
-                        <p class="subtitle has-text-centered">
+                        <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-9.text2">
                             A <strong>yaw</strong> reset is the <strong>one you will use the most</strong>, it
                             eliminates most (if not all) drift on one axis. This is less accurate but the fastest and
                             most convenient. You only need to straighten your limbs - this can even be used while laying
                             or sitting down!
                         </p>
-                        <p class="subtitle has-text-centered">
+                        <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-9.text3">
                             A <strong>full</strong> reset is the most accurate and completely resets the skeleton in
                             SlimeVR. You must be standing up and straight while doing this reset.
                         </p>
-                        <p class="subtitle has-text-centered">
+                        <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-9.text4">
                             A <strong>mounting</strong> reset is used when the position of your trackers have physically
                             moved (or mounting calibration is off). You must be in a "ski pose" while doing this reset.
                         </p>
@@ -283,19 +328,26 @@
                             style="height: 350px"
                         />
                         <!-- Image credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
-                        <figcaption class="subtitle is-6 has-text-centered">Mounting reset pose</figcaption>
+                        <figcaption
+                            class="subtitle is-6 has-text-centered"
+                            data-i18n="onboarding.steps.step-9.caption2"
+                        >
+                            Mounting reset pose
+                        </figcaption>
                     </figure>
                 </div>
                 <div class="buttons is-centered">
-                    <button class="button is-info" id="back-step9-button">Back</button>
-                    <a class="button is-primary" id="next-step9-button">Next</a>
+                    <button class="button is-info" id="back-step9-button" data-i18n="onboarding.back">Back</button>
+                    <a class="button is-primary" id="next-step9-button" data-i18n="onboarding.next">Next</a>
                 </div>
             </div>
 
             <div class="onboarding-step" id="step-10" style="display: none">
                 <div>
-                    <h2 class="title is-2 has-text-centered is-spaced">Body Proportions</h2>
-                    <p class="subtitle has-text-centered">
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-10.title">
+                        Body proportions
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-10.text">
                         Now it's time to calculate your body proportions. SlimeVR applies your body proportions to a
                         virtual skeleton to have much more accurate tracking if set up correctly. Select "Automatic
                         proportions" and follow the on-screen instructions to perform the calibration by following a set
@@ -314,8 +366,8 @@
                 </div>
 
                 <div class="buttons is-centered">
-                    <button class="button is-info" id="back-step10-button">Back</button>
-                    <a class="button is-primary" id="next-step10-button">Finish</a>
+                    <button class="button is-info" id="back-step10-button" data-i18n="onboarding.back">Back</button>
+                    <a class="button is-primary" id="next-step10-button" data-i18n="onboarding.finish">Finish</a>
                 </div>
             </div>
         </div>
