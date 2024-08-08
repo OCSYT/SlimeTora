@@ -205,7 +205,7 @@
     "dialogs": {
         "connectionFailed": {
             "title": "Connection failed",
-            "message": "Failed to start a connection via the selected connection mode(s). Please make sure HaritoraConfigurator is closed and (if applicable), bluetooth is on and/or the correct COM ports are selected."
+            "message": "Failed to start a connection via the selected connection mode(s). Please make sure HaritoraConfigurator is closed and (if applicable), Bluetooth is on and/or the correct COM ports are selected."
         },
         "comPortsMissing": {
             "title": "COM ports missing",
@@ -230,13 +230,13 @@
         "onboarding": {
             "complete": {
                 "title": "Onboarding complete!",
-                "message": "SlimeTora has been successfully set up! You can always reopen the onboarding screen in the program settings. After this dialog, the program will open the wiki page for you to read more information.<br /><br />Enjoy!"
+                "message": "SlimeTora has been successfully set up! You can always reopen the onboarding screen in the program settings. After this dialog, the program will open the wiki page for you to read more information.\r\n\r\nEnjoy!"
             }
         },
         "autodetect": {
             "pre-check": {
                 "title": "Auto-detect pre-check",
-                "message": "This feature will attempt to automatically detect your trackers (wired unsupported in this beta), connection mode, and tracker settings to apply the settings in the program for you.<br /><br />Make sure HaritoraConfigurator is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
+                "message": "This feature will attempt to automatically detect your trackers (wired unsupported in this beta), connection mode, and tracker settings to apply the settings in the program for you.\r\n\r\nMake sure HaritoraConfigurator is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
             },
             "success": {
                 "title": "Auto-detect completed!",
