@@ -151,6 +151,59 @@ const onboardingConfig = {
     ],
 };
 
+// Initialize the onboarding process
+document.addEventListener("DOMContentLoaded", async () => {
+    function appendOptions(selectElement: HTMLElement, options: string[]) {
+        const fragment = document.createDocumentFragment();
+        options.forEach((optionValue) => {
+            const option = document.createElement("option");
+            option.value = optionValue;
+            option.text = optionValue;
+            fragment.appendChild(option);
+        });
+        selectElement.appendChild(fragment);
+    }
+
+    new Onboarding(onboardingConfig);
+
+    addEventListeners();
+
+    // Populate language select
+    const languageSelect = document.getElementById("language-select") as HTMLSelectElement;
+    const languages: string[] = await window.ipc.invoke("get-languages", null);
+    appendOptions(languageSelect, languages);
+});
+
+function addEventListeners() {
+    document.getElementById("language-select").addEventListener("change", async function () {
+        const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
+        localStorage.setItem("language", language);
+    });
+}
+
+window.addEventListener("storage", (event) => {
+    window.log(`Storage event: "${event.key}" changed to "${event.newValue}"`);
+
+    if (event.key === "status") {
+        const step5 = document.getElementById("step-5");
+        const statusElement = document.getElementById("status");
+
+        if (step5?.style.display === "flex" && statusElement) {
+            statusElement.textContent = event.newValue;
+        }
+    } else if (event.key === "trackerCount") {
+        const step5 = document.getElementById("step-5");
+        const connectedTrackersElement = document.getElementById("tracker-count");
+
+        if (step5?.style.display === "flex" && connectedTrackersElement) {
+            connectedTrackersElement.textContent = event.newValue;
+        }
+    } else if (event.key === "toggleConnectionButtons") {
+        document.getElementById("start-connection-button").toggleAttribute("disabled");
+        document.getElementById("stop-connection-button").toggleAttribute("disabled");
+    }
+});
+
 async function showMessageBox(
     titleKey: string,
     messageKey: string,
@@ -166,34 +219,6 @@ async function showMessageBox(
         translateMessage,
     });
 }
-
-// Initialize the onboarding process
-document.addEventListener("DOMContentLoaded", () => {
-    new Onboarding(onboardingConfig);
-});
-
-window.addEventListener("storage", (event) => {
-    window.log(`Storage event: "${event.key}" changed to "${event.newValue}"`);
-
-    if (event.key === "status") {
-        const step5 = document.getElementById("step-5");
-        const statusElement = document.getElementById("status");
-    
-        if (step5?.style.display === "flex" && statusElement) {
-            statusElement.textContent = event.newValue;
-        }
-    } else if (event.key === "trackerCount") {
-        const step5 = document.getElementById("step-5");
-        const connectedTrackersElement = document.getElementById("tracker-count");
-    
-        if (step5?.style.display === "flex" && connectedTrackersElement) {
-            connectedTrackersElement.textContent = event.newValue;
-        }
-    } else if (event.key === "toggleConnectionButtons") {
-        document.getElementById("start-connection-button").toggleAttribute("disabled");
-        document.getElementById("stop-connection-button").toggleAttribute("disabled");
-    }
-});
 
 // i can't believe this works lol
 // Sets a flag in localStorage to start the auto-detection process found in the main window (which listens for this flag)

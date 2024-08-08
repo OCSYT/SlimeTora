@@ -196,6 +196,9 @@ window.addEventListener("storage", (event) => {
     } else if (event.key === "stopConnection" && event.newValue === "true") {
         stopConnection();
         localStorage.setItem("stopConnection", "false");
+    } else if (event.key === "language") {
+        window.log(`1 Language changed to: ${event.newValue}`);
+        selectLanguage(event.newValue);
     }
 });
 
@@ -1074,13 +1077,7 @@ function addEventListeners() {
 
     document.getElementById("language-select").addEventListener("change", async function () {
         const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
-        window.log(`Changed selected language: ${language}`);
-        window.changeLanguage(language);
-        window.ipc.send("save-setting", {
-            global: {
-                language: language,
-            },
-        });
+        selectLanguage(language);
     });
 
     document.getElementById("fps-mode-select").addEventListener("change", async function () {
@@ -1229,6 +1226,16 @@ function addEventListeners() {
                 },
             },
         });
+    });
+}
+
+function selectLanguage(language: string) {
+    window.log(`Changed selected language: ${language}`);
+    window.changeLanguage(language);
+    window.ipc.send("save-setting", {
+        global: {
+            language: language,
+        },
     });
 }
 
