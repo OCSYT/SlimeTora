@@ -63,12 +63,21 @@ contextBridge.exposeInMainWorld("changeLanguage", (lng: string) => {
 });
 
 contextBridge.exposeInMainWorld("translate", async (key: string) => {
+    let translation: string;
+
     if (!localize) {
-        const result = await ipcRenderer.invoke("translate", key);
-        return result;
+        translation = await ipcRenderer.invoke("translate", key);
     } else {
-        return i18next.t(key);
+        translation = i18next.t(key);
     }
+
+    if (translation === key) {
+        const error = `Translation for key "${key}" doesn't exist for current language.`
+        ipcRenderer.send("error", error);
+        console.error(error);
+    }
+
+    return translation;
 });
 
 contextBridge.exposeInMainWorld("i18n", {

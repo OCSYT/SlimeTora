@@ -151,17 +151,23 @@ const onboardingConfig = {
     ],
 };
 
+const params = new URLSearchParams(window.location.search);
+const language = params.get("language");
+
 // Initialize the onboarding process
 document.addEventListener("DOMContentLoaded", async () => {
-    function appendOptions(selectElement: HTMLElement, options: string[]) {
-        const fragment = document.createDocumentFragment();
-        options.forEach((optionValue) => {
-            const option = document.createElement("option");
-            option.value = optionValue;
-            option.text = optionValue;
-            fragment.appendChild(option);
+    async function appendOptions(selectElement: HTMLElement, options: string[]): Promise<boolean> {
+        return new Promise((resolve) => {
+            const fragment = document.createDocumentFragment();
+            options.forEach((optionValue) => {
+                const option = document.createElement("option");
+                option.value = optionValue;
+                option.text = optionValue;
+                fragment.appendChild(option);
+            });
+            selectElement.appendChild(fragment);
+            resolve(true);
         });
-        selectElement.appendChild(fragment);
     }
 
     new Onboarding(onboardingConfig);
@@ -173,7 +179,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Populate language select
     const languageSelect = document.getElementById("language-select") as HTMLSelectElement;
     const languages: string[] = await window.ipc.invoke("get-languages", null);
-    appendOptions(languageSelect, languages);
+    await appendOptions(languageSelect, languages);
+
+    if (language) {
+        languageSelect.value = language;
+        localStorage.setItem("language", language);
+        await updateTranslations();
+    }
 });
 
 function addEventListeners() {
@@ -214,8 +226,10 @@ async function updateTranslations() {
     i18nElements.forEach((element) => {
         const key = element.getAttribute("data-i18n");
         const translationPromise = window.translate(key).then((translation) => {
-            // could be a slight security risk, but makes it so much easier to format text
-            element.innerHTML = translation;
+            if (translation && translation !== key) {
+                // could be a slight security risk, but makes it so much easier to format text
+                element.innerHTML = translation;
+            }
         });
         translationPromises.push(translationPromise);
     });

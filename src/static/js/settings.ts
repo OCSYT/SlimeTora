@@ -16,7 +16,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     i18nElements.forEach((element) => {
         const key = element.getAttribute("data-i18n");
         const translationPromise = window.translate(key).then((translation) => {
-            element.textContent = translation;
+            if (translation && translation !== key) {
+                element.textContent = translation;
+            }
         });
         translationPromises.push(translationPromise);
     });

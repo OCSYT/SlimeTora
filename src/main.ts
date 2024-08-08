@@ -146,7 +146,7 @@ const createWindow = async () => {
             log("Development mode enabled, showing menu bar");
         }
 
-        if (firstLaunch) onboarding();
+        if (firstLaunch) onboarding("en");
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -177,7 +177,7 @@ app.on("window-all-closed", closeApp);
  * Renderer handlers
  */
 
-function onboarding() {
+function onboarding(language: string) {
     log("Showing onboarding screen");
 
     let onboardingWindow = new BrowserWindow({
@@ -202,6 +202,7 @@ function onboarding() {
             pathname: path.join(__dirname, "static/html/onboarding.html"),
             protocol: "file:",
             slashes: true,
+            query: { language: language },
         })
     );
 
@@ -265,8 +266,8 @@ ipcMain.handle("show-error", async (_event, arg) => {
     return await showError(title, message, translateTitle, translateMessage);
 });
 
-ipcMain.on("show-onboarding", () => {
-    onboarding();
+ipcMain.on("show-onboarding", (_event, language) => {
+    onboarding(language);
 });
 
 ipcMain.handle("translate", async (_event, arg: string) => {

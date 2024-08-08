@@ -1240,7 +1240,8 @@ function selectLanguage(language: string) {
 
 function showOnboarding() {
     window.log("Reopening onboarding screen...");
-    window.ipc.send("show-onboarding", null);
+    const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
+    window.ipc.send("show-onboarding", language);
 }
 
 function saveSettings() {
