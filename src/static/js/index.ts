@@ -185,9 +185,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 window.addEventListener("storage", (event) => {
-    if (event.key === "runAutodetect" && event.newValue === "true") {
+    window.log(`Storage event: "${event.key}" changed to "${event.newValue}"`);
+
+    if (event.key === "autodetect" && event.newValue === "true") {
         autodetect();
-        localStorage.setItem("runAutodetect", "false");
+        localStorage.setItem("autodetect", "false");
+    } else if (event.key === "startConnection" && event.newValue === "true") {
+        startConnection();
+        localStorage.setItem("startConnection", "false");
+    } else if (event.key === "stopConnection" && event.newValue === "true") {
+        stopConnection();
+        localStorage.setItem("stopConnection", "false");
     }
 });
 
@@ -376,6 +384,8 @@ function stopConnection() {
     setStatus("main.status.none");
     document.getElementById("tracker-count").textContent = "0";
     document.getElementById("device-list").textContent = "";
+
+    localStorage.setItem("trackerCount", document.getElementById("tracker-count").textContent);
 }
 
 // Helper functions
@@ -383,6 +393,7 @@ function toggleConnectionButtons() {
     isActive = !isActive;
     document.getElementById("start-connection-button").toggleAttribute("disabled");
     document.getElementById("stop-connection-button").toggleAttribute("disabled");
+    localStorage.setItem("toggleConnectionButtons", isActive.toString());
 }
 
 async function handleSlimeVRCheck(slimeVRFound: boolean) {
@@ -445,17 +456,13 @@ async function setStatus(status: string, translate: boolean = true) {
     const statusElement = document.getElementById("status");
     if (!statusElement) return;
 
-    if (translate) {
-        const translatedStatus = await window.translate(status);
+    const finalStatus = translate ? await window.translate(status) : status;
+    statusElement.textContent = finalStatus;
+    window.log(`Set status to: ${finalStatus}`);
 
-        statusElement.setAttribute("data-i18n", status);
-        statusElement.textContent = translatedStatus;
-        window.log(`Set status to: ${translatedStatus}`);
-    } else {
-        statusElement.textContent = status;
-        window.log(`Set status to: ${status}`);
-        return;
-    }
+    if (translate) statusElement.setAttribute("data-i18n", status);
+
+    localStorage.setItem("status", finalStatus);
 }
 
 async function showMessageBox(
@@ -559,6 +566,8 @@ window.ipc.on("disconnect", (_event, deviceID) => {
     document.getElementById("tracker-count").textContent = (
         parseInt(document.getElementById("tracker-count").textContent) - 1
     ).toString();
+
+    localStorage.setItem("trackerCount", document.getElementById("tracker-count").textContent);
 
     if (document.getElementById("tracker-count").textContent === "0") setStatus("searching");
 });
@@ -763,6 +772,7 @@ async function addDeviceToList(deviceID: string) {
     // add to tracker count
     const trackerCount = document.getElementById("tracker-count");
     trackerCount.textContent = (parseInt(trackerCount.textContent) + 1).toString();
+    localStorage.setItem("trackerCount", document.getElementById("tracker-count").textContent);
 
     // Disable tracker settings button if wired tracker is enabled
     if (wiredTrackerEnabled) {

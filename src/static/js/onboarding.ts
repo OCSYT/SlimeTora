@@ -172,12 +172,45 @@ document.addEventListener("DOMContentLoaded", () => {
     new Onboarding(onboardingConfig);
 });
 
+window.addEventListener("storage", (event) => {
+    window.log(`Storage event: "${event.key}" changed to "${event.newValue}"`);
+
+    if (event.key === "status") {
+        const step5 = document.getElementById("step-5");
+        const statusElement = document.getElementById("status");
+    
+        if (step5?.style.display === "flex" && statusElement) {
+            statusElement.textContent = event.newValue;
+        }
+    } else if (event.key === "trackerCount") {
+        const step5 = document.getElementById("step-5");
+        const connectedTrackersElement = document.getElementById("tracker-count");
+    
+        if (step5?.style.display === "flex" && connectedTrackersElement) {
+            connectedTrackersElement.textContent = event.newValue;
+        }
+    } else if (event.key === "toggleConnectionButtons") {
+        document.getElementById("start-connection-button").toggleAttribute("disabled");
+        document.getElementById("stop-connection-button").toggleAttribute("disabled");
+    }
+});
+
 // i can't believe this works lol
-// Sets a flag in localStorage to start the auto-detection process (main window listens for this flag)
+// Sets a flag in localStorage to start the auto-detection process found in the main window (which listens for this flag)
 function startAutoDetection() {
-    localStorage.setItem("runAutodetect", "true");
+    localStorage.setItem("autodetect", "true");
+}
+
+function runStartConnection() {
+    localStorage.setItem("startConnection", "true");
+}
+
+function runStopConnection() {
+    localStorage.setItem("stopConnection", "true");
 }
 
 window.autodetect = startAutoDetection;
+window.runStartConnection = runStartConnection;
+window.runStopConnection = runStopConnection;
 
 export {};

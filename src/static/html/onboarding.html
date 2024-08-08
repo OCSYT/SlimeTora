@@ -80,10 +80,6 @@
                         Now we're sure you know what SlimeVR is, right? It's the reason why you downloaded SlimeTora in
                         the first place - it's a software that allows for communication between multiple
                         sensors/trackers to use in SteamVR, like HaritoraConfigurator.
-                        <strong
-                            >At this point, you will want to connect your VR headset to your PC for the rest of this
-                            setup.</strong
-                        >
                     </p>
                 </div>
                 <a
@@ -106,27 +102,41 @@
 
             <div class="onboarding-step" id="step-5" style="display: none">
                 <h2 class="title is-2 has-text-centered is-spaced">SlimeVR Connection</h2>
-                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 2rem">
                     <p class="subtitle has-text-centered" style="margin: 0">
-                        It's now time to put on your trackers! Open up the SlimeVR Server and make sure your trackers
-                        (and VR headset) are on and connected to your computer. After, press the "Start connection"
-                        button to connect your trackers to SlimeVR Server.
+                        At this point, you will now want to connect your VR headset to your PC - it's time to put on
+                        your trackers! Make sure your trackers (and VR headset) are connected and press the "Start
+                        connection" button to connect them to the SlimeVR Server.
                     </p>
                     <div class="is-flex is-flex-direction-column is-align-items-center" style="width: 100%">
+                        <div class="subtitle has-text-centered">
+                            <h2 class="has-text-weight-medium inline-block" data-i18n="main.status.statusText">
+                                Status:
+                            </h2>
+                            <p class="has-text-weight-medium inline-block" data-i18n="main.status.none" id="status">
+                                N/A
+                            </p>
+                        </div>
                         <div class="subtitle has-text-centered">
                             <h3 class="inline-block" data-i18n="main.connectedTrackers">Connected trackers:</h3>
                             <p class="inline-block" id="tracker-count">0</p>
                         </div>
-                        <a
-                            class="button is-primary"
-                            href="https://github.com/SlimeVR/SlimeVR-Server/releases/latest"
-                            target="_blank"
-                        >
-                            Start connection
-                        </a>
                     </div>
                 </div>
-                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 1rem">
+                    <button class="button is-primary" id="start-connection-button" onclick="runStartConnection()">
+                        Start connection
+                    </button>
+                    <button
+                        class="button is-danger"
+                        id="stop-connection-button"
+                        onclick="runStopConnection()"
+                        disabled="true"
+                    >
+                        Stop connection
+                    </button>
+                </div>
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 2rem">
                     <img
                         width="300px"
                         src="../images/onboarding/new_tracker.webp"
@@ -194,7 +204,7 @@
                     </p>
                 </div>
 
-                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 2rem">
                     <img
                         src="../images/onboarding/reset.webp"
                         alt="Tracker assignment page in SlimeVR Server"
@@ -221,7 +231,7 @@
                         Here are the explanations of the three different resets and when they would be used:
                     </p>
                 </div>
-                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 2rem">
                     <figure class="is-flex-grow-1">
                         <img src="../images/onboarding/reset_pose.webp" alt="Full reset pose" style="height: 350px" />
                         <!-- Image credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
@@ -270,7 +280,7 @@
                     </p>
                 </div>
 
-                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 3rem">
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 2rem">
                     <img
                         src="../images/onboarding/body_proportions.webp"
                         alt="Tracker assignment page in SlimeVR Server"

@@ -84,7 +84,6 @@ declare global {
         // index.ts
         startConnection: () => void;
         stopConnection: () => void;
-        autodetect: () => void;
         showOnboarding: () => void;
         openLogsFolder: () => void;
         saveSettings: () => void;
@@ -94,6 +93,11 @@ declare global {
         saveTrackerSettings: () => void;
         getTrackerSettings: () => void;
         resetTrackerSettings: () => void;
+
+        // onboarding.ts
+        autodetect: () => void;
+        runStartConnection: () => void;
+        runStopConnection: () => void;
 
         ipc: {
             invoke: (channel: string, args: any) => Promise<any>;
