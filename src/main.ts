@@ -998,6 +998,8 @@ async function handleConnectionStartError(err: any) {
         await translate("dialogs.connectionFailed.title"),
         await translate("dialogs.connectionFailed.message")
     );
+
+    mainWindow.webContents.send("disconnect", "connection-error")
 }
 
 /*

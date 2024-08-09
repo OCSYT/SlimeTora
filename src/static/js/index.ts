@@ -395,7 +395,6 @@ function toggleConnectionButtons() {
     isActive = !isActive;
     document.getElementById("start-connection-button").toggleAttribute("disabled");
     document.getElementById("stop-connection-button").toggleAttribute("disabled");
-    localStorage.setItem("toggleConnectionButtons", isActive.toString());
 }
 
 async function handleSlimeVRCheck(slimeVRFound: boolean) {
@@ -563,6 +562,13 @@ window.ipc.on("connect", async (_event, deviceID) => {
 window.ipc.on("disconnect", (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
+    if (deviceID === "connection-error") {
+        document.getElementById("device-list").textContent = "";
+        document.getElementById("tracker-count").textContent = "0";
+        setStatus("main.status.failed");
+        return;
+    }
+
     window.log(`Disconnected from ${deviceID}`);
     document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").textContent = (
@@ -571,7 +577,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
 
     localStorage.setItem("trackerCount", document.getElementById("tracker-count").textContent);
 
-    if (document.getElementById("tracker-count").textContent === "0") setStatus("searching");
+    if (document.getElementById("tracker-count").textContent === "0") setStatus("main.status.searching");
 });
 
 window.ipc.on("device-connected-to-server", (_event, deviceID) => {

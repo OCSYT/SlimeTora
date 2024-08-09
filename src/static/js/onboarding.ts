@@ -213,9 +213,6 @@ window.addEventListener("storage", (event) => {
         if (step5?.style.display === "flex" && connectedTrackersElement) {
             connectedTrackersElement.textContent = event.newValue;
         }
-    } else if (event.key === "toggleConnectionButtons") {
-        document.getElementById("start-connection-button").toggleAttribute("disabled");
-        document.getElementById("stop-connection-button").toggleAttribute("disabled");
     }
 });
 
@@ -261,10 +258,14 @@ function startAutoDetection() {
 
 function runStartConnection() {
     localStorage.setItem("startConnection", "true");
+    document.getElementById("start-connection-button").setAttribute("disabled", "true");
+    document.getElementById("stop-connection-button").removeAttribute("disabled");
 }
 
 function runStopConnection() {
     localStorage.setItem("stopConnection", "true");
+    document.getElementById("stop-connection-button").setAttribute("disabled", "true");
+    document.getElementById("start-connection-button").removeAttribute("disabled");
 }
 
 window.autodetect = startAutoDetection;
