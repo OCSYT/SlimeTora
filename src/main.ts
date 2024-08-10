@@ -71,6 +71,64 @@ async function translate(key: string) {
 }
 
 /*
+ * Update checking
+ */
+
+async function getLatestRelease() {
+    log("Fetching the latest release from GitHub...");
+    const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/releases/latest");
+    if (!response.ok) {
+        error(`Failed to fetch latest release: ${response.statusText}`);
+        throw new Error("Failed to fetch latest release");
+    }
+    const release = await response.json();
+    log(`Fetched latest release: ${release.tag_name}`);
+    return release.tag_name;
+}
+
+function isNewerVersion(latestVersion: string, currentVersion: string): boolean {
+    const latest = latestVersion.replace(/^v/, "").split(".").map(Number);
+    const current = currentVersion.replace(/^v/, "").split(".").map(Number);
+
+    for (let i = 0; i < latest.length; i++) {
+        if (latest[i] > current[i]) {
+            return true;
+        }
+        if (latest[i] < current[i]) {
+            return false;
+        }
+    }
+    log("The versions are identical.");
+    return false;
+}
+
+async function checkForUpdates() {
+    try {
+        log("Checking for updates...");
+        const latestVersion = await getLatestRelease();
+        const currentVersion = app.getVersion();
+        log(`Latest version: ${latestVersion}, current version: ${currentVersion}`);
+        if (isNewerVersion(latestVersion, currentVersion)) {
+            log("Update available, notifying user...");
+            const response = await dialog.showMessageBox({
+                type: "info",
+                buttons: ["Download", "Cancel"],
+                title: "Update Available",
+                message: `A new version (${latestVersion}) of SlimeTora is available.`,
+                detail: "Please visit the GitHub releases page to download the latest version.",
+            });
+            if (response.response === 0) {
+                shell.openExternal("https://github.com/OCSYT/SlimeTora/releases/latest");
+            }
+        } else {
+            log("No updates available.");
+        }
+    } catch (err) {
+        error(`Failed to check for updates: ${err}`);
+    }
+}
+
+/*
  * Renderer
  */
 
@@ -110,7 +168,6 @@ const createWindow = async () => {
         await fs.promises.writeFile(configPath, "{}");
         firstLaunch = true;
     }
-
     mainWindow = new BrowserWindow({
         title: "SlimeTora: Main",
         autoHideMenuBar: true,
@@ -137,6 +194,8 @@ const createWindow = async () => {
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", resources);
         mainWindow.webContents.send("version", app.getVersion());
+
+        checkForUpdates();
 
         // Don't show the menu bar for performance if not on development mode and if loggingMode is 1 (this disables the dev tools though)
         if (!process.env.DEVELOPMENT && app.isPackaged && loggingMode === 1) {
@@ -999,7 +1058,7 @@ async function handleConnectionStartError(err: any) {
         await translate("dialogs.connectionFailed.message")
     );
 
-    mainWindow.webContents.send("disconnect", "connection-error")
+    mainWindow.webContents.send("disconnect", "connection-error");
 }
 
 /*
