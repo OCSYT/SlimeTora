@@ -102,7 +102,7 @@ function isNewerVersion(latestVersion: string, currentVersion: string): boolean 
     return false;
 }
 
-async function checkForUpdates() {
+async function checkForAppUpdates() {
     try {
         log("Checking for updates...");
         const latestVersion = await getLatestRelease();
@@ -113,7 +113,7 @@ async function checkForUpdates() {
             const response = await dialog.showMessageBox({
                 type: "info",
                 buttons: ["Download", "Cancel"],
-                title: "Update Available",
+                title: "Update available",
                 message: `A new version (${latestVersion}) of SlimeTora is available.`,
                 detail: "Please visit the GitHub releases page to download the latest version.",
             });
@@ -125,6 +125,85 @@ async function checkForUpdates() {
         }
     } catch (err) {
         error(`Failed to check for updates: ${err}`);
+    }
+}
+
+async function fetchTranslationFiles() {
+    log(`Fetching translation files from GitHub...`);
+    const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/contents/src/languages");
+    if (!response.ok) {
+        error(`Failed to fetch translation files: ${response.statusText}`);
+        throw new Error("Failed to fetch translation files");
+    }
+    const files = await response.json();
+    log(`Fetched translation files: ${files.map((file: any) => file.name).join(", ")}`);
+    return files;
+}
+
+async function downloadTranslationUpdates(updates: any[]) {
+    for (const file of updates) {
+        log(`Downloading ${file.name}...`);
+        const response = await fetch(file.download_url);
+        if (!response.ok) {
+            error(`Failed to download ${file.name}: ${response.statusText}`);
+            throw new Error(`Failed to download ${file.name}`);
+        }
+        const content = await response.text();
+        fs.writeFileSync(path.join(languagesPath, file.name), content);
+        log(`Downloaded and saved ${file.name} to ${languagesPath}`);
+    }
+}
+
+async function checkForTranslationUpdates() {
+    try {
+        log(`Checking for translation updates...`);
+        const remoteFiles = await fetchTranslationFiles();
+        const localFiles = fs.readdirSync(languagesPath);
+        log(`Local translation files: ${localFiles.join(", ")}`);
+
+        const updates = [];
+        for (const remoteFile of remoteFiles) {
+            const localFilePath = path.join(languagesPath, remoteFile.name);
+            if (!localFiles.includes(remoteFile.name)) {
+                log(`New translation file found: ${remoteFile.name}`);
+                updates.push(remoteFile);
+                continue;
+            }
+            const localFileStats = fs.statSync(localFilePath);
+            log(`Comparing ${remoteFile.name} - local size: ${localFileStats.size}, remote size: ${remoteFile.size}`);
+            // Assume there is a translation update if the file size is different
+            if (remoteFile.size !== localFileStats.size) {
+                log(`Update available for ${remoteFile.name}`);
+                updates.push(remoteFile);
+            }
+        }
+
+        if (updates.length > 0) {
+            log(`Translation updates available: ${updates.map((file) => file.name).join(", ")}`);
+            const response = await dialog.showMessageBox({
+                type: "info",
+                buttons: ["Download", "Cancel"],
+                title: "Update available",
+                message: `New translation updates available: ${updates.map((file) => file.name).join(", ")}`,
+                detail: "Would you like to download them?",
+            });
+
+            if (response.response === 0) {
+                await downloadTranslationUpdates(updates);
+                dialog.showMessageBox({
+                    type: "info",
+                    buttons: ["OK"],
+                    title: "Updates downloaded",
+                    message: "Translation updates have been downloaded.",
+                    detail: "Please restart the application to apply the changes.",
+                });
+                log(`Translation updates downloaded and placed.`);
+            }
+        } else {
+            log(`No translation updates available.`);
+        }
+    } catch (err) {
+        error(`Failed to check for translation updates: ${err}`);
     }
 }
 
@@ -195,8 +274,6 @@ const createWindow = async () => {
         mainWindow.webContents.send("localize", resources);
         mainWindow.webContents.send("version", app.getVersion());
 
-        checkForUpdates();
-
         // Don't show the menu bar for performance if not on development mode and if loggingMode is 1 (this disables the dev tools though)
         if (!process.env.DEVELOPMENT && app.isPackaged && loggingMode === 1) {
             log("Development mode disabled, hiding menu bar");
@@ -206,6 +283,9 @@ const createWindow = async () => {
         }
 
         if (firstLaunch) onboarding("en");
+
+        await checkForAppUpdates();
+        await checkForTranslationUpdates();
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
