@@ -8,7 +8,7 @@ class Onboarding {
         this.steps = config.steps.map((step) => {
             const element = document.getElementById(step.id) as HTMLElement;
             if (!element) {
-                window.error(`Element with ID ${step.id} not found`);
+                window.warn(`Element with ID ${step.id} not found`);
             }
             return element;
         });
@@ -42,7 +42,7 @@ class Onboarding {
             this.currentStepIndex = stepIndex;
             this.showStep(this.currentStepIndex);
         } else {
-            window.error(`Step with ID ${stepId} not found`);
+            window.warn(`Step with ID ${stepId} not found`);
         }
     }
 
@@ -69,7 +69,7 @@ class Onboarding {
                         }
                     });
                 } else {
-                    window.error(`Button with ID ${buttonId} not found`);
+                    window.warn(`Button with ID ${buttonId} not found`);
                 }
             });
         });

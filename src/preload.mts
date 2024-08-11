@@ -29,8 +29,13 @@ contextBridge.exposeInMainWorld("log", (message: string, where?: string) => {
     console.log(message);
 });
 
-contextBridge.exposeInMainWorld("error", (message: string, where?: string) => {
-    ipcRenderer.send("error", message, where);
+contextBridge.exposeInMainWorld("warn", (message: string, where?: string) => {
+    ipcRenderer.send("warn", message, where);
+    console.warn(message);
+});
+
+contextBridge.exposeInMainWorld("error", (message: string, where?: string, err?: any) => {
+    ipcRenderer.send("error", message, where, err);
     console.error(message);
 });
 
@@ -72,7 +77,7 @@ contextBridge.exposeInMainWorld("translate", async (key: string) => {
     }
 
     if (translation === key) {
-        const error = `Translation for key "${key}" doesn't exist for current language.`
+        const error = `Translation for key "${key}" doesn't exist for current language.`;
         ipcRenderer.send("error", error, "i18n");
         console.error(error);
     }
@@ -115,7 +120,8 @@ declare global {
         };
 
         log: (message: string, where?: string) => void;
-        error: (message: string, where?: string) => void;
+        warn: (message: string, where?: string) => void;
+        error: (message: string, where?: string, err?: any) => void;
 
         localize: (resources?: string) => void;
         changeLanguage: (lng: string) => void;

@@ -284,7 +284,7 @@ async function autodetect() {
 
     if (devices.size === 0) {
         // If somehow, literally nothing is found...
-        window.error("No devices found", "detect");
+        window.warn("No devices found", "detect");
         await showErrorDialog("dialogs.autodetect.failed.title", "dialogs.autodetect.failed.message");
         setStatus("main.status.autodetect.failed");
     } else {
@@ -362,7 +362,7 @@ async function startConnection() {
         if (!(await handleTrackerModelCheck())) return false;
         if (!(await handleConnectionType())) return false;
     } catch (err) {
-        window.error(`Error starting connection: ${err}`, "connection");
+        window.error(`Error starting connection`, "connection", err);
         return false;
     }
 

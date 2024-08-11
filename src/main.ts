@@ -78,7 +78,7 @@ async function getLatestRelease() {
     log("Fetching the latest release from GitHub...", "updater");
     const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/releases/latest");
     if (!response.ok) {
-        error(`Failed to fetch latest release: ${response.statusText}`, "updater");
+        warn(`Failed to fetch latest release: ${response.statusText}`, "updater");
         throw new Error("Failed to fetch latest release");
     }
     const release = await response.json();
@@ -121,10 +121,10 @@ async function checkForAppUpdates() {
                 shell.openExternal("https://github.com/OCSYT/SlimeTora/releases/latest");
             }
         } else {
-            log("No updates available.", "updater");
+            log("No app updates available.", "updater");
         }
     } catch (err) {
-        error(`Failed to check for updates: ${err}`, "updater");
+        warn(`Failed to check for updates: ${err}`, "updater");
     }
 }
 
@@ -132,7 +132,7 @@ async function fetchTranslationFiles() {
     log(`Fetching translation files from GitHub...`, "updater");
     const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/contents/src/languages");
     if (!response.ok) {
-        error(`Failed to fetch translation files: ${response.statusText}`, "updater");
+        warn(`Failed to fetch translation files: ${response.statusText}`, "updater");
         throw new Error("Failed to fetch translation files");
     }
     const files = await response.json();
@@ -145,7 +145,7 @@ async function downloadTranslationUpdates(updates: any[]) {
         log(`Downloading ${file.name}...`, "updater");
         const response = await fetch(file.download_url);
         if (!response.ok) {
-            error(`Failed to download ${file.name}: ${response.statusText}`, "updater");
+            warn(`Failed to download ${file.name}: ${response.statusText}`, "updater");
             throw new Error(`Failed to download ${file.name}`);
         }
         const content = await response.text();
@@ -211,7 +211,7 @@ async function checkForTranslationUpdates() {
             log(`No translation updates available.`, "updater");
         }
     } catch (err) {
-        error(`Failed to check for translation updates: ${err}`, "updater");
+        warn(`Failed to check for translation updates: ${err}`, "updater");
     }
 }
 
@@ -227,7 +227,7 @@ function clearTrackers() {
             try {
                 device.deinit();
             } catch (err) {
-                error(`Failed to de-initialize device: ${err}`, "connection");
+                error(`Failed to de-initialize device`, "connection", err);
             }
         }
     });
@@ -386,6 +386,10 @@ ipcMain.on("log", (_event, message: string, where = "renderer") => {
     log(message, where);
 });
 
+ipcMain.on("warn", (_event, message: string, where = "renderer") => {
+    warn(message, where);
+});
+
 ipcMain.on("error", (_event, message: string, where = "renderer") => {
     error(message, where);
 });
@@ -478,7 +482,7 @@ ipcMain.on("open-logs-folder", async () => {
         await fs.promises.access(logDir);
         await shell.openPath(logDir);
     } catch (err) {
-        error(`Logs directory does not exist: ${err}`);
+        error(`Logs directory does not exist`, "main", err);
         await showError("dialogs.noLogsFolder.title", "dialogs.noLogsFolder.message");
     }
 });
@@ -603,12 +607,12 @@ ipcMain.on("start-connection", async (_event, arg) => {
     log(`Start connection with: ${JSON.stringify(arg)}`, "connection");
 
     if (isActive) {
-        error("Tried to start connection while already active", "connection");
+        warn("Tried to start connection while already active", "connection");
         return false;
     }
 
     if (!isValidDeviceConfiguration(types, ports)) {
-        error("Invalid device configuration", "connection");
+        warn("Invalid device configuration", "connection");
         return false;
     }
 
@@ -727,7 +731,7 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
     } = arg;
     // Validate input parameters
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
-        error(`Invalid settings received: ${JSON.stringify(arg)}`, "settings");
+        warn(`Invalid settings received: ${JSON.stringify(arg)}`, "settings");
         return;
     }
 
@@ -762,7 +766,7 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
 
     // Validate input settings
     if (!sensorMode || !fpsMode || !sensorAutoCorrection || sensorAutoCorrection.length === 0) {
-        error(`Invalid settings received: ${JSON.stringify(arg)}`, "settings");
+        warn(`Invalid settings received: ${JSON.stringify(arg)}`, "settings");
         return;
     }
 
@@ -1110,7 +1114,10 @@ function startDeviceListeners() {
             batteryVoltage: stableBatteryVoltage,
         });
 
-        log(`Received battery data for ${trackerName}: ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`, "tracker");
+        log(
+            `Received battery data for ${trackerName}: ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`,
+            "tracker"
+        );
     });
 
     device.on("log", (msg: string) => {
@@ -1139,7 +1146,7 @@ function handleError(msg: string, errorType: ErrorType, handler: (msg: string) =
 }
 
 async function handleConnectionStartError(err: any) {
-    error(`Failed to start tracker connection: ${err}`, "haritorax-interpreter");
+    error(`Failed to start tracker connection`, "haritorax-interpreter", err);
     mainWindow.webContents.send("set-status", "main.status.failed");
     dialog.showErrorBox(
         await translate("dialogs.connectionFailed.title"),
@@ -1181,16 +1188,16 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
         log(`Tracker ${trackerName} disconnected from SlimeVR server due to: ${reason}`, "@slimevr/emulated-tracker");
     });
 
-    tracker.on("error", (err: Error) => {
-        error(`Tracker ${trackerName} error: ${err}}`, "@slimevr/emulated-tracker");
+    tracker.on("error", (err) => {
+        error(`Tracker ${trackerName} error`, "@slimevr/emulated-tracker", err);
     });
 
     tracker.on("unknown-incoming-packet", (packet: any) => {
-        error(`Tracker ${trackerName} unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
+        warn(`Tracker ${trackerName} unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
     });
 
     tracker.on("unknown-incoming-packet", (buf: Buffer) =>
-        error(`Tracker ${trackerName} unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker")
+        warn(`Tracker ${trackerName} unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker")
     );
 
     if (loggingMode === 3) {
@@ -1217,11 +1224,11 @@ await heartbeatTracker.init();
 
 let hasInitializedLogDir = false;
 
-async function logMessage(level: string, msg: string, where: string) {
+async function logMessage(level: string, msg: string, where: string, err?: Error) {
     const date = new Date();
     const logLevel = level.toUpperCase();
-    const consoleLogFn = logLevel === "ERROR" || "SEVERE" ? console.error : console.log;
-    const formattedMessage = `${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}`;
+    const consoleLogFn = logLevel === "WARN" ? console.warn : logLevel === "ERROR" ? console.error : console.log;
+    let formattedMessage = `${date.toTimeString()} -- ${logLevel} -- (${where}): ${msg}`;
 
     consoleLogFn(formattedMessage);
 
@@ -1232,19 +1239,26 @@ async function logMessage(level: string, msg: string, where: string) {
 
     const logPath = path.join(logDir, `log-${formatDateForFile(date)}.txt`);
     await logToFile(logPath, `${formattedMessage}\n`);
+
+    if (err) {
+        consoleLogFn(err.stack);
+        await logToFile(logPath, `${err.stack}\n`);
+    }
 }
 
 function log(msg: string, where = "main") {
     logMessage("info", msg, where);
 }
 
-function error(msg: string, where = "main", exceptional = false) {
-    if (exceptional) {
-        logMessage("severe", msg, where);
-        throw new Error(msg);
-    } else {
-        logMessage("error", msg, where);
+function warn(msg: string, where = "main") {
+    logMessage("warn", msg, where);
+}
+
+function error(msg: string, where = "main", err?: any) {
+    if (!(err instanceof Error)) {
+        err = new Error(String(err));
     }
+    logMessage("error", msg, where, err);
 }
 
 async function initializeLogDirectory(logDir: PathLike) {
@@ -1261,7 +1275,7 @@ async function logToFile(logPath: PathLike, message: string) {
     try {
         await fs.promises.appendFile(logPath, message);
     } catch (err) {
-        error(`Error logging to file: ${err}`);
+        error(`Error logging to file`, "main", err);
     }
 }
 
