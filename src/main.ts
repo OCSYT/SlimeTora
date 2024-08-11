@@ -136,7 +136,7 @@ async function fetchTranslationFiles() {
         throw new Error("Failed to fetch translation files");
     }
     const files = await response.json();
-    log(`Fetched translation files: ${files.map((file: any) => file.name).join(", ")}`);
+    log(`Fetched remote translation files: ${files.map((file: any) => file.name).join(", ")}`);
     return files;
 }
 
@@ -169,10 +169,16 @@ async function checkForTranslationUpdates() {
                 updates.push(remoteFile);
                 continue;
             }
-            const localFileStats = fs.statSync(localFilePath);
-            log(`Comparing ${remoteFile.name} - local size: ${localFileStats.size}, remote size: ${remoteFile.size}`);
-            // Assume there is a translation update if the file size is different
-            if (remoteFile.size !== localFileStats.size) {
+        
+            let localContent = fs.readFileSync(localFilePath, 'utf-8');
+        
+            // Normalize newlines to LF for local content
+            // Fixes issues with CRLF line endings on Windows (time for me to permanently switch to Linux)
+            localContent = localContent.replace(/\r\n/g, '\n');
+            const localContentSize = Buffer.byteLength(localContent, 'utf-8');
+        
+            log(`Comparing ${remoteFile.name} - local size: ${localContentSize}, remote size: ${remoteFile.size}`);
+            if (remoteFile.size !== localContentSize) {
                 log(`Update available for ${remoteFile.name}`);
                 updates.push(remoteFile);
             }
