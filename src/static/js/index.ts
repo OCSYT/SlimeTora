@@ -31,6 +31,24 @@ let loggingMode = 1;
  * Renderer functions
  */
 
+async function updateTranslations() {
+    const i18nElements = document.querySelectorAll("[data-i18n]");
+    const translationPromises: Promise<void>[] = [];
+
+    i18nElements.forEach((element) => {
+        const key = element.getAttribute("data-i18n");
+        const translationPromise = window.translate(key).then((translation) => {
+            if (translation && translation !== key) {
+                // could be a slight security risk, but makes it so much easier to format text
+                element.innerHTML = translation;
+            }
+        });
+        translationPromises.push(translationPromise);
+    });
+
+    return await Promise.all(translationPromises);
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
     window.log("DOM loaded");
 
@@ -171,6 +189,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     window.changeLanguage(language);
+    await updateTranslations();
 
     // Set program statuses
     setStatus("main.status.none");
@@ -458,7 +477,7 @@ async function setStatus(status: string, translate: boolean = true) {
     if (!statusElement) return;
 
     const finalStatus = translate ? await window.translate(status) : status;
-    statusElement.textContent = finalStatus;
+    statusElement.innerHTML = finalStatus;
     window.log(`Set status to: ${finalStatus}`);
 
     if (translate) statusElement.setAttribute("data-i18n", status);
@@ -791,7 +810,7 @@ async function addDeviceToList(deviceID: string) {
 
     deviceList.appendChild(newDevice);
 
-    window.localize();
+    updateTranslations();
 }
 
 function setTrackerSettings(deviceID: string, trackerSettings: any) {

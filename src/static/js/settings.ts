@@ -17,7 +17,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const key = element.getAttribute("data-i18n");
         const translationPromise = window.translate(key).then((translation) => {
             if (translation && translation !== key) {
-                element.textContent = translation;
+                // could be a slight security risk, but makes it so much easier to format text
+                element.innerHTML = translation;
             }
         });
         translationPromises.push(translationPromise);
