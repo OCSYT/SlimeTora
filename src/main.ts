@@ -933,10 +933,10 @@ async function processQueue() {
 
         let newTracker = new EmulatedTracker(
             macAddress,
-            app.getVersion(),
+            `SlimeTora v${app.getVersion()}`,
             new FirmwareFeatureFlags(new Map([])),
-            BoardType.CUSTOM,
-            MCUType.UNKNOWN
+            BoardType.HARITORA,
+            MCUType.HARITORA
         );
 
         await newTracker.init();
@@ -1209,10 +1209,10 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
 
 const heartbeatTracker = new EmulatedTracker(
     new MACAddress([0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
-    app.getVersion() + "-heartbeat",
+    `SlimeTora v${app.getVersion()} heartbeat`,
     new FirmwareFeatureFlags(new Map([])),
-    BoardType.CUSTOM,
-    MCUType.UNKNOWN
+    BoardType.HARITORA,
+    MCUType.HARITORA
 );
 
 setupTrackerEvents(heartbeatTracker, true);
