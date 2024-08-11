@@ -24,13 +24,13 @@ contextBridge.exposeInMainWorld("ipc", {
     },
 });
 
-contextBridge.exposeInMainWorld("log", (message: string) => {
-    ipcRenderer.send("log", message);
+contextBridge.exposeInMainWorld("log", (message: string, where?: string) => {
+    ipcRenderer.send("log", message, where);
     console.log(message);
 });
 
-contextBridge.exposeInMainWorld("error", (message: string) => {
-    ipcRenderer.send("error", message);
+contextBridge.exposeInMainWorld("error", (message: string, where?: string) => {
+    ipcRenderer.send("error", message, where);
     console.error(message);
 });
 
@@ -45,10 +45,10 @@ contextBridge.exposeInMainWorld("localize", (resources?: any) => {
                 localize = locI18next.init(i18next);
                 localize("[data-i18n]");
 
-                ipcRenderer.send("log", "Attempting to localize");
+                ipcRenderer.send("log", "Attempting to localize", "i18n");
             });
     } else {
-        ipcRenderer.send("log", "Attempting to localize again");
+        ipcRenderer.send("log", "Attempting to localize again", "i18n");
         localize("[data-i18n]");
     }
 });
@@ -56,7 +56,7 @@ contextBridge.exposeInMainWorld("localize", (resources?: any) => {
 contextBridge.exposeInMainWorld("changeLanguage", (lng: string) => {
     i18next.changeLanguage(lng).then(() => {
         if (localize) {
-            ipcRenderer.send("log", `Attempting to change language to ${lng}`);
+            ipcRenderer.send("log", `Attempting to change language to ${lng}`, "i18n");
             localize("[data-i18n]");
         }
     });
@@ -73,7 +73,7 @@ contextBridge.exposeInMainWorld("translate", async (key: string) => {
 
     if (translation === key) {
         const error = `Translation for key "${key}" doesn't exist for current language.`
-        ipcRenderer.send("error", error);
+        ipcRenderer.send("error", error, "i18n");
         console.error(error);
     }
 
@@ -114,8 +114,8 @@ declare global {
             on: (channel: string, listener: (_event: any, args: any) => void) => void;
         };
 
-        log: (message: string) => void;
-        error: (message: string) => void;
+        log: (message: string, where?: string) => void;
+        error: (message: string, where?: string) => void;
 
         localize: (resources?: string) => void;
         changeLanguage: (lng: string) => void;

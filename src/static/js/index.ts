@@ -208,14 +208,14 @@ window.addEventListener("storage", (event) => {
 async function autodetect() {
     showMessageBox("dialogs.autodetect.pre-check.title", "dialogs.autodetect.pre-check.message", true);
 
-    window.log("Running auto-detection...");
+    window.log("Starting auto-detection...", "detect");
     setStatus("main.status.autodetect.running");
 
     const autodetectObject = await window.ipc.invoke("autodetect", null);
     const devices: Set<string> = new Set(autodetectObject.devices);
     const trackerSettings = autodetectObject.trackerSettings;
 
-    window.log(`Auto-detect: found devices: ${Array.from(devices).join(", ")}`);
+    window.log(`Found devices: ${Array.from(devices).join(", ")}`, "detect");
 
     let detectedTrackerModel = "";
     let detectedConnectionModes: string[] = [];
@@ -224,7 +224,7 @@ async function autodetect() {
         if (element.checked === value) return;
         element.checked = value;
         element.dispatchEvent(new Event("change"));
-        window.log(`Auto-detect: ${value ? "enabling" : "disabling"} element ${element.id}`);
+        window.log(`${value ? "Enabling" : "Disabling"} element ${element.id}`, "detect");
     }
 
     async function handleComPorts(deviceName: string) {
@@ -240,8 +240,8 @@ async function autodetect() {
         );
         comPortsParent.dispatchEvent(new Event("change")); // simulate it here again since the actual code for handling COM port changes is in the parent element
 
-        window.log(`Auto-detect: found ${deviceName}`);
-        window.log(`Auto-detect: COM ports for ${deviceName}: ${comPorts}`);
+        window.log(`Found device ${deviceName}`, "detect");
+        window.log(`COM ports for device ${deviceName}: ${comPorts}`, "detect");
     }
 
     const deviceHandlers: { [key: string]: () => Promise<void> } = {
@@ -265,7 +265,7 @@ async function autodetect() {
             if (devices.has("HaritoraX Wireless") && !devices.has("GX6")) {
                 simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                 detectedConnectionModes.push("Bluetooth");
-                window.log("Auto-detect: found HaritoraX Wireless and GX2, enabling Bluetooth and COM");
+                window.log("Found HaritoraX Wireless and GX2, enabling Bluetooth and COM", "detect");
             }
         },
         Bluetooth: async () => {
@@ -273,7 +273,7 @@ async function autodetect() {
             simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
             if (!devices.has("HaritoraX Wireless") || !devices.has("HaritoraX Wired")) {
                 // Assume HaritoraX Wireless if no other devices are found
-                window.log("Auto-detect: no other devices found, assuming HaritoraX Wireless");
+                window.log("No other devices found with Bluetooth, assuming HaritoraX Wireless", "detect");
                 detectedTrackerModel = "HaritoraX Wireless";
                 simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
             }
@@ -284,11 +284,10 @@ async function autodetect() {
 
     if (devices.size === 0) {
         // If somehow, literally nothing is found...
-        window.error("No devices found during auto-detection");
+        window.error("No devices found", "detect");
         await showErrorDialog("dialogs.autodetect.failed.title", "dialogs.autodetect.failed.message");
         setStatus("main.status.autodetect.failed");
     } else {
-        window.log(`Auto-detect: completed, detected ${Array.from(devices).join(", ")}`);
         const message = await window.translate("dialogs.autodetect.success.message");
 
         const trackerName = detectedTrackerModel;
@@ -351,7 +350,7 @@ Ankle motion detection: ${ankle}`
 }
 
 async function startConnection() {
-    window.log("Starting connection...");
+    window.log("Starting connection...", "connection");
     setStatus("main.status.searchingServer");
 
     try {
@@ -363,7 +362,7 @@ async function startConnection() {
         if (!(await handleTrackerModelCheck())) return false;
         if (!(await handleConnectionType())) return false;
     } catch (err) {
-        window.error(`Error starting connection: ${err}`);
+        window.error(`Error starting connection: ${err}`, "connection");
         return false;
     }
 
@@ -373,11 +372,12 @@ async function startConnection() {
 function stopConnection() {
     if (!isActive) {
         window.error(
-            "No connection to stop.. wait a second, you shouldn't be seeing this - get out of inspect element and stop trying to break the program!"
+            "No connection to stop.. wait a second, you shouldn't be seeing this - get out of inspect element and stop trying to break the program!",
+            "connection"
         );
         return;
     }
-    window.log("Stopping connection(s)...");
+    window.log("Stopping connection(s)...", "connection");
 
     toggleConnectionButtons();
 
@@ -402,7 +402,7 @@ async function handleSlimeVRCheck(slimeVRFound: boolean) {
         const errorKey = skipSlimeVRCheck
             ? "SlimeVR check skipped"
             : "Tried to start connection while not connected to SlimeVR";
-        window.log(errorKey);
+        window.log(errorKey, "connection");
         if (!skipSlimeVRCheck) {
             setStatus("main.status.slimeVRMissing");
             return false;
@@ -436,7 +436,7 @@ async function handleConnectionType() {
                 types.push("com");
             }
             window.ipc.send("start-connection", { types, ports: selectedComPorts, isActive });
-            window.log(`Starting ${types.join(" and ")} connection with ports: ${selectedComPorts}`);
+            window.log(`Starting ${types.join(" and ")} connection with ports: ${selectedComPorts}`, "connection");
             return true;
         } else {
             window.error("No connection mode enabled");
@@ -526,7 +526,7 @@ function unsavedSettings(unsaved: boolean) {
 window.ipc.on("connect", async (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
-    window.log(`Connected to ${deviceID}`);
+    window.log(`Connected to ${deviceID}`, "tracker");
 
     if (!deviceQueue.includes(deviceID)) deviceQueue.push(deviceID);
     await processQueue();
@@ -537,7 +537,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     const settings = await window.ipc.invoke("get-settings", null);
     const exists = settings.trackers?.[deviceID].fpsMode !== undefined;
-    window.log(`Tracker settings for ${deviceID} exists: ${exists}`);
+    window.log(`Tracker settings for ${deviceID} exists: ${exists}`, "tracker");
 
     let trackerSettings = undefined;
     if (exists) {
@@ -554,7 +554,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
             sensorAutoCorrection: sensorAutoCorrectionList,
         };
     }
-    window.log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`);
+    window.log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`, "tracker");
 
     setTrackerSettings(deviceID, trackerSettings);
 });
@@ -569,7 +569,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
         return;
     }
 
-    window.log(`Disconnected from ${deviceID}`);
+    window.log(`Disconnected from ${deviceID}`, "tracker");
     document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").textContent = (
         parseInt(document.getElementById("tracker-count").textContent) - 1
@@ -583,7 +583,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
 window.ipc.on("device-connected-to-server", (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
-    window.log(`Tracker ${deviceID} connected to server, firing battery and mag events...`);
+    window.log(`Tracker ${deviceID} connected to server, firing battery and mag events...`, "tracker");
     // TODO: unknown if wired trackers report these immediately when COM port opens, check with users
     window.ipc.invoke("fire-tracker-battery", deviceID);
     window.ipc.invoke("fire-tracker-mag", deviceID);
@@ -616,7 +616,7 @@ window.ipc.on("device-battery", (_event, arg) => {
         updateTrackerBattery(trackerName, batteryRemaining, batteryVoltage);
     }
 
-    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`);
+    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`, "tracker");
 });
 
 window.ipc.on("device-mag", (_event, arg) => {
@@ -801,18 +801,21 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
 
     if (accelerometerEnabled) {
         sensorAutoCorrection.add("accel");
-        window.log("Added accel to sensor auto correction");
+        window.log("Added accel to sensor auto correction", "tracker");
     }
     if (gyroscopeEnabled) {
         sensorAutoCorrection.add("gyro");
-        window.log("Added gyro to sensor auto correction");
+        window.log("Added gyro to sensor auto correction", "tracker");
     }
     if (magnetometerEnabled) {
         sensorAutoCorrection.add("mag");
-        window.log("Added mag to sensor auto correction");
+        window.log("Added mag to sensor auto correction", "tracker");
     }
 
-    window.log(`Set sensor auto correction for ${deviceID} to: ${Array.from(sensorAutoCorrection).join(",")}`);
+    window.log(
+        `Set sensor auto correction for ${deviceID} to: ${Array.from(sensorAutoCorrection).join(",")}`,
+        "tracker"
+    );
 
     window.ipc.send("set-tracker-settings", {
         deviceID,

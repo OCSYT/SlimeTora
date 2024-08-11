@@ -54,7 +54,7 @@ let comPorts = await Binding.list();
 async function loadTranslations() {
     const files = await fs.promises.readdir(languagesPath);
     const resources: any = {};
-    log(`Loading translations from ${languagesPath}`);
+    log(`Loading translations from ${languagesPath}`, "i18n");
 
     for (const file of files) {
         const lang = path.basename(file, ".json");
@@ -75,14 +75,14 @@ async function translate(key: string) {
  */
 
 async function getLatestRelease() {
-    log("Fetching the latest release from GitHub...");
+    log("Fetching the latest release from GitHub...", "updater");
     const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/releases/latest");
     if (!response.ok) {
-        error(`Failed to fetch latest release: ${response.statusText}`);
+        error(`Failed to fetch latest release: ${response.statusText}`, "updater");
         throw new Error("Failed to fetch latest release");
     }
     const release = await response.json();
-    log(`Fetched latest release: ${release.tag_name}`);
+    log(`Fetched latest release: ${release.tag_name}`, "updater");
     return release.tag_name;
 }
 
@@ -98,18 +98,18 @@ function isNewerVersion(latestVersion: string, currentVersion: string): boolean 
             return false;
         }
     }
-    log("The versions are identical.");
+    log("The versions are identical.", "updater");
     return false;
 }
 
 async function checkForAppUpdates() {
     try {
-        log("Checking for updates...");
+        log("Checking for updates...", "updater");
         const latestVersion = await getLatestRelease();
         const currentVersion = app.getVersion();
-        log(`Latest version: ${latestVersion}, current version: ${currentVersion}`);
+        log(`Latest version: ${latestVersion}, current version: ${currentVersion}`, "updater");
         if (isNewerVersion(latestVersion, currentVersion)) {
-            log("Update available, notifying user...");
+            log("Update available, notifying user...", "updater");
             const response = await dialog.showMessageBox({
                 type: "info",
                 buttons: ["Download", "Cancel"],
@@ -121,71 +121,73 @@ async function checkForAppUpdates() {
                 shell.openExternal("https://github.com/OCSYT/SlimeTora/releases/latest");
             }
         } else {
-            log("No updates available.");
+            log("No updates available.", "updater");
         }
     } catch (err) {
-        error(`Failed to check for updates: ${err}`);
+        error(`Failed to check for updates: ${err}`, "updater");
     }
 }
 
 async function fetchTranslationFiles() {
-    log(`Fetching translation files from GitHub...`);
+    log(`Fetching translation files from GitHub...`, "updater");
     const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/contents/src/languages");
     if (!response.ok) {
-        error(`Failed to fetch translation files: ${response.statusText}`);
+        error(`Failed to fetch translation files: ${response.statusText}`, "updater");
         throw new Error("Failed to fetch translation files");
     }
     const files = await response.json();
-    log(`Fetched remote translation files: ${files.map((file: any) => file.name).join(", ")}`);
+    log(`Fetched remote translation files: ${files.map((file: any) => file.name).join(", ")}`, "updater");
     return files;
 }
 
 async function downloadTranslationUpdates(updates: any[]) {
     for (const file of updates) {
-        log(`Downloading ${file.name}...`);
+        log(`Downloading ${file.name}...`, "updater");
         const response = await fetch(file.download_url);
         if (!response.ok) {
-            error(`Failed to download ${file.name}: ${response.statusText}`);
+            error(`Failed to download ${file.name}: ${response.statusText}`, "updater");
             throw new Error(`Failed to download ${file.name}`);
         }
         const content = await response.text();
         fs.writeFileSync(path.join(languagesPath, file.name), content);
-        log(`Downloaded and saved ${file.name} to ${languagesPath}`);
+        log(`Downloaded and saved ${file.name} to ${languagesPath}`, "updater");
     }
 }
 
 async function checkForTranslationUpdates() {
     try {
-        log(`Checking for translation updates...`);
+        log(`Checking for translation updates...`, "updater");
         const remoteFiles = await fetchTranslationFiles();
         const localFiles = fs.readdirSync(languagesPath);
-        log(`Local translation files: ${localFiles.join(", ")}`);
+        log(`Local translation files: ${localFiles.join(", ")}`, "updater");
 
         const updates = [];
         for (const remoteFile of remoteFiles) {
             const localFilePath = path.join(languagesPath, remoteFile.name);
             if (!localFiles.includes(remoteFile.name)) {
-                log(`New translation file found: ${remoteFile.name}`);
+                log(`New translation file found: ${remoteFile.name}`, "updater");
                 updates.push(remoteFile);
                 continue;
             }
-        
-            let localContent = fs.readFileSync(localFilePath, 'utf-8');
-        
+
+            let localContent = fs.readFileSync(localFilePath, "utf-8");
+
             // Normalize newlines to LF for local content
-            // Fixes issues with CRLF line endings on Windows (time for me to permanently switch to Linux)
-            localContent = localContent.replace(/\r\n/g, '\n');
-            const localContentSize = Buffer.byteLength(localContent, 'utf-8');
-        
-            log(`Comparing ${remoteFile.name} - local size: ${localContentSize}, remote size: ${remoteFile.size}`);
+            localContent = localContent.replace(/\r\n/g, "\n");
+            const localContentSize = Buffer.byteLength(localContent, "utf-8");
+
+            log(
+                `Comparing ${remoteFile.name} - local size: ${localContentSize}, remote size: ${remoteFile.size}`,
+                "updater"
+            );
             if (remoteFile.size !== localContentSize) {
-                log(`Update available for ${remoteFile.name}`);
+                log(`Update available for ${remoteFile.name}`, "updater");
                 updates.push(remoteFile);
             }
         }
 
         if (updates.length > 0) {
-            log(`Translation updates available: ${updates.map((file) => file.name).join(", ")}`);
+            log(`Translation updates available: ${updates.map((file) => file.name).join(", ")}`, "updater");
             const response = await dialog.showMessageBox({
                 type: "info",
                 buttons: ["Download", "Cancel"],
@@ -203,13 +205,13 @@ async function checkForTranslationUpdates() {
                     message: "Translation updates have been downloaded.",
                     detail: "Please restart the application to apply the changes.",
                 });
-                log(`Translation updates downloaded and placed.`);
+                log(`Translation updates downloaded and placed.`, "updater");
             }
         } else {
-            log(`No translation updates available.`);
+            log(`No translation updates available.`, "updater");
         }
     } catch (err) {
-        error(`Failed to check for translation updates: ${err}`);
+        error(`Failed to check for translation updates: ${err}`, "updater");
     }
 }
 
@@ -225,7 +227,7 @@ function clearTrackers() {
             try {
                 device.deinit();
             } catch (err) {
-                error(`Failed to de-initialize device: ${err}`);
+                error(`Failed to de-initialize device: ${err}`, "connection");
             }
         }
     });
@@ -380,12 +382,12 @@ async function showError(title: string, message: string, translateTitle = true, 
     return true;
 }
 
-ipcMain.on("log", (_event, arg: string) => {
-    log(arg, "renderer");
+ipcMain.on("log", (_event, message: string, where = "renderer") => {
+    log(message, where);
 });
 
-ipcMain.on("error", (_event, arg: string) => {
-    error(arg, "renderer");
+ipcMain.on("error", (_event, message: string, where = "renderer") => {
+    error(message, where);
 });
 
 ipcMain.handle("show-message", async (_event, arg) => {
@@ -452,22 +454,22 @@ ipcMain.handle("search-for-server", async () => {
 
 ipcMain.on("set-log-to-file", (_event, arg) => {
     canLogToFile = arg;
-    log(`Logging to file set to: ${arg}`);
+    log(`Logging to file set to: ${arg}`, "settings");
 });
 
 ipcMain.on("set-logging", (_event, arg) => {
     loggingMode = arg;
-    log(`Logging mode set to: ${arg}`);
+    log(`Logging mode set to: ${arg}`, "settings");
 });
 
 ipcMain.on("set-wireless-tracker", (_event, arg) => {
     wirelessTrackerEnabled = arg;
-    log(`Wireless tracker enabled set to: ${arg}`);
+    log(`Wireless tracker enabled set to: ${arg}`, "settings");
 });
 
 ipcMain.on("set-wired-tracker", (_event, arg) => {
     wiredTrackerEnabled = arg;
-    log(`Wired tracker enabled set to: ${arg}`);
+    log(`Wired tracker enabled set to: ${arg}`, "settings");
 });
 
 ipcMain.on("open-logs-folder", async () => {
@@ -519,13 +521,13 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
  */
 
 ipcMain.handle("autodetect", async () => {
-    log("Auto-detect: starting auto-detection...");
+    log("Running auto-detection...", "detect");
     device = undefined;
 
-    log("Auto-detect: initializing new HaritoraX instance...");
+    log("Initializing new HaritoraX instance...", "detect");
     initializeDevice(true);
 
-    log("Auto-detect: getting available devices...");
+    log("Getting available devices...", "detect");
     // @ts-ignore
     const devices = await device.getAvailableDevices();
 
@@ -534,39 +536,39 @@ ipcMain.handle("autodetect", async () => {
     const waitForTrackerSettings = new Promise(async (resolve) => {
         let comPorts;
         if (devices.includes("Bluetooth") && devices.includes("HaritoraX Wireless")) {
-            log("Auto-detect: Bluetooth & HaritoraX Wireless devices found, starting connection...");
+            log("Bluetooth & HaritoraX Wireless devices found, starting connection...", "detect");
             device.startConnection("bluetooth");
         }
         if (devices.includes("GX6")) {
-            log("Auto-detect: GX6 device found, starting connection...");
+            log("GX6 device found, starting connection...", "detect");
             // @ts-ignore
             comPorts = await device.getDevicePorts("GX6");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
         if (devices.includes("GX2")) {
-            log("Auto-detect: GX2 device found, starting connection...");
+            log("GX2 device found, starting connection...", "detect");
             // @ts-ignore
             comPorts = await device.getDevicePorts("GX2");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
         if (devices.includes("HaritoraX Wired")) {
-            log("Auto-detect: HaritoraX Wired device found, starting connection...");
+            log("HaritoraX Wired device found, starting connection...", "detect");
             // @ts-ignore
             comPorts = await device.getDevicePorts("HaritoraX Wired");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
 
         trackerSettingsTimeout = setTimeout(() => {
-            log("Auto-detect: no tracker settings received after 5 seconds, resolving with null");
+            log("No tracker settings received after 5 seconds, resolving with null", "detect");
             device.stopConnection("com");
             device.stopConnection("bluetooth");
             resolve(null);
         }, 5000);
 
         device.once("connect", async (deviceID: string, connectionMode: string) => {
-            log(`Auto-detect: connected to tracker ${deviceID} via ${connectionMode}, getting settings...`);
+            log(`Connected to tracker ${deviceID} via ${connectionMode}, getting settings...`, "detect");
             const trackerSettings = await device.getTrackerSettings(deviceID, true);
-            log(`Auto-detect: got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`);
+            log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`, "detect");
 
             clearTimeout(trackerSettingsTimeout);
 
@@ -580,10 +582,10 @@ ipcMain.handle("autodetect", async () => {
     let trackerSettings = null;
 
     if (devices.length !== 0) {
-        log("Auto-detect: waiting for tracker settings...");
+        log("Waiting for tracker settings...", "detect");
         trackerSettings = await waitForTrackerSettings;
     } else {
-        log("Auto-detect: no devices found");
+        log("No devices found", "detect");
         clearTimeout(trackerSettingsTimeout);
     }
 
@@ -598,15 +600,15 @@ ipcMain.handle("autodetect", async () => {
 ipcMain.on("start-connection", async (_event, arg) => {
     const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
 
-    log(`Start connection with: ${JSON.stringify(arg)}`);
+    log(`Start connection with: ${JSON.stringify(arg)}`, "connection");
 
     if (isActive) {
-        error("Tried to start connection while already active");
+        error("Tried to start connection while already active", "connection");
         return false;
     }
 
     if (!isValidDeviceConfiguration(types, ports)) {
-        error("Invalid device configuration");
+        error("Invalid device configuration", "connection");
         return false;
     }
 
@@ -645,7 +647,7 @@ function shouldInitializeNewDevice(): boolean {
 function initializeDevice(forceDisableLogging: boolean = false): void {
     const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
     const effectiveLoggingMode = forceDisableLogging ? 1 : loggingMode;
-    log(`Creating new HaritoraX ${trackerType} instance with logging mode ${effectiveLoggingMode}...`);
+    log(`Creating new HaritoraX ${trackerType} instance with logging mode ${effectiveLoggingMode}...`, "connection");
     const loggingOptions = {
         1: [false, false, false],
         2: [true, false, false],
@@ -662,19 +664,19 @@ async function notifyConnectedDevices(): Promise<void> {
     const activeTrackers = Array.from(new Set(device.getActiveTrackers()));
     if (activeTrackers.length === 0) return;
     for (const trackerName of activeTrackers) await addTracker(trackerName);
-    log("Connected devices: " + JSON.stringify(activeTrackers));
+    log("Connected devices: " + JSON.stringify(activeTrackers), "connection");
 }
 
 ipcMain.on("stop-connection", () => {
     if (!device) {
-        error("Device instance wasn't started correctly");
+        error("Device instance wasn't started correctly", "connection");
         return;
     }
 
     const stopConnectionIfActive = (mode: string) => {
         if (!device.getConnectionModeActive(mode)) return;
         device.stopConnection(mode);
-        log(`Stopped ${mode} connection`);
+        log(`Stopped ${mode} connection`, "connection");
     };
 
     stopConnectionIfActive("bluetooth");
@@ -707,7 +709,7 @@ ipcMain.handle("fire-tracker-mag", (_event, trackerName: string) => {
 ipcMain.handle("get-tracker-settings", async (_event, arg) => {
     const { trackerName, forceBLE }: { trackerName: string; forceBLE: boolean } = arg;
     let settings = await device.getTrackerSettings(trackerName, forceBLE);
-    log("Got tracker settings: " + JSON.stringify(settings));
+    log(`Got tracker settings: ${JSON.stringify(settings)}`, "settings");
     return settings;
 });
 
@@ -725,27 +727,30 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
     } = arg;
     // Validate input parameters
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
-        error(`Invalid settings received: ${JSON.stringify(arg)}`);
+        error(`Invalid settings received: ${JSON.stringify(arg)}`, "settings");
         return;
     }
 
     // Log old tracker settings
     const oldSettings = await device.getTrackerSettings(deviceID, true);
-    log(`Old tracker settings: ${JSON.stringify(oldSettings)}`);
+    log(`Old tracker settings: ${JSON.stringify(oldSettings)}`, "settings");
 
     // Make sure we get unique entries
     const uniqueSensorAutoCorrection = [...new Set(sensorAutoCorrection)];
-    log(`Setting tracker settings for ${deviceID} to:`);
-    log(`Sensor mode: ${sensorMode}`);
-    log(`FPS mode: ${fpsMode}`);
-    log(`Sensor auto correction: ${sensorAutoCorrection}`);
+    log(
+        `Setting tracker settings for ${deviceID} to:
+        Sensor mode: ${sensorMode}
+        FPS mode: ${fpsMode}
+        Sensor auto correction: ${sensorAutoCorrection}`,
+        "settings"
+    );
 
     // Apply the new settings
     device.setTrackerSettings(deviceID, sensorMode, fpsMode, uniqueSensorAutoCorrection, false);
 
     // Log new tracker settings
     const newSettings = await device.getTrackerSettings(deviceID, true);
-    log(`New tracker settings: ${JSON.stringify(newSettings)}`);
+    log(`New tracker settings: ${JSON.stringify(newSettings)}`, "settings");
 });
 
 ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
@@ -757,7 +762,7 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
 
     // Validate input settings
     if (!sensorMode || !fpsMode || !sensorAutoCorrection || sensorAutoCorrection.length === 0) {
-        error(`Invalid settings received: ${JSON.stringify(arg)}`);
+        error(`Invalid settings received: ${JSON.stringify(arg)}`, "settings");
         return;
     }
 
@@ -771,7 +776,7 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
             SensorMode: sensorMode,
             FPSMode: fpsMode,
             SensorAutoCorrection: uniqueSensorAutoCorrection,
-        }}`
+        }}, "settings"`
     );
 
     device.setAllTrackerSettings(sensorMode, fpsMode, uniqueSensorAutoCorrection, false);
@@ -935,23 +940,21 @@ async function processQueue() {
 
         // Set the MAC address in the config
         saveSetting({ trackers: { [trackerName]: { macAddress } } });
-        log(`Set MAC address for ${trackerName} to ${macAddress}`);
+        log(`Set MAC address for ${trackerName} to ${macAddress}`, "tracker");
 
         connectedDevices.set(trackerName, newTracker);
 
         setupTrackerEvents(newTracker);
 
-        log(`Connected to tracker: ${trackerName}`);
+        log(`Connected to tracker: ${trackerName}`, "tracker");
         mainWindow.webContents.send("connect", trackerName);
     }
 
     // Sort the connectedDevices map by keys
     connectedDevices = new Map([...connectedDevices.entries()].sort());
 
-    log(
-        "Connected devices: " +
-            JSON.stringify(Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key)))
-    );
+    const trackers = JSON.stringify(Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key)));
+    log(`Connected devices: ${trackers}`, "tracker");
 
     isProcessingQueue = false;
 }
@@ -965,17 +968,16 @@ function startDeviceListeners() {
 
     device.on("disconnect", (deviceID: string) => {
         if (!deviceID || !connectedDevices.get(deviceID)) return;
-        log(`Disconnected from tracker: ${deviceID}`);
+        log(`Disconnected from tracker: ${deviceID}`, "tracker");
 
         connectedDevices.get(deviceID).deinit();
         connectedDevices.get(deviceID).removeAllListeners();
         connectedDevices.set(deviceID, undefined);
 
         mainWindow.webContents.send("disconnect", deviceID);
-        log(
-            "Connected devices: " +
-                JSON.stringify(Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key)))
-        );
+
+        const trackers = JSON.stringify(Array.from(connectedDevices.keys()).filter((key) => connectedDevices.get(key)));
+        log(`Connected devices: ${trackers}`, "tracker");
     });
 
     device.on("mag", (trackerName: string, magStatus: string) => {
@@ -997,16 +999,16 @@ function startDeviceListeners() {
 
         clickTimeouts[key] = setTimeout(() => {
             if (clickCounts[key] === 1) {
-                log(`Single click ${buttonPressed} button from ${trackerName}`);
+                log(`Single click ${buttonPressed} button from ${trackerName}`, "tracker");
                 heartbeatTracker.sendUserAction(UserAction.RESET_YAW);
             } else if (clickCounts[key] === 2) {
-                log(`Double click ${buttonPressed} button from ${trackerName}`);
+                log(`Double click ${buttonPressed} button from ${trackerName}`, "tracker");
                 heartbeatTracker.sendUserAction(UserAction.RESET_FULL);
             } else if (clickCounts[key] === 3) {
-                log(`Triple click ${buttonPressed} button from ${trackerName}`);
+                log(`Triple click ${buttonPressed} button from ${trackerName}`, "tracker");
                 heartbeatTracker.sendUserAction(UserAction.RESET_MOUNTING);
             } else {
-                log(`Four click ${buttonPressed} button from ${trackerName}`);
+                log(`Four click ${buttonPressed} button from ${trackerName}`, "tracker");
                 heartbeatTracker.sendUserAction(UserAction.PAUSE_TRACKING);
             }
 
@@ -1041,7 +1043,7 @@ function startDeviceListeners() {
 
         let tracker = connectedDevices.get(trackerName);
         if (!tracker || !rotation || !gravity || !quaternion || !eulerRadians) {
-            error(`Error processing IMU data for ${trackerName}, skipping...`);
+            error(`Error processing IMU data for ${trackerName}, skipping...`, "tracker");
             return;
         }
 
@@ -1108,7 +1110,7 @@ function startDeviceListeners() {
             batteryVoltage: stableBatteryVoltage,
         });
 
-        log(`Received battery data for ${trackerName}: ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`);
+        log(`Received battery data for ${trackerName}: ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`, "tracker");
     });
 
     device.on("log", (msg: string) => {
