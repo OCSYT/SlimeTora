@@ -25,6 +25,7 @@
     "trackerInfo": {
         "title": "Tracker information",
         "tooltip": "See information about the connected trackers. An option with yellow text requires a restart of the connection or program to fully apply.",
+        "compactView": "Compact view",
         "censorSerialNumbers": "Censor serial numbers",
         "trackerVisualization": "Tracker visualization",
         "deviceName": "Device:",
@@ -34,7 +35,7 @@
         "battery": "Battery:",
         "magStatus": "Mag status:",
         "edit": "Edit",
-        "settings": "Override tracker settings",
+        "settings": "Override settings",
         "trackerSettings": {
             "title": "{trackerName} settings",
             "text": "Override the global tracker settings for this tracker. This may be buggy and is not recommended for normal use.",

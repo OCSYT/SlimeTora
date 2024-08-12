@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Get settings from config file
     const settings: { [key: string]: any } = await window.ipc.invoke("get-settings", null);
     language = settings.global?.language || "en";
-    compactView = settings.global?.compactMode || false;
+    compactView = settings.global?.compactView || false;
     censorSerialNumbers = settings.global?.censorSerialNumbers || false;
     trackerVisualization = settings.global?.trackerVisualization || false;
     trackerVisualizationFPS = settings.global?.trackerVisualizationFPS || 10;
@@ -730,7 +730,7 @@ async function addDeviceToList(deviceID: string) {
                         data-i18n="trackerInfo.settings"
                         onclick="openTrackerSettings('${deviceID}')"
                     >
-                        Override tracker settings
+                        Override settings
                     </button>
                 </div>
             </div>
@@ -961,7 +961,7 @@ function addEventListeners() {
         window.log(`Switched compact mode: ${compactView}`);
         window.ipc.send("save-setting", {
             global: {
-                compactMode: compactView,
+                compactView: compactView,
             },
         });
     });

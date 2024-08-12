@@ -21772,12 +21772,17 @@ br {
   color: white;
   padding: 0.5rem;
   outline: none;
-  width: 60%;
+  width: 100%;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.card-header > div {
+  display: flex;
   align-items: center;
 }
 
@@ -21787,6 +21792,14 @@ br {
 
 .card-footer {
   color: white;
+}
+
+#device-name {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 30vw;
 }
 
 .compact-mode .card {
@@ -21801,7 +21814,6 @@ br {
   flex-direction: row;
   align-items: center;
   align-content: center;
-  justify-content: space-between;
   width: 100%;
 }
 
@@ -21810,8 +21822,7 @@ br {
   flex-direction: column;
   align-items: center;
   flex: 1;
-  margin-right: 20px;
-  max-width: 200px;
+  max-width: 150px;
   text-align: center;
   overflow: hidden;
 }

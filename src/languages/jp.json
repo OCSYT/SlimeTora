@@ -14,12 +14,7 @@
             "slimeVRMissing": "SlimeVRが見つかりません",
             "noConnectionMode": "有効な接続モードがありません",
             "noTrackerModel": "トラッカーモデルが選択されていません",
-            "noComPorts": "COMポートが選択されていません",
-            "autodetect": {
-                "running": "TO CHANGE",
-                "success": "TO CHANGE",
-                "failed": "TO CHANGE" 
-            }
+            "noComPorts": "COMポートが選択されていません"
         }
     },
     "trackerInfo": {
@@ -87,8 +82,7 @@
         "other": {
             "title": "その他の設定",
             "tooltip": "他のカテゴリーに当てはまらないその他の設定。",
-            "trackerVisualizationFPS": "トラッカーモデルのフレームレート",
-            "autodetect": "TO CHANGE"
+            "trackerVisualizationFPS": "トラッカーモデルのフレームレート"
         }
     },
     "trackerSettings": {
@@ -164,20 +158,6 @@
         "noComPorts": {
             "title": "COMポートが選択されていません",
             "message": "アプリケーション設定で、少なくとも1つのCOMポートを選択してください。"
-        },
-        "autodetect": {
-            "pre-check": {
-                "title": "TO CHANGE",
-                "message": "TO CHANGE"
-            },
-            "success": {
-                "title": "TO CHANGE",
-                "message": "TO CHANGE"
-            },
-            "failed": {
-                "title": "TO CHANGE",
-                "message": "TO CHANGE"
-            }
         }
     }
 }

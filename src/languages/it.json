@@ -1,8 +1,6 @@
 {   
     "needs to be completed": "needs to be completed",
 
-
-    
     "main": {
         "connectedTrackers": "Tracker Connessi:",
         "startConnection": "Avvia Connessione",
@@ -98,8 +96,7 @@
             "title": "Altre Impostazioni",
             "tooltip": "Alre impostazioni che non rientrano nelle altre categorie",
             "trackerVisualizationFPS": "Tracker visualization FPS",
-            "saveButton": "Salva",
-            "autodetect": "TO CHANGE"
+            "saveButton": "Salva"
         }
     },
     "about": {
