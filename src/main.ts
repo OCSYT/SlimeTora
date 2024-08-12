@@ -1255,7 +1255,7 @@ function warn(msg: string, where = "main") {
 }
 
 function error(msg: string, where = "main", err?: any) {
-    if (!(err instanceof Error)) {
+    if (err && !(err instanceof Error)) {
         err = new Error(String(err));
     }
     logMessage("error", msg, where, err);

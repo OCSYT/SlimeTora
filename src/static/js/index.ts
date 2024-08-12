@@ -24,6 +24,7 @@ let bypassCOMPortLimit = false;
 let language = "en";
 let censorSerialNumbers = false;
 let trackerVisualization = false;
+let compactView = false;
 let trackerVisualizationFPS = 10;
 let loggingMode = 1;
 
@@ -108,6 +109,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Get settings from config file
     const settings: { [key: string]: any } = await window.ipc.invoke("get-settings", null);
     language = settings.global?.language || "en";
+    compactView = settings.global?.compactMode || false;
     censorSerialNumbers = settings.global?.censorSerialNumbers || false;
     trackerVisualization = settings.global?.trackerVisualization || false;
     trackerVisualizationFPS = settings.global?.trackerVisualizationFPS || 10;
@@ -126,6 +128,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit || false;
 
     // Set switch states based on settings
+    setSwitchState("compact-view-switch", compactView);
     setSwitchState("censor-serial-switch", censorSerialNumbers);
     setSwitchState("visualization-switch", trackerVisualization);
     setSwitchState("wireless-tracker-switch", wirelessTrackerEnabled);
@@ -619,6 +622,7 @@ window.ipc.on("device-data", async (_event: any, arg) => {
         return;
     }
 
+    if (compactView) return;
     updateTrackerData(trackerElement, rotation, gravity);
     sendVisualizationData(trackerName, rawRotation, rawGravity);
 });
@@ -628,6 +632,8 @@ window.ipc.on("device-battery", (_event, arg) => {
     if (!isActive || (!batteryRemaining && batteryRemaining !== 0) || (!batteryVoltage && batteryVoltage !== 0)) return;
 
     if (batteryVoltage > 10) batteryVoltage = batteryVoltage / 1000;
+
+    batteryVoltage = parseFloat(batteryVoltage.toFixed(2));
 
     if (trackerName === "HaritoraXWired") {
         updateAllTrackerBatteries(batteryRemaining, batteryVoltage);
@@ -687,15 +693,49 @@ async function addDeviceToList(deviceID: string) {
     // Create a new div element
     const newDevice = document.createElement("div");
     newDevice.id = deviceID;
-    newDevice.className = "column is-6 is-flex-grow-1";
+    newDevice.className = compactView ? "column is-12 compact-mode" : "column is-6 is-flex-grow-1";
 
     // Check if device has a user-specified name
     const deviceName: string = settings.trackers?.[deviceID]?.name || deviceID;
     if (deviceName !== deviceID) window.log(`Got user-specified name for ${deviceID}: ${deviceName}`);
 
-    // Fill the div with device data
-    newDevice.innerHTML = `
-        <div class="card" id="${deviceID}">
+    // Fill the div with device card data (depending on compactView)
+    newDevice.innerHTML = compactView
+        ? `<div class="card" id="${deviceID}">
+            <div class="card-content is-flex is-align-items-center is-justify-content-space-between">
+                <div>
+                    <p class="has-text-weight-bold" id="device-name">${deviceName}</p>
+                </div>
+                <div>
+                    <button
+                        id="edit-button"
+                        class="button is-info is-small"
+                        data-i18n="trackerInfo.edit"
+                    >
+                        Edit
+                    </button>
+                </div>
+                <div>
+                    <p data-i18n="trackerInfo.battery">Battery:</p>
+                    <span id="battery">N/A</span>
+                </div>
+                <div>
+                    <p data-i18n="trackerInfo.magStatus">Mag status:</p>
+                    <span class="mr-2" id="mag-status"></span>
+                </div>
+                <div>
+                    <button
+                        id="tracker-settings-button"
+                        class="button is-info is-small"
+                        data-i18n="trackerInfo.settings"
+                        onclick="openTrackerSettings('${deviceID}')"
+                    >
+                        Override tracker settings
+                    </button>
+                </div>
+            </div>
+        </div>`
+        : `<div class="card" id="${deviceID}">
             <header class="card-header">
                 <div>
                     <p class="card-header-title is-centered inline-block" data-i18n="trackerInfo.deviceName">
@@ -720,8 +760,7 @@ async function addDeviceToList(deviceID: string) {
                     <button id="tracker-settings-button" data-i18n="trackerInfo.settings" onclick="openTrackerSettings('${deviceID}')" class="button is-info" data-i18n="trackerInfo.settings">Override tracker settings</button>
                 </div>
             </footer>
-        </div>
-        `;
+        </div>`;
 
     const deviceNameElement = newDevice.querySelector("#device-name");
     const deviceIDElement = newDevice.querySelector("#device-id");
@@ -766,18 +805,20 @@ async function addDeviceToList(deviceID: string) {
         }
     }
 
-    if (!editButton || !deviceNameElement || !deviceIDElement) return;
+    if (!editButton || !deviceNameElement) return;
 
     editButton.addEventListener("click", startEditing);
     deviceNameElement.addEventListener("click", startEditing);
 
     // Censor serial if BT tracker and censorSerialNumbers is enabled
-    if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
-        if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraXW-XXXXXX";
-        deviceIDElement.textContent = "HaritoraXW-XXXXXX";
-    } else if (deviceID.startsWith("HaritoraX") && censorSerialNumbers) {
-        if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraX-XXXXXX";
-        deviceIDElement.textContent = "HaritoraX-XXXXXX";
+    if (deviceIDElement) {
+        if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
+            if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraXW-XXXXXX";
+            deviceIDElement.textContent = "HaritoraXW-XXXXXX";
+        } else if (deviceID.startsWith("HaritoraX") && censorSerialNumbers) {
+            if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraX-XXXXXX";
+            deviceIDElement.textContent = "HaritoraX-XXXXXX";
+        }
     }
 
     // Add visualization iframe if enabled
@@ -914,6 +955,16 @@ function addEventListeners() {
     /*
      * "Tracker info" event listeners
      */
+
+    document.getElementById("compact-view-switch").addEventListener("change", function () {
+        compactView = !compactView;
+        window.log(`Switched compact mode: ${compactView}`);
+        window.ipc.send("save-setting", {
+            global: {
+                compactMode: compactView,
+            },
+        });
+    });
 
     document.getElementById("censor-serial-switch").addEventListener("change", function () {
         censorSerialNumbers = !censorSerialNumbers;

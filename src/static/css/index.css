@@ -21662,28 +21662,6 @@ br {
   text-align: left;
 }
 
-.onboarding-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 3rem;
-}
-
-.onboarding-container figure {
-  flex: 1;
-  text-align: center;
-}
-
-.onboarding-container img {
-  width: 100%;
-  height: auto;
-  min-height: 300px;
-}
-
-.onboarding-container .subtitle-container {
-  flex: 2;
-}
-
 .list.has-bullets li {
   margin: 0.75rem;
 }
@@ -21809,6 +21787,50 @@ br {
 
 .card-footer {
   color: white;
+}
+
+.compact-mode .card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  --bulma-card-content-padding: 1.25rem !important;
+}
+
+.compact-mode .card-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-content: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.compact-mode .card-content > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  margin-right: 20px;
+  max-width: 200px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.compact-mode .card-content p {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.compact-mode .card-content span {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .com-port-row {
