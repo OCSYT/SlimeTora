@@ -63,11 +63,11 @@ async function loadConfigSettings(trackerName: string) {
     if (trackerSettings) {
         fpsMode =
             trackerSettings.fpsMode && trackerSettings.fpsMode !== -1
-                ? await getSetting(`trackers.${trackerName}.fpsMode`, trackerSettings.fpsMode || 50)
+                ? await getSetting(`trackers.${trackerName}.fpsMode`, trackerSettings.fpsMode ?? 50)
                 : fpsMode;
         sensorMode =
             trackerSettings.sensorMode && trackerSettings.sensorMode !== -1
-                ? await getSetting(`trackers.${trackerName}.sensorMode`, trackerSettings.sensorMode || 2)
+                ? await getSetting(`trackers.${trackerName}.sensorMode`, trackerSettings.sensorMode ?? 2)
                 : sensorMode;
         accelerometerEnabled = await getSetting(
             `trackers.${trackerName}.accelerometerEnabled`,
@@ -242,11 +242,11 @@ async function resetTrackerSettings() {
 
     window.log(`Old settings: ${JSON.stringify(settings)}`);
 
-    fpsMode = settings.global?.trackers?.fpsMode || 50;
-    sensorMode = settings.global?.trackers?.sensorMode || 2;
-    accelerometerEnabled = settings.global?.trackers?.accelerometerEnabled || false;
-    gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
-    magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled || false;
+    fpsMode = settings.global?.trackers?.fpsMode ?? 50;
+    sensorMode = settings.global?.trackers?.sensorMode ?? 2;
+    accelerometerEnabled = settings.global?.trackers?.accelerometerEnabled ?? false;
+    gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled ?? false;
+    magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled ?? false;
 
     accelerometerSwitch.checked = accelerometerEnabled;
     gyroscopeSwitch.checked = gyroscopeEnabled;

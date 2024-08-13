@@ -40,7 +40,7 @@ let heartbeatInterval = 2000;
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
 let appUpdatesEnabled = true;
-let translationUpdatesEnabled = true;
+let translationsUpdatesEnabled = true;
 let updateChannel = "stable";
 // this variable is literally only used so i can fix a stupid issue where with both BT+COM enabled, it sometimes connects the BT trackers again directly after again, breaking the program
 // why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
@@ -293,16 +293,14 @@ const createWindow = async () => {
             const config: { [key: string]: any } = JSON.parse(data);
 
             // Set configuration variables
-            canLogToFile = config.global?.debug?.canLogToFile || false;
-            wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled || false;
-            wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled || false;
-            appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled || true;
-            translationUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled || true;
-            updateChannel = config.global?.updates?.updateChannel || "stable";
-            heartbeatInterval = config.global?.trackers?.heartbeatInterval || 2000;
-            loggingMode = config.global?.debug?.loggingMode || 1;
-
-            log(`appUpdatesEnabled: ${appUpdatesEnabled}, translationUpdatesEnabled: ${translationUpdatesEnabled}, updateChannel: ${updateChannel}`, "settings");
+            canLogToFile = config.global?.debug?.canLogToFile ?? false;
+            wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
+            wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
+            appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled ?? true;
+            translationsUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled ?? true;
+            updateChannel = config.global?.updates?.updateChannel ?? "stable";
+            heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
+            loggingMode = config.global?.debug?.loggingMode ?? 1;
 
             return true;
         }
@@ -352,7 +350,7 @@ const createWindow = async () => {
         if (firstLaunch) onboarding("en");
 
         if (appUpdatesEnabled) await checkForAppUpdates();
-        if (translationUpdatesEnabled) await checkForTranslationUpdates();
+        if (translationsUpdatesEnabled) await checkForTranslationUpdates();
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {

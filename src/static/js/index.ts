@@ -28,7 +28,7 @@ let compactView = false;
 let trackerVisualizationFPS = 10;
 
 let appUpdatesEnabled = true;
-let translationUpdatesEnabled = true;
+let translationsUpdatesEnabled = true;
 let updateChannel = "stable";
 
 let loggingMode = 1;
@@ -113,27 +113,27 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Get settings from config file
     const settings: { [key: string]: any } = await window.ipc.invoke("get-settings", null);
-    language = settings.global?.language || "en";
-    compactView = settings.global?.compactView || false;
-    censorSerialNumbers = settings.global?.censorSerialNumbers || false;
-    trackerVisualization = settings.global?.trackerVisualization || false;
-    trackerVisualizationFPS = settings.global?.trackerVisualizationFPS || 10;
-    wirelessTrackerEnabled = settings.global?.trackers?.wirelessTrackerEnabled || false;
-    wiredTrackerEnabled = settings.global?.trackers?.wiredTrackerEnabled || false;
-    bluetoothEnabled = settings.global?.connectionMode?.bluetoothEnabled || false;
-    comEnabled = settings.global?.connectionMode?.comEnabled || false;
-    fpsMode = settings.global?.trackers?.fpsMode || 50;
-    sensorMode = settings.global?.trackers?.sensorMode || 2;
-    accelerometerEnabled = settings.global?.trackers?.accelerometerEnabled || true;
-    gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
-    magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled || false;
-    appUpdatesEnabled = settings.global?.updates?.appUpdatesEnabled || true;
-    translationUpdatesEnabled = settings.global?.updates?.translationsUpdatesEnabled || true;
-    updateChannel = settings.global?.updates?.updateChannel || "stable";
-    canLogToFile = settings.global?.debug?.canLogToFile || false;
-    loggingMode = settings.global?.debug?.loggingMode || 1;
-    skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck || false;
-    bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit || false;
+    language = settings.global?.language ?? "en";
+    compactView = settings.global?.compactView ?? false;
+    censorSerialNumbers = settings.global?.censorSerialNumbers ?? false;
+    trackerVisualization = settings.global?.trackerVisualization ?? false;
+    trackerVisualizationFPS = settings.global?.trackerVisualizationFPS ?? 10;
+    wirelessTrackerEnabled = settings.global?.trackers?.wirelessTrackerEnabled ?? false;
+    wiredTrackerEnabled = settings.global?.trackers?.wiredTrackerEnabled ?? false;
+    bluetoothEnabled = settings.global?.connectionMode?.bluetoothEnabled ?? false;
+    comEnabled = settings.global?.connectionMode?.comEnabled ?? false;
+    fpsMode = settings.global?.trackers?.fpsMode ?? 50;
+    sensorMode = settings.global?.trackers?.sensorMode ?? 2;
+    accelerometerEnabled = settings.global?.trackers?.accelerometerEnabled ?? true;
+    gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled ?? false;
+    magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled ?? false;
+    appUpdatesEnabled = settings.global?.updates?.appUpdatesEnabled ?? true;
+    translationsUpdatesEnabled = settings.global?.updates?.translationsUpdatesEnabled ?? true;
+    updateChannel = settings.global?.updates?.updateChannel ?? "stable";
+    canLogToFile = settings.global?.debug?.canLogToFile ?? false;
+    loggingMode = settings.global?.debug?.loggingMode ?? 1;
+    skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck ?? false;
+    bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit ?? false;
 
     // Set switch states based on settings
     setSwitchState("compact-view-switch", compactView);
@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("gyroscope-switch", gyroscopeEnabled);
     setSwitchState("magnetometer-switch", magnetometerEnabled);
     setSwitchState("app-updates-switch", appUpdatesEnabled);
-    setSwitchState("translations-updates-switch", translationUpdatesEnabled);
+    setSwitchState("translations-updates-switch", translationsUpdatesEnabled);
     setSwitchState("log-to-file-switch", canLogToFile);
     setSwitchState("skip-slimevr-switch", skipSlimeVRCheck);
     setSwitchState("bypass-com-limit-switch", bypassCOMPortLimit);
@@ -165,7 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
-    const selectedPorts: string[] = settings.global?.connectionMode?.comPorts || [];
+    const selectedPorts: string[] = settings.global?.connectionMode?.comPorts ?? [];
 
     comPortsSwitches.forEach((port) => {
         if (selectedPorts.includes(port.id)) port.checked = true;
@@ -707,7 +707,7 @@ async function addDeviceToList(deviceID: string) {
     newDevice.className = compactView ? "column is-12 compact-mode" : "column is-6 is-flex-grow-1";
 
     // Check if device has a user-specified name
-    const deviceName: string = settings.trackers?.[deviceID]?.name || deviceID;
+    const deviceName: string = settings.trackers?.[deviceID]?.name ?? deviceID;
     if (deviceName !== deviceID) window.log(`Got user-specified name for ${deviceID}: ${deviceName}`);
 
     // Fill the div with device card data (depending on compactView)
@@ -1020,7 +1020,7 @@ function addEventListeners() {
                 const settings = await window.ipc.invoke("get-settings", null);
                 const deviceNameElement = device.querySelector("#device-name");
                 const deviceIDElement = device.querySelector("#device-id");
-                const originalDeviceName = settings.trackers?.[device.id]?.name || device.id;
+                const originalDeviceName = settings.trackers?.[device.id]?.name ?? device.id;
 
                 if (!deviceNameElement || !deviceIDElement) return;
 
