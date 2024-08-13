@@ -284,28 +284,21 @@ function clearTrackers() {
 
 const createWindow = async () => {
     try {
-        async function loadConfigs() {
-            // Check if the config file is accessible
-            await fs.promises.access(configPath);
+        await fs.promises.access(configPath);
 
-            // Read and parse the config file
-            const data = await fs.promises.readFile(configPath, "utf8");
-            const config: { [key: string]: any } = JSON.parse(data);
+        // Read and parse the config file
+        const data = await fs.promises.readFile(configPath, "utf8");
+        const config: { [key: string]: any } = JSON.parse(data);
 
-            // Set configuration variables
-            canLogToFile = config.global?.debug?.canLogToFile ?? false;
-            wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
-            wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
-            appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled ?? true;
-            translationsUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled ?? true;
-            updateChannel = config.global?.updates?.updateChannel ?? "stable";
-            heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
-            loggingMode = config.global?.debug?.loggingMode ?? 1;
-
-            return true;
-        }
-
-        await loadConfigs();
+        // Set configuration variables
+        canLogToFile = config.global?.debug?.canLogToFile ?? false;
+        wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
+        wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
+        appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled ?? true;
+        translationsUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled ?? true;
+        updateChannel = config.global?.updates?.updateChannel ?? "stable";
+        heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
+        loggingMode = config.global?.debug?.loggingMode ?? 1;
     } catch (err) {
         // If the config file doesn't exist, create it
         log("First launch, creating config file and showing onboarding screen (after load)");
@@ -1020,7 +1013,18 @@ async function processQueue() {
     isProcessingQueue = false;
 }
 
+const trackerTimeouts: { [key: string]: NodeJS.Timeout } = {};
 function startDeviceListeners() {
+    const resetTrackerTimeout = (trackerName: string) => {
+        if (trackerTimeouts[trackerName]) {
+            clearTimeout(trackerTimeouts[trackerName]);
+        }
+        trackerTimeouts[trackerName] = setTimeout(() => {
+            device.emit("disconnect", trackerName);
+            log(`Tracker ${trackerName} assumed disconnected due to inactivity.`);
+        }, 5000);
+    };
+
     device.on("connect", async (deviceID: string) => {
         if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
             return;
@@ -1031,6 +1035,7 @@ function startDeviceListeners() {
         if (!deviceID || !connectedDevices.get(deviceID)) return;
         log(`Disconnected from tracker: ${deviceID}`, "tracker");
 
+        delete trackerTimeouts[deviceID];
         connectedDevices.get(deviceID).deinit();
         connectedDevices.get(deviceID).removeAllListeners();
         connectedDevices.set(deviceID, undefined);
@@ -1110,6 +1115,7 @@ function startDeviceListeners() {
 
         tracker.sendRotationData(0, RotationDataType.NORMAL, quaternion, 0);
         tracker.sendAcceleration(0, gravity);
+        resetTrackerTimeout(trackerName);
 
         mainWindow.webContents.send("device-data", {
             trackerName,
