@@ -26,6 +26,11 @@ let censorSerialNumbers = false;
 let trackerVisualization = false;
 let compactView = false;
 let trackerVisualizationFPS = 10;
+
+let appUpdatesEnabled = true;
+let translationUpdatesEnabled = true;
+let updateChannel = "stable";
+
 let loggingMode = 1;
 
 /*
@@ -122,6 +127,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     accelerometerEnabled = settings.global?.trackers?.accelerometerEnabled || true;
     gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled || false;
     magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled || false;
+    appUpdatesEnabled = settings.global?.updates?.appUpdatesEnabled || true;
+    translationUpdatesEnabled = settings.global?.updates?.translationsUpdatesEnabled || true;
+    updateChannel = settings.global?.updates?.updateChannel || "stable";
     canLogToFile = settings.global?.debug?.canLogToFile || false;
     loggingMode = settings.global?.debug?.loggingMode || 1;
     skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck || false;
@@ -138,6 +146,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("accelerometer-switch", accelerometerEnabled);
     setSwitchState("gyroscope-switch", gyroscopeEnabled);
     setSwitchState("magnetometer-switch", magnetometerEnabled);
+    setSwitchState("app-updates-switch", appUpdatesEnabled);
+    setSwitchState("translations-updates-switch", translationUpdatesEnabled);
     setSwitchState("log-to-file-switch", canLogToFile);
     setSwitchState("skip-slimevr-switch", skipSlimeVRCheck);
     setSwitchState("bypass-com-limit-switch", bypassCOMPortLimit);
@@ -147,6 +157,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSelectValue("sensor-mode-select", sensorMode.toString());
     setSelectValue("language-select", language.toString());
     setSelectValue("logging-mode-select", loggingMode.toString());
+    setSelectValue("update-channel-select", updateChannel.toString());
 
     // Set input values based on settings
     const trackerVisualizationFPSInput = document.getElementById("tracker-visualization-fps") as HTMLInputElement;
@@ -704,7 +715,8 @@ async function addDeviceToList(deviceID: string) {
         ? `<div class="card" id="${deviceID}">
             <div class="card-content is-flex is-align-items-center is-justify-content-space-between">
                 <div>
-                    <p class="has-text-weight-bold" id="device-name">${deviceName}</p>
+                    <p data-i18n="trackerInfo.deviceName">Battery:</p>
+                    <span id="device-name">${deviceName}</span>
                 </div>
                 <div>
                     <button
@@ -1230,6 +1242,46 @@ function addEventListeners() {
         });
 
         unsavedSettings(true);
+    });
+
+    /*
+     * "Update checking" event listeners
+     */
+
+    document.getElementById("app-updates-switch").addEventListener("change", async function () {
+        const appUpdatesEnabled = (document.getElementById("app-updates-switch") as HTMLInputElement).checked;
+        window.log(`Switched app updates to: ${appUpdatesEnabled}`);
+        window.ipc.send("save-setting", {
+            global: {
+                updates: {
+                    appUpdatesEnabled: appUpdatesEnabled,
+                },
+            },
+        });
+    });
+
+    document.getElementById("translations-updates-switch").addEventListener("change", async function () {
+        const translationsUpdatesEnabled = (document.getElementById("translations-updates-switch") as HTMLInputElement).checked;
+        window.log(`Switched translations updates to: ${translationsUpdatesEnabled}`);
+        window.ipc.send("save-setting", {
+            global: {
+                updates: {
+                    translationsUpdatesEnabled: translationsUpdatesEnabled,
+                },
+            },
+        });
+    });
+
+    document.getElementById("update-channel-select").addEventListener("change", async function () {
+        const updateChannel = (document.getElementById("update-channel-select") as HTMLSelectElement).value;
+        window.log(`Selected update channel: ${updateChannel}`);
+        window.ipc.send("save-setting", {
+            global: {
+                updates: {
+                    updateChannel: updateChannel,
+                },
+            },
+        });
     });
 
     /*

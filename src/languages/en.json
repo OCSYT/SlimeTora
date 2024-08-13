@@ -3,6 +3,7 @@
         "connectedTrackers": "Connected trackers:",
         "startConnection": "Start connection",
         "stopConnection": "Stop connection",
+        "onboarding": "Open onboarding",
         "status": {
             "statusText": "Status:",
             "none": "N/A",
@@ -12,9 +13,9 @@
             "connected": "connected",
             "comPortsMissing": "COM ports missing",
             "slimeVRMissing": "SlimeVR not found",
-            "noConnectionMode": "No connection mode enabled",
-            "noTrackerModel": "No tracker model selected",
-            "noComPorts": "No COM ports selected",
+            "noConnectionMode": "no connection mode enabled",
+            "noTrackerModel": "no tracker model selected",
+            "noComPorts": "no COM ports selected",
             "autodetect": {
                 "running": "running auto-detection...",
                 "success": "auto-detection complete",
@@ -88,8 +89,18 @@
         "other": {
             "title": "Other settings",
             "tooltip": "Other settings for the program that don't fit in the other categories.",
-            "trackerVisualizationFPS": "Tracker visualization FPS",
-            "onboarding": "Reopen onboarding screen"
+            "trackerVisualizationFPS": "Tracker visualization FPS"
+        },
+        "updates": {
+            "title": "Update checking",
+            "tooltip": "Modify the settings used when checking for updates on program startup.",
+            "app": "App updates",
+            "translations": "Translation updates",
+            "channel": {
+                "title": "Update channel",
+                "stable": "Stable",
+                "beta": "Beta"
+            }
         }
     },
     "trackerSettings": {

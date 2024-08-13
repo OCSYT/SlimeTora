@@ -39,6 +39,9 @@ let foundSlimeVR = false;
 let heartbeatInterval = 2000;
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
+let appUpdatesEnabled = true;
+let translationUpdatesEnabled = true;
+let updateChannel = "stable";
 // this variable is literally only used so i can fix a stupid issue where with both BT+COM enabled, it sometimes connects the BT trackers again directly after again, breaking the program
 // why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
 // -jovannmc
@@ -74,31 +77,67 @@ async function translate(key: string) {
  * Update checking
  */
 
+// TODO: check if this actually works guh (check if v1.2.0-beta2 is detected as newer than v1.2.0-beta1 and stuff mfkasdk)
 async function getLatestRelease() {
     log("Fetching the latest release from GitHub...", "updater");
-    const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/releases/latest");
+    const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/releases");
     if (!response.ok) {
-        warn(`Failed to fetch latest release: ${response.statusText}`, "updater");
-        throw new Error("Failed to fetch latest release");
+        warn(`Failed to fetch releases: ${response.statusText}`, "updater");
+        throw new Error("Failed to fetch releases");
     }
-    const release = await response.json();
-    log(`Fetched latest release: ${release.tag_name}`, "updater");
-    return release.tag_name;
+    const releases = await response.json();
+
+    let latestRelease;
+    if (updateChannel === "stable") {
+        latestRelease = releases.find((release: { prerelease: any }) => !release.prerelease);
+    } else if (updateChannel === "beta") {
+        latestRelease = releases.find((release: { prerelease: any }) => release.prerelease);
+    }
+
+    if (!latestRelease) {
+        warn(`No suitable release found for update channel: ${updateChannel}`, "updater");
+        throw new Error("No suitable release found");
+    }
+
+    log(`Fetched latest ${updateChannel} release: ${latestRelease.tag_name}`, "updater");
+    return latestRelease.tag_name;
 }
 
 function isNewerVersion(latestVersion: string, currentVersion: string): boolean {
-    const latest = latestVersion.replace(/^v/, "").split(".").map(Number);
-    const current = currentVersion.replace(/^v/, "").split(".").map(Number);
+    const parseVersion = (version: string) => {
+        const [main, pre] = version.replace(/^v/, "").split("-");
+        const mainParts = main.split(".").map(Number);
+        const preParts: any[] | RegExpMatchArray = pre ? pre.match(/\d+|\D+/g) : [];
+        return { mainParts, preParts };
+    };
 
-    for (let i = 0; i < latest.length; i++) {
-        if (latest[i] > current[i]) {
+    const latest = parseVersion(latestVersion);
+    const current = parseVersion(currentVersion);
+
+    for (let i = 0; i < latest.mainParts.length; i++) {
+        if (latest.mainParts[i] > current.mainParts[i]) {
             return true;
         }
-        if (latest[i] < current[i]) {
+        if (latest.mainParts[i] < current.mainParts[i]) {
             return false;
         }
     }
-    log("The versions are identical.", "updater");
+
+    // Compare pre-release version (-betaX) part if main part (vx.y.z) is identical
+    // tbh idk how this works, but it does so thanks copilot
+    for (let i = 0; i < Math.max(latest.preParts.length, current.preParts.length); i++) {
+        if (latest.preParts[i] === undefined) return false;
+        if (current.preParts[i] === undefined) return true;
+        if (isNaN(Number(latest.preParts[i])) || isNaN(Number(current.preParts[i]))) {
+            if (latest.preParts[i] > current.preParts[i]) return true;
+            if (latest.preParts[i] < current.preParts[i]) return false;
+        } else {
+            if (Number(latest.preParts[i]) > Number(current.preParts[i])) return true;
+            if (Number(latest.preParts[i]) < Number(current.preParts[i])) return false;
+        }
+    }
+
+    log("The versions are identical or newer.", "updater");
     return false;
 }
 
@@ -107,14 +146,23 @@ async function checkForAppUpdates() {
         log("Checking for updates...", "updater");
         const latestVersion = await getLatestRelease();
         const currentVersion = app.getVersion();
-        log(`Latest version: ${latestVersion}, current version: ${currentVersion}`, "updater");
+        let versionType = "stable";
+
+        if (currentVersion.includes("beta")) {
+            versionType = "beta";
+        }
+
+        log(
+            `Latest ${versionType} version: ${latestVersion}, current ${versionType} version: ${currentVersion}`,
+            "updater"
+        );
         if (isNewerVersion(latestVersion, currentVersion)) {
             log("Update available, notifying user...", "updater");
             const response = await dialog.showMessageBox({
                 type: "info",
                 buttons: ["Download", "Cancel"],
                 title: "Update available",
-                message: `A new version (${latestVersion}) of SlimeTora is available.`,
+                message: `A new ${versionType} version (${latestVersion}) of SlimeTora is available.`,
                 detail: "Please visit the GitHub releases page to download the latest version.",
             });
             if (response.response === 0) {
@@ -236,19 +284,30 @@ function clearTrackers() {
 
 const createWindow = async () => {
     try {
-        // Check if the config file is accessible
-        await fs.promises.access(configPath);
+        async function loadConfigs() {
+            // Check if the config file is accessible
+            await fs.promises.access(configPath);
 
-        // Read and parse the config file
-        const data = await fs.promises.readFile(configPath, "utf8");
-        const config: { [key: string]: any } = JSON.parse(data);
+            // Read and parse the config file
+            const data = await fs.promises.readFile(configPath, "utf8");
+            const config: { [key: string]: any } = JSON.parse(data);
 
-        // Set configuration variables
-        canLogToFile = config.global?.debug?.canLogToFile || false;
-        wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled || false;
-        wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled || false;
-        heartbeatInterval = config.global?.trackers?.heartbeatInterval || 2000;
-        loggingMode = config.global?.debug?.loggingMode || 1;
+            // Set configuration variables
+            canLogToFile = config.global?.debug?.canLogToFile || false;
+            wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled || false;
+            wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled || false;
+            appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled || true;
+            translationUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled || true;
+            updateChannel = config.global?.updates?.updateChannel || "stable";
+            heartbeatInterval = config.global?.trackers?.heartbeatInterval || 2000;
+            loggingMode = config.global?.debug?.loggingMode || 1;
+
+            log(`appUpdatesEnabled: ${appUpdatesEnabled}, translationUpdatesEnabled: ${translationUpdatesEnabled}, updateChannel: ${updateChannel}`, "settings");
+
+            return true;
+        }
+
+        await loadConfigs();
     } catch (err) {
         // If the config file doesn't exist, create it
         log("First launch, creating config file and showing onboarding screen (after load)");
@@ -292,8 +351,8 @@ const createWindow = async () => {
 
         if (firstLaunch) onboarding("en");
 
-        await checkForAppUpdates();
-        await checkForTranslationUpdates();
+        if (appUpdatesEnabled) await checkForAppUpdates();
+        if (translationUpdatesEnabled) await checkForTranslationUpdates();
     });
 
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {

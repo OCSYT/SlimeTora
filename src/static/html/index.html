@@ -68,6 +68,16 @@
                         Stop connection
                     </button>
                 </div>
+                <div class="buttons is-centered">
+                    <button
+                        class="button is-info"
+                        id="onboarding-button"
+                        onclick="showOnboarding()"
+                        data-i18n="main.onboarding"
+                    >
+                        Open onboarding
+                    </button>
+                </div>
                 <br />
                 <div class="title is-3 has-text-centered">
                     <h2 class="has-text-weight-medium inline-block" data-i18n="main.status.statusText">Status:</h2>
@@ -99,7 +109,7 @@
                             <input type="checkbox" id="compact-view-switch" />
                             <label for="compact-view-switch" class="slider round"></label>
                         </div>
-                        <label for="compact-view-switch" data-i18n="trackerInfo.compactView"
+                        <label for="compact-view-switch" class="has-text-warning" data-i18n="trackerInfo.compactView"
                             >Compact view</label
                         >
                     </div>
@@ -280,20 +290,10 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="programSettings.other.tooltip"
+                                    data-i18n="programSettings.updates.tooltip"
                                     >Some other settings that don't fit in the other categories.</span
                                 >
                             </div>
-                        </div>
-                        <div class="buttons is-centered">
-                            <button
-                                class="button is-primary"
-                                id="onboarding-button"
-                                onclick="showOnboarding()"
-                                data-i18n="programSettings.other.onboarding"
-                            >
-                                Reopen onboarding screen
-                            </button>
                         </div>
                         <div class="input-container is-centered">
                             <label
@@ -309,6 +309,68 @@
                                 class="input"
                                 style="max-width: 30%"
                             />
+                        </div>
+                    </div>
+
+                    <div class="column is-12">
+                        <div class="with-tooltip">
+                            <h3 class="title is-4 is-spaced" data-i18n="programSettings.updates.title">
+                                Update checking
+                            </h3>
+                            <div class="tooltip-container">
+                                <div class="icon">
+                                    <img src="../images/help.svg" alt="Help icon" />
+                                </div>
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="programSettings.updates.tooltip"
+                                    >Modify the settings used when checking for updates on program startup.</span
+                                >
+                            </div>
+                        </div>
+                        <div class="vertical-settings-container is-centered">
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input type="checkbox" id="app-updates-switch" />
+                                    <label for="app-updates-switch" class="slider round"></label>
+                                </div>
+                                <label
+                                    for="app-updates-switch"
+                                    data-i18n="programSettings.updates.app"
+                                    style="min-width: 110px"
+                                    >App updates</label
+                                >
+                            </div>
+                            <div class="input-container is-centered has-text-centered">
+                                <label
+                                    for="update-channel-select"
+                                    class="label has-text-warning"
+                                    data-i18n="programSettings.updates.channel.title"
+                                    >Update channel</label
+                                >
+                                <div class="select">
+                                    <select id="update-channel-select">
+                                        <option value="stable" data-i18n="programSettings.updates.channel.stable">
+                                            Stable
+                                        </option>
+                                        <option value="beta" data-i18n="programSettings.updates.channel.beta">
+                                            Beta
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input type="checkbox" id="translations-updates-switch" />
+                                    <label for="translations-updates-switch" class="slider round"></label>
+                                </div>
+                                <label
+                                    for="translations-updates-switch"
+                                    data-i18n="programSettings.updates.translations"
+                                    style="min-width: 110px"
+                                    >Translations</label
+                                >
+                            </div>
                         </div>
                     </div>
                 </div>
