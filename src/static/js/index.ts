@@ -3,6 +3,7 @@
  */
 
 let isActive = false;
+let refreshingDeviceList = false;
 
 let bluetoothEnabled = false;
 let comEnabled = false;
@@ -625,7 +626,7 @@ window.ipc.on("device-connected-to-server", (_event, deviceID) => {
 window.ipc.on("device-data", async (_event: any, arg) => {
     const { trackerName, rotation, gravity, rawRotation, rawGravity } = arg;
 
-    if (!isActive) return;
+    if (!isActive || refreshingDeviceList) return;
 
     const trackerElement = document.getElementById(trackerName);
     if (!trackerElement) {
@@ -964,6 +965,22 @@ window.ipc.on("set-status", (_event, msg) => {
 });
 
 function addEventListeners() {
+    function refreshDeviceList() {
+        refreshingDeviceList = true;
+
+        document.getElementById("device-list").textContent = "";
+        deviceQueue.length = 0;
+
+        const devices = document.querySelectorAll(".card");
+        devices.forEach((device) => {
+            deviceQueue.push(device.id);
+        });
+
+        processQueue().then(() => {
+            refreshingDeviceList = false;
+        });
+    }
+
     /*
      * "Tracker info" event listeners
      */
@@ -976,6 +993,8 @@ function addEventListeners() {
                 compactView: compactView,
             },
         });
+
+        refreshDeviceList();
     });
 
     document.getElementById("censor-serial-switch").addEventListener("change", function () {
@@ -1038,6 +1057,8 @@ function addEventListeners() {
                 trackerVisualization: trackerVisualization,
             },
         });
+
+        refreshDeviceList();
     });
 
     /*

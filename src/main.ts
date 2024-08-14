@@ -1021,7 +1021,7 @@ function startDeviceListeners() {
         }
         trackerTimeouts[trackerName] = setTimeout(() => {
             device.emit("disconnect", trackerName);
-            log(`Tracker ${trackerName} assumed disconnected due to inactivity.`);
+            log(`Tracker ${trackerName} assumed disconnected due to inactivity.`, "tracker");
         }, 5000);
     };
 
