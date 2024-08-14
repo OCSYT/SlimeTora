@@ -285,11 +285,15 @@ function clearTrackers() {
 const createWindow = async () => {
     try {
         await fs.promises.access(configPath);
-
+    
         // Read and parse the config file
         const data = await fs.promises.readFile(configPath, "utf8");
+    
+        // Check if the config file is empty (contains only "{}")
+        if (data.trim() === "{}") throw new Error;
+    
         const config: { [key: string]: any } = JSON.parse(data);
-
+    
         // Set configuration variables
         canLogToFile = config.global?.debug?.canLogToFile ?? false;
         wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
@@ -300,7 +304,7 @@ const createWindow = async () => {
         heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
         loggingMode = config.global?.debug?.loggingMode ?? 1;
     } catch (err) {
-        // If the config file doesn't exist, create it
+        // If the config file doesn't exist or is empty, create it
         log("First launch, creating config file and showing onboarding screen (after load)");
         await fs.promises.writeFile(configPath, "{}");
         firstLaunch = true;
@@ -737,6 +741,13 @@ ipcMain.on("stop-connection", () => {
     stopConnectionIfActive("com");
 
     clearTrackers();
+    
+    // Clear all timeouts
+    for (const key in trackerTimeouts) {
+        if (trackerTimeouts.hasOwnProperty(key)) {
+            clearTimeout(trackerTimeouts[key]);
+        }
+    }
 
     connectionActive = false;
 });

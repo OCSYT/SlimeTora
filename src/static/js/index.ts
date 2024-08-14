@@ -969,6 +969,7 @@ function addEventListeners() {
         refreshingDeviceList = true;
 
         document.getElementById("device-list").textContent = "";
+        document.getElementById("tracker-count").textContent = "0";
         deviceQueue.length = 0;
 
         const devices = document.querySelectorAll(".card");
