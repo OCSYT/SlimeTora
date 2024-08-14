@@ -55,12 +55,21 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 -   Battery information jumps to incorrect percentages/voltage randomly
     -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers themselves.
     -   This has been slightly mitigated with [v1.2.0-beta2](https://github.com/OCSYT/SlimeTora/releases/v1.2.0-beta2), which uses a "stable average" of the battery percentage and voltage instead.
--   **(v1.2.0-beta2)** "Auto-detect settings" assumes anyone with "HaritoraX Wireless" and "GX6" uses elbows, thus enabling "Bluetooth" even if the user does not have/use elbows
--   **(v1.2.0-beta2)** (?) Program may not launch correctly - actions in the app stop working until a restart
-    -   Seems to be some sort of asynchronous issue again with the languages (which I have no idea why happens, because this issue should literally not exist)
+-   **(v1.2.0-beta3)** Running "auto-detection" more than once without restarting breaks tracker settings detection
 
 # Documentation & Getting Started
 
 Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
 For support, join the Discord server: https://discord.gg/XdfnKD9QVM
+
+# Support the project
+
+Love SlimeTora? You can show your support to the developers of SlimeTora through their Ko-Fi links, check them out!
+
+-   JovannMC - https://ko-fi.com/JovannMC
+-   BracketProto (OCSYT) - https://ko-fi.com/bracketproto
+
+### Special thanks to the project's supporters:
+
+- LuzianVR - https://www.instagram.com/luzianvr/
