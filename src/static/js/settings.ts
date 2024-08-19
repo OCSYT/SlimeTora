@@ -227,7 +227,7 @@ async function saveTrackerSettings() {
         sensorAutoCorrection: sensorAutoCorrection,
     });
 
-    window.log(`Saved settings for ${trackerName}`);
+    window.log(`Saved settings for: ${trackerName}`);
 }
 
 async function resetTrackerSettings() {
@@ -240,7 +240,7 @@ async function resetTrackerSettings() {
     // Grab the global settings from config file and set the values
     const settings: { [key: string]: any } = await window.ipc.invoke("get-settings", null);
 
-    window.log(`Old settings: ${JSON.stringify(settings)}`);
+    window.log(`Old settings for "${trackerName}": ${JSON.stringify(settings)}`);
 
     fpsMode = settings.global?.trackers?.fpsMode ?? 50;
     sensorMode = settings.global?.trackers?.sensorMode ?? 2;
@@ -254,7 +254,7 @@ async function resetTrackerSettings() {
     fpsSelect.value = fpsMode.toString();
     sensorModeSelect.value = sensorMode.toString();
 
-    window.log(`New settings: ${JSON.stringify(settings)}`);
+    window.log(`New settings for "${trackerName}": ${JSON.stringify(settings)}`);
 
     let sensorAutoCorrection: string[] = [];
     if (accelerometerEnabled) sensorAutoCorrection.push("accel");
@@ -268,7 +268,7 @@ async function resetTrackerSettings() {
         sensorAutoCorrection: sensorAutoCorrection,
     });
 
-    window.log(`Reset settings for ${trackerName} to default`);
+    window.log(`Reset settings for "${trackerName}" to default`);
 }
 
 async function getTrackerSettings() {
@@ -280,9 +280,9 @@ async function getTrackerSettings() {
     const sensorAutoCorrection = currentSettings.sensorAutoCorrection;
     const ankleMotionDetection = currentSettings.ankleMotionDetection;
 
-    window.log(`Current settings for ${trackerName}: ${JSON.stringify(currentSettings)}`);
+    window.log(`Current settings for "${trackerName}": ${JSON.stringify(currentSettings)}`);
     window.ipc.invoke("show-message", {
-        title: `Current settings for ${trackerName}`,
+        title: `Current settings for "${trackerName}"`,
         message: `Sensor Mode: ${sensorMode} \nFPS Mode: ${fpsMode} \nSensor Auto Correction: ${sensorAutoCorrection.join(
             ", "
         )} \nAnkle Motion Detection: ${ankleMotionDetection}`,
@@ -305,7 +305,7 @@ function unsavedSettings(unsaved: boolean) {
 
 async function getSetting(key: string, defaultValue: any) {
     const exists = await window.ipc.invoke("has-setting", key);
-    window.log(`Setting ${key} exists: ${exists}`);
+    window.log(`Setting "${key}" exists with value: ${exists}`);
     return exists ? await window.ipc.invoke("get-setting", key) : defaultValue;
 }
 
@@ -313,4 +313,5 @@ window.saveTrackerSettings = saveTrackerSettings;
 window.getTrackerSettings = getTrackerSettings;
 window.resetTrackerSettings = resetTrackerSettings;
 
+// Required to prevent variable conflicts from other files
 export {};

@@ -258,13 +258,6 @@ async function autodetect() {
     let detectedTrackerModel = "";
     let detectedConnectionModes: string[] = [];
 
-    function simulateChangeEvent(element: HTMLInputElement, value: boolean) {
-        if (element.checked === value) return;
-        element.checked = value;
-        element.dispatchEvent(new Event("change"));
-        window.log(`${value ? "Enabling" : "Disabling"} element ${element.id}`, "detect");
-    }
-
     async function handleComPorts(deviceName: string) {
         const comPorts: string[] = await window.ipc.invoke("get-com-ports", deviceName);
         selectedComPorts.length = 0;
@@ -278,8 +271,8 @@ async function autodetect() {
         );
         comPortsParent.dispatchEvent(new Event("change")); // simulate it here again since the actual code for handling COM port changes is in the parent element
 
-        window.log(`Found device ${deviceName}`, "detect");
-        window.log(`COM ports for device ${deviceName}: ${comPorts}`, "detect");
+        window.log(`Found device: ${deviceName}`, "detect");
+        window.log(`COM ports for device "${deviceName}": ${comPorts}`, "detect");
     }
 
     const deviceHandlers: { [key: string]: () => Promise<void> } = {
@@ -564,7 +557,7 @@ function unsavedSettings(unsaved: boolean) {
 window.ipc.on("connect", async (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
-    window.log(`Connected to ${deviceID}`, "tracker");
+    window.log(`Connected to "${deviceID}"`, "tracker");
 
     if (!deviceQueue.includes(deviceID)) deviceQueue.push(deviceID);
     await processQueue();
@@ -575,7 +568,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     const settings = await window.ipc.invoke("get-settings", null);
     const exists = settings.trackers?.[deviceID].fpsMode !== undefined;
-    window.log(`Tracker settings for ${deviceID} exists: ${exists}`, "tracker");
+    window.log(`Tracker settings for "${deviceID}" exists: ${exists}`, "tracker");
 
     let trackerSettings = undefined;
     if (exists) {
@@ -607,7 +600,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
         return;
     }
 
-    window.log(`Disconnected from ${deviceID}`, "tracker");
+    window.log(`Disconnected from "${deviceID}"`, "tracker");
     document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").textContent = (
         parseInt(document.getElementById("tracker-count").textContent) - 1
@@ -713,7 +706,7 @@ async function addDeviceToList(deviceID: string) {
 
     // Check if device has a user-specified name
     const deviceName: string = settings.trackers?.[deviceID]?.name ?? deviceID;
-    if (deviceName !== deviceID) window.log(`Got user-specified name for ${deviceID}: ${deviceName}`);
+    if (deviceName !== deviceID) window.log(`Got user-specified name for "${deviceID}": ${deviceName}`);
 
     // Fill the div with device card data (depending on compactView)
     newDevice.innerHTML = compactView
@@ -890,7 +883,7 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
     }
 
     window.log(
-        `Set sensor auto correction for ${deviceID} to: ${Array.from(sensorAutoCorrection).join(",")}`,
+        `Set sensor auto correction for "${deviceID}" to: ${Array.from(sensorAutoCorrection).join(",")}`,
         "tracker"
     );
 
@@ -966,6 +959,10 @@ window.ipc.on("version", (_event, version) => {
 
 window.ipc.on("set-status", (_event, msg) => {
     setStatus(msg);
+});
+
+window.ipc.on("set-switch", (_event, { id, state }) => {
+    simulateChangeEvent(document.getElementById(id) as HTMLInputElement, state);
 });
 
 function addEventListeners() {
@@ -1471,6 +1468,13 @@ function saveSettings() {
     window.log("Settings saved");
 }
 
+function simulateChangeEvent(element: HTMLInputElement, value: boolean) {
+    if (element.checked === value) return;
+    element.checked = value;
+    element.dispatchEvent(new Event("change"));
+    window.log(`${value ? "Enabling" : "Disabling"} element "${element.id}"`);
+}
+
 /*
  * Export functions to window
  */
@@ -1481,7 +1485,7 @@ window.showOnboarding = showOnboarding;
 window.saveSettings = saveSettings;
 
 window.openTrackerSettings = async (deviceID: string) => {
-    window.log(`Opening tracker settings for ${deviceID}`);
+    window.log(`Opening tracker settings for "${deviceID}"`);
     window.ipc.send("open-tracker-settings", deviceID);
 };
 

@@ -57,7 +57,7 @@ let comPorts = await Binding.list();
 async function loadTranslations() {
     const files = await fs.promises.readdir(languagesPath);
     const resources: any = {};
-    log(`Loading translations from ${languagesPath}`, "i18n");
+    log(`Loading translations from "${languagesPath}"`, "i18n");
 
     for (const file of files) {
         const lang = path.basename(file, ".json");
@@ -98,7 +98,7 @@ async function getLatestRelease() {
         throw new Error("No suitable release found");
     }
 
-    log(`Fetched latest ${updateChannel} release: ${latestRelease.tag_name}`, "updater");
+    log(`Fetched latest "${updateChannel}" release: ${latestRelease.tag_name}`, "updater");
     return latestRelease.tag_name;
 }
 
@@ -152,7 +152,7 @@ async function checkForAppUpdates() {
         }
 
         log(
-            `Latest ${versionType} version: ${latestVersion}, current ${versionType} version: ${currentVersion}`,
+            `Latest "${versionType}" version: ${latestVersion}, current "${versionType}" version: ${currentVersion}`,
             "updater"
         );
         if (isNewerVersion(latestVersion, currentVersion)) {
@@ -192,12 +192,12 @@ async function downloadTranslationUpdates(updates: any[]) {
         log(`Downloading ${file.name}...`, "updater");
         const response = await fetch(file.download_url);
         if (!response.ok) {
-            warn(`Failed to download ${file.name}: ${response.statusText}`, "updater");
-            throw new Error(`Failed to download ${file.name}`);
+            warn(`Failed to download "${file.name}": ${response.statusText}`, "updater");
+            throw new Error(`Failed to download "${file.name}"`);
         }
         const content = await response.text();
         fs.writeFileSync(path.join(languagesPath, file.name), content);
-        log(`Downloaded and saved ${file.name} to ${languagesPath}`, "updater");
+        log(`Downloaded and saved "${file.name}" to: ${languagesPath}`, "updater");
     }
 }
 
@@ -224,11 +224,11 @@ async function checkForTranslationUpdates() {
             const localContentSize = Buffer.byteLength(localContent, "utf-8");
 
             log(
-                `Comparing ${remoteFile.name} - local size: ${localContentSize}, remote size: ${remoteFile.size}`,
+                `Comparing "${remoteFile.name}" - local size: ${localContentSize}, remote size: ${remoteFile.size}`,
                 "updater"
             );
             if (remoteFile.size !== localContentSize) {
-                log(`Update available for ${remoteFile.name}`, "updater");
+                log(`Update available for "${remoteFile.name}"`, "updater");
                 updates.push(remoteFile);
             }
         }
@@ -334,6 +334,7 @@ const createWindow = async () => {
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", resources);
         mainWindow.webContents.send("version", app.getVersion());
+        mainWindow.webContents.send("set-switch", { id: "accelerometer-switch", state: true });
 
         // Don't show the menu bar for performance if not on development mode and if loggingMode is 1 (this disables the dev tools though)
         if (!process.env.DEVELOPMENT && app.isPackaged && loggingMode === 1) {
@@ -628,9 +629,9 @@ ipcMain.handle("autodetect", async () => {
         }, 5000);
 
         device.once("connect", async (deviceID: string, connectionMode: string) => {
-            log(`Connected to tracker ${deviceID} via ${connectionMode}, getting settings...`, "detect");
+            log(`Connected to tracker "${deviceID}" via "${connectionMode}", getting settings...`, "detect");
             const trackerSettings = await device.getTrackerSettings(deviceID, true);
-            log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`, "detect");
+            log(`Got tracker settings for "${deviceID}": ${JSON.stringify(trackerSettings)}`, "detect");
 
             clearTimeout(trackerSettingsTimeout);
 
@@ -873,7 +874,7 @@ import * as _ from "lodash-es";
 function saveSetting(data: { [key: string]: any }) {
     const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
-    // Use lodash's mergeWith to merge the new data with the existing config (not merge as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
+    // Use lodash's mergeWith() to merge the new data with the existing config (not merge() as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
     const mergedConfig = _.mergeWith(config, data, (objValue: any, srcValue: any) => {
         if (_.isArray(objValue)) {
             return srcValue;
@@ -929,6 +930,7 @@ import { EmulatedTracker } from "@slimevr/tracker-emulation";
 import BetterQuaternion from "quaternion";
 
 // For haritorax-interpreter
+// Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
 enum ErrorType {
     IMUProcessError = "Error decoding IMU packet",
     MagProcessError = "Error processing mag data",
@@ -948,7 +950,6 @@ enum ErrorType {
 
     TrackerSettingsWriteError = "Error sending tracker settings",
     ConnectionStartError = "Opening COM",
-    // TODO: add more error types
 }
 
 const lastErrorShownTime: Record<ErrorType, number> = {
@@ -1009,7 +1010,7 @@ async function processQueue() {
 
         // Set the MAC address in the config
         saveSetting({ trackers: { [trackerName]: { macAddress } } });
-        log(`Set MAC address for ${trackerName} to ${macAddress}`, "tracker");
+        log(`Set MAC address for "${trackerName}" to: ${macAddress}`, "tracker");
 
         connectedDevices.set(trackerName, newTracker);
 
@@ -1036,7 +1037,7 @@ function startDeviceListeners() {
         }
         trackerTimeouts[trackerName] = setTimeout(() => {
             device.emit("disconnect", trackerName);
-            log(`Tracker ${trackerName} assumed disconnected due to inactivity.`, "tracker");
+            log(`Tracker "${trackerName}" assumed disconnected due to inactivity.`, "tracker");
         }, 5000);
     };
 
@@ -1080,16 +1081,16 @@ function startDeviceListeners() {
 
         clickTimeouts[key] = setTimeout(() => {
             if (clickCounts[key] === 1) {
-                log(`Single click ${buttonPressed} button from ${trackerName}`, "tracker");
+                log(`Single click ${buttonPressed} button from tracker "${trackerName}"`, "tracker");
                 heartbeatTracker.sendUserAction(UserAction.RESET_YAW);
             } else if (clickCounts[key] === 2) {
-                log(`Double click ${buttonPressed} button from ${trackerName}`, "tracker");
+                log(`Double click ${buttonPressed} button from tracker "${trackerName}"`, "tracker");
                 heartbeatTracker.sendUserAction(UserAction.RESET_FULL);
             } else if (clickCounts[key] === 3) {
-                log(`Triple click ${buttonPressed} button from ${trackerName}`, "tracker");
+                log(`Triple click ${buttonPressed} button from tracker "${trackerName}"`, "tracker");
                 heartbeatTracker.sendUserAction(UserAction.RESET_MOUNTING);
             } else {
-                log(`Four click ${buttonPressed} button from ${trackerName}`, "tracker");
+                log(`Four click ${buttonPressed} button from tracker "${trackerName}"`, "tracker");
                 heartbeatTracker.sendUserAction(UserAction.PAUSE_TRACKING);
             }
 
@@ -1204,10 +1205,15 @@ function startDeviceListeners() {
 
     device.on("error", (msg: string, exceptional: boolean) => {
         if (exceptional) {
-            if (msg.includes(ErrorType.ConnectionStartError)) {
-                handleError(msg, ErrorType.ConnectionStartError, handleConnectionStartError);
+            switch (true) {
+                case msg.includes(ErrorType.ConnectionStartError):
+                    handleError(msg, ErrorType.ConnectionStartError, handleConnectionStartError);
+                    break;
+                default:
+                    warn("Unhandled error type received from haritorax-interpreter");
+                    error(msg, "haritorax-interpreter");
+                    break;
             }
-
             // TODO: add more error handling
         } else {
             error(msg, "haritorax-interpreter");
@@ -1244,15 +1250,15 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
         (isHeartbeat ? "(HEARTBEAT)" : undefined);
 
     tracker.on("ready", () => {
-        log(`Tracker ${trackerName} is ready to search for SlimeVR server...`, "@slimevr/emulated-tracker");
+        log(`Tracker "${trackerName}" is ready to search for SlimeVR server...`, "@slimevr/emulated-tracker");
     });
 
     tracker.on("searching-for-server", () => {
-        log(`Tracker ${trackerName} is searching for SlimeVR server...`, "@slimevr/emulated-tracker");
+        log(`Tracker "${trackerName}" is searching for SlimeVR server...`, "@slimevr/emulated-tracker");
     });
 
     tracker.on("connected-to-server", (ip: string, port: number) => {
-        log(`Tracker ${trackerName} connected to SlimeVR server on ${ip}:${port}`, "@slimevr/emulated-tracker");
+        log(`Tracker "${trackerName}" connected to SlimeVR server on ${ip}:${port}`, "@slimevr/emulated-tracker");
         mainWindow.webContents.send("device-connected-to-server", trackerName);
 
         tracker.sendTemperature(0, 420.69);
@@ -1263,24 +1269,24 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
     });
 
     tracker.on("disconnected-from-server", (reason) => {
-        log(`Tracker ${trackerName} disconnected from SlimeVR server due to: ${reason}`, "@slimevr/emulated-tracker");
+        log(`Tracker "${trackerName}" disconnected from SlimeVR server due to: ${reason}`, "@slimevr/emulated-tracker");
     });
 
     tracker.on("error", (err) => {
-        error(`Tracker ${trackerName} error`, "@slimevr/emulated-tracker", err);
+        error(`Tracker "${trackerName}" error`, "@slimevr/emulated-tracker", err);
     });
 
     tracker.on("unknown-incoming-packet", (packet: any) => {
-        warn(`Tracker ${trackerName} unknown packet type ${packet.type}`, "@slimevr/emulated-tracker");
+        warn(`Tracker "${trackerName}" unknown packet type: ${packet.type}`, "@slimevr/emulated-tracker");
     });
 
     tracker.on("unknown-incoming-packet", (buf: Buffer) =>
-        warn(`Tracker ${trackerName} unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker")
+        warn(`Tracker "${trackerName}" unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker")
     );
 
     if (loggingMode === 3) {
         tracker.on("outgoing-packet", (packet: any) => {
-            log(`Tracker ${trackerName} outgoing packet: ${packet}`, "@slimevr/emulated-tracker");
+            log(`Tracker "${trackerName}" outgoing packet: ${packet}`, "@slimevr/emulated-tracker");
         });
     }
 }
@@ -1353,7 +1359,7 @@ async function logToFile(logPath: PathLike, message: string) {
     try {
         await fs.promises.appendFile(logPath, message);
     } catch (err) {
-        error(`Error logging to file`, "main", err);
+        error(`Error logging to file "${logPath}"`, "main", err);
     }
 }
 

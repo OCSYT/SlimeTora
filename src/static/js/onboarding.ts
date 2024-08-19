@@ -8,7 +8,7 @@ class Onboarding {
         this.steps = config.steps.map((step) => {
             const element = document.getElementById(step.id) as HTMLElement;
             if (!element) {
-                window.warn(`Element with ID ${step.id} not found`);
+                window.warn(`Element with ID "${step.id}" not found`);
             }
             return element;
         });
@@ -31,7 +31,7 @@ class Onboarding {
         // Ensure the current step is visible
         const currentStep = this.steps[index];
         if (currentStep && currentStep.style.display !== "flex") {
-            window.log(`Step ${currentStep.id} is not visible, forcing display`);
+            window.log(`Step "${currentStep.id}" is not visible, forcing display`);
             currentStep.style.display = "flex";
         }
     }
@@ -42,7 +42,7 @@ class Onboarding {
             this.currentStepIndex = stepIndex;
             this.showStep(this.currentStepIndex);
         } else {
-            window.warn(`Step with ID ${stepId} not found`);
+            window.warn(`Step with ID "${stepId}" not found`);
         }
     }
 
@@ -52,7 +52,7 @@ class Onboarding {
                 const button = document.getElementById(buttonId);
                 if (button) {
                     button.addEventListener("click", async () => {
-                        window.log(`Button with ID ${buttonId} clicked`);
+                        window.log(`Button with ID $"{buttonId}" clicked`);
                         if (targetStepId === "finish") {
                             window.log("Onboarding process complete");
                             await showMessageBox(
@@ -69,7 +69,7 @@ class Onboarding {
                         }
                     });
                 } else {
-                    window.warn(`Button with ID ${buttonId} not found`);
+                    window.warn(`Button with ID "${buttonId}" not found`);
                 }
             });
         });
@@ -197,7 +197,7 @@ function addEventListeners() {
 }
 
 window.addEventListener("storage", (event) => {
-    window.log(`Storage event: "${event.key}" changed to "${event.newValue}"`);
+    window.log(`Storage event: "${event.key}" changed to: ${event.newValue}`);
 
     if (event.key === "status") {
         const step5 = document.getElementById("step-5");
@@ -272,4 +272,5 @@ window.autodetect = startAutoDetection;
 window.runStartConnection = runStartConnection;
 window.runStopConnection = runStopConnection;
 
+// Required to prevent variable conflicts from other files
 export {};
