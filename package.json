@@ -20,7 +20,7 @@
     "scripts": {
         "start": "npm run preload && electron .",
         "dev": "cross-env DEVELOPMENT=true && tsc && npm run copy-files && electron .",
-        "build": "npm run preload&& npx @electron/packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar --extra-resource=src/languages",
+        "build": "npm run preload && npx @electron/packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out='build/' --icon=src/static/images/icon.ico --asar --extra-resource=src/languages --ignore='^/(src|docs|.vscode|.eslintrc.cjs|.prettierrc|tsconfig.json|README.md|.gitignore)$'",
         "preload": "npx @electron/rebuild && del-cli dist/ && tsc && npm run copy-files",
         "copy-files": "copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.png\" \"src/**/*.webp\" \"src/**/*.webm\" \"src/**/*.svg\" \"src/**/*.fbx\" src/languages/* dist/",
         "build-bulma": "npx sass --watch ./src/static/css/index.scss ./src/static/css/index.css",
