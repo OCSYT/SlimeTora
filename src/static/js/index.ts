@@ -1084,7 +1084,7 @@ function addEventListeners() {
         window.ipc.send("set-wireless-tracker", wirelessTrackerEnabled);
 
         // Disable unsupported settings
-        if (wirelessTrackerEnabled) {
+        if (wirelessTrackerEnabled || bluetoothEnabled) {
             document.getElementById("wired-tracker-switch").setAttribute("disabled", "true");
         } else {
             document.getElementById("wired-tracker-switch").removeAttribute("disabled");
@@ -1127,6 +1127,7 @@ function addEventListeners() {
             },
         });
 
+        if (!wiredTrackerEnabled && wirelessTrackerEnabled) return;
         setElementDisabledState(document.getElementById("wired-tracker-switch"), bluetoothEnabled);
     });
 
