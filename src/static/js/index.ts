@@ -1422,26 +1422,34 @@ function saveSettings() {
     // Save settings to config file
     window.ipc.send("save-setting", {
         global: {
+            language: language,
             censorSerialNumbers: censorSerialNumbers,
             trackerVisualization: trackerVisualization,
             trackerVisualizationFPS: trackerVisualizationFPS,
-            connectionMode: {
-                bluetoothEnabled: bluetoothEnabled,
-                comEnabled: comEnabled,
-                comPorts: selectedPorts,
-            },
             trackers: {
+                wirelessTrackerEnabled: wirelessTrackerEnabled,
+                wiredTrackerEnabled: wiredTrackerEnabled,
                 fpsMode: fpsMode,
                 sensorMode: sensorMode,
                 accelerometerEnabled: accelerometerEnabled,
                 gyroscopeEnabled: gyroscopeEnabled,
                 magnetometerEnabled: magnetometerEnabled,
             },
+            connectionMode: {
+                bluetoothEnabled: bluetoothEnabled,
+                comEnabled: comEnabled,
+                comPorts: selectedPorts,
+            },
             debug: {
                 canLogToFile: canLogToFile,
                 skipSlimeVRCheck: skipSlimeVRCheck,
                 bypassCOMPortLimit: bypassCOMPortLimit,
                 loggingMode: loggingMode,
+            },
+            updates: {
+                appUpdatesEnabled: appUpdatesEnabled,
+                translationsUpdatesEnabled: translationsUpdatesEnabled,
+                updateChannel: updateChannel,
             },
         },
     });
