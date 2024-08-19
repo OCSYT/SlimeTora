@@ -4,7 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
 // @ts-ignore
-import { HaritoraX } from "../../haritorax-interpreter/dist/index.js";
+import { HaritoraX } from "haritorax-interpreter";
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
@@ -142,17 +142,13 @@ function isNewerVersion(latestVersion: string, currentVersion: string): boolean 
 
 async function checkForAppUpdates() {
     try {
-        log("Checking for updates...", "updater");
+        log(`Checking for latest "${updateChannel}" updates...`, "updater");
         const latestVersion = await getLatestRelease();
         const currentVersion = app.getVersion();
-        let versionType = "stable";
-
-        if (currentVersion.includes("beta")) {
-            versionType = "beta";
-        }
+        const versionType = currentVersion.includes("beta") ? "beta" : "stable";
 
         log(
-            `Latest "${versionType}" version: ${latestVersion}, current "${versionType}" version: ${currentVersion}`,
+            `Latest "${updateChannel}" version: ${latestVersion}, current "${versionType}" version: ${currentVersion}`,
             "updater"
         );
         if (isNewerVersion(latestVersion, currentVersion)) {
@@ -932,41 +928,47 @@ import BetterQuaternion from "quaternion";
 // For haritorax-interpreter
 // Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
 enum ErrorType {
+    TrackerSettingsWriteError = "Error sending tracker settings",
+
     IMUProcessError = "Error decoding IMU packet",
     MagProcessError = "Error processing mag data",
     SettingsProcessError = "Error processing settings data",
     ButtonProcessError = "Error processing button data",
 
+    BluetoothOpenError = "Bluetooth initialization failed",
     BluetoothScanError = "Error starting bluetooth scanning",
     BluetoothDiscoveryError = "Error during discovery/connection process",
     BluetoothCloseError = "Error while closing bluetooth connection",
 
+    SerialOpenError = "Opening COM",
     SerialWriteError = "Error writing data to serial port",
     SerialUnexpectedError = "Error on port",
 
     JSONParseError = "JSON",
     SendHeartbeatError = "Error while sending heartbeat",
     UnexpectedError = "An unexpected error occurred",
-
-    TrackerSettingsWriteError = "Error sending tracker settings",
-    ConnectionStartError = "Opening COM",
 }
 
 const lastErrorShownTime: Record<ErrorType, number> = {
-    [ErrorType.ConnectionStartError]: 0,
     [ErrorType.TrackerSettingsWriteError]: 0,
+
+    [ErrorType.IMUProcessError]: 0,
     [ErrorType.MagProcessError]: 0,
     [ErrorType.SettingsProcessError]: 0,
     [ErrorType.ButtonProcessError]: 0,
-    [ErrorType.SerialWriteError]: 0,
+
+    [ErrorType.BluetoothOpenError]: 0,
     [ErrorType.BluetoothScanError]: 0,
     [ErrorType.BluetoothDiscoveryError]: 0,
-    [ErrorType.JSONParseError]: 0,
-    [ErrorType.UnexpectedError]: 0,
-    [ErrorType.SendHeartbeatError]: 0,
-    [ErrorType.IMUProcessError]: 0,
     [ErrorType.BluetoothCloseError]: 0,
+
+    [ErrorType.SerialOpenError]: 0,
+    [ErrorType.SerialWriteError]: 0,
     [ErrorType.SerialUnexpectedError]: 0,
+
+    [ErrorType.JSONParseError]: 0,
+    [ErrorType.SendHeartbeatError]: 0,
+    [ErrorType.UnexpectedError]: 0,
 };
 
 const errorCooldownPeriod = 500;
@@ -1206,8 +1208,9 @@ function startDeviceListeners() {
     device.on("error", (msg: string, exceptional: boolean) => {
         if (exceptional) {
             switch (true) {
-                case msg.includes(ErrorType.ConnectionStartError):
-                    handleError(msg, ErrorType.ConnectionStartError, handleConnectionStartError);
+                case msg.includes(ErrorType.SerialOpenError):
+                case msg.includes(ErrorType.BluetoothOpenError):
+                    handleError(msg, ErrorType.SerialOpenError, handleConnectionStartError);
                     break;
                 default:
                     warn("Unhandled error type received from haritorax-interpreter");
