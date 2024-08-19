@@ -77,7 +77,6 @@ async function translate(key: string) {
  * Update checking
  */
 
-// TODO: check if this actually works guh (check if v1.2.0-beta2 is detected as newer than v1.2.0-beta1 and stuff mfkasdk)
 async function getLatestRelease() {
     log("Fetching the latest release from GitHub...", "updater");
     const response = await fetch("https://api.github.com/repos/OCSYT/SlimeTora/releases");
@@ -285,15 +284,15 @@ function clearTrackers() {
 const createWindow = async () => {
     try {
         await fs.promises.access(configPath);
-    
+
         // Read and parse the config file
         const data = await fs.promises.readFile(configPath, "utf8");
-    
+
         // Check if the config file is empty (contains only "{}")
-        if (data.trim() === "{}") throw new Error;
-    
+        if (data.trim() === "{}") throw new Error();
+
         const config: { [key: string]: any } = JSON.parse(data);
-    
+
         // Set configuration variables
         canLogToFile = config.global?.debug?.canLogToFile ?? false;
         wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
@@ -480,7 +479,12 @@ ipcMain.handle("translate", async (_event, arg: string) => {
 });
 
 ipcMain.handle("get-com-ports", async (_event, arg: string) => {
-    if (!arg) return comPorts.map((port: any) => port.path).sort();
+    if (!arg) {
+        return comPorts
+            .map((port: any) => port.path)
+            .filter((path: string) => /\/dev\/tty(USB|ACM)\d+/.test(path))
+            .sort();
+    }
 
     if (!device) {
         initializeDevice(true);
@@ -656,7 +660,7 @@ ipcMain.handle("autodetect", async () => {
 });
 
 ipcMain.on("start-connection", async (_event, arg) => {
-    const { types, ports, isActive }: { types: string[]; ports?: string[]; isActive: boolean } = arg;
+    const { types, ports, isActive } = arg;
 
     log(`Start connection with: ${JSON.stringify(arg)}`, "connection");
 
@@ -741,7 +745,7 @@ ipcMain.on("stop-connection", () => {
     stopConnectionIfActive("com");
 
     clearTrackers();
-    
+
     // Clear all timeouts
     for (const key in trackerTimeouts) {
         if (trackerTimeouts.hasOwnProperty(key)) {

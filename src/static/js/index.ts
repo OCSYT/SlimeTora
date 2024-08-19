@@ -83,17 +83,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Populate COM ports
     const comPortList = document.getElementById("com-ports");
     const comPorts: string[] = await window.ipc.invoke("get-com-ports", null);
+
     window.log(`COM ports: ${JSON.stringify(comPorts)}`);
 
     let rowHTML = '<div class="com-port-row">';
     comPorts.forEach((port: string, index: number) => {
+        // Remove /dev/tty from COM ports on Linux
+        const prettyPort = port.replace("/dev/tty", "");
+
         const switchHTML = `
         <div class="switch-container">
             <div class="switch">
             <input type="checkbox" id="${port}" />
             <label for="${port}" class="slider round"></label>
             </div>
-            <label for="${port}">${port}</label>
+            <label for="${port}">${prettyPort}</label>
         </div>
         `;
 
@@ -1283,7 +1287,8 @@ function addEventListeners() {
     });
 
     document.getElementById("translations-updates-switch").addEventListener("change", async function () {
-        const translationsUpdatesEnabled = (document.getElementById("translations-updates-switch") as HTMLInputElement).checked;
+        const translationsUpdatesEnabled = (document.getElementById("translations-updates-switch") as HTMLInputElement)
+            .checked;
         window.log(`Switched translations updates to: ${translationsUpdatesEnabled}`);
         window.ipc.send("save-setting", {
             global: {
