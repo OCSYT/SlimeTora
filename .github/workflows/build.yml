@@ -42,8 +42,16 @@ jobs:
             - name: Build the application
               run: npm run build
 
-            - name: Archive build artifacts
+            - name: Archive build artifacts for Ubuntu
+              if: matrix.os == 'ubuntu-latest'
               uses: actions/upload-artifact@v3
               with:
-                  name: build-artifacts-${{ matrix.os }}
-                  path: build/
+                  name: build-artifacts-linux
+                  path: build/*linux*
+
+            - name: Archive build artifacts for Windows
+              if: matrix.os == 'windows-latest'
+              uses: actions/upload-artifact@v3
+              with:
+                  name: build-artifacts-win32
+                  path: build/*win32*
