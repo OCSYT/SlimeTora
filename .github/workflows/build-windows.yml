@@ -1,0 +1,40 @@
+name: Build application (Windows)
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - '.github/workflows/build-windows.yml'
+            - package.json
+    workflow_dispatch:
+    create:
+
+jobs:
+    build:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "20"
+
+            - name: Install dependencies on Windows
+              run: |
+                  choco install -y windows-sdk-10.0
+
+            - name: Install Node.js dependencies
+              run: npm install
+
+            - name: Build the application
+              run: npm run build
+
+            - name: Archive build artifacts for Windows
+              uses: actions/upload-artifact@v3
+              with:
+                  name: build-artifacts-win32
+                  path: build/*win32*

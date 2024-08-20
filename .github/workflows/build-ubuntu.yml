@@ -1,21 +1,18 @@
-name: Build application
+name: Build application (Ubuntu)
 
 on:
     push:
         branches:
             - main
         paths:
-            - '.github/workflows/build.yml'
+            - '.github/workflows/build-ubuntu.yml'
             - package.json
     workflow_dispatch:
     create:
 
 jobs:
     build:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-latest, windows-latest]
+        runs-on: ubuntu-latest
 
         steps:
             - name: Checkout repository
@@ -27,37 +24,22 @@ jobs:
                   node-version: "20"
 
             - name: Install dependencies on Ubuntu
-              if: matrix.os == 'ubuntu-latest'
               run: |
                   sudo apt-get update
                   sudo apt-get install -y libudev-dev
-
-            - name: Install dependencies on Windows
-              if: matrix.os == 'windows-latest'
-              run: |
-                  choco install -y windows-sdk-10.0
 
             - name: Install Node.js dependencies
               run: npm install
 
             - name: Make app executable on Ubuntu
-              if: matrix.os == 'ubuntu-latest'
               run: |
-                  chmod +x build/SlimeTora-linux-x64/SlimeTora
+                  chmod +x ./build/SlimeTora-linux-x64/SlimeTora
 
             - name: Build the application
               run: npm run build
 
             - name: Archive build artifacts for Ubuntu
-              if: matrix.os == 'ubuntu-latest'
               uses: actions/upload-artifact@v3
               with:
                   name: build-artifacts-linux
                   path: build/*linux*
-
-            - name: Archive build artifacts for Windows
-              if: matrix.os == 'windows-latest'
-              uses: actions/upload-artifact@v3
-              with:
-                  name: build-artifacts-win32
-                  path: build/*win32*
