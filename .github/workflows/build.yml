@@ -1,7 +1,13 @@
-name: Manual Build
+name: Build application
 
 on:
+    push:
+        branches:
+            - main
+        paths:
+            - package.json
     workflow_dispatch:
+    create:
 
 jobs:
     build:
