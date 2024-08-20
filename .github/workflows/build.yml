@@ -5,6 +5,7 @@ on:
         branches:
             - main
         paths:
+            - '.github/workflows/build.yml'
             - package.json
     workflow_dispatch:
     create:
@@ -38,6 +39,11 @@ jobs:
 
             - name: Install Node.js dependencies
               run: npm install
+
+            - name: Make app executable on Ubuntu
+              if: matrix.os == 'ubuntu-latest'
+              run: |
+                  chmod +x build/SlimeTora-linux-x64/SlimeTora
 
             - name: Build the application
               run: npm run build
