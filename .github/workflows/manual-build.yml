@@ -1,0 +1,32 @@
+name: Manual Build
+
+on:
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, windows-latest]
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "20" # Ensure this matches your project's Node.js version
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Build the application
+              run: npm run build
+
+            - name: Archive build artifacts
+              uses: actions/upload-artifact@v3
+              with:
+                  name: build-artifacts-${{ matrix.os }}
+                  path: build/
