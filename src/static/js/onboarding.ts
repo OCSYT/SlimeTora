@@ -52,7 +52,7 @@ class Onboarding {
                 const button = document.getElementById(buttonId);
                 if (button) {
                     button.addEventListener("click", async () => {
-                        window.log(`Button with ID $"{buttonId}" clicked`);
+                        window.log(`Button with ID "${buttonId}" clicked`);
                         if (targetStepId === "finish") {
                             window.log("Onboarding process complete");
                             await showMessageBox(

@@ -3,8 +3,8 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
-// @ts-ignore
 import { HaritoraX } from "haritorax-interpreter";
+// @ts-ignore (for development)
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
@@ -485,7 +485,6 @@ ipcMain.handle("get-com-ports", async (_event, arg: string) => {
 
     if (!device) {
         initializeDevice(true);
-        // @ts-ignore
         const ports = await device.getDevicePorts(arg);
         device = undefined;
         return ports;
@@ -587,11 +586,9 @@ ipcMain.handle("autodetect", async () => {
     initializeDevice(true);
 
     log("Getting available devices...", "detect");
-    // @ts-ignore
-    const devices = await device.getAvailableDevices();
 
     let trackerSettingsTimeout: NodeJS.Timeout = null;
-
+    const devices = await device.getAvailableDevices();
     const waitForTrackerSettings = new Promise(async (resolve) => {
         let comPorts;
         if (devices.includes("Bluetooth") && devices.includes("HaritoraX Wireless")) {
@@ -600,19 +597,16 @@ ipcMain.handle("autodetect", async () => {
         }
         if (devices.includes("GX6")) {
             log("GX6 device found, starting connection...", "detect");
-            // @ts-ignore
             comPorts = await device.getDevicePorts("GX6");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
         if (devices.includes("GX2")) {
             log("GX2 device found, starting connection...", "detect");
-            // @ts-ignore
             comPorts = await device.getDevicePorts("GX2");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
         if (devices.includes("HaritoraX Wired")) {
             log("HaritoraX Wired device found, starting connection...", "detect");
-            // @ts-ignore
             comPorts = await device.getDevicePorts("HaritoraX Wired");
             device.startConnection("com", comPorts, heartbeatInterval);
         }
@@ -715,7 +709,6 @@ function initializeDevice(forceDisableLogging: boolean = false): void {
     const [logging, imuProcessing, rawData] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
         effectiveLoggingMode.toString()
     ] || [false, false, false];
-    // @ts-ignore
     device = new HaritoraX(trackerType, logging, imuProcessing, rawData);
 }
 
@@ -763,12 +756,10 @@ ipcMain.handle("fire-tracker-battery", (_event, trackerName: string) => {
         });
     }
 
-    // @ts-ignore
     device.fireTrackerBattery(trackerName);
 });
 
 ipcMain.handle("fire-tracker-mag", (_event, trackerName: string) => {
-    // @ts-ignore
     device.fireTrackerMag(trackerName);
 });
 
