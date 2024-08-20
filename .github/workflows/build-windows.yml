@@ -5,7 +5,7 @@ on:
         branches:
             - main
         paths:
-            - '.github/workflows/build-windows.yml'
+            - ".github/workflows/build-windows.yml"
             - package.json
     workflow_dispatch:
     create:

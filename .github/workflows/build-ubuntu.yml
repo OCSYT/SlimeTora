@@ -5,7 +5,7 @@ on:
         branches:
             - main
         paths:
-            - '.github/workflows/build-ubuntu.yml'
+            - ".github/workflows/build-ubuntu.yml"
             - package.json
     workflow_dispatch:
     create:
@@ -31,12 +31,11 @@ jobs:
             - name: Install Node.js dependencies
               run: npm install
 
-            - name: Make app executable on Ubuntu
-              run: |
-                  chmod +x ./build/SlimeTora-linux-x64/SlimeTora
-
             - name: Build the application
               run: npm run build
+
+            - name: Make app executable on Ubuntu
+              run: chmod +x ./build/SlimeTora-linux-x64/SlimeTora
 
             - name: Archive build artifacts for Ubuntu
               uses: actions/upload-artifact@v3
