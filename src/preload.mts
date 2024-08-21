@@ -100,6 +100,7 @@ declare global {
         stopConnection: () => void;
         showOnboarding: () => void;
         openLogsFolder: () => void;
+        openSupport: () => void;
         saveSettings: () => void;
         openTrackerSettings: (deviceID: string) => void;
 

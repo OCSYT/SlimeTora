@@ -530,6 +530,10 @@ ipcMain.on("set-wired-tracker", (_event, arg) => {
     log(`Wired tracker enabled set to: ${arg}`, "settings");
 });
 
+ipcMain.on("open-support-page", async () => {
+    await shell.openExternal("https://github.com/OCSYT/SlimeTora/wiki/FAQ#i-found-an-issuebug");
+});
+
 ipcMain.on("open-logs-folder", async () => {
     const logDir = path.resolve(mainPath, "logs");
     try {

@@ -1494,4 +1494,9 @@ window.openLogsFolder = () => {
     window.ipc.send("open-logs-folder", null);
 };
 
+window.openSupport = () => {
+    window.log("Opening support page...");
+    window.ipc.send("open-support-page", null);
+};
+
 export {};

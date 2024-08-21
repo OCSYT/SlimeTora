@@ -150,7 +150,8 @@
             "extra": "Extra data",
             "all": "All data (!!!)"
         },
-        "openLogsFolder": "Open logs folder"
+        "openLogsFolder": "Open logs folder",
+        "openSupportPage": "Open support page"
     },
     "onboarding": {
         "title": "Welcome to SlimeTora!",
