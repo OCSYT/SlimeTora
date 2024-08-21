@@ -29,33 +29,35 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
     -   Unknown support for `Haritora` (before Shiftall // DIY)
 -   `Bluetooth` (LE/Classic) and `COM`/`GX(6/2)` support (with all at the same time supported on `HaritoraX Wireless`)
 -   Use of [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter) package to process tracker data
--   **(v1.2.0-beta2)** Set up the app easily with settings auto-detection
+-   Get started with the program (and SlimeVR Server) easily through the guided onboarding process!
+    -   Through the "automatic setup", run auto-detection to let the program ***set itself up for you***!
     -   Automatically detect your tracker model, connection mode (including COM ports), and tracker settings
 -   Set tracker settings per-tracker (`HaritoraX Wireless` only)
 -   Localization support
     -   You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 -   Linux support
     -   This was done as SlimeVR is supported on Linux, making this the first time HaritoraX trackers work on Linux!
-    -   ..however this needs more testing. Please let us know if there are issues.
+    -   ..however this needs more testing. Please let us know if there are issues
 -   Button bindings to SlimeVR functions (e.g. resets)
     -   Read more on the [SlimeVR basics](https://github.com/OCSYT/SlimeTora/wiki/SlimeVR#resets--calibration) wiki page
+-   Update checking (for app and translations)
 -   Tracker visualization
 -   Magnetometer statuses
 -   Per-tracker battery information (in-app and SlimeVR/SteamVR)
+-   Compact view of the trackers
 -   Censor tracker serial numbers in-app
 -   Debugging options
 -   ..and many more improvements coming soon!
 
 # Known issues
 
--   Battery and mag info for `HaritoraX Wireless` trackers (connected via BT) not displaying
-    -   Fixed with the `v1.2.0` betas, check [releases](https://github.com/OCSYT/SlimeTora/releases).
--   Detection of being unable to access trackers unreliable
-    -   Fixed with the `v1.2.0` betas, check [releases](https://github.com/OCSYT/SlimeTora/releases).
 -   Battery information jumps to incorrect percentages/voltage randomly
-    -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers themselves.
-    -   This has been slightly mitigated with [v1.2.0-beta2](https://github.com/OCSYT/SlimeTora/releases/v1.2.0-beta2), which uses a "stable average" of the battery percentage and voltage instead.
--   **(v1.2.0-beta3)** Running "auto-detection" more than once without restarting breaks tracker settings detection
+    -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers themselves
+    -   This has been slightly mitigated with [v1.2.0](https://github.com/OCSYT/SlimeTora/releases/v1.2.0), which uses a "stable average" of the battery percentage and voltage instead
+-   Running "auto-detection" more than once without restarting breaks tracker settings auto-detection (device/ports detection still works)
+-   **(LINUX)** Connecting to trackers via "Bluetooth (LE)" always fails
+    -   The Bluetooth package we are using, [noble](https://github.com/abandonware/noble), requires root/sudo to be able to interact with BLE devices - its workarounds (and running as sudo) break [Electron](https://www.electronjs.org/) due to `setcap` disabling the `LD_LIBRARY_PATH` environment variable for security and modifying the `bluetooth.conf` for dbus does not work (at least, for me)
+    -   Any help on this is appreciated, though [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter) may need to use both [noble](https://github.com/abandonware/noble) and [node-ble](https://github.com/chrvadala/node-ble) (with a minor tweak on the user's side) to work.
 
 # Documentation & Getting Started
 
@@ -72,4 +74,4 @@ Love SlimeTora? You can show your support to the developers of SlimeTora through
 
 ### Special thanks to the project's supporters:
 
-- LuzianVR - https://www.instagram.com/luzianvr/
+-   LuzianVR - https://www.instagram.com/luzianvr/
