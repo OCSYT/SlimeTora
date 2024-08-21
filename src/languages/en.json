@@ -257,7 +257,7 @@
         "autodetect": {
             "pre-check": {
                 "title": "Auto-detect pre-check",
-                "message": "This feature will attempt to automatically detect your trackers (wired unsupported in this beta), connection mode, and tracker settings to apply the settings in the program for you.\r\n\r\nMake sure HaritoraConfigurator is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
+                "message": "This feature will attempt to automatically detect your trackers, connection mode, and tracker settings to apply the settings in the program for you.\r\n\r\nMake sure HaritoraConfigurator is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
             },
             "success": {
                 "title": "Auto-detect completed!",
