@@ -477,9 +477,10 @@ ipcMain.handle("translate", async (_event, arg: string) => {
 
 ipcMain.handle("get-com-ports", async (_event, arg: string) => {
     if (!arg) {
+        const isLinux = process.platform === 'linux';
         return comPorts
             .map((port: any) => port.path)
-            .filter((path: string) => /\/dev\/tty(USB|ACM)\d+/.test(path))
+            .filter((path: string) => isLinux ? /\/dev\/tty(USB|ACM)\d+/.test(path) : true)
             .sort();
     }
 
