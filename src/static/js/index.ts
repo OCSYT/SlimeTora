@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Set switch states based on settings
     setSwitchState("compact-view-switch", compactView);
     setSwitchState("censor-serial-switch", censorSerialNumbers);
-    setSwitchState("visualization-switch", trackerVisualization);
+    setSwitchState("tracker-visualization-switch", trackerVisualization);
     setSwitchState("wireless-tracker-switch", wirelessTrackerEnabled);
     setSwitchState("wired-tracker-switch", wiredTrackerEnabled);
     setSwitchState("bluetooth-switch", bluetoothEnabled);
@@ -996,6 +996,13 @@ function addEventListeners() {
             },
         });
 
+        // Disable unsupported settings
+        if (compactView) {
+            document.getElementById("tracker-visualization-switch").setAttribute("disabled", "true");
+        } else {
+            document.getElementById("tracker-visualization-switch").removeAttribute("disabled");
+        }
+
         refreshDeviceList();
     });
 
@@ -1051,7 +1058,7 @@ function addEventListeners() {
         }
     });
 
-    document.getElementById("visualization-switch").addEventListener("change", function () {
+    document.getElementById("tracker-visualization-switch").addEventListener("change", function () {
         trackerVisualization = !trackerVisualization;
         window.log(`Switched tracker visualization: ${trackerVisualization}`);
         window.ipc.send("save-setting", {
@@ -1059,6 +1066,13 @@ function addEventListeners() {
                 trackerVisualization: trackerVisualization,
             },
         });
+
+        // Disable unsupported settings
+        if (trackerVisualization) {
+            document.getElementById("compact-view-switch").setAttribute("disabled", "true");
+        } else {
+            document.getElementById("compact-view-switch").removeAttribute("disabled");
+        }
 
         refreshDeviceList();
     });
