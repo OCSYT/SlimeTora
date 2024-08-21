@@ -240,6 +240,14 @@
             "title": "No COM ports selected",
             "message": "Please select at least one COM port in the program's settings."
         },
+        "trackerWriteError": {
+            "title": "Tracker write error",
+            "message": "Failed to write data to the tracker, please check log files for more information."
+        },
+        "unexpectedError": {
+            "title": "Unexpected error",
+            "message": "An unexpected error occurred, please check log files for more information."
+        },
         "onboarding": {
             "complete": {
                 "title": "Onboarding complete!",

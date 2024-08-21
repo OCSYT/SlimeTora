@@ -477,10 +477,10 @@ ipcMain.handle("translate", async (_event, arg: string) => {
 
 ipcMain.handle("get-com-ports", async (_event, arg: string) => {
     if (!arg) {
-        const isLinux = process.platform === 'linux';
+        const isLinux = process.platform === "linux";
         return comPorts
             .map((port: any) => port.path)
-            .filter((path: string) => isLinux ? /\/dev\/tty(USB|ACM)\d+/.test(path) : true)
+            .filter((path: string) => (isLinux ? /\/dev\/tty(USB|ACM)\d+/.test(path) : true))
             .sort();
     }
 
@@ -787,6 +787,7 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         fpsMode: number;
         sensorAutoCorrection: string[];
     } = arg;
+
     // Validate input parameters
     if (!sensorMode || !fpsMode || !sensorAutoCorrection) {
         warn(`Invalid settings received: ${JSON.stringify(arg)}`, "settings");
@@ -924,46 +925,52 @@ import BetterQuaternion from "quaternion";
 // For haritorax-interpreter
 // Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
 enum ErrorType {
-    TrackerSettingsWriteError = "Error sending tracker settings",
+    SerialOpenError = "Opening COM",
+    SerialWriteError = "Error writing data to serial port",
+    SendHeartbeatError = "Error while sending heartbeat",
+    SerialUnexpectedError = "Error on port",
+    
+    BluetoothOpenError = "Bluetooth initialization failed",
+    BluetoothScanError = "Error starting bluetooth scanning",
+    BluetoothDiscoveryError = "Error during discovery/connection process",
+    BluetoothCloseError = "Error while closing bluetooth connection",
+    BluetoothServiceError = "Error setting up Bluetooth services",
+    BluetoothCharacteristicError = "Error setting up reading characteristic",
 
     IMUProcessError = "Error decoding IMU packet",
     MagProcessError = "Error processing mag data",
     SettingsProcessError = "Error processing settings data",
     ButtonProcessError = "Error processing button data",
 
-    BluetoothOpenError = "Bluetooth initialization failed",
-    BluetoothScanError = "Error starting bluetooth scanning",
-    BluetoothDiscoveryError = "Error during discovery/connection process",
-    BluetoothCloseError = "Error while closing bluetooth connection",
-
-    SerialOpenError = "Opening COM",
-    SerialWriteError = "Error writing data to serial port",
-    SerialUnexpectedError = "Error on port",
+    TrackerSettingsReadError = "Cannot get settings for ",
+    TrackerSettingsWriteError = "Error sending tracker settings",
 
     JSONParseError = "JSON",
-    SendHeartbeatError = "Error while sending heartbeat",
     UnexpectedError = "An unexpected error occurred",
 }
 
 const lastErrorShownTime: Record<ErrorType, number> = {
-    [ErrorType.TrackerSettingsWriteError]: 0,
+    [ErrorType.SerialOpenError]: 0,
+    [ErrorType.SerialWriteError]: 0,
+    [ErrorType.SendHeartbeatError]: 0,
+    [ErrorType.SerialUnexpectedError]: 0,
+    
+    [ErrorType.BluetoothOpenError]: 0,
+    [ErrorType.BluetoothScanError]: 0,
+    [ErrorType.BluetoothDiscoveryError]: 0,
+    [ErrorType.BluetoothCloseError]: 0,
+    [ErrorType.BluetoothServiceError]: 0,
+    [ErrorType.BluetoothCharacteristicError]: 0,
 
     [ErrorType.IMUProcessError]: 0,
     [ErrorType.MagProcessError]: 0,
     [ErrorType.SettingsProcessError]: 0,
     [ErrorType.ButtonProcessError]: 0,
 
-    [ErrorType.BluetoothOpenError]: 0,
-    [ErrorType.BluetoothScanError]: 0,
-    [ErrorType.BluetoothDiscoveryError]: 0,
-    [ErrorType.BluetoothCloseError]: 0,
-
-    [ErrorType.SerialOpenError]: 0,
-    [ErrorType.SerialWriteError]: 0,
-    [ErrorType.SerialUnexpectedError]: 0,
+    [ErrorType.TrackerSettingsReadError]: 0,
+    [ErrorType.TrackerSettingsWriteError]: 0,
 
     [ErrorType.JSONParseError]: 0,
-    [ErrorType.SendHeartbeatError]: 0,
     [ErrorType.UnexpectedError]: 0,
 };
 
@@ -1202,20 +1209,35 @@ function startDeviceListeners() {
     });
 
     device.on("error", (msg: string, exceptional: boolean) => {
+        switch (true) {
+            case msg.includes(ErrorType.SerialOpenError):
+            case msg.includes(ErrorType.BluetoothOpenError):
+            case msg.includes(ErrorType.BluetoothScanError):
+            case msg.includes(ErrorType.BluetoothDiscoveryError):
+            case msg.includes(ErrorType.BluetoothServiceError):
+                handleError(msg, ErrorType.SerialOpenError, handleConnectionStartError);
+                break;
+            case msg.includes(ErrorType.SerialWriteError):
+            case msg.includes(ErrorType.SendHeartbeatError):
+            case msg.includes(ErrorType.TrackerSettingsWriteError):
+                handleError(msg, ErrorType.SerialWriteError, handleTrackerWriteError);
+                break;
+            case msg.includes(ErrorType.UnexpectedError):
+            case msg.includes(ErrorType.SerialUnexpectedError):
+                handleError(msg, ErrorType.UnexpectedError, handleUnexpectedError);
+                break;
+            default:
+                warn("Unhandled error type received from haritorax-interpreter");
+                error(msg, "haritorax-interpreter");
+                break;
+        }
         if (exceptional) {
+        } else {
             switch (true) {
-                case msg.includes(ErrorType.SerialOpenError):
-                case msg.includes(ErrorType.BluetoothOpenError):
-                    handleError(msg, ErrorType.SerialOpenError, handleConnectionStartError);
-                    break;
                 default:
-                    warn("Unhandled error type received from haritorax-interpreter");
                     error(msg, "haritorax-interpreter");
                     break;
             }
-            // TODO: add more error handling
-        } else {
-            error(msg, "haritorax-interpreter");
         }
     });
 }
@@ -1237,6 +1259,22 @@ async function handleConnectionStartError(err: any) {
     );
 
     mainWindow.webContents.send("disconnect", "connection-error");
+}
+
+async function handleTrackerWriteError(err: any) {
+    error(`Failed to write data to a tracker`, "haritorax-interpreter", err);
+    dialog.showErrorBox(
+        await translate("dialogs.trackerWriteError.title"),
+        await translate("dialogs.trackerWriteError.message")
+    );
+}
+
+async function handleUnexpectedError(err: any) {
+    error(`An unexpected error occurred`, "haritorax-interpreter", err);
+    dialog.showErrorBox(
+        await translate("dialogs.unexpectedError.title"),
+        await translate("dialogs.unexpectedError.message")
+    );
 }
 
 /*
