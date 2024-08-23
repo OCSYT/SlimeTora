@@ -2,7 +2,7 @@
     "name": "slimetora",
     "productName": "slimetora",
     "type": "module",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "A program that connects the HaritoraX full body trackers to the SlimeVR server",
     "private": true,
     "author": {
