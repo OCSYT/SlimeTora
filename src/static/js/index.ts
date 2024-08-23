@@ -1066,26 +1066,23 @@ function addEventListeners() {
             devices.forEach((device) => {
                 const deviceNameElement = device.querySelector("#device-name");
                 const deviceIDElement = device.querySelector("#device-id");
-
-                if (!deviceNameElement || !deviceIDElement) return;
-
-                const deviceName = deviceNameElement.textContent;
-                const deviceID = deviceIDElement.textContent;
-
-                if (deviceName.includes("HaritoraX") && deviceName === device.id) {
-                    deviceNameElement.textContent = "HaritoraX-XXXXXX";
+        
+                if (deviceNameElement) {
+                    const deviceName = deviceNameElement.textContent;
+                    if (deviceName.includes("HaritoraX") && deviceName === device.id) {
+                        deviceNameElement.textContent = "HaritoraX-XXXXXX";
+                    } else if (deviceName.includes("HaritoraXW") && deviceName === device.id) {
+                        deviceNameElement.textContent = "HaritoraXW-XXXXXX";
+                    }
                 }
-
-                if (deviceID.includes("HaritoraX")) {
-                    deviceIDElement.textContent = "HaritoraX-XXXXXX";
-                }
-
-                if (deviceName.includes("HaritoraXW") && deviceName === device.id) {
-                    deviceNameElement.textContent = "HaritoraXW-XXXXXX";
-                }
-
-                if (deviceID.includes("HaritoraXW")) {
-                    deviceIDElement.textContent = "HaritoraXW-XXXXXX";
+        
+                if (deviceIDElement) {
+                    const deviceID = deviceIDElement.textContent;
+                    if (deviceID.includes("HaritoraX")) {
+                        deviceIDElement.textContent = "HaritoraX-XXXXXX";
+                    } else if (deviceID.includes("HaritoraXW")) {
+                        deviceIDElement.textContent = "HaritoraXW-XXXXXX";
+                    }
                 }
             });
         } else {
@@ -1095,11 +1092,14 @@ function addEventListeners() {
                 const deviceNameElement = device.querySelector("#device-name");
                 const deviceIDElement = device.querySelector("#device-id");
                 const originalDeviceName = settings.trackers?.[device.id]?.name ?? device.id;
-
-                if (!deviceNameElement || !deviceIDElement) return;
-
-                deviceNameElement.textContent = originalDeviceName;
-                deviceIDElement.textContent = device.id;
+        
+                if (deviceNameElement) {
+                    deviceNameElement.textContent = originalDeviceName;
+                }
+        
+                if (deviceIDElement) {
+                    deviceIDElement.textContent = device.id;
+                }
             });
         }
     });
