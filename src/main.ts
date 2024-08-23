@@ -3,8 +3,8 @@
  */
 
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
-import { HaritoraX } from "haritorax-interpreter";
 // @ts-ignore (for development)
+import { HaritoraX } from "haritorax-interpreter";
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
@@ -31,6 +31,7 @@ let deviceBattery: {
 /*
  * Renderer variables
  */
+
 let firstLaunch = false;
 
 let canLogToFile = false;
@@ -929,7 +930,7 @@ enum ErrorType {
     SerialWriteError = "Error writing data to serial port",
     SendHeartbeatError = "Error while sending heartbeat",
     SerialUnexpectedError = "Error on port",
-    
+
     BluetoothOpenError = "Bluetooth initialization failed",
     BluetoothScanError = "Error starting bluetooth scanning",
     BluetoothDiscoveryError = "Error during discovery/connection process",
@@ -954,7 +955,7 @@ const lastErrorShownTime: Record<ErrorType, number> = {
     [ErrorType.SerialWriteError]: 0,
     [ErrorType.SendHeartbeatError]: 0,
     [ErrorType.SerialUnexpectedError]: 0,
-    
+
     [ErrorType.BluetoothOpenError]: 0,
     [ErrorType.BluetoothScanError]: 0,
     [ErrorType.BluetoothDiscoveryError]: 0,

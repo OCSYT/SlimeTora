@@ -969,17 +969,59 @@ function addEventListeners() {
     function refreshDeviceList() {
         refreshingDeviceList = true;
 
+        // Store last known tracker info
+        const devices = document.getElementById("device-list").querySelectorAll(".card");
+        const lastMagStatus: { [key: string]: string } = {};
+        const lastBatteryInfo: { [key: string]: string } = {};
+
+        devices.forEach((device) => {
+            const magStatusElement = device.querySelector("#mag-status");
+            const batteryElement = device.querySelector("#battery");
+
+            if (!magStatusElement || !batteryElement) return;
+
+            // Find the class that starts with "mag-status-"
+            // We are doing this because compact-view uses "mr-2" in classList
+            const magStatus =
+                Array.from(magStatusElement.classList).find((cls) => cls.startsWith("mag-status-")) || "unknown";
+            const batteryText = batteryElement.textContent;
+
+            lastBatteryInfo[device.id] = batteryText;
+            lastMagStatus[device.id] = magStatus;
+        });
+
+        // Reset device list
         document.getElementById("device-list").textContent = "";
         document.getElementById("tracker-count").textContent = "0";
         deviceQueue.length = 0;
 
-        const devices = document.querySelectorAll(".card");
+        // Re-add devices to the list
         devices.forEach((device) => {
             deviceQueue.push(device.id);
         });
 
+        // After processing queue, restore last known tracker info
         processQueue().then(() => {
             refreshingDeviceList = false;
+            window.log("Refreshed device list");
+
+            // Restore last known mag statuses
+            const newDevices = document.getElementById("device-list").querySelectorAll(".card");
+            newDevices.forEach((device) => {
+                const magStatusElement = device.querySelector("#mag-status");
+                const batteryElement = device.querySelector("#battery");
+
+                if (!magStatusElement || !batteryElement) return;
+
+                const magStatus = lastMagStatus[device.id];
+                const batteryText = lastBatteryInfo[device.id];
+
+                magStatusElement.classList.add(magStatus);
+                batteryElement.innerHTML = batteryText;
+
+                window.log(`Restored last known mag status for ${device.id}: ${magStatus}`);
+                window.log(`Restored last known battery info for ${device.id}: ${batteryText}`);
+            });
         });
     }
 
