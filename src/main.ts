@@ -749,6 +749,8 @@ ipcMain.on("stop-connection", () => {
         }
     }
 
+    batteryReadingsMap.clear();
+
     connectionActive = false;
 });
 
@@ -1049,6 +1051,8 @@ const resetTrackerTimeout = (trackerName: string) => {
     }, 5000);
 };
 
+const MAX_BATTERY_READINGS = 5;
+const batteryReadingsMap = new Map<string, { percentages: number[]; voltages: number[] }>();
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
         if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
@@ -1151,8 +1155,6 @@ function startDeviceListeners() {
         });
     });
 
-    const MAX_BATTERY_READINGS = 5;
-    const batteryReadingsMap = new Map<string, { percentages: number[]; voltages: number[] }>();
     device.on("battery", (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
         if (!trackerName || !batteryRemaining) return;
 
