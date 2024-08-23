@@ -1036,17 +1036,18 @@ async function processQueue() {
 }
 
 const trackerTimeouts: { [key: string]: NodeJS.Timeout } = {};
-function startDeviceListeners() {
-    const resetTrackerTimeout = (trackerName: string) => {
-        if (trackerTimeouts[trackerName]) {
-            clearTimeout(trackerTimeouts[trackerName]);
-        }
-        trackerTimeouts[trackerName] = setTimeout(() => {
-            device.emit("disconnect", trackerName);
-            log(`Tracker "${trackerName}" assumed disconnected due to inactivity.`, "tracker");
-        }, 5000);
-    };
 
+const resetTrackerTimeout = (trackerName: string) => {
+    if (trackerTimeouts[trackerName]) {
+        clearTimeout(trackerTimeouts[trackerName]);
+    }
+    trackerTimeouts[trackerName] = setTimeout(() => {
+        device.emit("disconnect", trackerName);
+        log(`Tracker "${trackerName}" assumed disconnected due to inactivity.`, "tracker");
+    }, 5000);
+};
+
+function startDeviceListeners() {
     device.on("connect", async (deviceID: string) => {
         if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
             return;
@@ -1057,7 +1058,7 @@ function startDeviceListeners() {
         if (!deviceID || !connectedDevices.get(deviceID)) return;
         log(`Disconnected from tracker: ${deviceID}`, "tracker");
 
-        delete trackerTimeouts[deviceID];
+        clearTimeout(trackerTimeouts[deviceID]);
         connectedDevices.get(deviceID).deinit();
         connectedDevices.get(deviceID).removeAllListeners();
         connectedDevices.set(deviceID, undefined);
