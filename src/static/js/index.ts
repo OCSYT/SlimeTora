@@ -1443,6 +1443,8 @@ function addEventListeners() {
 function selectLanguage(language: string) {
     window.log(`Changed selected language: ${language}`);
     window.changeLanguage(language);
+    const languageSelect = document.getElementById("language-select") as HTMLSelectElement;
+    if (languageSelect) languageSelect.value = language;
     window.ipc.send("save-setting", {
         global: {
             language: language,
