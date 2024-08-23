@@ -862,6 +862,10 @@ async function addDeviceToList(deviceID: string) {
     deviceList.appendChild(newDevice);
 
     updateTranslations();
+
+    // Manually fire tracker events
+    window.ipc.invoke("fire-tracker-battery", deviceID);
+    window.ipc.invoke("fire-tracker-mag", deviceID);
 }
 
 function setTrackerSettings(deviceID: string, trackerSettings: any) {

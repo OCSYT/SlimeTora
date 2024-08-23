@@ -760,9 +760,11 @@ ipcMain.handle("fire-tracker-battery", (_event, trackerName: string) => {
             batteryRemaining: deviceBattery[trackerName]?.batteryRemaining || 0,
             batteryVoltage: deviceBattery[trackerName]?.batteryVoltage || 0,
         });
-    }
 
-    device.fireTrackerBattery(trackerName);
+        deviceBattery[trackerName] = null;
+    } else {
+        device.fireTrackerBattery(trackerName);
+    }
 });
 
 ipcMain.handle("fire-tracker-mag", (_event, trackerName: string) => {
