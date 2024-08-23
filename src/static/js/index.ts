@@ -1247,6 +1247,8 @@ function addEventListeners() {
                 trackerVisualizationFPS: trackerVisualizationFPS,
             },
         });
+        
+        refreshDeviceList();
     });
 
     document.getElementById("language-select").addEventListener("change", async function () {
