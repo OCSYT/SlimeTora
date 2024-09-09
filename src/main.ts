@@ -805,16 +805,14 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
 
     // Make sure we get unique entries
     const uniqueSensorAutoCorrection = [...new Set(sensorAutoCorrection)];
-    log(
-        `Setting tracker settings for ${deviceID} to:
-        Sensor mode: ${sensorMode}
-        FPS mode: ${fpsMode}
-        Sensor auto correction: ${sensorAutoCorrection}`,
-        "settings"
-    );
 
     // Apply the new settings
     device.setTrackerSettings(deviceID, sensorMode, fpsMode, uniqueSensorAutoCorrection, false);
+
+    log(`Setting ${deviceID} settings to:`, "settings");
+    log(`Sensor mode: ${sensorMode}`, "settings");
+    log(`FPS mode: ${fpsMode}`, "settings");
+    log(`Sensor auto correction: ${uniqueSensorAutoCorrection.join(", ")}`, "settings");
 
     // Log new tracker settings
     const newSettings = await device.getTrackerSettings(deviceID, true);
@@ -838,14 +836,11 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
     const uniqueSensorAutoCorrection = [...new Set(sensorAutoCorrection)];
     const uniqueActiveTrackers = [...new Set(device.getActiveTrackers())];
 
-    log(
-        `Setting all tracker settings to: ${{
-            ActiveTrackers: uniqueActiveTrackers,
-            SensorMode: sensorMode,
-            FPSMode: fpsMode,
-            SensorAutoCorrection: uniqueSensorAutoCorrection,
-        }}, "settings"`
-    );
+    log("Setting all tracker settings to:", "settings");
+    log(`Sensor mode: ${sensorMode}`, "settings");
+    log(`FPS mode: ${fpsMode}`, "settings");
+    log(`Sensor auto correction: ${uniqueSensorAutoCorrection.join(", ")}`, "settings");
+    log(`Applied to trackers: ${uniqueActiveTrackers.join(", ")}`, "settings");
 
     device.setAllTrackerSettings(sensorMode, fpsMode, uniqueSensorAutoCorrection, false);
 });
