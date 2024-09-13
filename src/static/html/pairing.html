@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html data-theme="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+        <link rel="stylesheet" href="../css/index.css" />
+        <script type="module" src="../js/pairing.js"></script>
+    </head>
+
+    <body>
+        <div class="section">
+            <div class="container">
+                <h1 class="title has-text-centered is-2 is-spaced" data-i18n="pairing.title">
+                    GX(6/2) Tracker Pairing
+                </h1>
+                <h3 class="subtitle has-text-centered" data-i18n="pairing.text">
+                    Manage the pairing of your trackers connected with the GX(6/2) communication dongles.
+                </h3>
+                <div class="columns is-multiline">
+                    <!-- Example COM port section -->
+                    <div class="column is-12">
+                        <div class="card" id="com-port-${port}">
+                            <header class="card-header">
+                                <div>
+                                    <p
+                                        class="card-header-title with-padding is-centered inline-block"
+                                        data-i18n="pairing.card.title"
+                                    >
+                                        COM port:
+                                    </p>
+                                    <span class="has-text-white has-text-weight-bold" id="port-name">COM3</span>
+                                </div>
+                            </header>
+                            <div class="card-content">
+                                <div class="content">
+                                    <div class="columns">
+                                        <!-- Port ID 0 section -->
+                                        <div class="column is-6">
+                                            <div class="card">
+                                                <header class="card-header">
+                                                    <p class="card-header-title" data-i18n="pairing.card.id.title.0">
+                                                        Port ID 0
+                                                    </p>
+                                                </header>
+                                                <div class="card-content">
+                                                    <div>
+                                                        <p
+                                                            class="inline-block"
+                                                            data-i18n="pairing.card.id.status.title"
+                                                        >
+                                                            Status:
+                                                        </p>
+                                                        <span id="status">Unpaired</span>
+                                                    </div>
+                                                    <div>
+                                                        <p class="inline-block" data-i18n="pairing.card.id.tracker">
+                                                            Tracker:
+                                                        </p>
+                                                        <span id="status">None</span>
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer">
+                                                    <div class="card-footer-item">
+                                                        <button
+                                                            class="button is-info"
+                                                            onclick="manageTracker('lorem ipsum')"
+                                                            data-i18n="pairing.card.id.manage"
+                                                        >
+                                                            Pair/Unpair
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Port ID 1 section -->
+                                        <div class="column is-6">
+                                            <div class="card">
+                                                <header class="card-header">
+                                                    <p class="card-header-title" data-i18n="pairing.card.id.title.1">
+                                                        Port ID 1
+                                                    </p>
+                                                </header>
+                                                <div class="card-content">
+                                                    <div>
+                                                        <p
+                                                            class="inline-block"
+                                                            data-i18n="pairing.card.id.status.title"
+                                                        >
+                                                            Status:
+                                                        </p>
+                                                        <span id="status">Unpaired</span>
+                                                    </div>
+                                                    <div>
+                                                        <p class="inline-block" data-i18n="pairing.card.id.tracker">
+                                                            Tracker:
+                                                        </p>
+                                                        <span id="status">None</span>
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer">
+                                                    <div class="card-footer-item">
+                                                        <button
+                                                            class="button is-info"
+                                                            onclick="manageTracker('lorem ipsum')"
+                                                            data-i18n="pairing.card.id.manage"
+                                                        >
+                                                            Pair/Unpair
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <div class="card-footer-item">
+                                    <button
+                                        class="button is-info"
+                                        onclick="manageTracker('port0')"
+                                        data-i18n="pairing.card.manage"
+                                    >
+                                        Pair/Unpair all
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

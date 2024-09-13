@@ -749,7 +749,7 @@ async function addDeviceToList(deviceID: string) {
         : `<div class="card" id="${deviceID}">
             <header class="card-header">
                 <div>
-                    <p class="card-header-title is-centered inline-block" data-i18n="trackerInfo.deviceName">
+                    <p class="card-header-title with-padding is-centered inline-block" data-i18n="trackerInfo.deviceName">
                         Device:
                     </p><span class="has-text-white has-text-weight-bold" id="device-name">${deviceName}</span>
                 </div>
@@ -1067,7 +1067,7 @@ function addEventListeners() {
             devices.forEach((device) => {
                 const deviceNameElement = device.querySelector("#device-name");
                 const deviceIDElement = device.querySelector("#device-id");
-        
+
                 if (deviceNameElement) {
                     const deviceName = deviceNameElement.textContent;
                     if (deviceName.includes("HaritoraX") && deviceName === device.id) {
@@ -1076,7 +1076,7 @@ function addEventListeners() {
                         deviceNameElement.textContent = "HaritoraXW-XXXXXX";
                     }
                 }
-        
+
                 if (deviceIDElement) {
                     const deviceID = deviceIDElement.textContent;
                     if (deviceID.includes("HaritoraX")) {
@@ -1093,11 +1093,11 @@ function addEventListeners() {
                 const deviceNameElement = device.querySelector("#device-name");
                 const deviceIDElement = device.querySelector("#device-id");
                 const originalDeviceName = settings.trackers?.[device.id]?.name ?? device.id;
-        
+
                 if (deviceNameElement) {
                     deviceNameElement.textContent = originalDeviceName;
                 }
-        
+
                 if (deviceIDElement) {
                     deviceIDElement.textContent = device.id;
                 }
@@ -1248,7 +1248,7 @@ function addEventListeners() {
                 trackerVisualizationFPS: trackerVisualizationFPS,
             },
         });
-        
+
         refreshDeviceList();
     });
 
@@ -1460,9 +1460,14 @@ function selectLanguage(language: string) {
 }
 
 function showOnboarding() {
-    window.log("Reopening onboarding screen...");
+    window.log("Opening onboarding screen...");
     const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
     window.ipc.send("show-onboarding", language);
+}
+
+function showPairing() {
+    window.log("Opening pairing screen...");
+    window.ipc.send("show-pairing", null);
 }
 
 function saveSettings() {
@@ -1547,6 +1552,7 @@ function simulateChangeEvent(element: HTMLInputElement, value: boolean) {
 window.startConnection = startConnection;
 window.stopConnection = stopConnection;
 window.showOnboarding = showOnboarding;
+window.showPairing = showPairing;
 window.saveSettings = saveSettings;
 
 window.openTrackerSettings = async (deviceID: string) => {

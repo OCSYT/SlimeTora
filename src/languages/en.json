@@ -89,7 +89,8 @@
         "other": {
             "title": "Other settings",
             "tooltip": "Other settings for the program that don't fit in the other categories.",
-            "trackerVisualizationFPS": "Tracker visualization FPS"
+            "trackerVisualizationFPS": "Tracker visualization FPS",
+            "pairing": "Manage GX(6/2) pairing"
         },
         "updates": {
             "title": "Update checking",
@@ -213,6 +214,27 @@
                 "title": "Body proportions",
                 "text": "Now it's time to calculate your body proportions. SlimeVR applies your body proportions to a virtual skeleton to have much more accurate tracking if set up correctly. Select \"Automatic proportions\" and follow the on-screen instructions to perform the calibration by following a set of movements."
             }
+        }
+    },
+    "pairing": {
+        "title": "GX(6/2) Tracker Pairing",
+        "text": "Manage the pairing of your trackers connected with the GX(6/2) communication dongles.",
+        "card": {
+            "title": "COM port:",
+            "id": {
+                "title": {
+                    "0": "Port ID 0",
+                    "1": "Port ID 1"
+                },
+                "status": {
+                    "title": "Status:",
+                    "paired": "Paired",
+                    "unpaired": "Unpaired"
+                },
+                "tracker": "Tracker:",
+                "manage": "Pair/Unpair"
+            },
+            "manage": "Pair/Unpair all"
         }
     },
     "dialogs": {

@@ -4,7 +4,14 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
 // @ts-ignore (for development)
-import { HaritoraX, TrackerModel, SensorMode, FPSMode, SensorAutoCorrection, MagStatus } from "haritorax-interpreter";
+import {
+    HaritoraX,
+    TrackerModel,
+    SensorMode,
+    FPSMode,
+    SensorAutoCorrection,
+    MagStatus,
+} from "haritorax-interpreter;
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
@@ -305,28 +312,7 @@ const createWindow = async () => {
         await fs.promises.writeFile(configPath, "{}");
         firstLaunch = true;
     }
-    mainWindow = new BrowserWindow({
-        title: "SlimeTora: Main",
-        autoHideMenuBar: true,
-        width: 900,
-        height: 700,
-        webPreferences: {
-            contextIsolation: true,
-            nodeIntegration: true,
-            preload: path.join(__dirname, "preload.mjs"),
-            spellcheck: false,
-            sandbox: false, // fixes startup crashes due to GPU process, shouldn't be too large of a security risk as we're not loading any external content/connect to internet
-        },
-        icon: path.join(__dirname, "static/images/icon.ico"),
-    });
-
-    mainWindow.loadURL(
-        format({
-            pathname: path.join(__dirname, "static/html/index.html"),
-            protocol: "file:",
-            slashes: true,
-        })
-    );
+    mainWindow = createBrowserWindow("SlimeTora: Main", "index.html", "en", null, 900, 700);
 
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", resources);
@@ -345,11 +331,6 @@ const createWindow = async () => {
 
         if (appUpdatesEnabled) await checkForAppUpdates();
         if (translationsUpdatesEnabled) await checkForTranslationUpdates();
-    });
-
-    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        shell.openExternal(url);
-        return { action: "deny" };
     });
 };
 
@@ -375,16 +356,21 @@ app.on("window-all-closed", closeApp);
  * Renderer handlers
  */
 
-function onboarding(language: string) {
-    log("Showing onboarding screen");
-
-    let onboardingWindow = new BrowserWindow({
-        title: "SlimeTora: Onboarding",
+function createBrowserWindow(
+    title: string,
+    htmlFile: string,
+    query: string | ParsedUrlQueryInput,
+    parent: BrowserWindow,
+    width: number = 950,
+    height: number = 750
+): BrowserWindow {
+    let window = new BrowserWindow({
+        title: title,
         autoHideMenuBar: true,
-        width: 950,
-        height: 750,
+        width: width,
+        height: height,
         modal: true, // prevent interaction with "parent" window until closed
-        parent: mainWindow,
+        parent: parent,
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,
@@ -395,19 +381,31 @@ function onboarding(language: string) {
         icon: path.join(__dirname, "static/images/icon.ico"),
     });
 
-    onboardingWindow.loadURL(
+    window.loadURL(
         format({
-            pathname: path.join(__dirname, "static/html/onboarding.html"),
+            pathname: path.join(__dirname, `static/html/${htmlFile}`),
             protocol: "file:",
             slashes: true,
-            query: { language: language },
+            query: query,
         })
     );
 
-    onboardingWindow.webContents.setWindowOpenHandler(({ url }) => {
+    window.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: "deny" };
     });
+
+    return window;
+}
+
+function onboarding(language: string) {
+    log("Showing onboarding screen");
+    createBrowserWindow("SlimeTora: Onboarding", "onboarding.html", { language: language }, mainWindow);
+}
+
+function pairing() {
+    log("Showing pairing screen");
+    createBrowserWindow("SlimeTora: Pairing", "pairing.html", null, mainWindow);
 }
 
 async function showMessage(
@@ -470,6 +468,10 @@ ipcMain.handle("show-error", async (_event, arg) => {
 
 ipcMain.on("show-onboarding", (_event, language) => {
     onboarding(language);
+});
+
+ipcMain.on("show-pairing", () => {
+    pairing();
 });
 
 ipcMain.handle("translate", async (_event, arg: string) => {
@@ -548,30 +550,13 @@ ipcMain.on("open-logs-folder", async () => {
 });
 
 ipcMain.on("open-tracker-settings", (_event, arg: string) => {
-    let trackerSettingsWindow = new BrowserWindow({
-        title: `SlimeTora: ${arg} settings`,
-        autoHideMenuBar: true,
-        width: 850,
-        height: 650,
-        modal: true, // prevent interaction with "parent" window until closed
-        parent: mainWindow,
-        webPreferences: {
-            contextIsolation: true,
-            nodeIntegration: true,
-            preload: path.join(__dirname, "preload.mjs"),
-            spellcheck: false,
-            sandbox: false, // fixes startup crashes due to GPU process, shouldn't be too large of a security risk as we're not loading any external content/connect to internet
-        },
-        icon: path.join(__dirname, "static/images/icon.ico"),
-    });
-
-    trackerSettingsWindow.loadURL(
-        format({
-            pathname: path.join(__dirname, "static/html/settings.html"),
-            protocol: "file:",
-            slashes: true,
-            query: { trackerName: arg },
-        })
+    let trackerSettingsWindow = createBrowserWindow(
+        `SlimeTora: ${arg} settings`,
+        "settings.html",
+        { trackerName: arg },
+        mainWindow,
+        850,
+        650
     );
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
@@ -704,7 +689,7 @@ function shouldInitializeNewDevice(): boolean {
 }
 
 function initializeDevice(forceDisableLogging: boolean = false) {
-    const trackerType = wiredTrackerEnabled ? TrackerModel.Wired: TrackerModel.Wireless;
+    const trackerType = wiredTrackerEnabled ? TrackerModel.Wired : TrackerModel.Wireless;
     const effectiveLoggingMode = forceDisableLogging ? 1 : loggingMode;
     log(`Creating new HaritoraX ${trackerType} instance with logging mode ${effectiveLoggingMode}...`, "connection");
     const loggingOptions = {
@@ -721,7 +706,7 @@ function initializeDevice(forceDisableLogging: boolean = false) {
 async function notifyConnectedDevices(): Promise<void> {
     const activeTrackers = Array.from(new Set(device.getActiveTrackers()));
     if (activeTrackers.length === 0) return;
-    for (const trackerName of activeTrackers) await addTracker(trackerName);
+    for (const trackerName of activeTrackers) await addTracker(trackerName as string);
     log("Connected devices: " + JSON.stringify(activeTrackers), "connection");
 }
 
@@ -921,6 +906,7 @@ import {
 } from "@slimevr/firmware-protocol";
 import { EmulatedTracker } from "@slimevr/tracker-emulation";
 import BetterQuaternion from "quaternion";
+import { ParsedUrlQueryInput } from "querystring";
 
 // For haritorax-interpreter
 // Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
@@ -1037,9 +1023,8 @@ async function processQueue() {
 const trackerTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
 const resetTrackerTimeout = (trackerName: string) => {
-    if (trackerTimeouts[trackerName]) {
-        clearTimeout(trackerTimeouts[trackerName]);
-    }
+    if (trackerTimeouts[trackerName]) clearTimeout(trackerTimeouts[trackerName]);
+
     trackerTimeouts[trackerName] = setTimeout(() => {
         device.emit("disconnect", trackerName);
         log(`Tracker "${trackerName}" assumed disconnected due to inactivity.`, "tracker");

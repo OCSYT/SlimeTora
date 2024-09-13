@@ -99,6 +99,7 @@ declare global {
         startConnection: () => void;
         stopConnection: () => void;
         showOnboarding: () => void;
+        showPairing: () => void;
         openLogsFolder: () => void;
         openSupport: () => void;
         saveSettings: () => void;
