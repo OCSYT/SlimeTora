@@ -653,6 +653,7 @@ window.ipc.on("device-battery", (_event, arg) => {
     window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`, "tracker");
 });
 
+// TODO: change mag status to text instead of color
 window.ipc.on("device-mag", (_event, arg) => {
     const { trackerName, magStatus }: { trackerName: string; magStatus: string } = arg;
     if (!isActive) return;

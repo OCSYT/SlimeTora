@@ -4,7 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
 // @ts-ignore (for development)
-import { HaritoraX } from "haritorax-interpreter";
+import { HaritoraX, TrackerModel, SensorMode, FPSMode, SensorAutoCorrection, MagStatus } from "haritorax-interpreter";
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
@@ -703,8 +703,8 @@ function shouldInitializeNewDevice(): boolean {
     );
 }
 
-function initializeDevice(forceDisableLogging: boolean = false): void {
-    const trackerType = wiredTrackerEnabled ? "wired" : "wireless";
+function initializeDevice(forceDisableLogging: boolean = false) {
+    const trackerType = wiredTrackerEnabled ? TrackerModel.Wired: TrackerModel.Wireless;
     const effectiveLoggingMode = forceDisableLogging ? 1 : loggingMode;
     log(`Creating new HaritoraX ${trackerType} instance with logging mode ${effectiveLoggingMode}...`, "connection");
     const loggingOptions = {
@@ -788,9 +788,9 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
         sensorAutoCorrection,
     }: {
         deviceID: string;
-        sensorMode: number;
-        fpsMode: number;
-        sensorAutoCorrection: string[];
+        sensorMode: SensorMode;
+        fpsMode: FPSMode;
+        sensorAutoCorrection: SensorAutoCorrection[];
     } = arg;
 
     // Validate input parameters
@@ -824,7 +824,7 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
         sensorMode,
         fpsMode,
         sensorAutoCorrection,
-    }: { sensorMode: number; fpsMode: number; sensorAutoCorrection: string[] } = arg;
+    }: { sensorMode: SensorMode; fpsMode: FPSMode; sensorAutoCorrection: SensorAutoCorrection[] } = arg;
 
     // Validate input settings
     if (!sensorMode || !fpsMode || !sensorAutoCorrection || sensorAutoCorrection.length === 0) {
@@ -1070,9 +1070,30 @@ function startDeviceListeners() {
         log(`Connected devices: ${trackers}`, "tracker");
     });
 
-    device.on("mag", (trackerName: string, magStatus: string) => {
+    device.on("mag", (trackerName: string, magStatus: MagStatus) => {
         if (!trackerName || !magStatus) return;
-        mainWindow.webContents.send("device-mag", { trackerName, magStatus });
+
+        let magStatusColor;
+
+        switch (magStatus) {
+            case MagStatus.GREAT:
+                magStatusColor = "green";
+                break;
+            case MagStatus.OKAY:
+                magStatusColor = "yellow";
+                break;
+            case MagStatus.BAD:
+                magStatusColor = "red";
+                break;
+            case MagStatus.VERY_BAD:
+                magStatusColor = "red";
+                break;
+            default:
+                magStatusColor = "gray";
+                break;
+        }
+
+        mainWindow.webContents.send("device-mag", { trackerName, magStatus: magStatusColor });
     });
 
     let clickCounts: { [key: string]: number } = {};

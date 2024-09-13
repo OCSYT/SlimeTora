@@ -52,7 +52,7 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 # Known issues
 
 -   Battery information jumps to incorrect percentages/voltage randomly
-    -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers themselves
+    -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers reporting those random values themselves
     -   This has been slightly mitigated with [v1.2.0](https://github.com/OCSYT/SlimeTora/releases/v1.2.0), which uses a "stable average" of the battery percentage and voltage instead
 -   Running "auto-detection" more than once without restarting breaks tracker settings auto-detection (device/ports detection still works)
 -   **(LINUX)** Connecting to trackers via "Bluetooth (LE)" always fails
