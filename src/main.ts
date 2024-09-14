@@ -29,6 +29,9 @@ const languagesPath = path.resolve(
 );
 
 let mainWindow: BrowserWindow;
+let trackerSettingsWindow: BrowserWindow;
+let onboardingWindow: BrowserWindow;
+let pairingWindow: BrowserWindow;
 let device: HaritoraX;
 let connectedDevices = new Map<string, EmulatedTracker>();
 let deviceBattery: {
@@ -400,12 +403,12 @@ function createBrowserWindow(
 
 function onboarding(language: string) {
     log("Showing onboarding screen");
-    createBrowserWindow("SlimeTora: Onboarding", "onboarding.html", { language: language }, mainWindow);
+    onboardingWindow = createBrowserWindow("SlimeTora: Onboarding", "onboarding.html", { language: language }, mainWindow);
 }
 
 function pairing(ports: string[]) {
     log("Showing pairing screen");
-    createBrowserWindow("SlimeTora: Pairing", "pairing.html", { ports: JSON.stringify(ports) }, mainWindow);
+    pairingWindow = createBrowserWindow("SlimeTora: Pairing", "pairing.html", { ports: JSON.stringify(ports) }, mainWindow);
 }
 
 async function showMessage(
@@ -550,7 +553,7 @@ ipcMain.on("open-logs-folder", async () => {
 });
 
 ipcMain.on("open-tracker-settings", (_event, arg: string) => {
-    let trackerSettingsWindow = createBrowserWindow(
+    trackerSettingsWindow = createBrowserWindow(
         `SlimeTora: ${arg} settings`,
         "settings.html",
         { trackerName: arg },
@@ -572,12 +575,20 @@ ipcMain.handle("get-tracker-from-info", (_event, arg) => {
 });
 
 ipcMain.handle("manage-tracker", async (_event, arg) => {
-    const { port, portId } = arg;
-    log(`Managing tracker for port ${port} (ID ${portId})`, "pairing");
+    const { port, portId, status } = arg;
+    log(`Managing tracker for port ${port} (ID ${portId}, status: ${status})`, "pairing");
 
     if (!device) error("Device instance wasn't started correctly", "pairing");
 
-    return true;
+    if (status === "paired") {
+        device.getComInstance().unpair(port, portId);
+        log(`Unpaired tracker for port ${port} (ID ${portId})`, "pairing");
+        return false;
+    } else {
+        device.getComInstance().pair(port, portId);
+        log(`Started pairing tracker for port ${port} (ID ${portId})`, "pairing");
+        return true;
+    }
 });
 
 /*
@@ -1049,10 +1060,15 @@ const resetTrackerTimeout = (trackerName: string) => {
 const MAX_BATTERY_READINGS = 5;
 const batteryReadingsMap = new Map<string, { percentages: number[]; voltages: number[] }>();
 function startDeviceListeners() {
-    device.on("connect", async (deviceID: string) => {
+    device.on("connect", async (deviceID: string, mode: string, port: string, portId: string) => {
         if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
             return;
         await addTracker(deviceID);
+
+        if (mode === "com" && (port || portId) && pairingWindow) {
+            // Using COM port, check if pairing window is open and if so, send the tracker, port and port id
+            pairingWindow.webContents.send("device-connected", { deviceID, port, portId });            
+        }
     });
 
     device.on("disconnect", (deviceID: string) => {

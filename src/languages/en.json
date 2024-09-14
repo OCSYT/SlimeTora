@@ -229,7 +229,8 @@
                 "status": {
                     "title": "Status:",
                     "paired": "Paired",
-                    "unpaired": "Unpaired"
+                    "unpaired": "Unpaired",
+                    "pairing": "Pairing"
                 },
                 "tracker": {
                     "title": "Tracker:",

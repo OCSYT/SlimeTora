@@ -3,6 +3,11 @@ import { PairingCard } from "./templates/pairing-card.js";
 const params = new URLSearchParams(window.location.search);
 const ports = JSON.parse(params.get("ports"));
 
+let paired: string;
+let unpaired: string
+let pairing: string;
+let none: string;
+
 document.addEventListener("DOMContentLoaded", async () => {
     const i18nElements = document.querySelectorAll("[data-i18n]");
     const translationPromises: Promise<void>[] = [];
@@ -20,12 +25,36 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await Promise.all(translationPromises);
 
-    await populateComPorts();
+    paired = await t("pairing.card.id.status.paired");
+    unpaired = await t("pairing.card.id.status.unpaired");
+    pairing = await t("pairing.card.id.status.pairing");
+    none = await t("pairing.card.id.tracker.none");
+
+    populateComPorts();
     updateComPorts();
 });
 
-async function populateComPorts() {
+window.ipc.on("device-connected", (_event, arg) => {
+    const { deviceID, port, portID } = arg;
+
+    const portElement = document.querySelector(`#com-port-${CSS.escape(port)}`);
+    if (!portElement) return;
+
+    const portIdElement = portElement.querySelector(`#port-id-${portID}`);
+    if (!portIdElement) return;
+
+    const statusElement = portIdElement.querySelector("#status");
+    if (statusElement) statusElement.textContent = paired;
+
+    const trackerElement = portIdElement.querySelector("#tracker");
+    if (trackerElement) trackerElement.textContent = deviceID;
+
+    window.log(`Device connected: ${deviceID} on ${port} with ID ${portID}`, "pairing");
+});
+
+function populateComPorts() {
     const columnsDiv = document.querySelector(".columns.is-multiline");
+    if (!columnsDiv) return;
 
     ports.forEach((port: string) => {
         window.log(`Found COM port: ${port}`, "pairing");
@@ -35,16 +64,12 @@ async function populateComPorts() {
         columnsDiv.appendChild(comPortDiv);
     });
 
-    return true;
+    return;
 }
 
-async function updateComPorts() {
+function updateComPorts() {
     // get the COM ports and update the status/tracker of each
     // for every element with class card, get the tracker port and ID of each
-    const paired = await t("pairing.card.id.status.paired");
-    const unpaired = await t("pairing.card.id.status.unpaired");
-    const none = await t("pairing.card.id.tracker.none");
-
     const cards = document.querySelectorAll(".card");
     cards.forEach(async (card) => {
         const port = card.id.replace("com-port-", "");
@@ -68,14 +93,33 @@ async function updateComPorts() {
     });
 }
 
-function manageTracker(element: string) {
+async function manageTracker(element: string) {
     const match = element.match(/^(.*)-manage-(.*)$/);
     if (!match) throw new Error("Invalid element format");
 
-    const port = match[1];
+    let port = match[1];
+    const escapedPort = CSS.escape(port);
     const portId = match[2];
 
-    window.ipc.send("manage-tracker", { port, portId });
+    const statusElement = document.querySelector(`#com-port-${escapedPort} #port-id-${portId} #status`);
+    if (!statusElement) return;
+
+    let status = statusElement.textContent === paired ? "paired" : "unpaired";
+
+    // Simulate cancellation of pairing if status is "pairing"
+    if (statusElement.textContent === pairing) {
+        window.log("Cancelling pairing", "pairing");
+        status = "paired";
+    }
+
+    const response = await window.ipc.invoke("manage-tracker", { port, portId, status });
+
+    // If response is true, has started pairing, otherwise has been unpaired
+    const newStatus = response ? pairing : unpaired;
+    if (statusElement) statusElement.textContent = newStatus;
+
+    const trackerElement = document.querySelector(`#com-port-${escapedPort} #port-id-${portId} #tracker`);
+    if (trackerElement) trackerElement.textContent = none;
 }
 
 const t = window.translate;

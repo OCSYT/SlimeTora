@@ -16,7 +16,7 @@ export function PairingCard(port: string): string {
                     <div class="content">
                         <div class="columns">
                             <!-- Port ID 0 section -->
-                            <div class="column is-6">
+                            <div class="column is-6" id="port-id-0">
                                 <div class="card">
                                     <header class="card-header">
                                         <p class="card-header-title" data-i18n="pairing.card.id.title.0">
@@ -54,7 +54,7 @@ export function PairingCard(port: string): string {
                                 </div>
                             </div>
                             <!-- Port ID 1 section -->
-                            <div class="column is-6">
+                            <div class="column is-6" id="port-id-1">
                                 <div class="card">
                                     <header class="card-header">
                                         <p class="card-header-title" data-i18n="pairing.card.id.title.1">
