@@ -403,9 +403,9 @@ function onboarding(language: string) {
     createBrowserWindow("SlimeTora: Onboarding", "onboarding.html", { language: language }, mainWindow);
 }
 
-function pairing() {
+function pairing(ports: string[]) {
     log("Showing pairing screen");
-    createBrowserWindow("SlimeTora: Pairing", "pairing.html", null, mainWindow);
+    createBrowserWindow("SlimeTora: Pairing", "pairing.html", { ports: JSON.stringify(ports) }, mainWindow);
 }
 
 async function showMessage(
@@ -470,8 +470,8 @@ ipcMain.on("show-onboarding", (_event, language) => {
     onboarding(language);
 });
 
-ipcMain.on("show-pairing", () => {
-    pairing();
+ipcMain.on("show-pairing", (_event, ports) => {
+    pairing(ports);
 });
 
 ipcMain.handle("translate", async (_event, arg: string) => {
@@ -563,6 +563,21 @@ ipcMain.on("open-tracker-settings", (_event, arg: string) => {
         // send trackerName to window
         trackerSettingsWindow.webContents.send("trackerName", arg);
     });
+});
+
+ipcMain.handle("get-tracker-from-info", (_event, arg) => {
+    const { port, portId } = arg;
+    if (!port || !portId) return null;
+    return device.getComInstance().getTrackerFromInfo(port, portId);
+});
+
+ipcMain.handle("manage-tracker", async (_event, arg) => {
+    const { port, portId } = arg;
+    log(`Managing tracker for port ${port} (ID ${portId})`, "pairing");
+
+    if (!device) error("Device instance wasn't started correctly", "pairing");
+
+    return true;
 });
 
 /*

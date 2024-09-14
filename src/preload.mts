@@ -115,6 +115,9 @@ declare global {
         runStartConnection: () => void;
         runStopConnection: () => void;
 
+        // pairing.ts
+        manageTracker: (port: string) => void;
+
         ipc: {
             invoke: (channel: string, args: any) => Promise<any>;
             send: (channel: string, args: any) => void;

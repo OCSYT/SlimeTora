@@ -34,10 +34,10 @@ export function PairingCard(port: string): string {
                                             <span id="status">Unpaired</span>
                                         </div>
                                         <div>
-                                            <p class="inline-block" data-i18n="pairing.card.id.tracker">
+                                            <p class="inline-block" data-i18n="pairing.card.id.tracker.title">
                                                 Tracker:
                                             </p>
-                                            <span id="status">None</span>
+                                            <span id="tracker">N/A</span>
                                         </div>
                                     </div>
                                     <div class="card-footer">
@@ -72,10 +72,10 @@ export function PairingCard(port: string): string {
                                             <span id="status">Unpaired</span>
                                         </div>
                                         <div>
-                                            <p class="inline-block" data-i18n="pairing.card.id.tracker">
+                                            <p class="inline-block" data-i18n="pairing.card.id.tracker.title">
                                                 Tracker:
                                             </p>
-                                            <span id="status">None</span>
+                                            <span id="tracker">N/A</span>
                                         </div>
                                     </div>
                                     <div class="card-footer">

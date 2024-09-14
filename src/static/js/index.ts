@@ -399,7 +399,7 @@ async function startConnection() {
         return false;
     }
 
-    toggleConnectionButtons();
+    toggleButtons();
 }
 
 function stopConnection() {
@@ -412,7 +412,7 @@ function stopConnection() {
     }
     window.log("Stopping connection(s)...", "connection");
 
-    toggleConnectionButtons();
+    toggleButtons();
 
     window.ipc.send("stop-connection", null);
 
@@ -424,10 +424,12 @@ function stopConnection() {
 }
 
 // Helper functions
-function toggleConnectionButtons() {
+function toggleButtons() {
     isActive = !isActive;
     document.getElementById("start-connection-button").toggleAttribute("disabled");
     document.getElementById("stop-connection-button").toggleAttribute("disabled");
+
+    if (wirelessTrackerEnabled && comEnabled) document.getElementById("pairing-button").toggleAttribute("disabled");
 }
 
 async function handleSlimeVRCheck(slimeVRFound: boolean) {
@@ -762,13 +764,14 @@ async function addDeviceToList(deviceID: string) {
     deviceNameElement.addEventListener("click", startEditing);
 
     // Censor serial if BT tracker and censorSerialNumbers is enabled
-    if (deviceIDElement) {
-        if (deviceID.startsWith("HaritoraXW") && censorSerialNumbers) {
-            if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraXW-XXXXXX";
-            deviceIDElement.textContent = "HaritoraXW-XXXXXX";
-        } else if (deviceID.startsWith("HaritoraX") && censorSerialNumbers) {
-            if (deviceName === deviceID) deviceNameElement.textContent = "HaritoraX-XXXXXX";
-            deviceIDElement.textContent = "HaritoraX-XXXXXX";
+    if (censorSerialNumbers) {
+        const regex = /^Haritora.*-/;
+        if (regex.test(deviceID)) {
+            const censoredText = deviceID.replace(/-.*/, "-XXXXXX");
+            if (deviceIDElement) deviceIDElement.textContent = censoredText;
+            if (deviceName === deviceID) {
+                if (deviceNameElement) deviceNameElement.textContent = censoredText;
+            }
         }
     }
 
@@ -1008,22 +1011,13 @@ function addEventListeners() {
                 const deviceNameElement = device.querySelector("#device-name");
                 const deviceIDElement = device.querySelector("#device-id");
 
-                if (deviceNameElement) {
-                    const deviceName = deviceNameElement.textContent;
-                    if (deviceName.includes("HaritoraX") && deviceName === device.id) {
-                        deviceNameElement.textContent = "HaritoraX-XXXXXX";
-                    } else if (deviceName.includes("HaritoraXW") && deviceName === device.id) {
-                        deviceNameElement.textContent = "HaritoraXW-XXXXXX";
-                    }
-                }
+                const deviceID = deviceIDElement.textContent;
+                const regex = /^Haritora.*-/;
 
-                if (deviceIDElement) {
-                    const deviceID = deviceIDElement.textContent;
-                    if (deviceID.includes("HaritoraX")) {
-                        deviceIDElement.textContent = "HaritoraX-XXXXXX";
-                    } else if (deviceID.includes("HaritoraXW")) {
-                        deviceIDElement.textContent = "HaritoraXW-XXXXXX";
-                    }
+                if (regex.test(deviceID)) {
+                    const censoredText = deviceID.replace(/-.*/, "-XXXXXX");
+                    if (deviceNameElement) deviceNameElement.textContent = censoredText;
+                    if (deviceIDElement) deviceIDElement.textContent = censoredText;
                 }
             });
         } else {
@@ -1407,7 +1401,7 @@ function showOnboarding() {
 
 function showPairing() {
     window.log("Opening pairing screen...");
-    window.ipc.send("show-pairing", null);
+    window.ipc.send("show-pairing", selectedComPorts);
 }
 
 function saveSettings() {
@@ -1421,6 +1415,7 @@ function saveSettings() {
     comPorts.forEach((port) => {
         if (port.checked) {
             selectedPorts.push(port.id);
+            if (!selectedComPorts.includes(port.id)) selectedComPorts.push(port.id);
         }
     });
 

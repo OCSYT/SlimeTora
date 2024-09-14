@@ -231,7 +231,10 @@
                     "paired": "Paired",
                     "unpaired": "Unpaired"
                 },
-                "tracker": "Tracker:",
+                "tracker": {
+                    "title": "Tracker:",
+                    "none": "N/A"
+                },
                 "manage": "Pair/Unpair"
             },
             "manage": "Pair/Unpair all"
