@@ -1,3 +1,5 @@
+import { PairingCard } from "./templates/pairing-card.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
     const i18nElements = document.querySelectorAll("[data-i18n]");
     const translationPromises: Promise<void>[] = [];
@@ -14,12 +16,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     await Promise.all(translationPromises);
+
+    populateComPorts();
 });
 
-async function getSetting(key: string, defaultValue: any) {
-    const exists = await window.ipc.invoke("has-setting", key);
-    window.log(`Setting "${key}" exists with value: ${exists}`);
-    return exists ? await window.ipc.invoke("get-setting", key) : defaultValue;
+async function populateComPorts() {
+    const comPorts = await window.ipc.invoke("get-com-ports", null);
+    const columnsDiv = document.querySelector(".columns.is-multiline");
+
+    comPorts.forEach((port: string) => {
+        const comPortDiv = document.createElement("div");
+        comPortDiv.classList.add("column", "is-12");
+        comPortDiv.innerHTML = PairingCard(port);
+        columnsDiv.appendChild(comPortDiv);
+    });
 }
 
 // Required to prevent variable conflicts from other files

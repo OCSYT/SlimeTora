@@ -11,7 +11,7 @@ import {
     FPSMode,
     SensorAutoCorrection,
     MagStatus,
-} from "haritorax-interpreter;
+} from "haritorax-interpreter";
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
