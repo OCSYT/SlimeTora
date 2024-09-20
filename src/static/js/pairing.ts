@@ -34,22 +34,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateComPorts();
 });
 
-window.ipc.on("device-connected", (_event, arg) => {
-    const { deviceID, port, portID } = arg;
+window.ipc.on("device-paired", (_event, arg) => {
+    const { trackerName, port, portId } = arg;
+
+    window.log(`Received paired device: ${trackerName} on ${port} with ID ${portId}`, "pairing");
 
     const portElement = document.querySelector(`#com-port-${CSS.escape(port)}`);
     if (!portElement) return;
 
-    const portIdElement = portElement.querySelector(`#port-id-${portID}`);
+    const portIdElement = portElement.querySelector(`#port-id-${portId}`);
     if (!portIdElement) return;
 
     const statusElement = portIdElement.querySelector("#status");
     if (statusElement) statusElement.textContent = paired;
 
     const trackerElement = portIdElement.querySelector("#tracker");
-    if (trackerElement) trackerElement.textContent = deviceID;
+    if (trackerElement) trackerElement.textContent = trackerName;
 
-    window.log(`Device connected: ${deviceID} on ${port} with ID ${portID}`, "pairing");
+    window.log(`Updated status of ${port} with ID ${portId} to paired`, "pairing");
 });
 
 function populateComPorts() {

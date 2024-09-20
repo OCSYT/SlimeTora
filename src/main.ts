@@ -1064,11 +1064,6 @@ function startDeviceListeners() {
         if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
             return;
         await addTracker(deviceID);
-
-        if (mode === "com" && (port || portId) && pairingWindow) {
-            // Using COM port, check if pairing window is open and if so, send the tracker, port and port id
-            pairingWindow.webContents.send("device-connected", { deviceID, port, portId });            
-        }
     });
 
     device.on("disconnect", (deviceID: string) => {
@@ -1171,6 +1166,7 @@ function startDeviceListeners() {
         let tracker = connectedDevices.get(trackerName);
         if (!tracker || !rotation || !gravity || !quaternion || !eulerRadians) {
             error(`Error processing IMU data for ${trackerName}, skipping...`, "tracker");
+            log(`Tracker: ${tracker}, Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(gravity)}`, "tracker");
             return;
         }
 
@@ -1240,6 +1236,23 @@ function startDeviceListeners() {
             `Received battery data for ${trackerName}: ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`,
             "tracker"
         );
+    });
+
+    device.on("paired", (trackerName: string, port: string, portId: string) => {
+        if (!trackerName || !port || !portId || !pairingWindow) return;
+
+        device.emit("connect", trackerName, "com", port, portId);
+        pairingWindow.webContents.send("device-paired", { trackerName, port, portId });
+
+        log(`Paired tracker "${trackerName}" with port ${port} (ID ${portId})`, "pairing");
+    });
+
+    device.on("unpaired", (trackerName: string) => {
+        if (!trackerName) return;
+
+        device.emit("disconnect", trackerName);
+
+        log(`Unpaired tracker "${trackerName}"`, "pairing");
     });
 
     device.on("log", (msg: string) => {
