@@ -95,13 +95,25 @@ function updateComPorts() {
     });
 }
 
-async function manageTracker(element: string) {
+async function manageTracker(element: string, forceUnpair?: boolean) {
     const match = element.match(/^(.*)-manage-(.*)$/);
     if (!match) throw new Error("Invalid element format");
 
-    let port = match[1];
+    const port = match[1];
     const escapedPort = CSS.escape(port);
     const portId = match[2];
+    
+    if (portId === "all") {
+        const portIdElements = document.querySelectorAll(`#com-port-${escapedPort} .card-content .card-header-title`);
+        portIdElements.forEach(async (portIdElement) => {
+            const id = portIdElement.textContent.replace("Port ID ", "").trim();
+            if (!id || isNaN(parseInt(id))) return;
+
+            await manageTracker(`${port}-manage-${id}`, true);
+        });
+
+        return;
+    }
 
     const statusElement = document.querySelector(`#com-port-${escapedPort} #port-id-${portId} #status`);
     if (!statusElement) return;
@@ -109,8 +121,8 @@ async function manageTracker(element: string) {
     let status = statusElement.textContent === paired ? "paired" : "unpaired";
 
     // Simulate cancellation of pairing if status is "pairing"
-    if (statusElement.textContent === pairing) {
-        window.log("Cancelling pairing", "pairing");
+    if (statusElement.textContent === pairing || forceUnpair) {
+        window.log("Forcing unpair", "pairing");
         status = "paired";
     }
 

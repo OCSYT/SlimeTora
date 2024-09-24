@@ -238,7 +238,7 @@
                 },
                 "manage": "Pair/Unpair"
             },
-            "manage": "Pair/Unpair all"
+            "manage": "Unpair all"
         }
     },
     "dialogs": {

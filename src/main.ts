@@ -1166,7 +1166,7 @@ function startDeviceListeners() {
         let tracker = connectedDevices.get(trackerName);
         if (!tracker || !rotation || !gravity || !quaternion || !eulerRadians) {
             error(`Error processing IMU data for ${trackerName}, skipping...`, "tracker");
-            log(`Tracker: ${tracker}, Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(gravity)}`, "tracker");
+            log(`Tracker: ${JSON.stringify(tracker)}, Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(gravity)}`, "tracker");
             return;
         }
 

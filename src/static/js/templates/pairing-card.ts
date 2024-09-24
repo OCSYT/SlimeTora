@@ -101,7 +101,7 @@ export function PairingCard(port: string): string {
                             onclick="manageTracker('${port}-manage-all')"
                             data-i18n="pairing.card.manage"
                         >
-                            Pair/Unpair all
+                            Unpair all
                         </button>
                     </div>
                 </div>
