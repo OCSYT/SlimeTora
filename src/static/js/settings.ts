@@ -28,6 +28,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const trackerNameElement = document.getElementById("tracker-name");
     if (trackerName.startsWith("HaritoraX")) {
+        // Disable the turn off tracker button (BT currently unsupported)
+        document.getElementById("turn-off-tracker-button").toggleAttribute("disabled");
+
         // Check if censor serial numbers is enabled
         const settings = await window.ipc.invoke("get-settings", null);
 
@@ -309,6 +312,11 @@ async function getSetting(key: string, defaultValue: any) {
     return exists ? await window.ipc.invoke("get-setting", key) : defaultValue;
 }
 
+window.turnOffTracker = () => {
+    window.log(`Turning off tracker: ${trackerName}`);
+    window.ipc.send("turn-off-tracker", trackerName);
+    window.close();
+};
 window.saveTrackerSettings = saveTrackerSettings;
 window.getTrackerSettings = getTrackerSettings;
 window.resetTrackerSettings = resetTrackerSettings;

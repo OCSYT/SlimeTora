@@ -103,9 +103,11 @@ declare global {
         openLogsFolder: () => void;
         openSupport: () => void;
         saveSettings: () => void;
+        turnOffTrackers: () => void;
         openTrackerSettings: (deviceID: string) => void;
 
         // settings.ts
+        turnOffTracker: () => void;
         saveTrackerSettings: () => void;
         getTrackerSettings: () => void;
         resetTrackerSettings: () => void;

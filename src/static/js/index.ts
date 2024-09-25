@@ -429,7 +429,10 @@ function toggleButtons() {
     document.getElementById("start-connection-button").toggleAttribute("disabled");
     document.getElementById("stop-connection-button").toggleAttribute("disabled");
 
-    if (wirelessTrackerEnabled && comEnabled) document.getElementById("pairing-button").toggleAttribute("disabled");
+    if (wirelessTrackerEnabled && comEnabled) {
+        document.getElementById("pairing-button").toggleAttribute("disabled");
+        document.getElementById("turn-off-trackers-button").toggleAttribute("disabled");
+    }
 }
 
 async function handleSlimeVRCheck(slimeVRFound: boolean) {
@@ -1488,6 +1491,10 @@ window.stopConnection = stopConnection;
 window.showOnboarding = showOnboarding;
 window.showPairing = showPairing;
 window.saveSettings = saveSettings;
+window.turnOffTrackers = () => {
+    window.log("Turning off all trackers...");
+    window.ipc.send("turn-off-tracker", "all");
+};
 
 window.openTrackerSettings = async (deviceID: string) => {
     window.log(`Opening tracker settings for "${deviceID}"`);

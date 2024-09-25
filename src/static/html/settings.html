@@ -168,6 +168,17 @@
                         </div>
                         <div class="settings-container">
                             <button
+                                class="button is-danger"
+                                id="turn-off-tracker-button"
+                                onclick="turnOffTracker()"
+                                data-i18n="trackerInfo.trackerSettings.debugging.turnOff"
+                            >
+                                Turn off tracker
+                            </button>
+                        </div>
+                        <br />
+                        <div class="settings-container">
+                            <button
                                 class="button is-info"
                                 onclick="getTrackerSettings()"
                                 data-i18n="trackerInfo.trackerSettings.debugging.getSettings"

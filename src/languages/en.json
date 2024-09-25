@@ -29,6 +29,7 @@
         "compactView": "Compact view",
         "censorSerialNumbers": "Censor serial numbers",
         "trackerVisualization": "Tracker visualization",
+        "turnOffTrackers": "Turn off all trackers",
         "deviceName": "Device:",
         "deviceID": "Device ID:",
         "rotationData": "Rotation data:",
@@ -62,6 +63,7 @@
             "debugging": {
                 "title": "Debugging",
                 "tooltip": "Some debugging options for this individual tracker.",
+                "turnOff": "Turn off tracker",
                 "resetSettings": "Reset settings",
                 "getSettings": "Get tracker settings"
             }

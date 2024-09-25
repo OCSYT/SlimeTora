@@ -403,12 +403,22 @@ function createBrowserWindow(
 
 function onboarding(language: string) {
     log("Showing onboarding screen");
-    onboardingWindow = createBrowserWindow("SlimeTora: Onboarding", "onboarding.html", { language: language }, mainWindow);
+    onboardingWindow = createBrowserWindow(
+        "SlimeTora: Onboarding",
+        "onboarding.html",
+        { language: language },
+        mainWindow
+    );
 }
 
 function pairing(ports: string[]) {
     log("Showing pairing screen");
-    pairingWindow = createBrowserWindow("SlimeTora: Pairing", "pairing.html", { ports: JSON.stringify(ports) }, mainWindow);
+    pairingWindow = createBrowserWindow(
+        "SlimeTora: Pairing",
+        "pairing.html",
+        { ports: JSON.stringify(ports) },
+        mainWindow
+    );
 }
 
 async function showMessage(
@@ -878,6 +888,35 @@ ipcMain.on("set-channel", async (_event, arg) => {
     device.getComInstance().setChannel(port, channel);
 });
 
+ipcMain.on("turn-off-tracker", async (_event, arg) => {
+    const trackerName = arg;
+
+    if (!device) {
+        error("Device instance wasn't started correctly", "connection");
+        return;
+    }
+
+    const activeTrackers = device.getActiveTrackers();
+
+    if (trackerName === "all") {
+        if (activeTrackers.length === 0) {
+            error("No active trackers found", "connection");
+            return;
+        }
+
+        log("Manually turning off all trackers", "connection");
+        activeTrackers.forEach((tracker) => device.powerOffTracker(tracker as string));
+    } else {
+        if (!activeTrackers.includes(trackerName)) {
+            error(`Tracker "${trackerName}" not found`, "connection");
+            return;
+        }
+
+        log(`Manually turning off tracker "${trackerName}"`, "connection");
+        device.powerOffTracker(trackerName);
+    }
+});
+
 /*
  * Config handlers
  */
@@ -1188,7 +1227,12 @@ function startDeviceListeners() {
         let tracker = connectedDevices.get(trackerName);
         if (!tracker || !rotation || !gravity || !quaternion || !eulerRadians) {
             error(`Error processing IMU data for ${trackerName}, skipping...`, "tracker");
-            log(`Tracker: ${JSON.stringify(tracker)}, Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(gravity)}`, "tracker");
+            log(
+                `Tracker: ${JSON.stringify(tracker)}, Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(
+                    gravity
+                )}`,
+                "tracker"
+            );
             return;
         }
 
