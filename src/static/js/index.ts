@@ -619,7 +619,6 @@ window.ipc.on("device-connected-to-server", (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
     window.log(`Tracker ${deviceID} connected to server, firing battery and mag events...`, "tracker");
-    // TODO: unknown if wired trackers report these immediately when COM port opens, check with users
     window.ipc.invoke("fire-tracker-battery", deviceID);
     window.ipc.invoke("fire-tracker-mag", deviceID);
 });

@@ -791,6 +791,11 @@ ipcMain.handle("get-tracker-settings", async (_event, arg) => {
     return settings;
 });
 
+ipcMain.handle("get-channel", async (_event, arg) => {
+    const { port }: { port: string } = arg;
+    return device.getComInstance().getPortChannel(port);
+});
+
 ipcMain.on("set-tracker-settings", async (_event, arg) => {
     const {
         deviceID,
@@ -854,6 +859,23 @@ ipcMain.on("set-all-tracker-settings", async (_event, arg) => {
     log(`Applied to trackers: ${uniqueActiveTrackers.join(", ")}`, "settings");
 
     device.setAllTrackerSettings(sensorMode, fpsMode, uniqueSensorAutoCorrection, false);
+});
+
+ipcMain.on("set-channel", async (_event, arg) => {
+    const { port, channel } = arg;
+
+    if (!device) {
+        error("Device instance wasn't started correctly", "connection");
+        return;
+    }
+
+    if (!device.getConnectionModeActive("com")) {
+        error("COM connection not active", "connection");
+        return;
+    }
+
+    log(`Changing channel for port ${port} to ${channel}`, "connection");
+    device.getComInstance().setChannel(port, channel);
 });
 
 /*

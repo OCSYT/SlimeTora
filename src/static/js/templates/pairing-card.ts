@@ -25,10 +25,7 @@ export function PairingCard(port: string): string {
                                     </header>
                                     <div class="card-content">
                                         <div>
-                                            <p
-                                                class="inline-block"
-                                                data-i18n="pairing.card.id.status.title"
-                                            >
+                                            <p class="inline-block" data-i18n="pairing.card.id.status.title">
                                                 Status:
                                             </p>
                                             <span id="status">Unpaired</span>
@@ -63,10 +60,7 @@ export function PairingCard(port: string): string {
                                     </header>
                                     <div class="card-content">
                                         <div>
-                                            <p
-                                                class="inline-block"
-                                                data-i18n="pairing.card.id.status.title"
-                                            >
+                                            <p class="inline-block" data-i18n="pairing.card.id.status.title">
                                                 Status:
                                             </p>
                                             <span id="status">Unpaired</span>
@@ -103,6 +97,13 @@ export function PairingCard(port: string): string {
                         >
                             Unpair all
                         </button>
+                    </div>
+                    <div class="card-footer-item">
+                        <div class="select">
+                            <select id="channel-select">
+                                <!-- Port channels get populated here -->
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>

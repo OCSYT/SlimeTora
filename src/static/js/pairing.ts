@@ -4,7 +4,7 @@ const params = new URLSearchParams(window.location.search);
 const ports = JSON.parse(params.get("ports"));
 
 let paired: string;
-let unpaired: string
+let unpaired: string;
 let pairing: string;
 let none: string;
 
@@ -58,12 +58,37 @@ function populateComPorts() {
     const columnsDiv = document.querySelector(".columns.is-multiline");
     if (!columnsDiv) return;
 
-    ports.forEach((port: string) => {
+    ports.forEach(async (port: string) => {
         window.log(`Found COM port: ${port}`, "pairing");
         const comPortDiv = document.createElement("div");
         comPortDiv.classList.add("column", "is-12");
         comPortDiv.innerHTML = PairingCard(port);
         columnsDiv.appendChild(comPortDiv);
+
+        const dropdown = comPortDiv.querySelector("#channel-select");
+        if (!dropdown) return;
+
+        // Populate port dropdown
+        for (let i = 1; i <= 10; i++) {
+            const option = document.createElement("option");
+            option.value = i.toString();
+            option.textContent = `Channel ${i}`;
+            dropdown.appendChild(option);
+        }
+
+        // Change channel event listener
+        dropdown.addEventListener("change", (event) => {
+            const channel = (event.target as HTMLSelectElement).value;
+            window.log(`Changing channel to ${channel} for ${port}`, "pairing");
+            window.ipc.send("set-channel", { port, channel });
+        });
+
+        // Set current channel
+        const channel = await window.ipc.invoke("get-channel", { port });
+        if (channel) {
+            window.log(`Current channel for ${port}: ${channel}`, "pairing");
+            (dropdown as HTMLSelectElement).value = channel;
+        }
     });
 
     return;
@@ -102,7 +127,7 @@ async function manageTracker(element: string, forceUnpair?: boolean) {
     const port = match[1];
     const escapedPort = CSS.escape(port);
     const portId = match[2];
-    
+
     if (portId === "all") {
         const portIdElements = document.querySelectorAll(`#com-port-${escapedPort} .card-content .card-header-title`);
         portIdElements.forEach(async (portIdElement) => {
