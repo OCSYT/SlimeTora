@@ -729,14 +729,14 @@ function initializeDevice(forceDisableLogging: boolean = false) {
     const effectiveLoggingMode = forceDisableLogging ? 1 : loggingMode;
     log(`Creating new HaritoraX ${trackerType} instance with logging mode ${effectiveLoggingMode}...`, "connection");
     const loggingOptions = {
-        1: [false, false, false],
-        2: [true, false, false],
-        3: [true, false, true],
+        1: [false, false, false, false],
+        2: [true, false, false, true],
+        3: [true, false, true, true],
     };
-    const [logging, imuProcessing, rawData] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
+    const [logging, imuProcessing, rawData, printWrites] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
         effectiveLoggingMode.toString()
-    ] || [false, false, false];
-    device = new HaritoraX(trackerType, logging, imuProcessing, rawData);
+    ] || [false, false, false, false];
+    device = new HaritoraX(trackerType, logging, imuProcessing, rawData, printWrites);
 }
 
 async function notifyConnectedDevices(): Promise<void> {
@@ -1005,10 +1005,11 @@ enum ErrorType {
 
     BluetoothOpenError = "Bluetooth initialization failed",
     BluetoothScanError = "Error starting bluetooth scanning",
-    BluetoothDiscoveryError = "Error during discovery/connection process",
-    BluetoothCloseError = "Error while closing bluetooth connection",
+    BluetoothDiscoveryError = "Error during Bluetooth discovery/connection process",
+    BluetoothDisconnectError = "Error disconnecting from Bluetooth device",
+    BluetoothCloseError = "Error while closing Bluetooth connection",
     BluetoothServiceError = "Error setting up Bluetooth services",
-    BluetoothCharacteristicError = "Error setting up reading characteristic",
+    BluetoothCharacteristicError = "Error reading characteristic",
 
     IMUProcessError = "Error decoding IMU packet",
     MagProcessError = "Error processing mag data",
@@ -1031,6 +1032,7 @@ const lastErrorShownTime: Record<ErrorType, number> = {
     [ErrorType.BluetoothOpenError]: 0,
     [ErrorType.BluetoothScanError]: 0,
     [ErrorType.BluetoothDiscoveryError]: 0,
+    [ErrorType.BluetoothDisconnectError]: 0,
     [ErrorType.BluetoothCloseError]: 0,
     [ErrorType.BluetoothServiceError]: 0,
     [ErrorType.BluetoothCharacteristicError]: 0,
