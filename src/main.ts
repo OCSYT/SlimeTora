@@ -334,6 +334,10 @@ const createWindow = async () => {
 
         if (appUpdatesEnabled) await checkForAppUpdates();
         if (translationsUpdatesEnabled) await checkForTranslationUpdates();
+
+        if (canLogToFile && loggingMode === 3) {
+            showMessage("dialogs.maxLoggingWarning.title", "dialogs.maxLoggingWarning.message", true);
+        }
     });
 };
 

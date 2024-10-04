@@ -295,6 +295,10 @@
                 "title": "Auto-detect failed!",
                 "message": "Auto-detect failed. Please make sure you have your Bluetooth/GX(6/2) dongles plugged in & turned on."
             }
+        },
+        "maxLoggingWarning": {
+            "title": "Logging mode warning",
+            "message": "You have selected a logging mode that may cause huge log files and lag. Remember to only use this mode if asked or have tracker issues!"
         }
     }
 }
