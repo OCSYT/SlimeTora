@@ -81,3 +81,9 @@ Love SlimeTora? You can show your support to the developers of SlimeTora through
 ### Special thanks to the project's supporters:
 
 -   LuzianVR - https://www.instagram.com/luzianvr/
+-   The SlimeVR team:
+    -   Gorbit - https://github.com/OCSYT/SlimeTora
+    -   Meia - https://l.femboyfurry.net/supporters/meia
+    -   Aoki - https://wiki.archlinux.org/title/Installation_guide
+        -   yes, everyone here wanted to link these, lol.
+-   Ivy / Laker Turner - https://laker.lol/

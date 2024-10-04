@@ -132,7 +132,7 @@
     },
     "about": {
         "title": "About",
-        "text": "The SlimeTora project is a project that allows you to connect the HaritoraX trackers to the SlimeVR server.",
+        "text": "The SlimeTora project is a middleware program that allows you to connect the HaritoraX trackers to the SlimeVR server.",
         "authors": "Made by:",
         "credits": {
             "title": "Credits"
@@ -159,7 +159,7 @@
     },
     "onboarding": {
         "title": "Welcome to SlimeTora!",
-        "text": "SlimeTora is a program that allows you to connect your HaritoraX trackers to the SlimeVR server, bypassing HaritoraConfigurator!<br /><br />To get started, select how you would like to set up the program. After you set up the program, you will be guided on how to set up SlimeVR server.",
+        "text": "SlimeTora is a middleware program that allows you to connect your HaritoraX trackers to the SlimeVR server, bypassing HaritoraConfigurator!<br /><br />To get started, select how you would like to set up the program. After you set up the program, you will be guided on how to set up SlimeVR server.",
         "next": "Next",
         "back": "Back",
         "finish": "Finish",
@@ -167,7 +167,7 @@
         "steps": {
             "step-2": {
                 "title": "Automatic setup",
-                "text": "Automatic setup allows you to let the program try to automatically detect your settings and set up the program for you. It is the easiest way to get started and supports all tracker models and connection modes.<br /><br />It is recommended (but not necessary) to have at least one of your trackers turned on and connected to your computer before continuing. When you are ready, click the \"Next\" button."
+                "text": "Automatic setup allows you to let the program try to automatically detect your settings and set itself up for you. It is the easiest way to get started and supports all tracker models and connection modes.<br /><br />It is recommended (but not necessary) to have at least one of your trackers turned on before continuing. When you are ready, click the \"Next\" button."
             },
             "step-3": {
                 "title": "Auto-detection",
@@ -192,7 +192,7 @@
             },
             "step-7": {
                 "title": "Mounting calibration",
-                "text": "After assigning the trackers, you will be brought to the mounting calibration screen. <strong>Make sure you select \"Automatic Mounting\"</strong> and follow the on-screen instructions on how to do a mounting calibration. If it does not look right after the calibration, you can always redo it until it's accurate."
+                "text": "After assigning the trackers, you will be brought to the mounting calibration screen. Select \"Automatic Mounting\" <strong>(highly recommended)</strong> and follow the on-screen instructions on how to do a mounting calibration. If it does not look right after the calibration, you can always redo it until it's accurate or mess with \"Manual Mounting\"."
             },
             "step-8": {
                 "title": "Resets & calibration",
