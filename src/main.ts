@@ -58,6 +58,9 @@ let connectionActive = false;
 const resources = await loadTranslations();
 let comPorts = await Binding.list();
 
+// Force iGPU if available
+app.commandLine.appendSwitch("force_low_power_gpu");
+
 /*
  * Translations (i18next)
  */
@@ -341,9 +344,6 @@ const closeApp = () => {
 
     app.quit();
 };
-
-// Force iGPU if available
-app.commandLine.appendSwitch("force_low_power_gpu");
 
 app.on("ready", createWindow);
 app.on("window-all-closed", closeApp);
@@ -1125,6 +1125,9 @@ function startDeviceListeners() {
         if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
             return;
         await addTracker(deviceID);
+
+        if (mode !== "com" && !(port && portId)) return;
+        if (pairingWindow) pairingWindow.webContents.send("device-paired", { trackerName: deviceID, port, portId });
     });
 
     device.on("disconnect", (deviceID: string) => {
