@@ -141,6 +141,15 @@
                     >
                         Turn off all trackers
                     </button>
+                    <button
+                        class="button is-info"
+                        id="pairing-button"
+                        onclick="showPairing()"
+                        data-i18n="trackerInfo.pairing"
+                        disabled
+                    >
+                        Manage GX(6/2) pairing
+                    </button>
                 </div>
                 <div class="columns is-multiline" id="device-list">
                     <!-- Trackers get populated here -->
@@ -296,37 +305,44 @@
                                 </div>
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="programSettings.updates.tooltip"
-                                    >Some other settings that don't fit in the other categories.</span
+                                    data-i18n="programSettings.other.tooltip"
+                                    >Some settings for the program that don't fit in the other categories.</span
                                 >
                             </div>
                         </div>
-                        <div class="input-container is-centered">
-                            <label
-                                for="tracker-visualization-fps"
-                                class="label"
-                                data-i18n="programSettings.other.trackerVisualizationFPS"
-                                >Tracker visualization FPS</label
-                            >
-                            <input
-                                type="text"
-                                id="tracker-visualization-fps"
-                                placeholder="10"
-                                class="input"
-                                style="max-width: 30%"
-                            />
-                        </div>
-                        <br />
-                        <div class="buttons is-centered">
-                            <button
-                                class="button is-info"
-                                id="pairing-button"
-                                onclick="showPairing()"
-                                data-i18n="programSettings.other.pairing"
-                                disabled
-                            >
-                                Manage GX(6/2) pairing
-                            </button>
+                        <div class="columns is-centered">
+                            <div class="column is-two-fifths">
+                                <div class="input-container">
+                                    <label
+                                        for="tracker-visualization-fps"
+                                        class="label"
+                                        data-i18n="programSettings.other.trackerVisualizationFPS"
+                                    >Tracker visualization FPS</label>
+                                    <input
+                                        type="text"
+                                        id="tracker-visualization-fps"
+                                        placeholder="10"
+                                        class="input"
+                                        style="max-width: 100%"
+                                    />
+                                </div>
+                            </div>
+                            <div class="column is-two-fifths">
+                                <div class="input-container">
+                                    <label
+                                        for="tracker-heartbeat-interval"
+                                        class="label has-text-warning"
+                                        data-i18n="programSettings.other.heartbeat"
+                                    >Tracker heartbeat interval</label>
+                                    <input
+                                        type="text"
+                                        id="tracker-heartbeat-interval"
+                                        placeholder="2000"
+                                        class="input"
+                                        style="max-width: 100%"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 

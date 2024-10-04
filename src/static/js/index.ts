@@ -29,6 +29,7 @@ let censorSerialNumbers = false;
 let trackerVisualization = false;
 let compactView = false;
 let trackerVisualizationFPS = 10;
+let trackerHeartbeatInterval = 2000;
 
 let appUpdatesEnabled = true;
 let translationsUpdatesEnabled = true;
@@ -125,6 +126,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     censorSerialNumbers = settings.global?.censorSerialNumbers ?? false;
     trackerVisualization = settings.global?.trackerVisualization ?? false;
     trackerVisualizationFPS = settings.global?.trackerVisualizationFPS ?? 10;
+    trackerHeartbeatInterval = settings.global?.trackerHeartbeatInterval ?? 2000;
     wirelessTrackerEnabled = settings.global?.trackers?.wirelessTrackerEnabled ?? false;
     wiredTrackerEnabled = settings.global?.trackers?.wiredTrackerEnabled ?? false;
     bluetoothEnabled = settings.global?.connectionMode?.bluetoothEnabled ?? false;
@@ -169,6 +171,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Set input values based on settings
     const trackerVisualizationFPSInput = document.getElementById("tracker-visualization-fps") as HTMLInputElement;
     trackerVisualizationFPSInput.value = trackerVisualizationFPS.toString();
+
+    const trackerHeartbeatIntervalInput = document.getElementById("tracker-heartbeat-interval") as HTMLInputElement;
+    trackerHeartbeatIntervalInput.value = trackerHeartbeatInterval.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
@@ -1186,6 +1191,22 @@ function addEventListeners() {
         });
 
         refreshDeviceList();
+    });
+
+    document.getElementById("tracker-heartbeat-interval").addEventListener("change", async function () {
+        const heartbeatInterval = parseInt(
+            (document.getElementById("tracker-heartbeat-interval") as HTMLInputElement).value
+        );
+        window.log(`Selected tracker heartbeat interval: ${heartbeatInterval}`);
+        window.ipc.send("save-setting", {
+            global: {
+                trackers: {
+                    heartbeatInterval: heartbeatInterval,
+                },
+            },
+        });
+
+        window.ipc.send("set-tracker-heartbeat-interval", heartbeatInterval);
     });
 
     document.getElementById("language-select").addEventListener("change", async function () {

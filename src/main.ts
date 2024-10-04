@@ -540,6 +540,11 @@ ipcMain.on("set-wired-tracker", (_event, arg) => {
     log(`Wired tracker enabled set to: ${arg}`, "settings");
 });
 
+ipcMain.on("set-tracker-heartbeat-interval", (_event, arg) => {
+    heartbeatInterval = arg;
+    log(`Tracker heartbeat interval set to: ${arg}`, "settings");
+});
+
 ipcMain.on("open-support-page", async () => {
     await shell.openExternal("https://github.com/OCSYT/SlimeTora/wiki/FAQ#i-found-an-issuebug");
 });

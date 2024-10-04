@@ -25,11 +25,12 @@
     },
     "trackerInfo": {
         "title": "Tracker information",
-        "tooltip": "See information about the connected trackers. An option with yellow text requires a restart of the connection or program to fully apply.",
+        "tooltip": "See information about the connected trackers. An option with yellow text requires a restart of the connection or program to apply.",
         "compactView": "Compact view",
         "censorSerialNumbers": "Censor serial numbers",
         "trackerVisualization": "Tracker visualization",
         "turnOffTrackers": "Turn off all trackers",
+        "pairing": "Manage GX(6/2) pairing",
         "deviceName": "Device:",
         "deviceID": "Device ID:",
         "rotationData": "Rotation data:",
@@ -71,7 +72,7 @@
     },
     "programSettings": {
         "title": "Program settings",
-        "tooltip": "Set the settings of the program. An option with yellow text requires a restart of the program to fully apply.",
+        "tooltip": "Set the settings of the program. An option with yellow text requires a restart of the connection or program to apply.",
         "trackerModel": {
             "title": "Tracker model",
             "tooltip": "Select the model of HaritoraX trackers you have, the HaritoraX Wireless or HaritoraX Wired (1.1b/1.1/1.0).",
@@ -90,9 +91,9 @@
         },
         "other": {
             "title": "Other settings",
-            "tooltip": "Other settings for the program that don't fit in the other categories.",
+            "tooltip": "Some settings for the program that don't fit in the other categories.",
             "trackerVisualizationFPS": "Tracker visualization FPS",
-            "pairing": "Manage GX(6/2) pairing"
+            "heartbeat": "Tracker heartbeat interval"
         },
         "updates": {
             "title": "Update checking",
@@ -108,7 +109,7 @@
     },
     "trackerSettings": {
         "title": "Tracker settings",
-        "tooltip": "Set the global settings for the trackers (can be overriden per-tracker). An option with yellow text requires a restart of the program to fully apply.",
+        "tooltip": "Set the global settings for the trackers (can be overriden per-tracker).",
         "fps": {
             "title": "FPS transfer rate",
             "tooltip": "Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.",
@@ -123,7 +124,7 @@
         },
         "sensorCorrection": {
             "title": "Sensor auto correction",
-            "tooltip": "Enable or disable sensor auto correction features. Usually not needed to be changed and results vary between environments.",
+            "tooltip": "Enable or disable sensor auto correction features (dynamic calibration). Usually not needed to be changed and results vary between environments.",
             "accelerometer": "Accelerometer",
             "gyroscope": "Gyroscope",
             "magnetometer": "Magnetometer"
@@ -142,7 +143,7 @@
     },
     "debugging": {
         "title": "Debugging",
-        "tooltip": "An option with yellow text requires a restart of the connection or program to fully apply.",
+        "tooltip": "An option with yellow text requires a restart of the connection or program to apply.",
         "text": "Enable or disable debugging features for the program. Using logging mode 'All data (!!!)' will cause huge log files and lag, only use if asked or have tracker issues!",
         "writeToFile": "Write to log files",
         "skipSlimeVR": "Skip SlimeVR check",
