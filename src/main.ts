@@ -23,10 +23,7 @@ const __dirname = dirname(__filename);
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
 // don't mess with this or languages will fail to load cause of how the project is structured, lol
-const languagesPath = path.resolve(
-    mainPath,
-    app.isPackaged || process.env.DEVELOPMENT ? "resources/languages" : "languages"
-);
+const languagesPath = path.resolve(mainPath, app.isPackaged ? "resources/languages" : "languages");
 
 let mainWindow: BrowserWindow;
 let trackerSettingsWindow: BrowserWindow;
@@ -321,14 +318,6 @@ const createWindow = async () => {
         mainWindow.webContents.send("localize", resources);
         mainWindow.webContents.send("version", app.getVersion());
         mainWindow.webContents.send("set-switch", { id: "accelerometer-switch", state: true });
-
-        // Don't show the menu bar for performance if not on development mode and if loggingMode is 1 (this disables the dev tools though)
-        if (!process.env.DEVELOPMENT && app.isPackaged && loggingMode === 1) {
-            log("Development mode disabled, hiding menu bar");
-            Menu.setApplicationMenu(null);
-        } else {
-            log("Development mode enabled, showing menu bar");
-        }
 
         if (firstLaunch) onboarding("en");
 
