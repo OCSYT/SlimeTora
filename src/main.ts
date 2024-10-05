@@ -2,7 +2,7 @@
  * Global imports and variables
  */
 
-import { app, BrowserWindow, ipcMain, shell, dialog, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 // @ts-ignore (for development)
 import {
     HaritoraX,

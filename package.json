@@ -1,9 +1,9 @@
 {
     "name": "slimetora",
-    "productName": "slimetora",
+    "productName": "SlimeTora",
     "type": "module",
     "version": "1.2.2",
-    "description": "A program that connects the HaritoraX full body trackers to the SlimeVR server",
+    "description": "A middleware program that connects the HaritoraX full body trackers to the SlimeVR server",
     "private": true,
     "author": {
         "name": "BracketProto",
@@ -21,7 +21,6 @@
         "start": "npm run preload && cross-env DEVELOPMENT=true && electron .",
         "dev": "cross-env DEVELOPMENT=true && tsc && npm run copy-files && electron .",
         "build": "npm run preload && npx @electron/packager . SlimeTora --platform=win32,linux --arch=x64 --overwrite --out=build/ --icon=src/static/images/icon.ico --asar --extra-resource=src/languages --ignore=\"^/(src|docs|.vscode|.eslintrc.cjs|.prettierrc|tsconfig.json|README.md|.gitignore)$\"",
-        "build:dev": "npm run preload && npx @electron/packager . SlimeTora -arch=x64 --overwrite --out=build/ --icon=src/static/images/icon.ico --extra-resource=src/languages --ignore=\"^/(src|docs|.vscode|.eslintrc.cjs|.prettierrc|tsconfig.json|README.md|.gitignore)$\"",
         "preload": "npx @electron/rebuild && npx del-cli dist/ && tsc && npm run copy-files",
         "copy-files": "npx copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.png\" \"src/**/*.webp\" \"src/**/*.webm\" \"src/**/*.svg\" \"src/**/*.fbx\" src/languages/* dist/",
         "build-bulma": "npx sass --watch ./src/static/css/index.scss ./src/static/css/index.css",
@@ -30,31 +29,31 @@
     "keywords": [],
     "license": "MIT",
     "devDependencies": {
-        "@electron/packager": "^18.3.2",
-        "@electron/rebuild": "^3.6.0",
+        "@electron/packager": "^18.3.5",
+        "@electron/rebuild": "^3.6.2",
         "@types/lodash-es": "^4.17.12",
-        "@types/node": "^22.5.0",
+        "@types/node": "^22.7.4",
         "@types/serialport": "^8.0.5",
-        "@types/three": "^0.167.2",
-        "bulma": "^1.0.1",
+        "@types/three": "^0.169.0",
+        "bulma": "^1.0.2",
         "copyfiles": "^2.4.1",
         "cross-env": "^7.0.3",
         "del-cli": "^5.1.0",
-        "electron": "^31.5.0",
-        "eslint": "^9.9.0",
-        "node-gyp-build": "4.8.0",
-        "sass": "^1.77.6",
-        "typescript": "^5.4.5"
+        "electron": "^32.1.2",
+        "eslint": "^9.12.0",
+        "node-gyp-build": "^4.8.2",
+        "sass": "^1.79.4",
+        "typescript": "^5.6.2"
     },
     "dependencies": {
         "@slimevr/common": "^0.1.2",
         "@slimevr/firmware-protocol": "^0.6.5",
         "@slimevr/tracker-emulation": "^0.2.4",
-        "haritorax-interpreter": "^3.0.1",
-        "i18next": "^23.14.0",
+        "haritorax-interpreter": "^3.1.0",
+        "i18next": "^23.15.2",
         "loc-i18next": "^0.1.6",
         "lodash-es": "^4.17.21",
-        "quaternion": "^1.5.1",
-        "three": "^0.167.1"
+        "quaternion": "^1.6.1",
+        "three": "^0.169.0"
     }
 }
