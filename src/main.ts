@@ -1018,6 +1018,7 @@ enum ErrorType {
     TrackerSettingsWriteError = "Error sending tracker settings",
 
     JSONParseError = "JSON",
+    TimeoutError = "timeout",
     UnexpectedError = "An unexpected error occurred",
 }
 
@@ -1044,6 +1045,7 @@ const lastErrorShownTime: Record<ErrorType, number> = {
     [ErrorType.TrackerSettingsWriteError]: 0,
 
     [ErrorType.JSONParseError]: 0,
+    [ErrorType.TimeoutError]: 0,
     [ErrorType.UnexpectedError]: 0,
 };
 
@@ -1199,7 +1201,7 @@ function startDeviceListeners() {
             }
 
             clickCounts[key] = 0;
-        }, 500);
+        }, 750);
     });
 
     device.on("imu", async (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
@@ -1329,28 +1331,70 @@ function startDeviceListeners() {
     });
 
     device.on("error", (msg: string, exceptional: boolean) => {
-        switch (true) {
-            case msg.includes(ErrorType.SerialOpenError):
-            case msg.includes(ErrorType.BluetoothOpenError):
-            case msg.includes(ErrorType.BluetoothScanError):
-            case msg.includes(ErrorType.BluetoothDiscoveryError):
-            case msg.includes(ErrorType.BluetoothServiceError):
-                handleError(msg, ErrorType.SerialOpenError, handleConnectionStartError);
+        const handledErrorTypes = [
+            ErrorType.SerialOpenError,
+            ErrorType.BluetoothOpenError,
+            ErrorType.BluetoothScanError,
+            ErrorType.BluetoothDiscoveryError,
+            ErrorType.BluetoothServiceError,
+            ErrorType.TimeoutError,
+            ErrorType.SerialWriteError,
+            ErrorType.SendHeartbeatError,
+            ErrorType.TrackerSettingsWriteError,
+            ErrorType.IMUProcessError,
+            ErrorType.MagProcessError,
+            ErrorType.SettingsProcessError,
+            ErrorType.ButtonProcessError,
+            ErrorType.BluetoothCharacteristicError,
+            ErrorType.UnexpectedError,
+            ErrorType.SerialUnexpectedError
+        ];
+        
+        let matchedErrorType: ErrorType | null = null;
+        
+        for (const errorType of handledErrorTypes) {
+            if (msg.includes(errorType)) {
+                matchedErrorType = errorType;
                 break;
-            case msg.includes(ErrorType.SerialWriteError):
-            case msg.includes(ErrorType.SendHeartbeatError):
-            case msg.includes(ErrorType.TrackerSettingsWriteError):
-                handleError(msg, ErrorType.SerialWriteError, handleTrackerWriteError);
-                break;
-            case msg.includes(ErrorType.UnexpectedError):
-            case msg.includes(ErrorType.SerialUnexpectedError):
-                handleError(msg, ErrorType.UnexpectedError, handleUnexpectedError);
-                break;
-            default:
-                warn("Unhandled error type received from haritorax-interpreter");
-                error(msg, "haritorax-interpreter");
-                break;
+            }
         }
+        
+        if (matchedErrorType) {
+            switch (matchedErrorType) {
+                case ErrorType.SerialOpenError:
+                case ErrorType.BluetoothOpenError:
+                case ErrorType.BluetoothScanError:
+                case ErrorType.BluetoothDiscoveryError:
+                case ErrorType.BluetoothServiceError:
+                case ErrorType.TimeoutError:
+                    handleError(msg, matchedErrorType, handleConnectionStartError);
+                    break;
+                case ErrorType.SerialWriteError:
+                case ErrorType.SendHeartbeatError:
+                case ErrorType.TrackerSettingsWriteError:
+                    handleError(msg, matchedErrorType, handleTrackerWriteError);
+                    break;
+                case ErrorType.IMUProcessError:
+                case ErrorType.MagProcessError:
+                case ErrorType.SettingsProcessError:
+                case ErrorType.ButtonProcessError:
+                case ErrorType.BluetoothCharacteristicError:
+                    handleError(msg, matchedErrorType, handleTrackerReadError);
+                    break;
+                case ErrorType.UnexpectedError:
+                case ErrorType.SerialUnexpectedError:
+                    handleError(msg, matchedErrorType, handleUnexpectedError);
+                    break;
+                default:
+                    warn("Unhandled error type received from haritorax-interpreter");
+                    error(msg, "haritorax-interpreter");
+                    break;
+            }
+        } else {
+            warn("Unhandled error type received from haritorax-interpreter");
+            error(msg, "haritorax-interpreter");
+        }
+        
         if (exceptional) {
         } else {
             switch (true) {
@@ -1379,6 +1423,14 @@ async function handleConnectionStartError(err: any) {
     );
 
     mainWindow.webContents.send("disconnect", "connection-error");
+}
+
+async function handleTrackerReadError(err: any) {
+    error(`Failed to read data from a tracker`, "haritorax-interpreter", err);
+    dialog.showErrorBox(
+        await translate("dialogs.trackerReadError.title"),
+        await translate("dialogs.trackerReadError.message")
+    );
 }
 
 async function handleTrackerWriteError(err: any) {

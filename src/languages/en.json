@@ -273,6 +273,10 @@
             "title": "Tracker write error",
             "message": "Failed to write data to the tracker, please check log files for more information."
         },
+        "trackerReadError": {
+            "title": "Tracker read error",
+            "message": "Failed to read data from the tracker, please check log files for more information."
+        },
         "unexpectedError": {
             "title": "Unexpected error",
             "message": "An unexpected error occurred, please check log files for more information."
