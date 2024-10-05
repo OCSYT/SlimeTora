@@ -20,7 +20,7 @@ let accelerometerEnabled = false;
 let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
 
-let canLogToFile = false;
+let canLogToFile = true;
 let bypassCOMPortLimit = false;
 
 let language = "en";
@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     appUpdatesEnabled = settings.global?.updates?.appUpdatesEnabled ?? true;
     translationsUpdatesEnabled = settings.global?.updates?.translationsUpdatesEnabled ?? true;
     updateChannel = settings.global?.updates?.updateChannel ?? "stable";
-    canLogToFile = settings.global?.debug?.canLogToFile ?? false;
+    canLogToFile = settings.global?.debug?.canLogToFile ?? true;
     loggingMode = settings.global?.debug?.loggingMode ?? 1;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit ?? false;
 
@@ -502,19 +502,19 @@ async function showMessageBox(
 async function showErrorDialog(
     titleKey: string,
     messageKey: string,
+    blocking: boolean = true,
     translateTitle: boolean = true,
-    translateMessage: boolean = true,
-    blocking: boolean = true
+    translateMessage: boolean = true
 ) {
     const title = translateTitle ? await window.translate(titleKey) : titleKey;
     const message = translateMessage ? await window.translate(messageKey) : messageKey;
 
     return await window.ipc.invoke("show-error", {
-        title: title,
-        message: message,
+        title,
+        message,
+        blocking,
         translateTitle,
         translateMessage,
-        blocking,
     });
 }
 

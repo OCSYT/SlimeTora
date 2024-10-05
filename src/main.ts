@@ -40,8 +40,9 @@ let deviceBattery: {
  */
 
 let firstLaunch = false;
+let hasInitializedLogDir = false;
 
-let canLogToFile = false;
+let canLogToFile = true;
 let loggingMode = 1;
 let foundSlimeVR = false;
 let heartbeatInterval = 2000;
@@ -55,15 +56,48 @@ let updateChannel = "stable";
 // -jovannmc
 let connectionActive = false;
 
-const resources = await loadTranslations();
+let resources;
 let comPorts = await Binding.list();
+
+/*
+ * Initialization
+ */
 
 // Force iGPU if available
 app.commandLine.appendSwitch("force_low_power_gpu");
 
+try {
+    await fs.promises.access(configPath);
+
+    // Read and parse the config file
+    const data = await fs.promises.readFile(configPath, "utf8");
+
+    // Check if the config file is empty (contains only "{}")
+    if (data.trim() === "{}") throw new Error();
+
+    const config: { [key: string]: any } = JSON.parse(data);
+
+    // Set configuration variables
+    canLogToFile = config.global?.debug?.canLogToFile ?? true;
+    wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
+    wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
+    appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled ?? true;
+    translationsUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled ?? true;
+    updateChannel = config.global?.updates?.updateChannel ?? "stable";
+    heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
+    loggingMode = config.global?.debug?.loggingMode ?? 1;
+} catch (err) {
+    // If the config file doesn't exist or is empty, create it
+    log("First launch, creating config file and showing onboarding screen (after load)");
+    await fs.promises.writeFile(configPath, "{}");
+    firstLaunch = true;
+}
+
 /*
  * Translations (i18next)
  */
+
+resources = await loadTranslations();
 
 async function loadTranslations() {
     const files = await fs.promises.readdir(languagesPath);
@@ -289,32 +323,6 @@ function clearTrackers() {
 }
 
 const createWindow = async () => {
-    try {
-        await fs.promises.access(configPath);
-
-        // Read and parse the config file
-        const data = await fs.promises.readFile(configPath, "utf8");
-
-        // Check if the config file is empty (contains only "{}")
-        if (data.trim() === "{}") throw new Error();
-
-        const config: { [key: string]: any } = JSON.parse(data);
-
-        // Set configuration variables
-        canLogToFile = config.global?.debug?.canLogToFile ?? false;
-        wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
-        wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
-        appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled ?? true;
-        translationsUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled ?? true;
-        updateChannel = config.global?.updates?.updateChannel ?? "stable";
-        heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
-        loggingMode = config.global?.debug?.loggingMode ?? 1;
-    } catch (err) {
-        // If the config file doesn't exist or is empty, create it
-        log("First launch, creating config file and showing onboarding screen (after load)");
-        await fs.promises.writeFile(configPath, "{}");
-        firstLaunch = true;
-    }
     mainWindow = createBrowserWindow("SlimeTora: Main", "index.html", "en", null, 900, 700);
 
     mainWindow.webContents.on("did-finish-load", async () => {
@@ -439,9 +447,9 @@ async function showMessage(
 async function showError(
     title: string,
     message: string,
+    blocking = true,
     translateTitle = true,
     translateMessage = true,
-    blocking = true
 ) {
     const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
@@ -488,12 +496,12 @@ ipcMain.handle("show-error", async (_event, arg) => {
     const {
         title,
         message,
+        blocking = true,
         translateTitle = true,
         translateMessage = true,
-        blocking = true,
-    }: { title: string; message: string; translateTitle: boolean; translateMessage: boolean; blocking: boolean } = arg;
+    }: { title: string; message: string; blocking: boolean; translateTitle: boolean; translateMessage: boolean; } = arg;
 
-    return await showError(title, message, translateTitle, translateMessage, blocking);
+    return await showError(title, message, blocking, translateTitle, translateMessage, );
 });
 
 ipcMain.on("show-onboarding", (_event, language) => {
@@ -720,8 +728,8 @@ ipcMain.on("start-connection", async (_event, arg) => {
     setTimeout(() => {
         if (foundSlimeVR) return;
 
-        log("SlimeVR server seemingly not found, warning user...", "connection");
-        showError("dialogs.slimevrNotFound.title", "dialogs.slimevrNotFound.message", true, true, false);
+        warn("SlimeVR server seemingly not found, warning user...", "connection");
+        showError("dialogs.slimevrNotFound.title", "dialogs.slimevrNotFound.message", false);
     }, 4000);
 });
 
@@ -1538,8 +1546,6 @@ await heartbeatTracker.init();
 /*
  * Logging
  */
-
-let hasInitializedLogDir = false;
 
 async function logMessage(level: string, msg: string, where: string, err?: Error) {
     const date = new Date();
