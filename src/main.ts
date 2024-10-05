@@ -833,7 +833,7 @@ ipcMain.on("set-tracker-settings", async (_event, arg) => {
     // Apply the new settings
     device.setTrackerSettings(deviceID, sensorMode, fpsMode, uniqueSensorAutoCorrection, false);
 
-    log(`Setting ${deviceID} settings to:`, "settings");
+    log(`Setting "${deviceID}" settings to:`, "settings");
     log(`Sensor mode: ${sensorMode}`, "settings");
     log(`FPS mode: ${fpsMode}`, "settings");
     log(`Sensor auto correction: ${uniqueSensorAutoCorrection.join(", ")}`, "settings");
@@ -1231,7 +1231,7 @@ function startDeviceListeners() {
 
         let tracker = connectedDevices.get(trackerName);
         if (!tracker || !rotation || !gravity || !quaternion || !eulerRadians) {
-            error(`Error processing IMU data for ${trackerName}, skipping...`, "tracker");
+            error(`Error processing IMU data for "${trackerName}", skipping...`, "tracker");
             log(
                 `Tracker: ${JSON.stringify(tracker)}, Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(
                     gravity
@@ -1304,7 +1304,7 @@ function startDeviceListeners() {
         });
 
         log(
-            `Received battery data for ${trackerName}: ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`,
+            `Received battery data for "${trackerName}": ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`,
             "tracker"
         );
     });
@@ -1394,7 +1394,7 @@ function startDeviceListeners() {
             warn("Unhandled error type received from haritorax-interpreter");
             error(msg, "haritorax-interpreter");
         }
-        
+
         if (exceptional) {
         } else {
             switch (true) {

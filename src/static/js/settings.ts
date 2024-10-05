@@ -108,7 +108,7 @@ async function loadConfigSettings(trackerName: string) {
         window.log(`Setting gyroscope to: ${gyroscopeEnabled}`);
         window.log(`Setting magnetometer to: ${magnetometerEnabled}`);
     } else {
-        window.log(`No settings found for ${trackerName}`);
+        window.log(`No settings found for "${trackerName}"`);
     }
 
     document.getElementById("accelerometer-switch").addEventListener("change", async function () {

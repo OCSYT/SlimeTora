@@ -597,7 +597,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
             sensorAutoCorrection: sensorAutoCorrectionList,
         };
     }
-    window.log(`Got tracker settings for ${deviceID}: ${JSON.stringify(trackerSettings)}`, "tracker");
+    window.log(`Got tracker settings for "${deviceID}": ${JSON.stringify(trackerSettings)}`, "tracker");
 
     setTrackerSettings(deviceID, trackerSettings);
 });
@@ -626,7 +626,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
 window.ipc.on("device-connected-to-server", (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
-    window.log(`Tracker ${deviceID} connected to server, firing battery and mag events...`, "tracker");
+    window.log(`Tracker "${deviceID}" connected to server, firing battery and mag events...`, "tracker");
     window.ipc.invoke("fire-tracker-battery", deviceID);
     window.ipc.invoke("fire-tracker-mag", deviceID);
 });
@@ -661,7 +661,7 @@ window.ipc.on("device-battery", (_event, arg) => {
         updateTrackerBattery(trackerName, batteryRemaining, batteryVoltage);
     }
 
-    window.log(`Battery for ${trackerName}: ${batteryRemaining}% (${batteryVoltage}V)`, "tracker");
+    window.log(`Battery for "${trackerName}": ${batteryRemaining}% (${batteryVoltage}V)`, "tracker");
 });
 
 // TODO: change mag status to text instead of color
@@ -807,7 +807,7 @@ async function addDeviceToList(deviceID: string) {
     if (wiredTrackerEnabled) {
         const settingsButton = newDevice.querySelector("#tracker-settings-button");
         if (settingsButton) settingsButton.setAttribute("disabled", "true");
-        window.log(`Disabled tracker settings button for ${deviceID} (wired tracker)`);
+        window.log(`Disabled tracker settings button for "${deviceID}" (wired tracker)`);
     }
 
     deviceList.appendChild(newDevice);
@@ -852,7 +852,7 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
 
 async function handleMissingDevice(trackerName: string) {
     if (!deviceQueue.includes(trackerName)) {
-        window.ipc.send("log", `Device ${trackerName} not found in DOM, adding to queue`);
+        window.ipc.send("log", `Device "${trackerName}" not found in DOM, adding to queue`);
         deviceQueue.push(trackerName);
     }
     await processQueue();
