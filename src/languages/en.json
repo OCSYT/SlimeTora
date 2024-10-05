@@ -9,10 +9,8 @@
             "none": "N/A",
             "failed": "error",
             "searching": "searching",
-            "searchingServer": "searching for SlimeVR",
             "connected": "connected",
             "comPortsMissing": "COM ports missing",
-            "slimeVRMissing": "SlimeVR not found",
             "noConnectionMode": "no connection mode enabled",
             "noTrackerModel": "no tracker model selected",
             "noComPorts": "no COM ports selected",
@@ -146,7 +144,6 @@
         "tooltip": "An option with yellow text requires a restart of the connection or program to apply.",
         "text": "Enable or disable debugging features for the program. Using logging mode 'All data (!!!)' will cause huge log files and lag, only use if asked or have tracker issues!",
         "writeToFile": "Write to log files",
-        "skipSlimeVR": "Skip SlimeVR check",
         "bypassPortLimit": "Bypass port limit",
         "loggingMode": {
             "title": "Logging mode",
@@ -304,6 +301,10 @@
         "maxLoggingWarning": {
             "title": "Logging mode warning",
             "message": "You have selected a logging mode that may cause huge log files and lag. Remember to only use this mode if asked or have tracker issues!"
+        },
+        "slimevrNotFound": {
+            "title": "SlimeVR not found",
+            "message": "SlimeVR server does not seem to be running, make sure it is running and restart the connection. If it is already running & your trackers are connected, this is safe to ignore."
         }
     }
 }

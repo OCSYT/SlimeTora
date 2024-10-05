@@ -11,7 +11,6 @@
             "searching": "Ricerca",
             "connected": "Connesso",
             "comPortsMissing": "Porta COM mancante",
-            "slimeVRMissing": "Server SlimeVR non trovato",
             "noConnectionMode": "Nessuna modalità di connessione selezionata"
         }
     },
@@ -115,7 +114,6 @@
         "tooltip": "Le opzioni in giallo richiedono il riavvio del programma.",
         "text": "Enable or disable debugging features for the program. Debugging tracker data will make log files huge, only use if requested or if you have tracker issues!",
         "writeToFile": "Scrivi su file di log",
-        "skipSlimeVR": "Salta check SlimeVR",
         "bypassPortLimit": "Bypassa limite porta",
         "debugTrackerData": "Debug tracker data",
         "openLogsFolder": "Apri cartella log"

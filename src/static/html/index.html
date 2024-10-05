@@ -666,31 +666,13 @@
                     huge log files and lag, only use if asked or have tracker issues!
                 </h2>
                 <div class="column is-12">
-                    <div class="grid-settings-container">
+                    <div class="vertical-settings-container">
                         <div class="switch-container is-centered">
                             <div class="switch">
                                 <input type="checkbox" id="log-to-file-switch" />
                                 <label for="log-to-file-switch" class="slider round"></label>
                             </div>
                             <label for="log-to-file-switch" data-i18n="debugging.writeToFile">Write to log files</label>
-                        </div>
-                        <div class="switch-container is-centered">
-                            <div class="switch">
-                                <input type="checkbox" id="skip-slimevr-switch" />
-                                <label for="skip-slimevr-switch" class="slider round"></label>
-                            </div>
-                            <label for="skip-slimevr-switch" data-i18n="debugging.skipSlimeVR"
-                                >Skip SlimeVR check</label
-                            >
-                        </div>
-                        <div class="switch-container is-centered">
-                            <div class="switch">
-                                <input type="checkbox" id="bypass-com-limit-switch" />
-                                <label for="bypass-com-limit-switch" class="slider round"></label>
-                            </div>
-                            <label for="bypass-com-limit-switch" data-i18n="debugging.bypassPortLimit"
-                                >Bypass port limit</label
-                            >
                         </div>
                         <div class="input-container is-centered has-text-centered">
                             <label
@@ -711,6 +693,15 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="switch-container is-centered">
+                            <div class="switch">
+                                <input type="checkbox" id="bypass-com-limit-switch" />
+                                <label for="bypass-com-limit-switch" class="slider round"></label>
+                            </div>
+                            <label for="bypass-com-limit-switch" data-i18n="debugging.bypassPortLimit"
+                                >Bypass port limit</label
+                            >
+                        </div>
                     </div>
                     <br />
                     <div class="buttons is-centered">
@@ -724,6 +715,7 @@
                 </div>
             </div>
         </div>
+        <br />
 
         <button class="button is-info" id="save-button" onclick="saveSettings()">
             <img src="../images/save.svg" id="saveIcon" alt="Save icon" />

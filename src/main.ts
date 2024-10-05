@@ -328,7 +328,7 @@ const createWindow = async () => {
         if (translationsUpdatesEnabled) await checkForTranslationUpdates();
 
         if (canLogToFile && loggingMode === 3) {
-            showMessage("dialogs.maxLoggingWarning.title", "dialogs.maxLoggingWarning.message", true);
+            showMessage("dialogs.maxLoggingWarning.title", "dialogs.maxLoggingWarning.message");
         }
     });
 };
@@ -419,21 +419,44 @@ async function showMessage(
     message: string,
     blocking = false,
     translateTitle = true,
-    translateMessage = true
+    translateMessage = true,
+    playErrorSound = false
 ) {
     const show = blocking ? dialog.showMessageBoxSync : dialog.showMessageBox;
     const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
 
-    show({ title: translatedTitle, message: translatedMessage });
+    const options: Electron.MessageBoxOptions = {
+        title: translatedTitle,
+        message: translatedMessage,
+        type: playErrorSound ? "error" : "none",
+    };
+
+    show(options);
     return true;
 }
 
-async function showError(title: string, message: string, translateTitle = true, translateMessage = true) {
+async function showError(
+    title: string,
+    message: string,
+    translateTitle = true,
+    translateMessage = true,
+    blocking = true
+) {
     const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
 
-    dialog.showErrorBox(translatedTitle, translatedMessage);
+    if (blocking) {
+        dialog.showErrorBox(translatedTitle, translatedMessage);
+    } else {
+        const options: Electron.MessageBoxOptions = {
+            title: translatedTitle,
+            message: translatedMessage,
+            type: "error",
+        };
+
+        dialog.showMessageBox(options);
+    }
     return true;
 }
 
@@ -467,9 +490,10 @@ ipcMain.handle("show-error", async (_event, arg) => {
         message,
         translateTitle = true,
         translateMessage = true,
-    }: { title: string; message: string; translateTitle: boolean; translateMessage: boolean } = arg;
+        blocking = true,
+    }: { title: string; message: string; translateTitle: boolean; translateMessage: boolean; blocking: boolean } = arg;
 
-    return await showError(title, message, translateTitle, translateMessage);
+    return await showError(title, message, translateTitle, translateMessage, blocking);
 });
 
 ipcMain.on("show-onboarding", (_event, language) => {
@@ -507,17 +531,6 @@ ipcMain.handle("get-active-trackers", () => {
 
 ipcMain.handle("get-languages", async () => {
     return Object.keys(resources);
-});
-
-ipcMain.handle("search-for-server", async () => {
-    if (foundSlimeVR) return true;
-
-    heartbeatTracker.searchForServer();
-    return await new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(foundSlimeVR);
-        }, 2000);
-    });
 });
 
 ipcMain.on("set-log-to-file", (_event, arg) => {
@@ -702,6 +715,14 @@ ipcMain.on("start-connection", async (_event, arg) => {
     connectionActive = true;
 
     await notifyConnectedDevices();
+
+    // Set a timeout to warn user if the SlimeVR server wasn't found
+    setTimeout(() => {
+        if (foundSlimeVR) return;
+
+        log("SlimeVR server seemingly not found, warning user...", "connection");
+        showError("dialogs.slimevrNotFound.title", "dialogs.slimevrNotFound.message", true, true, false);
+    }, 4000);
 });
 
 function isValidDeviceConfiguration(types: string[], ports?: string[]): boolean {
@@ -996,6 +1017,7 @@ import { ParsedUrlQueryInput } from "querystring";
 // For haritorax-interpreter
 // Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
 enum ErrorType {
+    SerialNotFoundError = "File not found",
     SerialOpenError = "Opening COM",
     SerialWriteError = "Error writing data to serial port",
     SendHeartbeatError = "Error while sending heartbeat",
@@ -1023,6 +1045,7 @@ enum ErrorType {
 }
 
 const lastErrorShownTime: Record<ErrorType, number> = {
+    [ErrorType.SerialNotFoundError]: 0,
     [ErrorType.SerialOpenError]: 0,
     [ErrorType.SerialWriteError]: 0,
     [ErrorType.SendHeartbeatError]: 0,
@@ -1332,6 +1355,7 @@ function startDeviceListeners() {
 
     device.on("error", (msg: string, exceptional: boolean) => {
         const handledErrorTypes = [
+            ErrorType.SerialNotFoundError,
             ErrorType.SerialOpenError,
             ErrorType.BluetoothOpenError,
             ErrorType.BluetoothScanError,
@@ -1347,20 +1371,21 @@ function startDeviceListeners() {
             ErrorType.ButtonProcessError,
             ErrorType.BluetoothCharacteristicError,
             ErrorType.UnexpectedError,
-            ErrorType.SerialUnexpectedError
+            ErrorType.SerialUnexpectedError,
         ];
-        
+
         let matchedErrorType: ErrorType | null = null;
-        
+
         for (const errorType of handledErrorTypes) {
             if (msg.includes(errorType)) {
                 matchedErrorType = errorType;
                 break;
             }
         }
-        
+
         if (matchedErrorType) {
             switch (matchedErrorType) {
+                case ErrorType.SerialNotFoundError:
                 case ErrorType.SerialOpenError:
                 case ErrorType.BluetoothOpenError:
                 case ErrorType.BluetoothScanError:
@@ -1454,9 +1479,9 @@ async function handleUnexpectedError(err: any) {
  */
 
 function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
-    const trackerName =
-        Array.from(connectedDevices.keys()).find((key) => connectedDevices.get(key) === tracker) ||
-        (isHeartbeat ? "(HEARTBEAT)" : undefined);
+    const trackerName = isHeartbeat
+        ? "(HEARTBEAT)"
+        : Array.from(connectedDevices.keys()).find((key) => connectedDevices.get(key) === tracker);
 
     tracker.on("ready", () => {
         log(`Tracker "${trackerName}" is ready to search for SlimeVR server...`, "@slimevr/emulated-tracker");
@@ -1473,7 +1498,6 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
         tracker.sendTemperature(0, 420.69);
         tracker.sendSignalStrength(0, 69);
 
-        if (!isHeartbeat) return;
         foundSlimeVR = true;
     });
 

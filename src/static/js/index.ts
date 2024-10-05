@@ -21,7 +21,6 @@ let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
 
 let canLogToFile = false;
-let skipSlimeVRCheck = false;
 let bypassCOMPortLimit = false;
 
 let language = "en";
@@ -141,7 +140,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     updateChannel = settings.global?.updates?.updateChannel ?? "stable";
     canLogToFile = settings.global?.debug?.canLogToFile ?? false;
     loggingMode = settings.global?.debug?.loggingMode ?? 1;
-    skipSlimeVRCheck = settings.global?.debug?.skipSlimeVRCheck ?? false;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit ?? false;
 
     // Set switch states based on settings
@@ -158,7 +156,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("app-updates-switch", appUpdatesEnabled);
     setSwitchState("translations-updates-switch", translationsUpdatesEnabled);
     setSwitchState("log-to-file-switch", canLogToFile);
-    setSwitchState("skip-slimevr-switch", skipSlimeVRCheck);
     setSwitchState("bypass-com-limit-switch", bypassCOMPortLimit);
 
     // Set select values based on settings
@@ -195,10 +192,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (isMissingPorts) {
         setStatus("main.status.comPortsMissing");
-        window.ipc.invoke("show-error", {
-            title: "dialogs.comPortsMissing.title",
-            message: "dialogs.comPortsMissing.message",
-        });
+        showErrorDialog("dialogs.comPortsMissing.title", "dialogs.comPortsMissing.message");
     }
 
     selectedComPorts.push(...selectedPorts);
@@ -389,14 +383,8 @@ Ankle motion detection: ${ankle}`
 
 async function startConnection() {
     window.log("Starting connection...", "connection");
-    setStatus("main.status.searchingServer");
 
     try {
-        if (!skipSlimeVRCheck) {
-            const slimeVRFound: boolean = await window.ipc.invoke("search-for-server", null);
-            if (!(await handleSlimeVRCheck(slimeVRFound))) return false;
-        }
-
         if (!(await handleTrackerModelCheck())) return false;
         if (!(await handleConnectionType())) return false;
     } catch (err) {
@@ -438,20 +426,6 @@ function toggleButtons() {
         document.getElementById("pairing-button").toggleAttribute("disabled");
         document.getElementById("turn-off-trackers-button").toggleAttribute("disabled");
     }
-}
-
-async function handleSlimeVRCheck(slimeVRFound: boolean) {
-    if (!slimeVRFound) {
-        const errorKey = skipSlimeVRCheck
-            ? "SlimeVR check skipped"
-            : "Tried to start connection while not connected to SlimeVR";
-        window.log(errorKey, "connection");
-        if (!skipSlimeVRCheck) {
-            setStatus("main.status.slimeVRMissing");
-            return false;
-        }
-    }
-    return true;
 }
 
 async function handleTrackerModelCheck() {
@@ -529,7 +503,8 @@ async function showErrorDialog(
     titleKey: string,
     messageKey: string,
     translateTitle: boolean = true,
-    translateMessage: boolean = true
+    translateMessage: boolean = true,
+    blocking: boolean = true
 ) {
     const title = translateTitle ? await window.translate(titleKey) : titleKey;
     const message = translateMessage ? await window.translate(messageKey) : messageKey;
@@ -539,6 +514,7 @@ async function showErrorDialog(
         message: message,
         translateTitle,
         translateMessage,
+        blocking,
     });
 }
 
@@ -1346,18 +1322,6 @@ function addEventListeners() {
         });
     });
 
-    document.getElementById("skip-slimevr-switch").addEventListener("change", function () {
-        skipSlimeVRCheck = !skipSlimeVRCheck;
-        window.log(`Switched skip SlimeVR check: ${skipSlimeVRCheck}`);
-        window.ipc.send("save-setting", {
-            global: {
-                debug: {
-                    skipSlimeVRCheck: skipSlimeVRCheck,
-                },
-            },
-        });
-    });
-
     document.getElementById("bypass-com-limit-switch").addEventListener("change", function () {
         bypassCOMPortLimit = !bypassCOMPortLimit;
         window.log(`Switched bypass COM port limit: ${bypassCOMPortLimit}`);
@@ -1467,7 +1431,6 @@ function saveSettings() {
             },
             debug: {
                 canLogToFile: canLogToFile,
-                skipSlimeVRCheck: skipSlimeVRCheck,
                 bypassCOMPortLimit: bypassCOMPortLimit,
                 loggingMode: loggingMode,
             },
