@@ -62,9 +62,9 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 -   Running "auto-detection" on HaritoraX Wired (1.1b/1.1/1.0) trackers doesn't work
     -   Potentially fixed with `v1.3.0`, needs testing
 
-# Documentation & Getting Started
+# Documentation - getting started & development
 
-Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
+Read the wiki to get started on using/developing the program: https://github.com/OCSYT/SlimeTora/wiki
 
 For support, join the Discord server: https://discord.gg/XdfnKD9QVM
 
