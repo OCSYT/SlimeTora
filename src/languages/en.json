@@ -54,7 +54,7 @@
             },
             "sensorCorrection": {
                 "title": "Sensor auto correction",
-                "tooltip": "Enable or disable sensor auto correction (dynamic calibiration) features. Usually not needed to be changed and results vary between environments.",
+                "tooltip": "Enable or disable sensor auto correction (dynamic calibration) features. Usually not needed to be changed and results vary between environments.",
                 "accelerometer": "Accelerometer",
                 "gyroscope": "Gyroscope",
                 "magnetometer": "Magnetometer"

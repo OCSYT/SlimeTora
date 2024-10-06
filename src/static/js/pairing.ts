@@ -9,6 +9,14 @@ let pairing: string;
 let none: string;
 
 document.addEventListener("DOMContentLoaded", async () => {
+    paired = await t("pairing.card.id.status.paired");
+    unpaired = await t("pairing.card.id.status.unpaired");
+    pairing = await t("pairing.card.id.status.pairing");
+    none = await t("pairing.card.id.tracker.none");
+
+    populateComPorts();
+    updateComPorts();
+
     const i18nElements = document.querySelectorAll("[data-i18n]");
     const translationPromises: Promise<void>[] = [];
 
@@ -24,14 +32,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     await Promise.all(translationPromises);
-
-    paired = await t("pairing.card.id.status.paired");
-    unpaired = await t("pairing.card.id.status.unpaired");
-    pairing = await t("pairing.card.id.status.pairing");
-    none = await t("pairing.card.id.tracker.none");
-
-    populateComPorts();
-    updateComPorts();
 });
 
 window.ipc.on("device-paired", (_event, arg) => {
