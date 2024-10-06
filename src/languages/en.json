@@ -163,7 +163,7 @@
     },
     "onboarding": {
         "title": "Welcome to SlimeTora!",
-        "text": "SlimeTora is a middleware program that allows you to connect your HaritoraX trackers to the SlimeVR server, bypassing HaritoraConfigurator!<br /><br />To get started, select how you would like to set up the program. After you set up the program, you will be guided on how to set up SlimeVR server.",
+        "text": "SlimeTora is a middleware program that allows you to connect your HaritoraX trackers to the SlimeVR server, bypassing the official software!<br /><br />To get started, select how you would like to set up the program. After you set up the program, you will be guided on how to set up SlimeVR server.",
         "next": "Next",
         "back": "Back",
         "finish": "Finish",
@@ -175,13 +175,13 @@
             },
             "step-3": {
                 "title": "Auto-detection",
-                "text": "Press the button below to start the auto-detection process. The process may take up to 20 seconds to complete, <strong>make sure HaritoraConfigurator is closed</strong>.<br />After the process is complete, you will receive a pop-up with the results - make sure they are accurate. If the process fails, you can try again or set up SlimeTora manually.",
+                "text": "Press the button below to start the auto-detection process. The process may take up to 20 seconds to complete, <strong>make sure the official software is closed</strong>.<br />After the process is complete, you will receive a pop-up with the results - make sure they are accurate. If the process fails, you can try again or set up SlimeTora manually.",
                 "autodetect": "Start auto-detection",
                 "text2": "If you are happy with the results, click the \"Next\" button to continue. Otherwise, you may set up SlimeTora manually."
             },
             "step-4": {
                 "title": "SlimeVR setup",
-                "text": "Now we're sure you know what SlimeVR is, right? It's the reason why you downloaded SlimeTora in the first place - it's a software that allows for communication between multiple sensors/trackers to use in SteamVR, like HaritoraConfigurator.",
+                "text": "Now we're sure you know what SlimeVR is, right? It's the reason why you downloaded SlimeTora in the first place - it's a software that allows for communication between multiple sensors/trackers to use in SteamVR, like the official software.",
                 "download": "Download SlimeVR Server",
                 "text2": "To use SlimeTora, you need to have SlimeVR server installed on your computer. If you don't have it installed yet, click the button above to download and install it. After, press the \"Next\" button to learn how to set it up for SlimeTora."
             },
@@ -225,7 +225,7 @@
     },
     "pairing": {
         "title": "GX(6/2) Tracker Pairing",
-        "text": "Manage the pairing of your trackers connected via the GX(6/2) communication dongles.<br />To pair, press \"Pair/Unpair\" then hold down the (left/smaller) sub button on the tracker you want to pair for 3 seconds. Changing channels requires re-pairing the trackers.",
+        "text": "Manage the pairing of your trackers connected via the GX(6/2) communication dongles.<br /><br />To pair, press \"Pair/Unpair\" then hold down the (left/smaller) sub button on the tracker you want to pair for 3 seconds. Changing channels requires re-pairing the trackers.<br /><br />Treat this as a beta - if you have issues, use the official software.",
         "card": {
             "title": "COM port:",
             "id": {
@@ -251,7 +251,7 @@
     "dialogs": {
         "connectionFailed": {
             "title": "Connection failed",
-            "message": "Failed to start a connection via the selected connection mode(s). Please make sure HaritoraConfigurator is closed and (if applicable), Bluetooth is on and/or the correct COM ports are selected."
+            "message": "Failed to start a connection via the selected connection mode(s). Please make sure the official software is closed and (if applicable), Bluetooth is on and/or the correct COM ports are selected."
         },
         "slimevrNotFound": {
             "title": "SlimeVR not found",
@@ -298,7 +298,7 @@
         "autodetect": {
             "pre-check": {
                 "title": "Auto-detect pre-check",
-                "message": "This feature will attempt to automatically detect your trackers, connection mode, and tracker settings to apply the settings in the program for you.\r\n\r\nMake sure HaritoraConfigurator is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
+                "message": "This feature will attempt to automatically detect your trackers, connection mode, and tracker settings to apply the settings in the program for you.\r\n\r\nMake sure the official software is closed before proceeding. It is also recommended to turn on at least one of your trackers to find its settings."
             },
             "success": {
                 "title": "Auto-detect completed!",
