@@ -34,10 +34,10 @@ let deviceBattery: {
 
 let firstLaunch = false;
 let hasInitializedLogDir = false;
+let foundSlimeVR = false;
 
 let canLogToFile = true;
 let loggingMode = 1;
-let foundSlimeVR = false;
 let heartbeatInterval = 2000;
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
@@ -749,7 +749,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     // Set a timeout to warn user if the SlimeVR server wasn't found
     setTimeout(() => {
-        if (foundSlimeVR) return;
+        if (foundSlimeVR || !connectionActive) return;
 
         warn("SlimeVR server seemingly not found, warning user...", "connection");
         showError("dialogs.slimevrNotFound.title", "dialogs.slimevrNotFound.message", false);
