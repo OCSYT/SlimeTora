@@ -124,10 +124,8 @@ function populateComPorts() {
             const options = (dd as HTMLSelectElement).options;
             for (let i = 0; i < options.length; i++) {
                 if (selectedChannels.has(options[i].value)) {
-                    window.log(`Disabling channel ${options[i].value}`, "pairing");
                     options[i].disabled = true;
                 } else {
-                    window.log(`Enabling channel ${options[i].value}`, "pairing");
                     options[i].disabled = false;
                 }
             }
