@@ -225,7 +225,7 @@
     },
     "pairing": {
         "title": "GX(6/2) Tracker Pairing",
-        "text": "Manage the pairing of your trackers connected with the GX(6/2) communication dongles. After pressing \"pair\", press & hold the (left/smaller) sub button on the tracker you want to pair for 3 seconds.",
+        "text": "Manage the pairing of your trackers connected via the GX(6/2) communication dongles.<br />To pair, press \"Pair/Unpair\" then hold down the (left/smaller) sub button on the tracker you want to pair for 3 seconds. Changing channels requires re-pairing the trackers.",
         "card": {
             "title": "COM port:",
             "id": {
