@@ -32,12 +32,13 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 -   Get started with the program (and SlimeVR Server) easily through the guided onboarding process!
     -   Through the "automatic setup", run auto-detection to let the program **_set itself up for you_**!
     -   Automatically detect your tracker model, connection mode (including COM ports), and tracker settings
+-   Manage GX(6/2) dongles in-app - tracker pairing & changing 2.4GHz channels
 -   Set tracker settings per-tracker (`HaritoraX Wireless` only)
+-   Turn off one or all trackers (`HaritoraX Wireless` w/ `GX(6/2)` dongles only)
 -   Localization support
     -   You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 -   Linux support
     -   This was done as SlimeVR is supported on Linux, making this the first time HaritoraX trackers work on Linux!
-    -   ..however this needs more testing. Please let us know if there are issues
 -   Button bindings to SlimeVR functions (e.g. resets)
     -   Read more on the [SlimeVR basics](https://github.com/OCSYT/SlimeTora/wiki/SlimeVR#resets--calibration) wiki page
 -   Update checking (for app and translations)
@@ -51,19 +52,15 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
 # Known issues
 
--   On SlimeVR Server `v0.13.0`, you cannot pass the "IMU Calibration" setup wizard step
-    -   This has been fixed with a future update, `v1.3.0` (caused by weirdly high acceleration on idle due to IMU noise?)
-    -   SlimeVR Server `v0.13.1` will exclude Haritora trackers (as calibration isn't needed) & include a skip button
-    -   Either skip the setup wizard and perform the steps manually via the navbar, or use `0.12.1` (not recommended)
+-   On SlimeVR server `v0.13.0`, you cannot pass the "IMU Calibration" setup wizard step
+    -   SlimeVR server `v0.13.1` will exclude Haritora trackers for this calibration step as it isn't needed for these trackers
+    -   Either skip the setup wizard and perform the steps manually via the navbar, or use `0.12.1` (not recommended) until `0.13.1` releases
 -   Battery information jumps to incorrect percentages/voltage randomly
     -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers reporting those random values themselves
     -   This has been slightly mitigated with [v1.2.0](https://github.com/OCSYT/SlimeTora/releases/v1.2.0), which uses a "stable average" of the battery percentage and voltage instead
 -   Running "auto-detection" more than once without restarting breaks tracker settings auto-detection (device/ports detection still works)
 -   Running "auto-detection" on HaritoraX Wired (1.1b/1.1/1.0) trackers doesn't work
--   **(LINUX)** Connecting to trackers via "Bluetooth (LE)" always fails
-    -   The Bluetooth package we are using, [noble](https://github.com/abandonware/noble), requires root/sudo to be able to interact with BLE devices - its workarounds (and running as sudo) break [Electron](https://www.electronjs.org/) due to `setcap` disabling the `LD_LIBRARY_PATH` environment variable for security and modifying the `bluetooth.conf` for dbus does not work (at least, for me)
-    -   Any help on this is appreciated, though [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter) may need to use both [noble](https://github.com/abandonware/noble) and [node-ble](https://github.com/chrvadala/node-ble) (with a minor tweak on the user's side) to work.
-    -   Fixed with a future update, `v1.3.0`
+    -   Potentially fixed with `v1.3.0`, needs testing
 
 # Documentation & Getting Started
 
