@@ -58,6 +58,8 @@ function populateComPorts() {
     const columnsDiv = document.querySelector(".columns.is-multiline");
     if (!columnsDiv) return;
 
+    const selectedChannels = new Set<string>();
+
     ports.forEach(async (port: string) => {
         window.log(`Found COM port: ${port}`, "pairing");
         const comPortDiv = document.createElement("div");
@@ -76,20 +78,61 @@ function populateComPorts() {
             dropdown.appendChild(option);
         }
 
-        // Change channel event listener
-        dropdown.addEventListener("change", (event) => {
-            const channel = (event.target as HTMLSelectElement).value;
-            window.log(`Changing channel to ${channel} for ${port}`, "pairing");
-            window.ipc.send("set-channel", { port, channel });
-        });
-
         // Set current channel
         const channel = await window.ipc.invoke("get-channel", { port });
         if (channel) {
             window.log(`Current channel for ${port}: ${channel}`, "pairing");
             (dropdown as HTMLSelectElement).value = channel;
+            selectedChannels.add(channel);
         }
+
+        // Disable selected options in all dropdowns
+        updateDropdownOptions(selectedChannels);
+
+        // Change channel event listener
+        dropdown.addEventListener("change", (event) => {
+            const newChannel = (event.target as HTMLSelectElement).value;
+            const previousChannel = (dropdown as HTMLSelectElement).dataset.previousValue;
+
+            // Fallback if, somehow, user set an existing channel
+            if (selectedChannels.has(newChannel)) {
+                window.log(`Channel ${newChannel} is already in use`, "pairing");
+                (dropdown as HTMLSelectElement).value = previousChannel;
+                return;
+            }
+
+            if (previousChannel) selectedChannels.delete(previousChannel);
+            selectedChannels.add(newChannel);
+
+            // Disable selected options in all dropdowns
+            updateDropdownOptions(selectedChannels);
+
+            window.log(`Changing channel to ${newChannel} for ${port}`, "pairing");
+            window.ipc.send("set-channel", { port, channel: newChannel });
+
+            // Update the previous value
+            (dropdown as HTMLSelectElement).dataset.previousValue = newChannel;
+        });
+
+        // Set the initial previous value
+        (dropdown as HTMLSelectElement).dataset.previousValue = channel;
     });
+
+    function updateDropdownOptions(selectedChannels: Set<string>) {
+        const allDropdowns = document.querySelectorAll("#channel-select");
+        allDropdowns.forEach((dd) => {
+            const options = (dd as HTMLSelectElement).options;
+            for (let i = 0; i < options.length; i++) {
+                if (selectedChannels.has(options[i].value)) {
+                    window.log(`Disabling channel ${options[i].value}`, "pairing");
+                    options[i].disabled = true;
+                } else {
+                    window.log(`Enabling channel ${options[i].value}`, "pairing");
+                    options[i].disabled = false;
+                }
+            }
+        });
+    }
 
     return;
 }
