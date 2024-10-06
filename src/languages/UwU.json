@@ -1,5 +1,6 @@
 {
     "main": {
+        "title": "SwimeTowa",
         "connectedTrackers": "Connyected twackews:",
         "startConnection": "Stawt connyection",
         "stopConnection": "Stop connyection",
@@ -19,6 +20,12 @@
                 "success": "auto-detection compwete",
                 "failed": "auto-detection faiwed"
             }
+        },
+        "windowTitle": {
+            "main": "SwimeTowa: Main",
+            "onboarding": "SwimeTowa: Onboawding",
+            "settings": "SwimeTowa: {trackerName} settings",
+            "pairing": "SwimeTowa: Paiwing"
         }
     },
     "trackerInfo": {
@@ -218,7 +225,7 @@
     },
     "pairing": {
         "title": "GX(6/2) Twackew Paiwing",
-        "text": "Manyage the paiwing of youw twackews connyected with the GX(6/2) communyication dongwes.",
+        "text": "Manyage the paiwing of youw twackews connyected with the GX(6/2) communyication dongwes. Aftew pwessing \"paiw\", pwess & howd the (weft/smawwew) sub button on the twackew you want to paiw fow 3 seconds.",
         "card": {
             "title": "COM powt:",
             "id": {
@@ -245,6 +252,10 @@
         "connectionFailed": {
             "title": "Connyection faiwed",
             "message": "Faiwed to stawt a connyection wia the sewected connyection mode(s). Pwease make suwe HawitowaConfiguwatow is cwosed and (if appwicabwe), Bwuetooth is on and/ow the cowwect COM powts awe sewected."
+        },
+        "slimevrNotFound": {
+            "title": "SwimeVW nyot found",
+            "message": "SwimeVW sewwew does nyot seem to be wunnying, make suwe it is wunnying and westawt the connyection. If it is awweady wunnying & youw twackews awe connyected, this is safe to ignyowe."
         },
         "comPortsMissing": {
             "title": "COM powts missing",
@@ -298,13 +309,45 @@
                 "message": "Auto-detect faiwed. Pwease make suwe you hawe youw Bwuetooth/GX(6/2) dongwes pwugged in & tuwnyed on."
             }
         },
+        "updates": {
+            "app": {
+                "available": {
+                    "title": "Update awaiwabwe",
+                    "message": "A nyew {versionType} wewsion ({latestVersion}) of SwimeTowa is awaiwabwe.",
+                    "detail": "Pwease wisit the GitHub weweases page to downwoad the watest wewsion.",
+                    "buttons": {
+                        "yes": "Downwoad",
+                        "no": "Cancew"
+                    },
+                    "versionType": {
+                        "beta": "beta",
+                        "stable": "stabwe"
+                    }
+                }
+            },
+            "translations": {
+                "available": {
+                    "title": "Update awaiwabwe",
+                    "message": "Nyew twanswation updates awaiwabwe: {files}.",
+                    "detail": "Wouwd you wike to downwoad them?",
+                    "buttons": {
+                        "yes": "Downwoad",
+                        "no": "Cancew"
+                    }
+                },
+                "downloaded": {
+                    "title": "Updates downwoaded",
+                    "message": "Twanswation updates hawe been downwoaded ",
+                    "detail": "Pwease westawt the appwication to appwy the changes.",
+                    "buttons": {
+                        "yes": "OK"
+                    }
+                }
+            }
+        },
         "maxLoggingWarning": {
             "title": "Wogging mode wawnying",
             "message": "You hawe sewected a wogging mode that may cause huge wog fiwes and wag. Wemembew to onwy use this mode if asked ow hawe twackew issues!"
-        },
-        "slimevrNotFound": {
-            "title": "SwimeVW nyot found",
-            "message": "SwimeVW sewwew does nyot seem to be wunnying, make suwe it is wunnying and westawt the connyection. If it is awweady wunnying & youw twackews awe connyected, this is safe to ignyowe."
         }
     }
 }

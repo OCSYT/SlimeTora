@@ -1,5 +1,6 @@
 {
     "main": {
+        "title": "SlimeTora",
         "connectedTrackers": "Connected trackers:",
         "startConnection": "Start connection",
         "stopConnection": "Stop connection",
@@ -19,6 +20,12 @@
                 "success": "auto-detection complete",
                 "failed": "auto-detection failed"
             }
+        },
+        "windowTitle": {
+            "main": "SlimeTora: Main",
+            "onboarding": "SlimeTora: Onboarding",
+            "settings": "SlimeTora: {trackerName} settings",
+            "pairing": "SlimeTora: Pairing"
         }
     },
     "trackerInfo": {
@@ -218,7 +225,7 @@
     },
     "pairing": {
         "title": "GX(6/2) Tracker Pairing",
-        "text": "Manage the pairing of your trackers connected with the GX(6/2) communication dongles.",
+        "text": "Manage the pairing of your trackers connected with the GX(6/2) communication dongles. After pressing \"pair\", press & hold the (left/smaller) sub button on the tracker you want to pair for 3 seconds.",
         "card": {
             "title": "COM port:",
             "id": {
@@ -245,6 +252,10 @@
         "connectionFailed": {
             "title": "Connection failed",
             "message": "Failed to start a connection via the selected connection mode(s). Please make sure HaritoraConfigurator is closed and (if applicable), Bluetooth is on and/or the correct COM ports are selected."
+        },
+        "slimevrNotFound": {
+            "title": "SlimeVR not found",
+            "message": "SlimeVR server does not seem to be running, make sure it is running and restart the connection. If it is already running & your trackers are connected, this is safe to ignore."
         },
         "comPortsMissing": {
             "title": "COM ports missing",
@@ -298,13 +309,45 @@
                 "message": "Auto-detect failed. Please make sure you have your Bluetooth/GX(6/2) dongles plugged in & turned on."
             }
         },
+        "updates": {
+            "app": {
+                "available": {
+                    "title": "Update available",
+                    "message": "A new {versionType} version ({latestVersion}) of SlimeTora is available.",
+                    "detail": "Please visit the GitHub releases page to download the latest version.",
+                    "buttons": {
+                        "yes": "Download",
+                        "no": "Cancel"
+                    },
+                    "versionType": {
+                        "beta": "beta",
+                        "stable": "stable"
+                    }
+                }
+            },
+            "translations": {
+                "available": {
+                    "title": "Update available",
+                    "message": "New translation updates available: {files}.",
+                    "detail": "Would you like to download them?",
+                    "buttons":{
+                        "yes": "Download",
+                        "no": "Cancel"
+                    }
+                },
+                "downloaded": {
+                    "title": "Updates downloaded",
+                    "message": "Translation updates have been downloaded ",
+                    "detail": "Please restart the application to apply the changes.",
+                    "buttons": {
+                        "yes": "OK"
+                    }
+                }
+            }
+        },
         "maxLoggingWarning": {
             "title": "Logging mode warning",
             "message": "You have selected a logging mode that may cause huge log files and lag. Remember to only use this mode if asked or have tracker issues!"
-        },
-        "slimevrNotFound": {
-            "title": "SlimeVR not found",
-            "message": "SlimeVR server does not seem to be running, make sure it is running and restart the connection. If it is already running & your trackers are connected, this is safe to ignore."
         }
     }
 }

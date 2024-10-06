@@ -392,7 +392,7 @@ async function startConnection() {
         return false;
     }
 
-    toggleButtons();
+    toggleConnectionButtons(true);
 }
 
 function stopConnection() {
@@ -405,7 +405,7 @@ function stopConnection() {
     }
     window.log("Stopping connection(s)...", "connection");
 
-    toggleButtons();
+    toggleConnectionButtons(false);
 
     window.ipc.send("stop-connection", null);
 
@@ -417,14 +417,20 @@ function stopConnection() {
 }
 
 // Helper functions
-function toggleButtons() {
-    isActive = !isActive;
-    document.getElementById("start-connection-button").toggleAttribute("disabled");
-    document.getElementById("stop-connection-button").toggleAttribute("disabled");
+function toggleConnectionButtons(state: boolean) {
+    isActive = state;
+
+    const startButton = document.getElementById("start-connection-button") as HTMLButtonElement;
+    const stopButton = document.getElementById("stop-connection-button") as HTMLButtonElement;
+    const pairingButton = document.getElementById("pairing-button") as HTMLButtonElement;
+    const turnOffTrackersButton = document.getElementById("turn-off-trackers-button") as HTMLButtonElement;
+
+    if (startButton) startButton.disabled = state;
+    if (stopButton) stopButton.disabled = !state;
 
     if (wirelessTrackerEnabled && comEnabled) {
-        document.getElementById("pairing-button").toggleAttribute("disabled");
-        document.getElementById("turn-off-trackers-button").toggleAttribute("disabled");
+        if (pairingButton) pairingButton.disabled = !state;
+        if (turnOffTrackersButton) turnOffTrackersButton.disabled = !state;
     }
 }
 

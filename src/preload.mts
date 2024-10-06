@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld("localize", (resources?: any) => {
     if (!localize) {
         i18next
             .init({
+                fallbackLng: "en",
                 lng: "en",
                 resources,
             })

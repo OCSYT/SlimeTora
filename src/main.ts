@@ -4,14 +4,7 @@
 
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 // @ts-ignore (for development)
-import {
-    HaritoraX,
-    TrackerModel,
-    SensorMode,
-    FPSMode,
-    SensorAutoCorrection,
-    MagStatus,
-} from "haritorax-interpreter";
+import { HaritoraX, TrackerModel, SensorMode, FPSMode, SensorAutoCorrection, MagStatus } from "haritorax-interpreter";
 import { autoDetect } from "@serialport/bindings-cpp";
 const Binding = autoDetect();
 import fs, { PathLike } from "fs";
@@ -198,16 +191,28 @@ async function checkForAppUpdates() {
         );
         if (isNewerVersion(latestVersion, currentVersion)) {
             log("Update available, notifying user...", "updater");
+
+            const translatedTitle = await translate("dialogs.updates.app.available.title");
+            const translatedMessage = await translate("dialogs.updates.app.available.message");
+            const translatedDetail = await translate("dialogs.updates.app.available.detail");
+            const translatedButtonYes = await translate("dialogs.updates.app.available.buttons.yes");
+            const translatedButtonNo = await translate("dialogs.updates.app.available.buttons.no");
+            const translatedVersionType = await translate(`dialogs.updates.app.available.versionType.${versionType}`);
+
             const response = await dialog.showMessageBox({
                 type: "info",
-                buttons: ["Download", "Cancel"],
-                title: "Update available",
-                message: `A new ${versionType} version (${latestVersion}) of SlimeTora is available.`,
-                detail: "Please visit the GitHub releases page to download the latest version.",
+                buttons: [translatedButtonYes, translatedButtonNo],
+                title: translatedTitle,
+                message: translatedMessage
+                    .replace("{versionType}", translatedVersionType)
+                    .replace("{latestVersion}", latestVersion),
+                detail: translatedDetail,
+                cancelId: 1,
             });
-            if (response.response === 0) {
-                shell.openExternal("https://github.com/OCSYT/SlimeTora/releases/latest");
-            }
+
+            log(`User response: ${response.response}`, "updater");
+
+            if (response.response === 0) shell.openExternal("https://github.com/OCSYT/SlimeTora/releases/latest");
         } else {
             log("No app updates available.", "updater");
         }
@@ -276,24 +281,43 @@ async function checkForTranslationUpdates() {
 
         if (updates.length > 0) {
             log(`Translation updates available: ${updates.map((file) => file.name).join(", ")}`, "updater");
+
+            const translatedTitleAvailable = await translate("dialogs.updates.translations.available.title");
+            const translatedMessageAvailable = await translate("dialogs.updates.translations.available.message");
+            const translatedDetailAvailable = await translate("dialogs.updates.translations.available.detail");
+            const translatedButtonYes = await translate("dialogs.updates.translations.available.buttons.yes");
+            const translatedButtonNo = await translate("dialogs.updates.translations.available.buttons.no");
+
             const response = await dialog.showMessageBox({
                 type: "info",
-                buttons: ["Download", "Cancel"],
-                title: "Update available",
-                message: `New translation updates available: ${updates.map((file) => file.name).join(", ")}`,
-                detail: "Would you like to download them?",
+                buttons: [translatedButtonYes, translatedButtonNo],
+                title: translatedTitleAvailable,
+                message: translatedMessageAvailable.replace("{files}", updates.map((file) => file.name).join(", ")),
+                detail: translatedDetailAvailable,
+                cancelId: 1,
             });
+
+            log(`User response: ${response.response}`, "updater");
 
             if (response.response === 0) {
                 await downloadTranslationUpdates(updates);
-                dialog.showMessageBox({
+
+                const translatedTitleDownloaded = await translate("dialogs.updates.translations.downloaded.title");
+                const translatedMessageDownloaded = await translate("dialogs.updates.translations.downloaded.message");
+                const translatedDetailDownloaded = await translate("dialogs.updates.translations.downloaded.detail");
+                const translatedButtonOk = await translate("dialogs.updates.translations.downloaded.buttons.yes");
+
+                await dialog.showMessageBox({
                     type: "info",
-                    buttons: ["OK"],
-                    title: "Updates downloaded",
-                    message: "Translation updates have been downloaded.",
-                    detail: "Please restart the application to apply the changes.",
+                    buttons: [translatedButtonOk],
+                    title: translatedTitleDownloaded,
+                    message: translatedMessageDownloaded,
+                    detail: translatedDetailDownloaded,
                 });
-                log(`Translation updates downloaded and placed.`, "updater");
+
+                log(`Translation updates downloaded and applied.`, "updater");
+            } else {
+                log(`Translation updates download canceled by user.`, "updater");
             }
         } else {
             log(`No translation updates available.`, "updater");
@@ -323,7 +347,7 @@ function clearTrackers() {
 }
 
 const createWindow = async () => {
-    mainWindow = createBrowserWindow("SlimeTora: Main", "index.html", "en", null, 900, 700);
+    mainWindow = createBrowserWindow("main.windowTitle.main", true, "index.html", "en", null, 900, 700);
 
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", resources);
@@ -362,6 +386,7 @@ app.on("window-all-closed", closeApp);
 
 function createBrowserWindow(
     title: string,
+    translateTitle = true,
     htmlFile: string,
     query: string | ParsedUrlQueryInput,
     parent: BrowserWindow,
@@ -394,6 +419,10 @@ function createBrowserWindow(
         })
     );
 
+    if (translateTitle) {
+        window.webContents.on("did-finish-load", async () => (window.title = await translate(title)));
+    }
+
     window.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: "deny" };
@@ -402,24 +431,16 @@ function createBrowserWindow(
     return window;
 }
 
-function onboarding(language: string) {
+async function onboarding(language: string) {
     log("Showing onboarding screen");
-    onboardingWindow = createBrowserWindow(
-        "SlimeTora: Onboarding",
-        "onboarding.html",
-        { language: language },
-        mainWindow
-    );
+    const title = await translate("main.windowTitle.onboarding");
+    onboardingWindow = createBrowserWindow(title, false, "onboarding.html", { language: language }, mainWindow);
 }
 
-function pairing(ports: string[]) {
+async function pairing(ports: string[]) {
     log("Showing pairing screen");
-    pairingWindow = createBrowserWindow(
-        "SlimeTora: Pairing",
-        "pairing.html",
-        { ports: JSON.stringify(ports) },
-        mainWindow
-    );
+    const title = await translate("main.windowTitle.pairing");
+    pairingWindow = createBrowserWindow(title, false, "pairing.html", { ports: JSON.stringify(ports) }, mainWindow);
 }
 
 async function showMessage(
@@ -449,7 +470,7 @@ async function showError(
     message: string,
     blocking = true,
     translateTitle = true,
-    translateMessage = true,
+    translateMessage = true
 ) {
     const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
@@ -499,9 +520,9 @@ ipcMain.handle("show-error", async (_event, arg) => {
         blocking = true,
         translateTitle = true,
         translateMessage = true,
-    }: { title: string; message: string; blocking: boolean; translateTitle: boolean; translateMessage: boolean; } = arg;
+    }: { title: string; message: string; blocking: boolean; translateTitle: boolean; translateMessage: boolean } = arg;
 
-    return await showError(title, message, blocking, translateTitle, translateMessage, );
+    return await showError(title, message, blocking, translateTitle, translateMessage);
 });
 
 ipcMain.on("show-onboarding", (_event, language) => {
@@ -581,9 +602,11 @@ ipcMain.on("open-logs-folder", async () => {
     }
 });
 
-ipcMain.on("open-tracker-settings", (_event, arg: string) => {
+ipcMain.on("open-tracker-settings", async (_event, arg: string) => {
+    const title = await translate("main.windowTitle.settings");
     trackerSettingsWindow = createBrowserWindow(
-        `SlimeTora: ${arg} settings`,
+        title.replace("{trackerName}", arg),
+        false,
         "settings.html",
         { trackerName: arg },
         mainWindow,
