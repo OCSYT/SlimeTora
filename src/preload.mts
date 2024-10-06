@@ -63,6 +63,7 @@ contextBridge.exposeInMainWorld("changeLanguage", (lng: string) => {
     i18next.changeLanguage(lng).then(() => {
         if (localize) {
             ipcRenderer.send("log", `Attempting to change language to ${lng}`, "i18n");
+            ipcRenderer.send("update-titles");
             localize("[data-i18n]");
         }
     });

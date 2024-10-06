@@ -347,7 +347,7 @@ function clearTrackers() {
 }
 
 const createWindow = async () => {
-    mainWindow = createBrowserWindow("main.windowTitle.main", true, "index.html", "en", null, 900, 700);
+    mainWindow = createBrowserWindow("SlimeTora: Main", "index.html", "en", null, 900, 700);
 
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", resources);
@@ -362,6 +362,8 @@ const createWindow = async () => {
         if (canLogToFile && loggingMode === 3) {
             showMessage("dialogs.maxLoggingWarning.title", "dialogs.maxLoggingWarning.message");
         }
+
+        mainWindow.setTitle(await translate("main.windowTitle.main"));
     });
 };
 
@@ -386,7 +388,6 @@ app.on("window-all-closed", closeApp);
 
 function createBrowserWindow(
     title: string,
-    translateTitle = true,
     htmlFile: string,
     query: string | ParsedUrlQueryInput,
     parent: BrowserWindow,
@@ -419,10 +420,6 @@ function createBrowserWindow(
         })
     );
 
-    if (translateTitle) {
-        window.webContents.on("did-finish-load", async () => (window.title = await translate(title)));
-    }
-
     window.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: "deny" };
@@ -434,13 +431,13 @@ function createBrowserWindow(
 async function onboarding(language: string) {
     log("Showing onboarding screen");
     const title = await translate("main.windowTitle.onboarding");
-    onboardingWindow = createBrowserWindow(title, false, "onboarding.html", { language: language }, mainWindow);
+    onboardingWindow = createBrowserWindow(title, "onboarding.html", { language: language }, mainWindow);
 }
 
 async function pairing(ports: string[]) {
     log("Showing pairing screen");
     const title = await translate("main.windowTitle.pairing");
-    pairingWindow = createBrowserWindow(title, false, "pairing.html", { ports: JSON.stringify(ports) }, mainWindow);
+    pairingWindow = createBrowserWindow(title, "pairing.html", { ports: JSON.stringify(ports) }, mainWindow);
 }
 
 async function showMessage(
@@ -499,6 +496,21 @@ ipcMain.on("warn", (_event, message: string, where = "renderer") => {
 
 ipcMain.on("error", (_event, message: string, where = "renderer") => {
     error(message, where);
+});
+
+ipcMain.on("update-titles", async () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setTitle(await translate("main.windowTitle.main"));
+    }
+    if (onboardingWindow && !onboardingWindow.isDestroyed()) {
+        onboardingWindow.setTitle(await translate("main.windowTitle.onboarding"));
+    }
+    if (pairingWindow && !pairingWindow.isDestroyed()) {
+        pairingWindow.setTitle(await translate("main.windowTitle.pairing"));
+    }
+    if (trackerSettingsWindow && !trackerSettingsWindow.isDestroyed()) {
+        trackerSettingsWindow.setTitle(await translate("main.windowTitle.settings"));
+    }
 });
 
 ipcMain.handle("show-message", async (_event, arg) => {
@@ -606,7 +618,6 @@ ipcMain.on("open-tracker-settings", async (_event, arg: string) => {
     const title = await translate("main.windowTitle.settings");
     trackerSettingsWindow = createBrowserWindow(
         title.replace("{trackerName}", arg),
-        false,
         "settings.html",
         { trackerName: arg },
         mainWindow,
@@ -1183,7 +1194,9 @@ function startDeviceListeners() {
         await addTracker(deviceID);
 
         if (mode !== "com" && !(port && portId)) return;
-        if (pairingWindow) pairingWindow.webContents.send("device-paired", { trackerName: deviceID, port, portId });
+        if (pairingWindow && !pairingWindow.isDestroyed()) {
+            pairingWindow.webContents.send("device-paired", { trackerName: deviceID, port, portId });
+        }
     });
 
     device.on("disconnect", (deviceID: string) => {
