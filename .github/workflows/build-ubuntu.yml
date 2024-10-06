@@ -34,9 +34,6 @@ jobs:
             - name: Build the application
               run: npm run build
 
-            - name: Make app executable on Ubuntu
-              run: chmod +x ./build/SlimeTora-linux-x64/SlimeTora
-
             - name: Archive build artifacts for Ubuntu
               uses: actions/upload-artifact@v3
               with:
