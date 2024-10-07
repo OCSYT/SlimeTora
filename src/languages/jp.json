@@ -20,13 +20,13 @@
                 "success": "自動検出を完了しました",
                 "failed": "自動検出に失敗しました"
             }
-        }
-    },
+        },
         "windowTitle": {
             "main": "SlimeTora: メイン",
             "onboarding": "SlimeTora: セットアップウィザード",
             "settings": "SlimeTora: {trackerName} の設定",
             "pairing": "SlimeTora: ペアリング"
+        }
     },
     "trackerInfo": {
         "title": "トラッカー情報",
@@ -34,8 +34,8 @@
         "compactView": "コンパクトビュー",
         "censorSerialNumbers": "シリアルナンバーを隠す",
         "trackerVisualization": "トラッカーモデルを表示",
-		"turnOffTrackers": "全トラッカーの電源を切る",
-		"pairing": "GX(6/2)ペアリングの管理",
+        "turnOffTrackers": "全トラッカーの電源を切る",
+        "pairing": "GX(6/2)ペアリングの管理",
         "deviceName": "デバイス名:",
         "deviceID": "デバイスID:",
         "rotationData": "回転:",
@@ -69,7 +69,7 @@
             "debugging": {
                 "title": "デバッグ",
                 "tooltip": "各トラッカーに関連するいくつかのデバッグ用オプション",
-				"turnOff": "トラッカーの電源を切る",
+                "turnOff": "トラッカーの電源を切る",
                 "resetSettings": "設定をリセット",
                 "getSettings": "設定をトラッカーから取得"
             }
@@ -98,7 +98,7 @@
             "title": "その他の設定",
             "tooltip": "他のカテゴリーに当てはまらないいくつかの設定。",
             "trackerVisualizationFPS": "トラッカーモデルのフレームレート",
-			"heartbeat": "トラッカーのハートビート間隔"
+            "heartbeat": "トラッカーのハートビート間隔"
         },
         "updates": {
             "title": "アップデートを確認",
@@ -281,7 +281,7 @@
             "title": "書き込みエラー",
             "message": "トラッカーへのデータ書き込みに失敗しました。詳細はログを参照してください。"
         },
-		"trackerReadError": {
+        "trackerReadError": {
             "title": "読み込みエラー",
             "message": "トラッカーからのデータ読み込みに失敗しました。詳細はログを参照してください。"
         },
@@ -345,7 +345,7 @@
                 }
             }
         },
-		"maxLoggingWarning": {
+        "maxLoggingWarning": {
             "title": "ログモードの警告",
             "message": "選択したモードでは、ログファイルが膨大になりラグを引き起こす可能性があります。ログを要求された場合やトラッカーに問題がある場合にのみ使用してください！"
         }
