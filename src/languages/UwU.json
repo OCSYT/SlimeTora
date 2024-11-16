@@ -1,61 +1,61 @@
 {
     "main": {
         "title": "SwimeTowa",
-        "connectedTrackers": "Connyected twackews:",
-        "startConnection": "Stawt connyection",
-        "stopConnection": "Stop connyection",
-        "onboarding": "Open onboawding",
+        "connectedTrackers": "Connyected kitties:",
+        "startConnection": "Stawt meowing",
+        "stopConnection": "No meowing :(",
+        "onboarding": "Meow at onboawding",
         "status": {
-            "statusText": "Status:",
-            "none": "N/A",
-            "failed": "ewwow",
-            "searching": "seawching",
-            "connected": "connyected",
+            "statusText": "Nyatus:",
+            "none": "N(y)A",
+            "failed": "brokie :(",
+            "searching": "cyatching red dot...",
+            "connected": "on :o",
             "comPortsMissing": "COM powts missing",
             "noConnectionMode": "nyo connyection mode enyabwed",
             "noTrackerModel": "nyo twackew modew sewected",
             "noComPorts": "nyo COM powts sewected",
             "autodetect": {
-                "running": "wunnying auto-detection...",
-                "success": "auto-detection compwete",
-                "failed": "auto-detection faiwed"
+                "running": "wunnying cat-detection...",
+                "success": "cat-detection compwete :3",
+                "failed": "cat-detection faiwed :("
             }
         },
         "windowTitle": {
-            "main": "SwimeTowa: Main",
+            "main": "SwimeTowa: :3",
             "onboarding": "SwimeTowa: Onboawding",
-            "settings": "SwimeTowa: {trackerName} settings",
+            "settings": "SwimeTowa: {trackerName} meowings",
             "pairing": "SwimeTowa: Paiwing"
         }
     },
     "trackerInfo": {
         "title": "Twackew infowmation",
         "tooltip": "See infowmation about the connyected twackews. An option with yewwow text wequiwes a westawt of the connyection ow pwogwam to appwy.",
-        "compactView": "Compact wiew",
-        "censorSerialNumbers": "Censow sewiaw nyumbews",
-        "trackerVisualization": "Twackew wisuawization",
-        "turnOffTrackers": "Tuwn off aww twackews",
+        "compactView": "Smol wiew",
+        "censorSerialNumbers": "aaa hide twackew nyumbews",
+        "trackerVisualization": "See twackews :o",
+        "turnOffTrackers": "Cyutely kill aww twackews :3",
         "pairing": "Manyage GX(6/2) paiwing",
         "deviceName": "Dewice:",
         "deviceID": "Dewice ID:",
         "rotationData": "Wotation data:",
         "accelerationData": "Accewewation data:",
         "battery": "Battewy:",
-        "magStatus": "Mag status:",
+        "magStatus": "Magnyatus:",
         "edit": "Edit",
-        "settings": "Owewwide settings",
+        "settings": "Owewwide meowings",
         "trackerSettings": {
-            "title": "{trackerName} settings",
-            "text": "Owewwide the gwobaw twackew settings fow this twackew. Can be usefuw if onwy cewtain twackews hawe bad mag statuses.",
+            "title": "{trackerName} meowings",
+            "text": "Owewwide the gwobaw twackew meowings fow this twackew. Can be usefuw if onwy cewtain twackews hawe bad mag statuses.",
             "fps": {
-                "title": "FPS twansfew wate",
-                "tooltip": "Sewect the FPS twansfew wate fow the twackews. If using Bwuetooth, 50FPS may be mowe stabwe.",
-                "50": "50 FPS",
-                "100": "100 FPS"
+                "title": "Nyas twansfew wate",
+                "tooltip": "Sewect the nyas twansfew wate fow the twackews. If using Bwuetooth, 50FPS may be mowe stabwe.",
+                "50": "50 nyas",
+                "100": "100 nyas"
             },
             "sensorMode": {
                 "title": "Sensow mode",
-                "tooltip": "Sewect the sensow mode fow the twackews. Mode 1 enyabwes the magnyetometew which is best if you hawe a stabwe geomagnyetic enwiwonment (mag status is gween ow yewwow). If unstabwe (mag status is wed), use mode 2.",
+                "tooltip": "Sewect the sensow mode fow the twackews. Mode 1 enyabwes the magnyetometew which is best if you hawe a stabwe geomagnyetic enwiwonment (magnyatus is gween ow yewwow). If unstabwe (magnyatus is wed), use mode 2.",
                 "1": "Mode 1",
                 "2": "Mode 2"
             },
@@ -67,17 +67,17 @@
                 "magnetometer": "Magnyetometew"
             },
             "debugging": {
-                "title": "Debugging",
-                "tooltip": "Some debugging options fow this indiwiduaw twackew.",
+                "title": "Demeowing",
+                "tooltip": "Some demeowing options fow this indiwiduaw twackew.",
                 "turnOff": "Tuwn off twackew",
-                "resetSettings": "Weset settings",
-                "getSettings": "Get twackew settings"
+                "resetSettings": "Weset meowings",
+                "getSettings": "Get twackew meowings"
             }
         }
     },
     "programSettings": {
-        "title": "Pwogwam settings",
-        "tooltip": "Set the settings of the pwogwam. An option with yewwow text wequiwes a westawt of the connyection ow pwogwam to appwy.",
+        "title": "Pwogwam meowings",
+        "tooltip": "Set the meowings of the pwogwam. An option with yewwow text wequiwes a westawt of the connyection ow pwogwam to appwy.",
         "trackerModel": {
             "title": "Twackew modew",
             "tooltip": "Sewect the modew of HawitowaX twackews you hawe, the HawitowaX Wiwewess ow HawitowaX Wiwed (1.1b/1.1/1.0).",
@@ -95,35 +95,35 @@
             "tooltip": "Sewect the COM powts youw GX(6/2) dongwes ow HawitowaX 1.1b/1.1/1.0 twackews awe using. Up to 4 powts can be sewected (3 fow GX6 and 1 fow GX2) unwess checks awe bypassed."
         },
         "other": {
-            "title": "Othew settings",
-            "tooltip": "Some settings fow the pwogwam that don't fit in the othew categowies.",
-            "trackerVisualizationFPS": "Twackew wisuawization FPS",
+            "title": "Othew meowings",
+            "tooltip": "Some meowings fow the pwogwam that don't fit in the othew categowies.",
+            "trackerVisualizationFPS": "Twackew wisuawization nyas",
             "heartbeat": "Twackew heawtbeat intewwaw"
         },
         "updates": {
-            "title": "Update checking",
-            "tooltip": "Modify the settings used when checking fow updates on pwogwam stawtup.",
-            "app": "App updates",
-            "translations": "Twanswation updates",
+            "title": "Nyadates checking",
+            "tooltip": "Modify the meowings used when checking fow nyadates on pwogwam stawtup.",
+            "app": "App nyadates",
+            "translations": "Twanswation nyadates",
             "channel": {
                 "title": "Update channyew",
                 "stable": "Stabwe",
-                "beta": "Beta"
+                "beta": "Bweta"
             }
         }
     },
     "trackerSettings": {
-        "title": "Twackew settings",
-        "tooltip": "Set the gwobaw settings fow the twackews (can be uvwwiden pew-twackew).",
+        "title": "Twackew meowings",
+        "tooltip": "Set the gwobaw meowings fow the twackews (can be uvwwiden pew-twackew).",
         "fps": {
-            "title": "FPS twansfew wate",
-            "tooltip": "Sewect the FPS twansfew wate fow the twackews. If using Bwuetooth, 50FPS may be mowe stabwe.",
-            "50": "50 FPS",
-            "100": "100 FPS"
+            "title": "Nyas twansfew wate",
+            "tooltip": "Sewect the nyas twansfew wate fow the twackews. If using Bwuetooth, 50FPS may be mowe stabwe.",
+            "50": "50 nyas",
+            "100": "100 nyas"
         },
         "sensorMode": {
             "title": "Sensow mode",
-            "tooltip": "Sewect the sensow mode fow the twackews. Mode 1 enyabwes the magnyetometew which is best if you hawe a stabwe geomagnyetic enwiwonment (mag status is gween ow yewwow). If unstabwe (mag status is wed), use mode 2.",
+            "tooltip": "Sewect the sensow mode fow the twackews. Mode 1 enyabwes the magnyetometew which is best if you hawe a stabwe geomagnyetic enwiwonment (magnyatus is gween ow yewwow). If unstabwe (magnyatus is wed), use mode 2.",
             "1": "Mode 1",
             "2": "Mode 2"
         },
@@ -136,9 +136,9 @@
         }
     },
     "about": {
-        "title": "About",
+        "title": "who us :3",
         "text": "The SwimeTowa pwojyect is a middwewawe pwogwam that awwows you to connyect the HawitowaX twackews to the SwimeVW sewwew.",
-        "authors": "Made by:",
+        "authors": "Meowed by:",
         "credits": {
             "title": "Cwedits"
         },
@@ -147,9 +147,9 @@
         }
     },
     "debugging": {
-        "title": "Debugging",
+        "title": "Demeowing",
         "tooltip": "An option with yewwow text wequiwes a westawt of the connyection ow pwogwam to appwy.",
-        "text": "Enyabwe ow disabwe debugging featuwes fow the pwogwam. Using wogging mode 'Aww data (!!!)' wiww cause huge wog fiwes and wag, onwy use if asked ow hawe twackew issues!",
+        "text": "Enyabwe ow disabwe demeowing featuwes fow the pwogwam. Using wogging mode 'Aww data (!!!)' wiww cause huge wog fiwes and wag, onwy use if asked ow hawe twackew issues!",
         "writeToFile": "Wwite to wog fiwes",
         "bypassPortLimit": "Bypass powt wimit",
         "loggingMode": {
@@ -158,12 +158,12 @@
             "extra": "Extwa data",
             "all": "Aww data (!!!)"
         },
-        "openLogsFolder": "Open wogs fowdew",
-        "openSupportPage": "Open suppowt page"
+        "openLogsFolder": "Meow at wogs fowdew",
+        "openSupportPage": "Meow at suppowt page"
     },
     "onboarding": {
-        "title": "Wewcome to SwimeTowa!",
-        "text": "SwimeTowa is a middwewawe pwogwam that awwows you to connyect youw HawitowaX twackews to the SwimeVW sewwew, bypassing HawitowaConfiguwatow!<br /><br />To get stawted, sewect how you wouwd wike to set up the pwogwam. Aftew you set up the pwogwam, you wiww be guided on how to set up SwimeVW sewwew.",
+        "title": "Wewcome to SwimeTowa! :3",
+        "text": "SwimeTowa is a middwewawe pwogwam that awwows you to connyect youw HawitowaX twackews to the SwimeVW sewwew, bypassing the officiaw softwawe!<br /><br />To get stawted, sewect how you wouwd wike to set up the pwogwam. Aftew you set up the pwogwam, you wiww be guided on how to set up SwimeVW sewwew.",
         "next": "Nyext",
         "back": "Back",
         "finish": "Finyish",
@@ -171,17 +171,17 @@
         "steps": {
             "step-2": {
                 "title": "Automatic setup",
-                "text": "Automatic setup awwows you to wet the pwogwam twy to automaticawwy detect youw settings and set itsewf up fow you. It is the easiest way to get stawted and suppowts aww twackew modews and connyection modes.<br /><br />It is wecommended (but nyot nyecessawy) to hawe at weast onye of youw twackews tuwnyed on befowe continyuing. When you awe weady, cwick the \"Nyext\" button."
+                "text": "Automatic setup awwows you to wet the pwogwam twy to automaticawwy detect youw meowings and set itsewf up fow you. It is the easiest way to get stawted and suppowts aww twackew modews and connyection modes.<br /><br />It is wecommended (but nyot nyecessawy) to hawe at weast onye of youw twackews tuwnyed on befowe continyuing. When you awe weady, cwick the \"Nyext\" button."
             },
             "step-3": {
-                "title": "Auto-detection",
-                "text": "Pwess the button bewow to stawt the auto-detection pwocess. The pwocess may take up to 20 seconds to compwete, <strong>make suwe HawitowaConfiguwatow is cwosed</strong>.<br />Aftew the pwocess is compwete, you wiww weceiwe a pop-up with the wesuwts - make suwe they awe accuwate. If the pwocess faiws, you can twy again ow set up SwimeTowa manyuawwy.",
-                "autodetect": "Stawt auto-detection",
+                "title": "Cat-detection",
+                "text": "Pwess the button bewow to stawt the cat-detection pwocess. The pwocess may take up to 20 seconds to compwete, <b>make suwe the officiaw softwawe is cwosed</b>.<br />Aftew the pwocess is compwete, you wiww weceiwe a pop-up with the wesuwts - make suwe they awe accuwate. If the pwocess faiws, you can twy again ow set up SwimeTowa manyuawwy.",
+                "autodetect": "Stawt cat-detection",
                 "text2": "If you awe happy with the wesuwts, cwick the \"Nyext\" button to continyue. Othewwise, you may set up SwimeTowa manyuawwy."
             },
             "step-4": {
                 "title": "SwimeVW setup",
-                "text": "Nyow we'we suwe you knyow what SwimeVW is, wight? It's the weason why you downwoaded SwimeTowa in the fiwst pwace - it's a softwawe that awwows fow communyication between muwtipwe sensows/twackews to use in SteamVW, wike HawitowaConfiguwatow.",
+                "text": "Nyow we'we suwe you knyow what SwimeVW is, wight? It's the weason why you downwoaded SwimeTowa in the fiwst pwace - it's a softwawe that awwows fow communyication between muwtipwe sensows/twackews to use in SteamVW, wike the officiaw softwawe.",
                 "download": "Downwoad SwimeVW Sewwew",
                 "text2": "To use SwimeTowa, you nyeed to hawe SwimeVW sewwew instawwed on youw computew. If you don't hawe it instawwed yet, cwick the button abuv to downwoad and instaww it. Aftew, pwess the \"Nyext\" button to weawn how to set it up fow SwimeTowa."
             },
@@ -192,11 +192,11 @@
             },
             "step-6": {
                 "title": "Twackew assignment",
-                "text": "With youw twackews connyected, you can go thwough the inyitiaw setup of SwimeVW Sewwew. Cwick \"Wet's get set up!\", then \"Skip Wi-Fi settings\", and then \"I put stickews and stwaps!\". Nyext, assign youw twackews to the cowwect body pawt - an exampwe is shown in the scweenshot bewow."
+                "text": "With youw twackews connyected, you can go thwough the inyitiaw setup of SwimeVW Sewwew. Cwick \"Wet's get set up!\", then \"Skip Wi-Fi meowings\", and then \"I put stickews and stwaps!\". Nyext, assign youw twackews to the cowwect body pawt - an exampwe is shown in the scweenshot bewow."
             },
             "step-7": {
                 "title": "Mounting cawibwation",
-                "text": "Aftew assignying the twackews, you wiww be bwought to the mounting cawibwation scween. Sewect \"Automatic Mounting\" <strong>(highwy wecommended)</strong> and fowwow the on-scween instwuctions on how to do a mounting cawibwation. If it does nyot wook wight aftew the cawibwation, you can awways wedo it untiw it's accuwate ow mess with \"Manyuaw Mounting\"."
+                "text": "Aftew assignying the twackews, you wiww be bwought to the mounting cawibwation scween. Sewect \"Automatic Mounting\" <b>(highwy wecommended)</b> and fowwow the on-scween instwuctions on how to do a mounting cawibwation. If it does nyot wook wight aftew the cawibwation, you can awways wedo it untiw it's accuwate ow mess with \"Manyuaw Mounting\"."
             },
             "step-8": {
                 "title": "Wesets & cawibwation",
@@ -211,21 +211,26 @@
             "step-9": {
                 "title": "When to weset",
                 "text": "Hewe awe the expwanyations of the thwee diffewent wesets and when they wouwd be used:",
-                "text2": "A <strong>yaw</strong> weset is the <strong>onye you wiww use the most</strong>, it ewiminyates most (if nyot aww) dwift on onye axis. This is wess accuwate but the fastest and most conwenyient. You onwy nyeed to stwaighten youw wimbs - this can ewen be used whiwe waying ow sitting down!",
-                "text3": "A <strong>fuww</strong> weset is the most accuwate and compwetewy wesets the skeweton in SwimeVW. You must be standing up and stwaight whiwe doing this weset.",
-                "text4": "A <strong>mounting</strong> weset is used when the position of youw twackews hawe physicawwy muvd (ow mounting cawibwation is off). You must be in a \"ski pose\" whiwe doing this weset.",
+                "text2": "A <b>yaw</b> weset is the <b>onye you wiww use the most</b>, it ewiminyates most (if nyot aww) dwift on onye axis. This is wess accuwate but the fastest and most conwenyient. You onwy nyeed to stwaighten youw wimbs - this can ewen be used whiwe waying ow sitting down!",
+                "text3": "A <b>fuww</b> weset is the most accuwate and compwetewy wesets the skeweton in SwimeVW. You must be standing up and stwaight whiwe doing this weset.",
+                "text4": "A <b>mounting</b> weset is used when the position of youw twackews hawe physicawwy muvd (ow mounting cawibwation is off). You must be in a \"ski pose\" whiwe doing this weset.",
                 "caption1": "Fuww weset pose",
                 "caption2": "Mounting weset pose"
             },
             "step-10": {
                 "title": "Body pwopowtions",
-                "text": "Nyow it's time to cawcuwate youw body pwopowtions. SwimeVW appwies youw body pwopowtions to a wiwtuaw skeweton to hawe much mowe accuwate twacking if set up cowwectwy. Sewect \"Automatic pwopowtions\" and fowwow the on-scween instwuctions to pewfowm the cawibwation by fowwowing a set of muvments."
+                "text": "SwimeVW appwies youw body pwopowtions on a wiwtuaw skeweton fow accuwate twacking. Sewect \"Automatic pwopowtions\" and fowwow the on-scween instwuctions cawibwate by fowwowing a set of muvments. <b>You onwy nyeed to do this once and is awso optionyaw!</b>\r\n\r\nIf you hawe issues, you can awways wetwy ow use the defauwts (\"Weset aww pwopowtions\")."
+            },
+            "step-11": {
+                "title": "Wewaunching SwimeVW",
+                "text": "When wewaunching SwimeVW, pewfowm a \"Fuww Weset\" and then a \"Mounting Weset\" befowe cawibwating in-game. <strong>Again, you do nyot hawe to pewfowm the pwopowtions cawibwation again - it is onwy donye once!</strong> Make suwe to wefew to the SwimeTowa wiki ow watch wideos on how to get the best fwom SwimeVW - ZWock35 is a gweat pewson to watch!",
+                "watch": "Watch cawibwation wideo"
             }
         }
     },
     "pairing": {
         "title": "GX(6/2) Twackew Paiwing",
-        "text": "Manyage the paiwing of youw twackews connyected with the GX(6/2) communyication dongwes. Aftew pwessing \"paiw\", pwess & howd the (weft/smawwew) sub button on the twackew you want to paiw fow 3 seconds.",
+        "text": "Manyage the paiwing of youw twackews connyected wia the GX(6/2) communyication dongwes.<br /><br />To paiw, pwess \"Paiw/Unpaiw\" then howd down the (weft/smawwew) sub button on the twackew you want to paiw fow 3 seconds. Changing channyews wequiwes we-paiwing the twackews.<br /><br />Tweat this as a bweta - if you hawe issues, use the officiaw softwawe.",
         "card": {
             "title": "COM powt:",
             "id": {
@@ -234,14 +239,14 @@
                     "1": "Powt ID 1"
                 },
                 "status": {
-                    "title": "Status:",
+                    "title": "Nyatus:",
                     "paired": "Paiwed",
                     "unpaired": "Unpaiwed",
                     "pairing": "Paiwing"
                 },
                 "tracker": {
                     "title": "Twackew:",
-                    "none": "N/A"
+                    "none": ":("
                 },
                 "manage": "Paiw/Unpaiw"
             },
@@ -251,7 +256,7 @@
     "dialogs": {
         "connectionFailed": {
             "title": "Connyection faiwed",
-            "message": "Faiwed to stawt a connyection wia the sewected connyection mode(s). Pwease make suwe HawitowaConfiguwatow is cwosed and (if appwicabwe), Bwuetooth is on and/ow the cowwect COM powts awe sewected."
+            "message": "Faiwed to stawt a connyection wia the sewected connyection mode(s). Pwease make suwe the officiaw softwawe is cwosed and (if appwicabwe), Bwuetooth is on and/ow the cowwect COM powts awe sewected."
         },
         "slimevrNotFound": {
             "title": "SwimeVW nyot found",
@@ -263,19 +268,19 @@
         },
         "noLogsFolder": {
             "title": "Nyo wogs!",
-            "message": "You shouwd pwobabwy enyabwe debug wogging fiwst in debugging settings."
+            "message": "You shouwd pwobabwy enyabwe debug wogging fiwst in demeowing meowings."
         },
         "noConnectionMode": {
             "title": "Nyo connyection mode enyabwed",
-            "message": "Pwease enyabwe at weast onye connyection mode in the pwogwam's settings."
+            "message": "Pwease enyabwe at weast onye connyection mode in the pwogwam's meowings."
         },
         "noTrackerModel": {
             "title": "Nyo twackew modew sewected",
-            "message": "Pwease sewect a dewice modew in the pwogwam's settings."
+            "message": "Pwease sewect a dewice modew in the pwogwam's meowings."
         },
         "noComPorts": {
             "title": "Nyo COM powts sewected",
-            "message": "Pwease sewect at weast onye COM powt in the pwogwam's settings."
+            "message": "Pwease sewect at weast onye COM powt in the pwogwam's meowings."
         },
         "trackerWriteError": {
             "title": "Twackew wwite ewwow",
@@ -290,19 +295,23 @@
             "message": "An unyexpected ewwow occuwwed, pwease check wog fiwes fow mowe infowmation."
         },
         "onboarding": {
+            "unix": {
+                "title": "Unyix detected",
+                "message": "It seems you awe wunnying SwimeTowa on a Unyix-based system, some extwa setup is wequiwed befowe continyuing.\r\n\r\nThe SwimeTowa wiki wiww open aftew this diawog to guide you thwough the nyecessawy steps."
+            },
             "complete": {
                 "title": "Onboawding compwete!",
-                "message": "SwimeTowa has been successfuwwy set up! You can awways weopen the onboawding scween in the pwogwam settings. Aftew this diawog, the pwogwam wiww open the wiki page fow you to wead mowe infowmation.\r\n\r\nEnjyoy!"
+                "message": "SwimeTowa has been successfuwwy set up! You can awways weopen the onboawding scween in the pwogwam meowings. Aftew this diawog, the pwogwam wiww open the wiki page fow you to wead mowe infowmation.\r\n\r\nEnjyoy!"
             }
         },
         "autodetect": {
             "pre-check": {
                 "title": "Auto-detect pwe-check",
-                "message": "This featuwe wiww attempt to automaticawwy detect youw twackews, connyection mode, and twackew settings to appwy the settings in the pwogwam fow you.\r\n\r\nMake suwe HawitowaConfiguwatow is cwosed befowe pwoceeding. It is awso wecommended to tuwn on at weast onye of youw twackews to find its settings."
+                "message": "This featuwe wiww attempt to automaticawwy detect youw twackews, connyection mode, and twackew meowings to appwy the meowings in the pwogwam fow you.\r\n\r\nMake suwe the officiaw softwawe is cwosed befowe pwoceeding. It is awso wecommended to tuwn on at weast onye of youw twackews to find its meowings."
             },
             "success": {
                 "title": "Auto-detect compweted!",
-                "message": "Auto-detect compweted successfuwwy. Wemembew this may nyot be accuwate, so pwease wewiew the settings that hawe been appwied bewow: {settings}"
+                "message": "Auto-detect compweted successfuwwy. Wemembew this may nyot be accuwate, so pwease wewiew the meowings that hawe been appwied bewow: {settings}"
             },
             "failed": {
                 "title": "Auto-detect faiwed!",
@@ -320,7 +329,7 @@
                         "no": "Cancew"
                     },
                     "versionType": {
-                        "beta": "beta",
+                        "beta": "bweta",
                         "stable": "stabwe"
                     }
                 }
