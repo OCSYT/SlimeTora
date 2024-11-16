@@ -15,9 +15,14 @@ const __dirname = dirname(__filename);
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
+const isMac = process.platform === "darwin";
 // don't mess with this or languages will fail to load cause of how the project is structured, lol
-const languagesPath = path.resolve(mainPath, app.isPackaged ? "resources/languages" : "languages");
-
+// i hate how this is done.
+const languagesPath = path.resolve(
+    mainPath,
+    isMac ? ".." : "",
+    app.isPackaged ? (isMac ? "Resources/languages" : "resources/languages") : "languages"
+);
 let mainWindow: BrowserWindow;
 let trackerSettingsWindow: BrowserWindow;
 let onboardingWindow: BrowserWindow;
