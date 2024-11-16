@@ -144,8 +144,15 @@ const onboardingConfig = {
         {
             id: "step-10",
             buttons: {
-                "next-step10-button": "finish",
+                "next-step10-button": "step-11",
                 "back-step10-button": "step-9",
+            },
+        },
+        {
+            id: "step-11",
+            buttons: {
+                "next-step11-button": "finish",
+                "back-step11-button": "step-10",
             },
         },
     ],

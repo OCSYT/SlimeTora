@@ -1,4 +1,4 @@
-import { NormalCard, CompactCard } from "./templates/device-card.js";
+import { CompactCard, NormalCard } from "./templates/device-card.js";
 
 /*
  * Global variables

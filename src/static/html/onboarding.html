@@ -139,7 +139,7 @@
                 </p>
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step4-button" data-i18n="onboarding.back">Back</button>
-                    <a class="button is-primary" id="next-step4-button" data-i18n="onboarding.next">Next</a>
+                    <button class="button is-primary" id="next-step4-button" data-i18n="onboarding.next">Next</button>
                 </div>
             </div>
 
@@ -200,7 +200,7 @@
                 </div>
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step5-button" data-i18n="onboarding.back">Back</button>
-                    <a class="button is-primary" id="next-step5-button" data-i18n="onboarding.next">Next</a>
+                    <button class="button is-primary" id="next-step5-button" data-i18n="onboarding.next">Next</button>
                 </div>
             </div>
 
@@ -222,7 +222,7 @@
                 />
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step6-button" data-i18n="onboarding.back">Back</button>
-                    <a class="button is-primary" id="next-step6-button" data-i18n="onboarding.next">Next</a>
+                    <button class="button is-primary" id="next-step6-button" data-i18n="onboarding.next">Next</button>
                 </div>
             </div>
 
@@ -232,8 +232,8 @@
                         Mounting calibration
                     </h2>
                     <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-7.text">
-                        After assigning the trackers, you will be brought to the mounting calibration screen.
-                        Select "Automatic Mounting" <strong>(highly recommended)</strong> and follow the on-screen instructions
+                        After assigning the trackers, you will be brought to the mounting calibration screen. Select
+                        "Automatic Mounting" <strong>(highly recommended)</strong> and follow the on-screen instructions
                         on how to do a mounting calibration. If it does not look right after the calibration, you can
                         always redo it until it's accurate.
                     </p>
@@ -245,7 +245,7 @@
                 />
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step7-button" data-i18n="onboarding.back">Back</button>
-                    <a class="button is-primary" id="next-step7-button" data-i18n="onboarding.next">Next</a>
+                    <button class="button is-primary" id="next-step7-button" data-i18n="onboarding.next">Next</button>
                 </div>
             </div>
 
@@ -281,7 +281,7 @@
 
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step8-button" data-i18n="onboarding.back">Back</button>
-                    <a class="button is-primary" id="next-step8-button" data-i18n="onboarding.next">Next</a>
+                    <button class="button is-primary" id="next-step8-button" data-i18n="onboarding.next">Next</button>
                 </div>
             </div>
 
@@ -296,8 +296,8 @@
                 </div>
                 <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 2rem">
                     <figure class="is-flex-grow-1">
-                        <img src="../images/onboarding/reset_pose.webp" alt="Full reset pose" style="height: 350px" />
                         <!-- Image credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
+                        <img src="../images/onboarding/reset_pose.webp" alt="Full reset pose" style="height: 350px" />
                         <figcaption
                             class="subtitle is-6 has-text-centered"
                             data-i18n="onboarding.steps.step-9.caption1"
@@ -322,12 +322,12 @@
                         </p>
                     </div>
                     <figure class="is-flex-grow-1">
+                        <!-- Image credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
                         <img
                             src="../images/onboarding/mounting_reset_pose.webp"
                             alt="Mounting reset pose"
                             style="height: 350px"
                         />
-                        <!-- Image credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
                         <figcaption
                             class="subtitle is-6 has-text-centered"
                             data-i18n="onboarding.steps.step-9.caption2"
@@ -338,7 +338,7 @@
                 </div>
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step9-button" data-i18n="onboarding.back">Back</button>
-                    <a class="button is-primary" id="next-step9-button" data-i18n="onboarding.next">Next</a>
+                    <button class="button is-primary" id="next-step9-button" data-i18n="onboarding.next">Next</button>
                 </div>
             </div>
 
@@ -348,10 +348,10 @@
                         Body proportions
                     </h2>
                     <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-10.text">
-                        Now it's time to calculate your body proportions. SlimeVR applies your body proportions to a
-                        virtual skeleton to have much more accurate tracking if set up correctly. Select "Automatic
-                        proportions" and follow the on-screen instructions to perform the calibration by following a set
-                        of movements.
+                        SlimeVR applies your body proportions on a virtual skeleton for accurate tracking. Select
+                        "Automatic proportions" and follow the on-screen instructions calibrate by following a set of
+                        movements. <b>You only need to do this once and is also optional!</b> If you have issues, you
+                        can always retry or use the defaults ("Reset all proportions").
                     </p>
                 </div>
 
@@ -359,15 +359,63 @@
                     <img
                         src="../images/onboarding/body_proportions.webp"
                         alt="Tracker assignment page in SlimeVR Server"
-                        style="height: 300px"
+                        style="height: 280px"
                     />
                     <!-- Video credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
-                    <video src="../videos/autobone.webm" autoplay loop style="height: 350px"></video>
+                    <video src="../videos/autobone.webm" autoplay loop style="height: 320px"></video>
                 </div>
 
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step10-button" data-i18n="onboarding.back">Back</button>
-                    <a class="button is-primary" id="next-step10-button" data-i18n="onboarding.finish">Finish</a>
+                    <button class="button is-primary" id="next-step10-button" data-i18n="onboarding.next">Next</button>
+                </div>
+            </div>
+
+            <div class="onboarding-step" id="step-11" style="display: none">
+                <div>
+                    <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-11.title">
+                        Relaunching SlimeVR
+                    </h2>
+                    <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-11.text">
+                        When relaunching SlimeVR, perform a "Full Reset" and then a "Mounting Reset\" before calibrating
+                        in-game.
+                        <strong
+                            >Again, you do not have to perform the proportions calibration again - it is only done
+                            once!</strong
+                        >
+                        Make sure to refer to the SlimeTora wiki or watch videos on how to get the best from SlimeVR -
+                        ZRock35 is a great person to watch!
+                    </p>
+                </div>
+
+                <!-- hi zrock :3 -->
+                <a
+                    class="button is-primary"
+                    href="https://www.youtube.com/watch?v=SYqfQdVseF4"
+                    target="_blank"
+                    data-i18n="onboarding.steps.step-11.watch"
+                >
+                    Watch calibration video
+                </a>
+
+                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 1.5rem">
+                    <img
+                        src="../images/onboarding/resets.webp"
+                        alt="Reset options in the SlimeVR Server home page"
+                        style="height: 210px"
+                    />
+                    <img
+                        src="../images/onboarding/zrock35.webp"
+                        alt="ZRock35 YouTube channel & calibration"
+                        style="height: 210px"
+                    />
+                </div>
+
+                <div class="buttons is-centered">
+                    <button class="button is-info" id="back-step11-button" data-i18n="onboarding.back">Back</button>
+                    <button class="button is-primary" id="next-step11-button" data-i18n="onboarding.finish">
+                        Finish
+                    </button>
                 </div>
             </div>
         </div>

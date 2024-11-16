@@ -2,14 +2,14 @@
  * Global imports and variables
  */
 
-import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 // @ts-ignore (for development)
-import { HaritoraX, TrackerModel, SensorMode, FPSMode, SensorAutoCorrection, MagStatus } from "haritorax-interpreter";
 import { autoDetect } from "@serialport/bindings-cpp";
-const Binding = autoDetect();
 import fs, { PathLike } from "fs";
+import { FPSMode, HaritoraX, MagStatus, SensorAutoCorrection, SensorMode, TrackerModel } from "haritorax-interpreter";
 import path, { dirname } from "path";
 import { fileURLToPath, format } from "url";
+const Binding = autoDetect();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -1044,13 +1044,13 @@ ipcMain.handle("get-setting", (_event, name) => {
 
 import { MACAddress, Quaternion, Vector } from "@slimevr/common";
 import {
-    RotationDataType,
     BoardType,
+    FirmwareFeatureFlags,
     MCUType,
+    RotationDataType,
     SensorStatus,
     SensorType,
     UserAction,
-    FirmwareFeatureFlags,
 } from "@slimevr/firmware-protocol";
 import { EmulatedTracker } from "@slimevr/tracker-emulation";
 import BetterQuaternion from "quaternion";
