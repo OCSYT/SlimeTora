@@ -5,14 +5,14 @@ on:
         branches:
             - main
         paths:
-            - ".github/workflows/build-mac.yml"
+            - ".github/workflows/build-mac-x64.yml"
             - package.json
     workflow_dispatch:
     create:
 
 jobs:
     build:
-        runs-on: macos-latest
+        runs-on: macos-13
 
         steps:
             - name: Checkout repository
@@ -32,17 +32,8 @@ jobs:
             - name: Compress macOS build artifacts (x64)
               run: zip -r build/SlimeTora-darwin-x64.zip build/SlimeTora-darwin-x64
 
-            - name: Compress macOS build artifacts (arm64)
-              run: zip -r build/SlimeTora-darwin-arm64.zip build/SlimeTora-darwin-arm64
-
             - name: Archive build artifacts for macOS (x64)
               uses: actions/upload-artifact@v4
               with:
                   name: build-artifacts-macos-x64
                   path: build/SlimeTora-darwin-x64.zip
-
-            - name: Archive build artifacts for macOS (arm64)
-              uses: actions/upload-artifact@v4
-              with:
-                  name: build-artifacts-macos-arm64
-                  path: build/SlimeTora-darwin-arm64.zip
