@@ -23,10 +23,6 @@ jobs:
               with:
                   node-version: "20"
 
-            - name: Install dependencies on Windows
-              run: |
-                  choco install -y windows-sdk-10.0
-
             - name: Install Node.js dependencies
               run: npm install
 
