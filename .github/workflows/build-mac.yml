@@ -29,8 +29,20 @@ jobs:
             - name: Build the application
               run: npm run build
 
-            - name: Archive build artifacts for macOS
+            - name: Compress macOS build artifacts (x64)
+              run: zip -r build/SlimeTora-darwin-x64.zip build/SlimeTora-darwin-x64
+
+            - name: Compress macOS build artifacts (arm64)
+              run: zip -r build/SlimeTora-darwin-arm64.zip build/SlimeTora-darwin-arm64
+
+            - name: Archive build artifacts for macOS (x64)
               uses: actions/upload-artifact@v3
               with:
-                  name: build-artifacts-macos
-                  path: build/*darwin*
+                  name: build-artifacts-macos-x64
+                  path: build/SlimeTora-darwin-x64.zip
+
+            - name: Archive build artifacts for macOS (arm64)
+              uses: actions/upload-artifact@v3
+              with:
+                  name: build-artifacts-macos-arm64
+                  path: build/SlimeTora-darwin-arm64.zip
