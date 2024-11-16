@@ -224,7 +224,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 window.addEventListener("storage", (event) => {
-    window.log(`Storage event: "${event.key}" changed to "${event.newValue}"`);
+    window.log(`localStorage event: "${event.key}" changed to "${event.newValue}"`);
 
     if (event.key === "autodetect" && event.newValue === "true") {
         autodetect();

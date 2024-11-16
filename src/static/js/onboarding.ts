@@ -31,7 +31,7 @@ class Onboarding {
         // Ensure the current step is visible
         const currentStep = this.steps[index];
         if (currentStep && currentStep.style.display !== "flex") {
-            window.log(`Step "${currentStep.id}" is not visible, forcing display`);
+            window.log(`Step "${currentStep.id}" is not visible (for some reason), forcing display`);
             currentStep.style.display = "flex";
         }
     }
@@ -53,6 +53,7 @@ class Onboarding {
                 if (button) {
                     button.addEventListener("click", async () => {
                         window.log(`Button with ID "${buttonId}" clicked`);
+
                         if (targetStepId === "finish") {
                             window.log("Onboarding process complete");
                             await showMessageBox(
@@ -64,9 +65,10 @@ class Onboarding {
                             );
                             window.open("https://github.com/OCSYT/SlimeTora/wiki/", "_blank");
                             window.close();
-                        } else {
-                            this.goToStep(targetStepId);
+                            return;
                         }
+
+                        this.goToStep(targetStepId);
                     });
                 } else {
                     window.warn(`Button with ID "${buttonId}" not found`);
@@ -193,6 +195,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         localStorage.setItem("language", language);
         await updateTranslations();
     }
+
+    // Check if user is running on a Unix-based system
+    const os = await window.ipc.invoke("get-os", null);
+    if (os === "win32" || os !== "darwin") {
+        await showMessageBox("dialogs.onboarding.unix.title", "dialogs.onboarding.unix.message", true, true, true);
+        window.open("https://github.com/OCSYT/SlimeTora/wiki/Getting-Started#linux-specific-prerequisites", "_blank");
+    }
 });
 
 function addEventListeners() {
@@ -204,7 +213,7 @@ function addEventListeners() {
 }
 
 window.addEventListener("storage", (event) => {
-    window.log(`Storage event: "${event.key}" changed to: ${event.newValue}`);
+    window.log(`localStorage event: "${event.key}" changed to: ${event.newValue}`);
 
     if (event.key === "status") {
         const step5 = document.getElementById("step-5");

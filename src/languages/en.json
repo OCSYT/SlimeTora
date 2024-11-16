@@ -295,6 +295,10 @@
             "message": "An unexpected error occurred, please check log files for more information."
         },
         "onboarding": {
+            "unix": {
+                "title": "Unix detected",
+                "message": "It seems you are running SlimeTora on a Unix-based system, some extra setup is required before continuing.\r\n\r\nThe SlimeTora wiki will open after this dialog to guide you through the necessary steps."
+            },
             "complete": {
                 "title": "Onboarding complete!",
                 "message": "SlimeTora has been successfully set up! You can always reopen the onboarding screen in the program settings. After this dialog, the program will open the wiki page for you to read more information.\r\n\r\nEnjoy!"
@@ -335,7 +339,7 @@
                     "title": "Update available",
                     "message": "New translation updates available: {files}.",
                     "detail": "Would you like to download them?",
-                    "buttons":{
+                    "buttons": {
                         "yes": "Download",
                         "no": "Cancel"
                     }

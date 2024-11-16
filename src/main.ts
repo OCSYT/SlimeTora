@@ -458,8 +458,7 @@ async function showMessage(
         type: playErrorSound ? "error" : "none",
     };
 
-    show(options);
-    return true;
+    return show(options);
 }
 
 async function showError(
@@ -511,6 +510,10 @@ ipcMain.on("update-titles", async () => {
     if (trackerSettingsWindow && !trackerSettingsWindow.isDestroyed()) {
         trackerSettingsWindow.setTitle(await translate("main.windowTitle.settings"));
     }
+});
+
+ipcMain.handle("get-os", () => {
+    return process.platform;
 });
 
 ipcMain.handle("show-message", async (_event, arg) => {
