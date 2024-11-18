@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Check if user is running on a Unix-based system
     const os = await window.ipc.invoke("get-os", null);
-    if (os === "win32" || os !== "darwin") {
+    if (os !== "win32" && os !== "darwin") {
         await showMessageBox("dialogs.onboarding.unix.title", "dialogs.onboarding.unix.message", true, true, true);
         window.open("https://github.com/OCSYT/SlimeTora/wiki/Getting-Started#linux-specific-prerequisites", "_blank");
     }
