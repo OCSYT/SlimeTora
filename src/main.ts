@@ -477,6 +477,7 @@ async function showMessage(
     translateMessage = true,
     playErrorSound = false
 ) {
+    if (isClosing) return false;
     const show = blocking ? dialog.showMessageBoxSync : dialog.showMessageBox;
     const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
@@ -497,6 +498,7 @@ async function showError(
     translateTitle = true,
     translateMessage = true
 ) {
+    if (isClosing) return false;
     const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
 
