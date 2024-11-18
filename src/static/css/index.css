@@ -21880,6 +21880,10 @@ br {
   background-color: red;
 }
 
+.mag-status-darkred {
+  background-color: darkred;
+}
+
 /*
  * Settings
 */

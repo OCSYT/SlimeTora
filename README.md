@@ -37,8 +37,8 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 -   Turn off one or all trackers (`HaritoraX Wireless` w/ `GX(6/2)` dongles only)
 -   Localization support
     -   You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
--   Linux support
-    -   This was done as SlimeVR is supported on Linux, making this the first time HaritoraX trackers work on Linux!
+-   Linux & macOS support
+    -   This was done as SlimeVR is supported on Linux and macOS, making this the first time HaritoraX trackers work on Linux and macOS!
 -   Button bindings to SlimeVR functions (e.g. resets)
     -   Read more on the [SlimeVR basics](https://github.com/OCSYT/SlimeTora/wiki/SlimeVR#resets--calibration) wiki page
 -   Update checking (for app and translations)
@@ -52,15 +52,10 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
 # Known issues
 
--   On SlimeVR server `v0.13.0`, you cannot pass the "IMU Calibration" setup wizard step
-    -   SlimeVR server `v0.13.1` will exclude Haritora trackers for this calibration step as it isn't needed for these trackers
-    -   Either skip the setup wizard and perform the steps manually via the navbar, or use `0.12.1` (not recommended) until `0.13.1` releases
 -   Battery information jumps to incorrect percentages/voltage randomly
     -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers reporting those random values themselves
     -   This has been slightly mitigated with [v1.2.0](https://github.com/OCSYT/SlimeTora/releases/v1.2.0), which uses a "stable average" of the battery percentage and voltage instead
 -   Running "auto-detection" more than once without restarting breaks tracker settings auto-detection (device/ports detection still works)
--   Running "auto-detection" on HaritoraX Wired (1.1b/1.1/1.0) trackers doesn't work
-    -   Potentially fixed with `v1.3.0`, needs testing
 
 # Documentation - getting started & development
 

@@ -1238,7 +1238,7 @@ function startDeviceListeners() {
                 magStatusColor = "red";
                 break;
             case MagStatus.VERY_BAD:
-                magStatusColor = "red";
+                magStatusColor = "darkred";
                 break;
             default:
                 magStatusColor = "gray";

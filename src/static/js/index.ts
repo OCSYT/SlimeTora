@@ -661,6 +661,7 @@ window.ipc.on("device-mag", (_event, arg) => {
         green: "mag-status-green",
         yellow: "mag-status-yellow",
         red: "mag-status-red",
+        darkred: "mag-status-darkred",
         unknown: "mag-status-unknown",
     };
 
