@@ -52,6 +52,7 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
 # Known issues
 
+-   macOS builds are unnecessarily large
 -   Battery information jumps to incorrect percentages/voltage randomly
     -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers reporting those random values themselves
     -   This has been slightly mitigated with [v1.2.0](https://github.com/OCSYT/SlimeTora/releases/v1.2.0), which uses a "stable average" of the battery percentage and voltage instead
