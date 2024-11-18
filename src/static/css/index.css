@@ -21692,7 +21692,7 @@ br {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .grid-settings-container {

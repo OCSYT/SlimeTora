@@ -27,6 +27,8 @@ let language = "en";
 let censorSerialNumbers = false;
 let trackerVisualization = false;
 let compactView = false;
+let autoStart = false;
+let autoOff = false;
 let trackerVisualizationFPS = 10;
 let trackerHeartbeatInterval = 2000;
 
@@ -135,6 +137,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     accelerometerEnabled = settings.global?.trackers?.accelerometerEnabled ?? true;
     gyroscopeEnabled = settings.global?.trackers?.gyroscopeEnabled ?? false;
     magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled ?? false;
+    autoStart = settings.global?.autoStart ?? false;
+    autoOff = settings.global?.autoOff ?? false;
     appUpdatesEnabled = settings.global?.updates?.appUpdatesEnabled ?? true;
     translationsUpdatesEnabled = settings.global?.updates?.translationsUpdatesEnabled ?? true;
     updateChannel = settings.global?.updates?.updateChannel ?? "stable";
@@ -153,6 +157,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("accelerometer-switch", accelerometerEnabled);
     setSwitchState("gyroscope-switch", gyroscopeEnabled);
     setSwitchState("magnetometer-switch", magnetometerEnabled);
+    setSwitchState("auto-start-switch", autoStart);
+    setSwitchState("auto-off-switch", autoOff);
     setSwitchState("app-updates-switch", appUpdatesEnabled);
     setSwitchState("translations-updates-switch", translationsUpdatesEnabled);
     setSwitchState("log-to-file-switch", canLogToFile);
@@ -221,6 +227,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
 
     addEventListeners();
+
+    if (autoStart) startConnection();
 });
 
 window.addEventListener("storage", (event) => {
@@ -886,6 +894,10 @@ function formatBatteryText(batteryRemaining: number, batteryVoltage: number): st
  * Renderer event listeners
  */
 
+window.ipc.on("auto-start", (_event, _arg) => {
+    startConnection();
+});
+
 window.ipc.on("localize", (_event, resources) => {
     window.localize(resources);
 });
@@ -1159,8 +1171,30 @@ function addEventListeners() {
     });
 
     /*
-     * Other settings event listeners
+     * "Other settings" event listeners
      */
+
+    document.getElementById("auto-start-switch").addEventListener("change", function () {
+        autoStart = !autoStart;
+        window.log(`Switched auto start to: ${autoStart}`);
+        window.ipc.send("save-setting", {
+            global: {
+                autoStart: autoStart,
+            },
+        });
+        window.ipc.send("set-auto-start", autoStart);
+    });
+
+    document.getElementById("auto-off-switch").addEventListener("change", function () {
+        autoOff = !autoOff;
+        window.log(`Switched auto off to: ${autoOff}`);
+        window.ipc.send("save-setting", {
+            global: {
+                autoOff: autoOff,
+            },
+        });
+        window.ipc.send("set-auto-off", autoOff);
+    });
 
     document.getElementById("tracker-visualization-fps").addEventListener("change", async function () {
         trackerVisualizationFPS = parseInt(

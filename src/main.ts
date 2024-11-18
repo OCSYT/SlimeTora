@@ -21,7 +21,7 @@ const isMac = process.platform === "darwin";
 const languagesPath = path.resolve(
     mainPath,
     isMac ? ".." : "",
-    app.isPackaged ? (isMac ? "Resources/languages" : "resources/languages") : "languages",
+    app.isPackaged ? (isMac ? "Resources/languages" : "resources/languages") : "languages"
 );
 let mainWindow: BrowserWindow;
 let trackerSettingsWindow: BrowserWindow;
@@ -38,6 +38,7 @@ let deviceBattery: {
  */
 
 let firstLaunch = false;
+let isClosing = false;
 let hasInitializedLogDir = false;
 let foundSlimeVR = false;
 
@@ -46,6 +47,7 @@ let loggingMode = 1;
 let heartbeatInterval = 2000;
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
+let autoOff = true;
 let appUpdatesEnabled = true;
 let translationsUpdatesEnabled = true;
 let updateChannel = "stable";
@@ -79,6 +81,7 @@ try {
     canLogToFile = config.global?.debug?.canLogToFile ?? true;
     wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
     wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
+    autoOff = config.global?.autoOff ?? true;
     appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled ?? true;
     translationsUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled ?? true;
     updateChannel = config.global?.updates?.updateChannel ?? "stable";
@@ -192,7 +195,7 @@ async function checkForAppUpdates() {
 
         log(
             `Latest "${updateChannel}" version: ${latestVersion}, current "${versionType}" version: ${currentVersion}`,
-            "updater",
+            "updater"
         );
         if (isNewerVersion(latestVersion, currentVersion)) {
             log("Update available, notifying user...", "updater");
@@ -276,7 +279,7 @@ async function checkForTranslationUpdates() {
 
             log(
                 `Comparing "${remoteFile.name}" - local size: ${localContentSize}, remote size: ${remoteFile.size}`,
-                "updater",
+                "updater"
             );
             if (remoteFile.size !== localContentSize) {
                 log(`Update available for "${remoteFile.name}"`, "updater");
@@ -372,7 +375,22 @@ const createWindow = async () => {
     });
 };
 
-const closeApp = () => {
+const closeApp = async () => {
+    if (isClosing) return;
+    isClosing = true;
+
+    if (autoOff) {
+        log("Auto-off is enabled, turning off all trackers (if available)...", "connection");
+        const activeTrackers = Array.from(connectedDevices.keys());
+        const powerOffPromises = activeTrackers.map(async (tracker) => {
+            await device.powerOffTracker(tracker as string);
+            log(`Turned off tracker: ${tracker}`, "connection");
+        });
+
+        // Wait for all trackers to power off
+        await Promise.all(powerOffPromises);
+    }
+
     clearTrackers();
 
     if (device && device.getConnectionModeActive("bluetooth")) device.stopConnection("bluetooth");
@@ -385,7 +403,13 @@ const closeApp = () => {
 };
 
 app.on("ready", createWindow);
-app.on("window-all-closed", closeApp);
+app.on("window-all-closed", () => {
+    // Don't close the app on macOS when all windows are closed (let user quit via menu bar)
+    if (process.platform !== "darwin") {
+        closeApp();
+    }
+});
+app.on("before-quit", closeApp);
 
 /*
  * Renderer handlers
@@ -397,7 +421,7 @@ function createBrowserWindow(
     query: string | ParsedUrlQueryInput,
     parent: BrowserWindow,
     width: number = 950,
-    height: number = 750,
+    height: number = 750
 ): BrowserWindow {
     let window = new BrowserWindow({
         title: title,
@@ -422,7 +446,7 @@ function createBrowserWindow(
             protocol: "file:",
             slashes: true,
             query: query,
-        }),
+        })
     );
 
     window.webContents.setWindowOpenHandler(({ url }) => {
@@ -451,7 +475,7 @@ async function showMessage(
     blocking = false,
     translateTitle = true,
     translateMessage = true,
-    playErrorSound = false,
+    playErrorSound = false
 ) {
     const show = blocking ? dialog.showMessageBoxSync : dialog.showMessageBox;
     const translatedTitle = translateTitle ? await translate(title) : title;
@@ -471,7 +495,7 @@ async function showError(
     message: string,
     blocking = true,
     translateTitle = true,
-    translateMessage = true,
+    translateMessage = true
 ) {
     const translatedTitle = translateTitle ? await translate(title) : title;
     const translatedMessage = translateMessage ? await translate(message) : message;
@@ -607,6 +631,11 @@ ipcMain.on("set-tracker-heartbeat-interval", (_event, arg) => {
     log(`Tracker heartbeat interval set to: ${arg}`, "settings");
 });
 
+ipcMain.on("set-auto-off", (_event, arg) => {
+    autoOff = arg;
+    log(`Auto-off set to: ${arg}`, "settings");
+});
+
 ipcMain.on("open-support-page", async () => {
     await shell.openExternal("https://github.com/OCSYT/SlimeTora/wiki/FAQ#i-found-an-issuebug");
 });
@@ -630,7 +659,7 @@ ipcMain.on("open-tracker-settings", async (_event, arg: string) => {
         { trackerName: arg },
         mainWindow,
         850,
-        650,
+        650
     );
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
@@ -810,7 +839,7 @@ function initializeDevice(forceDisableLogging: boolean = false) {
 
 async function notifyConnectedDevices(): Promise<void> {
     const activeTrackers = Array.from(new Set(device.getActiveTrackers()));
-    if (activeTrackers.length === 0) return;
+    if (!activeTrackers || activeTrackers.length === 0) return;
     for (const trackerName of activeTrackers) await addTracker(trackerName as string);
     log("Connected devices: " + JSON.stringify(activeTrackers), "connection");
 }
@@ -968,13 +997,18 @@ ipcMain.on("turn-off-tracker", async (_event, arg) => {
     const activeTrackers = device.getActiveTrackers();
 
     if (trackerName === "all") {
-        if (activeTrackers.length === 0) {
+        if (activeTrackers && activeTrackers.length === 0) {
             error("No active trackers found", "connection");
             return;
         }
 
         log("Manually turning off all trackers", "connection");
-        activeTrackers.forEach((tracker) => device.powerOffTracker(tracker as string));
+        const powerOffPromises = activeTrackers.map(async (tracker) => {
+            await device.powerOffTracker(tracker as string);
+        });
+
+        // Wait for all trackers to power off
+        await Promise.all(powerOffPromises);
     } else {
         if (!activeTrackers.includes(trackerName)) {
             error(`Tracker "${trackerName}" not found`, "connection");
@@ -982,7 +1016,7 @@ ipcMain.on("turn-off-tracker", async (_event, arg) => {
         }
 
         log(`Manually turning off tracker "${trackerName}"`, "connection");
-        device.powerOffTracker(trackerName);
+        await device.powerOffTracker(trackerName);
     }
 });
 
@@ -1155,7 +1189,7 @@ async function processQueue() {
             `SlimeTora v${app.getVersion()}`,
             new FirmwareFeatureFlags(new Map([])),
             BoardType.HARITORA,
-            MCUType.HARITORA,
+            MCUType.HARITORA
         );
 
         await newTracker.init();
@@ -1197,7 +1231,12 @@ const MAX_BATTERY_READINGS = 5;
 const batteryReadingsMap = new Map<string, { percentages: number[]; voltages: number[] }>();
 function startDeviceListeners() {
     device.on("connect", async (deviceID: string, mode: string, port: string, portId: string) => {
-        if (!deviceID || !connectionActive || (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)))
+        if (
+            !deviceID ||
+            !connectionActive ||
+            (connectedDevices.has(deviceID) && connectedDevices.get(deviceID)) ||
+            isClosing
+        )
             return;
         await addTracker(deviceID);
 
@@ -1208,7 +1247,7 @@ function startDeviceListeners() {
     });
 
     device.on("disconnect", (deviceID: string) => {
-        if (!deviceID || !connectedDevices.get(deviceID)) return;
+        if (!deviceID || !connectedDevices.get(deviceID) || isClosing) return;
         log(`Disconnected from tracker: ${deviceID}`, "tracker");
 
         clearTimeout(trackerTimeouts[deviceID]);
@@ -1223,7 +1262,7 @@ function startDeviceListeners() {
     });
 
     device.on("mag", (trackerName: string, magStatus: MagStatus) => {
-        if (!trackerName || !magStatus) return;
+        if (!trackerName || !magStatus || isClosing) return;
 
         let magStatusColor;
 
@@ -1252,7 +1291,7 @@ function startDeviceListeners() {
     let clickTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
     device.on("button", (trackerName: string, buttonPressed: string, isOn: boolean) => {
-        if (!trackerName || !buttonPressed || !isOn) return;
+        if (!trackerName || !buttonPressed || !isOn || isClosing) return;
 
         let key = `${trackerName}-${buttonPressed}`;
 
@@ -1280,7 +1319,7 @@ function startDeviceListeners() {
     });
 
     device.on("imu", async (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
-        if (!trackerName || !rawRotation || !rawGravity || !connectedDevices.has(trackerName)) return;
+        if (!trackerName || !rawRotation || !rawGravity || !connectedDevices.has(trackerName) || isClosing) return;
 
         // YOU ARE NOT SERIOUS. ALRIGHT.
         // I HAD BEEN TRYING TO SOLVE TRACKING ISSUES FOR AGES, AND IT TURNS OUT BOTH QUATERNIONS WERE USING DIFFERENT LAYOUTS
@@ -1292,7 +1331,7 @@ function startDeviceListeners() {
 
         // Convert the quaternion to Euler angles
         const eulerRadians = new BetterQuaternion(quaternion.w, quaternion.x, quaternion.y, quaternion.z).toEuler(
-            "XYZ",
+            "XYZ"
         );
 
         // Convert the rotation to degrees
@@ -1309,9 +1348,9 @@ function startDeviceListeners() {
             error(`Error processing IMU data for "${trackerName}", skipping...`, "tracker");
             log(
                 `Tracker: ${JSON.stringify(tracker)}, Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(
-                    gravity,
+                    gravity
                 )}`,
-                "tracker",
+                "tracker"
             );
             return;
         }
@@ -1330,7 +1369,7 @@ function startDeviceListeners() {
     });
 
     device.on("battery", (trackerName: string, batteryRemaining: number, batteryVoltage: number) => {
-        if (!trackerName || !batteryRemaining) return;
+        if (!trackerName || !batteryRemaining || isClosing) return;
 
         if (!connectedDevices.has(trackerName) && trackerName !== "HaritoraXWired") {
             // If tracker is not connected, store battery info for COM wireless tracker to be used later when the tracker is connected
@@ -1380,12 +1419,12 @@ function startDeviceListeners() {
 
         log(
             `Received battery data for "${trackerName}": ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`,
-            "tracker",
+            "tracker"
         );
     });
 
     device.on("paired", (trackerName: string, port: string, portId: string) => {
-        if (!trackerName || !port || !portId || !pairingWindow) return;
+        if (!trackerName || !port || !portId || !pairingWindow || isClosing) return;
 
         device.emit("connect", trackerName, "com", port, portId);
         pairingWindow.webContents.send("device-paired", { trackerName, port, portId });
@@ -1394,7 +1433,7 @@ function startDeviceListeners() {
     });
 
     device.on("unpaired", (trackerName: string) => {
-        if (!trackerName) return;
+        if (!trackerName || isClosing) return;
 
         device.emit("disconnect", trackerName);
 
@@ -1496,7 +1535,7 @@ async function handleConnectionStartError(err: any) {
     mainWindow.webContents.send("set-status", "main.status.failed");
     dialog.showErrorBox(
         await translate("dialogs.connectionFailed.title"),
-        await translate("dialogs.connectionFailed.message"),
+        await translate("dialogs.connectionFailed.message")
     );
 
     mainWindow.webContents.send("disconnect", "connection-error");
@@ -1506,7 +1545,7 @@ async function handleTrackerReadError(err: any) {
     error(`Failed to read data from a tracker`, "haritorax-interpreter", err);
     dialog.showErrorBox(
         await translate("dialogs.trackerReadError.title"),
-        await translate("dialogs.trackerReadError.message"),
+        await translate("dialogs.trackerReadError.message")
     );
 }
 
@@ -1514,7 +1553,7 @@ async function handleTrackerWriteError(err: any) {
     error(`Failed to write data to a tracker`, "haritorax-interpreter", err);
     dialog.showErrorBox(
         await translate("dialogs.trackerWriteError.title"),
-        await translate("dialogs.trackerWriteError.message"),
+        await translate("dialogs.trackerWriteError.message")
     );
 }
 
@@ -1522,7 +1561,7 @@ async function handleUnexpectedError(err: any) {
     error(`An unexpected error occurred`, "haritorax-interpreter", err);
     dialog.showErrorBox(
         await translate("dialogs.unexpectedError.title"),
-        await translate("dialogs.unexpectedError.message"),
+        await translate("dialogs.unexpectedError.message")
     );
 }
 
@@ -1544,6 +1583,7 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
     });
 
     tracker.on("connected-to-server", (ip: string, port: number) => {
+        if (isHeartbeat) return;
         log(`Tracker "${trackerName}" connected to SlimeVR server on ${ip}:${port}`, "@slimevr/emulated-tracker");
         mainWindow.webContents.send("device-connected-to-server", trackerName);
 
@@ -1566,7 +1606,7 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
     });
 
     tracker.on("unknown-incoming-packet", (buf: Buffer) =>
-        warn(`Tracker "${trackerName}" unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker"),
+        warn(`Tracker "${trackerName}" unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker")
     );
 
     if (loggingMode === 3) {
@@ -1581,7 +1621,7 @@ const heartbeatTracker = new EmulatedTracker(
     `SlimeTora v${app.getVersion()} heartbeat`,
     new FirmwareFeatureFlags(new Map([])),
     BoardType.HARITORA,
-    MCUType.HARITORA,
+    MCUType.HARITORA
 );
 
 setupTrackerEvents(heartbeatTracker, true);

@@ -97,6 +97,8 @@
         "other": {
             "title": "Other settings",
             "tooltip": "Some settings for the program that don't fit in the other categories.",
+            "autoStart": "Start connection on open",
+            "autoOff": "Turn off trackers on exit",
             "trackerVisualizationFPS": "Tracker visualization FPS",
             "heartbeat": "Tracker heartbeat interval"
         },
@@ -104,7 +106,7 @@
             "title": "Update checking",
             "tooltip": "Modify the settings used when checking for updates on program startup.",
             "app": "App updates",
-            "translations": "Translation updates",
+            "translations": "Language updates",
             "channel": {
                 "title": "Update channel",
                 "stable": "Stable",

@@ -298,58 +298,6 @@
 
                     <div class="column is-6">
                         <div class="with-tooltip">
-                            <h3 class="title is-4 is-spaced" data-i18n="programSettings.other.title">Other settings</h3>
-                            <div class="tooltip-container">
-                                <div class="icon">
-                                    <img src="../images/help.svg" alt="Help icon" />
-                                </div>
-                                <span
-                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
-                                    data-i18n="programSettings.other.tooltip"
-                                    >Some settings for the program that don't fit in the other categories.</span
-                                >
-                            </div>
-                        </div>
-                        <div class="columns is-centered">
-                            <div class="column is-two-fifths">
-                                <div class="input-container">
-                                    <label
-                                        for="tracker-visualization-fps"
-                                        class="label"
-                                        data-i18n="programSettings.other.trackerVisualizationFPS"
-                                        >Tracker visualization FPS</label
-                                    >
-                                    <input
-                                        type="text"
-                                        id="tracker-visualization-fps"
-                                        placeholder="10"
-                                        class="input"
-                                        style="max-width: 100%"
-                                    />
-                                </div>
-                            </div>
-                            <div class="column is-two-fifths">
-                                <div class="input-container">
-                                    <label
-                                        for="tracker-heartbeat-interval"
-                                        class="label has-text-warning"
-                                        data-i18n="programSettings.other.heartbeat"
-                                        >Tracker heartbeat interval</label
-                                    >
-                                    <input
-                                        type="text"
-                                        id="tracker-heartbeat-interval"
-                                        placeholder="2000"
-                                        class="input"
-                                        style="max-width: 100%"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="column is-12">
-                        <div class="with-tooltip">
                             <h3 class="title is-4 is-spaced" data-i18n="programSettings.updates.title">
                                 Update checking
                             </h3>
@@ -364,18 +312,32 @@
                                 >
                             </div>
                         </div>
-                        <div class="vertical-settings-container is-centered">
-                            <div class="switch-container">
-                                <div class="switch">
-                                    <input type="checkbox" id="app-updates-switch" />
-                                    <label for="app-updates-switch" class="slider round"></label>
+                        <div class="vertical-settings-container">
+                            <div class="is-centered">
+                                <div class="switch-container">
+                                    <div class="switch">
+                                        <input type="checkbox" id="app-updates-switch" />
+                                        <label for="app-updates-switch" class="slider round"></label>
+                                    </div>
+                                    <label
+                                        for="app-updates-switch"
+                                        data-i18n="programSettings.updates.app"
+                                        style="min-width: 110px"
+                                        >App updates</label
+                                    >
                                 </div>
-                                <label
-                                    for="app-updates-switch"
-                                    data-i18n="programSettings.updates.app"
-                                    style="min-width: 110px"
-                                    >App updates</label
-                                >
+                                <div class="switch-container">
+                                    <div class="switch">
+                                        <input type="checkbox" id="translations-updates-switch" />
+                                        <label for="translations-updates-switch" class="slider round"></label>
+                                    </div>
+                                    <label
+                                        for="translations-updates-switch"
+                                        data-i18n="programSettings.updates.translations"
+                                        style="min-width: 110px"
+                                        >Translations</label
+                                    >
+                                </div>
                             </div>
                             <div class="input-container is-centered has-text-centered">
                                 <label
@@ -395,17 +357,79 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="switch-container">
-                                <div class="switch">
-                                    <input type="checkbox" id="translations-updates-switch" />
-                                    <label for="translations-updates-switch" class="slider round"></label>
+                        </div>
+                    </div>
+
+                    <div class="column is-12">
+                        <div class="with-tooltip">
+                            <h3 class="title is-4 is-spaced" data-i18n="programSettings.other.title">Other settings</h3>
+                            <div class="tooltip-container">
+                                <div class="icon">
+                                    <img src="../images/help.svg" alt="Help icon" />
                                 </div>
-                                <label
-                                    for="translations-updates-switch"
-                                    data-i18n="programSettings.updates.translations"
-                                    style="min-width: 110px"
-                                    >Translations</label
+                                <span
+                                    class="tooltip-text subtitle is-6 has-text-weight-normal"
+                                    data-i18n="programSettings.other.tooltip"
+                                    >Some settings for the program that don't fit in the other categories.</span
                                 >
+                            </div>
+                        </div>
+                        <div class="is-flex is-flex-direction-row is-centered">
+                            <div class="settings-container">
+                                <div class="switch-container">
+                                    <div class="switch">
+                                        <input type="checkbox" id="auto-start-switch" />
+                                        <label for="auto-start-switch" class="slider round"></label>
+                                    </div>
+                                    <label for="auto-start-switch" data-i18n="programSettings.other.autoStart"
+                                        >Start connection on open</label
+                                    >
+                                </div>
+                                <div class="switch-container">
+                                    <div class="switch">
+                                        <input type="checkbox" id="auto-off-switch" />
+                                        <label for="auto-off-switch" class="slider round"></label>
+                                    </div>
+                                    <label for="auto-off-switch" data-i18n="programSettings.other.autoOff"
+                                        >Turn off trackers on exit</label
+                                    >
+                                </div>
+                            </div>
+                            <div class="columns is-centered">
+                                <div class="column is-two-fifths is-centered">
+                                    <div class="input-container">
+                                        <label
+                                            for="tracker-visualization-fps"
+                                            class="label"
+                                            data-i18n="programSettings.other.trackerVisualizationFPS"
+                                            >Tracker visualization FPS</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="tracker-visualization-fps"
+                                            placeholder="10"
+                                            class="input"
+                                            style="max-width: 100%"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="column is-two-fifths is-centered">
+                                    <div class="input-container">
+                                        <label
+                                            for="tracker-heartbeat-interval"
+                                            class="label has-text-warning"
+                                            data-i18n="programSettings.other.heartbeat"
+                                            >Tracker heartbeat interval</label
+                                        >
+                                        <input
+                                            type="text"
+                                            id="tracker-heartbeat-interval"
+                                            placeholder="2000"
+                                            class="input"
+                                            style="max-width: 100%"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
