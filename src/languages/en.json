@@ -225,7 +225,7 @@
             },
             "step-11": {
                 "title": "Relaunching SlimeVR",
-                "text": "When relaunching SlimeVR, perform a \"Full Reset\" and then a \"Mounting Reset\" before calibrating in-game. <strong>Again, you do not have to perform the proportions calibration again - it is only done once!</strong> Make sure to refer to the SlimeTora wiki or watch videos on how to get the best from SlimeVR - ZRock35 is a great person to watch!",
+                "text": "When relaunching SlimeVR, perform a \"Full Reset\" and then a \"Mounting Reset\" before calibrating in-game. <b>Again, you do not have to perform the proportions calibration again - it is only done once!</b> Make sure to refer to the SlimeTora wiki or watch videos on how to get the best from SlimeVR - ZRock35 is a great person to watch!",
                 "watch": "Watch calibration video"
             }
         }
