@@ -97,6 +97,8 @@
         "other": {
             "title": "Othew meowings",
             "tooltip": "Some meowings fow the pwogwam that don't fit in the othew categowies.",
+			"autoStart": "Stawt meowing on lawnch :3",
+			"autoOff": "Tuwn off twackews on stop :(",
             "trackerVisualizationFPS": "Twackew wisuawization nyas",
             "heartbeat": "Twackew heawtbeat intewwaw"
         },
@@ -104,7 +106,7 @@
             "title": "Nyadates checking",
             "tooltip": "Modify the meowings used when checking fow nyadates on pwogwam stawtup.",
             "app": "App nyadates",
-            "translations": "Twanswation nyadates",
+            "translations": "Wanguage nyadates",
             "channel": {
                 "title": "Update channyew",
                 "stable": "Stabwe",
