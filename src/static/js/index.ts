@@ -621,6 +621,14 @@ window.ipc.on("device-connected-to-server", (_event, deviceID) => {
     window.ipc.invoke("fire-tracker-mag", deviceID);
 });
 
+window.ipc.on("device-error", (_event, deviceID) => {
+    if (!deviceID || !isActive) return;
+
+    window.log(`Too many IMU processing errors with device "${deviceID}"`, "tracker");
+    setStatus("main.status.failed");
+    showErrorDialog("dialogs.trackerIMUError.title", "dialogs.trackerIMUError.message");
+});
+
 window.ipc.on("device-data", async (_event: any, arg) => {
     const { trackerName, rotation, gravity, rawRotation, rawGravity } = arg;
 

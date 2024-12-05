@@ -284,13 +284,17 @@
             "title": "No COM ports selected",
             "message": "Please select at least one COM port in the program's settings."
         },
+        "trackerIMUError": {
+            "title": "Tracker IMU error",
+            "message": "Failed to process IMU data from a tracker after many attempts, please restart the connection and check log files for more information."
+        },
         "trackerWriteError": {
             "title": "Tracker write error",
-            "message": "Failed to write data to the tracker, please check log files for more information."
+            "message": "Failed to write data to a tracker, please check log files for more information."
         },
         "trackerReadError": {
             "title": "Tracker read error",
-            "message": "Failed to read data from the tracker, please check log files for more information."
+            "message": "Failed to read data from a tracker, please check log files for more information."
         },
         "unexpectedError": {
             "title": "Unexpected error",

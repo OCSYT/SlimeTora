@@ -1103,7 +1103,9 @@ import { ParsedUrlQueryInput } from "querystring";
 // For haritorax-interpreter
 // Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
 enum ErrorType {
+    SerialNotFoundRetryError = "Error while retrying connection",
     SerialNotFoundError = "File not found",
+    SerialNotOpenError = "Port is not open",
     SerialOpenError = "Opening COM",
     SerialWriteError = "Error writing data to serial port",
     SendHeartbeatError = "Error while sending heartbeat",
@@ -1132,6 +1134,8 @@ enum ErrorType {
 
 const lastErrorShownTime: Record<ErrorType, number> = {
     [ErrorType.SerialNotFoundError]: 0,
+    [ErrorType.SerialNotFoundRetryError]: 0,
+    [ErrorType.SerialNotOpenError]: 0,
     [ErrorType.SerialOpenError]: 0,
     [ErrorType.SerialWriteError]: 0,
     [ErrorType.SendHeartbeatError]: 0,
@@ -1320,6 +1324,7 @@ function startDeviceListeners() {
         }, 750);
     });
 
+    let imuErrorCount: { [key: string]: number } = {};
     device.on("imu", async (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
         if (!trackerName || !rawRotation || !rawGravity || !connectedDevices.has(trackerName) || isClosing) return;
 
@@ -1354,6 +1359,16 @@ function startDeviceListeners() {
                 )}`,
                 "tracker"
             );
+
+            // Prevent spam of IMU errors
+            imuErrorCount[trackerName] = imuErrorCount[trackerName] ? imuErrorCount[trackerName] + 1 : 1;
+            if (imuErrorCount[trackerName] > 20) {
+                error(`Too many errors processing IMU data for "${trackerName}", disconnecting...`, "tracker");
+                device.emit("disconnect", trackerName);
+                connectedDevices.delete(trackerName);
+                imuErrorCount[trackerName] = 0;
+                mainWindow.webContents.send("device-error", trackerName);
+            }
             return;
         }
 
@@ -1448,7 +1463,9 @@ function startDeviceListeners() {
 
     device.on("error", (msg: string, exceptional: boolean) => {
         const handledErrorTypes = [
+            ErrorType.SerialNotFoundRetryError,
             ErrorType.SerialNotFoundError,
+            ErrorType.SerialNotOpenError,
             ErrorType.SerialOpenError,
             ErrorType.BluetoothOpenError,
             ErrorType.BluetoothScanError,
@@ -1478,6 +1495,10 @@ function startDeviceListeners() {
 
         if (matchedErrorType) {
             switch (matchedErrorType) {
+                case ErrorType.SerialNotFoundRetryError:
+                case ErrorType.SerialNotOpenError:
+                    handleError(msg, matchedErrorType, handleConnectionRetryError);
+                    break;
                 case ErrorType.SerialNotFoundError:
                 case ErrorType.SerialOpenError:
                 case ErrorType.BluetoothOpenError:
@@ -1532,6 +1553,12 @@ function handleError(msg: string, errorType: ErrorType, handler: (msg: string) =
     }
 }
 
+async function handleConnectionRetryError(err: any) {
+    error(`Failed to retry tracker connection`, "haritorax-interpreter", err);
+    connectedDevices.clear();
+    mainWindow.webContents.send("disconnect", "connection-error");
+}
+
 async function handleConnectionStartError(err: any) {
     error(`Failed to start tracker connection`, "haritorax-interpreter", err);
     mainWindow.webContents.send("set-status", "main.status.failed");
@@ -1540,6 +1567,7 @@ async function handleConnectionStartError(err: any) {
         await translate("dialogs.connectionFailed.message")
     );
 
+    connectedDevices.clear();
     mainWindow.webContents.send("disconnect", "connection-error");
 }
 
