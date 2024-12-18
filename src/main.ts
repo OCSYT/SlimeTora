@@ -652,6 +652,51 @@ ipcMain.on("set-server-port", (_event, arg) => {
     log(`Server port set to: ${arg}`, "settings");
 });
 
+ipcMain.on("fix-trackers", async () => {
+    log("Fixing soft-bricked (power cycling) trackers...", "connection");
+
+    const ports: ActivePorts = device.getComInstance().getActivePorts();
+    // Sensor mode 2, 50 FPS, Accel sensor auto correction, ankle disabled
+    const commands = ["o0:00000000101000", `o1:00000000101000`];
+
+    const dialogOptions: Electron.MessageBoxOptions = {
+        type: "info",
+        buttons: ["OK"],
+        title: await translate("dialogs.fixTrackers.title"),
+        message: await translate("dialogs.fixTrackers.message"),
+    };
+
+    const startTime = Date.now();
+    let commandCount = 0;
+
+    const sendCommands = async () => {
+        for (const port in ports) {
+            for (const command of commands) {
+                ports[port].write(command, (err: any) => {
+                    if (err) {
+                        error(`Error writing data to serial port ${port}: ${err}`, "connection");
+                    }
+                });
+                commandCount++;
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+        }
+    };
+
+    const intervalId = setInterval(sendCommands, 100);
+    await dialog.showMessageBox(dialogOptions);
+    clearInterval(intervalId);
+
+    const endTime = Date.now();
+    const duration = (endTime - startTime) / 1000;
+    log(
+        `Dialog was open for ${duration} seconds, accounting for ${commandCount} times sent to ports: ${Object.keys(
+            ports
+        ).join(", ")}`,
+        "connection"
+    );
+});
+
 ipcMain.on("open-support-page", async () => {
     await shell.openExternal("https://github.com/OCSYT/SlimeTora/wiki/FAQ#i-found-an-issuebug");
 });
@@ -1111,6 +1156,7 @@ import {
     UserAction,
 } from "@slimevr/firmware-protocol";
 import { EmulatedTracker } from "@slimevr/tracker-emulation";
+import { ActivePorts } from "haritorax-interpreter/dist/mode/com";
 import BetterQuaternion from "quaternion";
 import { ParsedUrlQueryInput } from "querystring";
 

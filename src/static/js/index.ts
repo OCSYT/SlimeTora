@@ -63,29 +63,29 @@ async function updateTranslations() {
     return await Promise.all(translationPromises);
 }
 
+function appendOptions(selectElement: HTMLElement, options: string[]) {
+    const fragment = document.createDocumentFragment();
+    options.forEach((optionValue) => {
+        const option = document.createElement("option");
+        option.value = optionValue;
+        option.text = optionValue;
+        fragment.appendChild(option);
+    });
+    selectElement.appendChild(fragment);
+}
+
+function setSwitchState(switchId: string, state: any) {
+    const switchElement = document.getElementById(switchId) as HTMLInputElement;
+    if (switchElement) switchElement.checked = state;
+}
+
+function setSelectValue(selectId: string, value: string) {
+    const selectElement = document.getElementById(selectId) as HTMLSelectElement;
+    if (selectElement) selectElement.value = value;
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
     window.log("DOM loaded");
-
-    function appendOptions(selectElement: HTMLElement, options: string[]) {
-        const fragment = document.createDocumentFragment();
-        options.forEach((optionValue) => {
-            const option = document.createElement("option");
-            option.value = optionValue;
-            option.text = optionValue;
-            fragment.appendChild(option);
-        });
-        selectElement.appendChild(fragment);
-    }
-
-    function setSwitchState(switchId: string, state: any) {
-        const switchElement = document.getElementById(switchId) as HTMLInputElement;
-        if (switchElement) switchElement.checked = state;
-    }
-
-    function setSelectValue(selectId: string, value: string) {
-        const selectElement = document.getElementById(selectId) as HTMLSelectElement;
-        if (selectElement) selectElement.value = value;
-    }
 
     // Populate COM ports
     const comPortList = document.getElementById("com-ports");
@@ -443,6 +443,7 @@ function toggleConnectionButtons(state: boolean) {
     const stopButton = document.getElementById("stop-connection-button") as HTMLButtonElement;
     const pairingButton = document.getElementById("pairing-button") as HTMLButtonElement;
     const turnOffTrackersButton = document.getElementById("turn-off-trackers-button") as HTMLButtonElement;
+    const fixTrackersButton = document.getElementById("fix-trackers-button") as HTMLButtonElement;
 
     if (startButton) startButton.disabled = state;
     if (stopButton) stopButton.disabled = !state;
@@ -450,6 +451,7 @@ function toggleConnectionButtons(state: boolean) {
     if (wirelessTrackerEnabled && comEnabled) {
         if (pairingButton) pairingButton.disabled = !state;
         if (turnOffTrackersButton) turnOffTrackersButton.disabled = !state;
+        if (fixTrackersButton) fixTrackersButton.disabled = !state;
     }
 }
 
@@ -1562,6 +1564,24 @@ window.saveSettings = saveSettings;
 window.turnOffTrackers = () => {
     window.log("Turning off all trackers...");
     window.ipc.send("turn-off-tracker", "all");
+};
+
+window.fixTrackers = () => {
+    window.log("Fixing soft-bricked (power cycling) trackers...");
+    window.ipc.send("fix-trackers", null);
+
+    // Reset settings
+    fpsMode = 50;
+    sensorMode = 2;
+    accelerometerEnabled = true;
+    gyroscopeEnabled = false;
+    magnetometerEnabled = false;
+
+    setSwitchState("accelerometer-switch", accelerometerEnabled);
+    setSwitchState("gyroscope-switch", gyroscopeEnabled);
+    setSwitchState("magnetometer-switch", magnetometerEnabled);
+    setSelectValue("fps-mode-select", fpsMode.toString());
+    setSelectValue("sensor-mode-select", sensorMode.toString());
 };
 
 window.openTrackerSettings = async (deviceID: string) => {
