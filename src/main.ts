@@ -40,6 +40,8 @@ let firstLaunch = false;
 let isClosing = false;
 let hasInitializedLogDir = false;
 let foundSlimeVR = false;
+let serverAddress = "255.255.255.255";
+let serverPort = 6969;
 
 let canLogToFile = true;
 let loggingMode = 1;
@@ -86,6 +88,9 @@ try {
     updateChannel = config.global?.updates?.updateChannel ?? "stable";
     heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
     loggingMode = config.global?.debug?.loggingMode ?? 1;
+
+    serverAddress = config.global?.serverAddress ?? "255.255.255.255";
+    serverPort = config.global?.serverPort ?? 6969;
 } catch (err) {
     // If the config file doesn't exist or is empty, create it
     log("First launch, creating config file and showing onboarding screen (after load)");
@@ -635,6 +640,16 @@ ipcMain.on("set-tracker-heartbeat-interval", (_event, arg) => {
 ipcMain.on("set-auto-off", (_event, arg) => {
     autoOff = arg;
     log(`Auto-off set to: ${arg}`, "settings");
+});
+
+ipcMain.on("set-server-address", (_event, arg) => {
+    serverAddress = arg;
+    log(`Server address set to: ${arg}`, "settings");
+});
+
+ipcMain.on("set-server-port", (_event, arg) => {
+    serverPort = arg;
+    log(`Server port set to: ${arg}`, "settings");
 });
 
 ipcMain.on("open-support-page", async () => {
@@ -1194,7 +1209,9 @@ async function processQueue() {
             `SlimeTora v${app.getVersion()}`,
             new FirmwareFeatureFlags(new Map([])),
             BoardType.HARITORA,
-            MCUType.HARITORA
+            MCUType.HARITORA,
+            serverAddress,
+            serverPort
         );
 
         await newTracker.init();
@@ -1650,11 +1667,14 @@ const heartbeatTracker = new EmulatedTracker(
     `SlimeTora v${app.getVersion()} heartbeat`,
     new FirmwareFeatureFlags(new Map([])),
     BoardType.HARITORA,
-    MCUType.HARITORA
+    MCUType.HARITORA,
+    serverAddress,
+    serverPort
 );
 
 setupTrackerEvents(heartbeatTracker, true);
 await heartbeatTracker.init();
+log(`Looking for SlimeVR server on: ${serverAddress}:${serverPort}`, "connection");
 
 /*
  * Logging

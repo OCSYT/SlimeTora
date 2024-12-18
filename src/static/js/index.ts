@@ -32,6 +32,9 @@ let autoOff = false;
 let trackerVisualizationFPS = 10;
 let trackerHeartbeatInterval = 2000;
 
+let serverAddress = "255.255.255.255";
+let serverPort = 6969;
+
 let appUpdatesEnabled = true;
 let translationsUpdatesEnabled = true;
 let updateChannel = "stable";
@@ -145,6 +148,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     canLogToFile = settings.global?.debug?.canLogToFile ?? true;
     loggingMode = settings.global?.debug?.loggingMode ?? 1;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit ?? false;
+    serverAddress = settings.global?.serverAddress ?? "255.255.255.255";
+    serverPort = settings.global?.serverPort ?? 6969;
 
     // Set switch states based on settings
     setSwitchState("compact-view-switch", compactView);
@@ -177,6 +182,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const trackerHeartbeatIntervalInput = document.getElementById("tracker-heartbeat-interval") as HTMLInputElement;
     trackerHeartbeatIntervalInput.value = trackerHeartbeatInterval.toString();
+
+    const serverAddressInput = document.getElementById("server-address") as HTMLInputElement;
+    serverAddressInput.value = serverAddress;
+
+    const serverPortInput = document.getElementById("server-port") as HTMLInputElement;
+    serverPortInput.value = serverPort.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
@@ -1234,6 +1245,30 @@ function addEventListeners() {
         window.ipc.send("set-tracker-heartbeat-interval", heartbeatInterval);
     });
 
+    document.getElementById("server-address").addEventListener("change", async function () {
+        serverAddress = (document.getElementById("server-address") as HTMLInputElement).value;
+        window.log(`Changed server address to: ${serverAddress}`);
+        window.ipc.send("save-setting", {
+            global: {
+                serverAddress: serverAddress,
+            },
+        });
+
+        window.ipc.send("set-server-address", serverAddress);
+    });
+
+    document.getElementById("server-port").addEventListener("change", async function () {
+        serverPort = parseInt((document.getElementById("server-port") as HTMLInputElement).value);
+        window.log(`Changed server port to: ${serverPort}`);
+        window.ipc.send("save-setting", {
+            global: {
+                serverPort: serverPort,
+            },
+        });
+
+        window.ipc.send("set-server-port", serverPort);
+    });
+
     document.getElementById("language-select").addEventListener("change", async function () {
         const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
         selectLanguage(language);
@@ -1544,4 +1579,5 @@ window.openSupport = () => {
     window.ipc.send("open-support-page", null);
 };
 
-export {};
+export { };
+

@@ -100,7 +100,9 @@
             "autoStart": "Start connection on open",
             "autoOff": "Turn off trackers on exit",
             "trackerVisualizationFPS": "Tracker visualization FPS",
-            "heartbeat": "Tracker heartbeat interval"
+            "heartbeat": "Tracker heartbeat interval",
+            "serverAddress": "SlimeVR server address",
+            "serverPort": "SlimeVR server port"
         },
         "updates": {
             "title": "Update checking",
