@@ -36,6 +36,7 @@
         "trackerVisualization": "Tracker visualization",
         "turnOffTrackers": "Turn off all trackers",
         "pairing": "Manage GX(6/2) pairing",
+        "fixTrackers": "Fix soft-bricked trackers",
         "deviceName": "Device:",
         "deviceID": "Device ID:",
         "rotationData": "Rotation data:",
