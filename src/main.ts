@@ -2,9 +2,8 @@
  * Global imports and variables
  */
 
-import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
-// @ts-ignore (for development)
 import { autoDetect } from "@serialport/bindings-cpp";
+import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import fs, { PathLike } from "fs";
 import { FPSMode, HaritoraX, MagStatus, SensorAutoCorrection, SensorMode, TrackerModel } from "haritorax-interpreter";
 import path, { dirname } from "path";
@@ -47,7 +46,7 @@ let loggingMode = 1;
 let heartbeatInterval = 2000;
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
-let autoOff = true;
+let autoOff = false;
 let appUpdatesEnabled = true;
 let translationsUpdatesEnabled = true;
 let updateChannel = "stable";
@@ -81,7 +80,7 @@ try {
     canLogToFile = config.global?.debug?.canLogToFile ?? true;
     wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
     wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
-    autoOff = config.global?.autoOff ?? true;
+    autoOff = config.global?.autoOff ?? false;
     appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled ?? true;
     translationsUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled ?? true;
     updateChannel = config.global?.updates?.updateChannel ?? "stable";
