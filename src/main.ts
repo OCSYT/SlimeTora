@@ -653,7 +653,7 @@ ipcMain.on("set-server-port", (_event, arg) => {
 });
 
 ipcMain.on("fix-trackers", async () => {
-    log("Fixing soft-bricked (power cycling) trackers...", "connection");
+    log("Fixing soft-bricked (boot-looping) trackers...", "connection");
 
     const ports: ActivePorts = device.getComInstance().getActivePorts();
     // Sensor mode 2, 50 FPS, Accel sensor auto correction, ankle disabled

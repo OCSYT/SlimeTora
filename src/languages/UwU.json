@@ -2,7 +2,7 @@
     "main": {
         "title": "SwimeTowa",
         "connectedTrackers": "Connyected kitties:",
-        "startConnection": "Stawt meowing",
+        "startConnection": "Stawt meowing :3",
         "stopConnection": "Nyo meowing :(",
         "onboarding": "Meow at onboawding",
         "status": {
@@ -16,7 +16,7 @@
             "noTrackerModel": "nyo twacker modew sewected",
             "noComPorts": "nyo COM powts sewected",
             "autodetect": {
-                "running": "wunnying cat-detection...",
+                "running": "wunning cat-detection...",
                 "success": "cat-detection compwete :3",
                 "failed": "cat-detection faiwed :("
             }
@@ -31,10 +31,10 @@
     "trackerInfo": {
         "title": "Twacker infowmation",
         "tooltip": "See infowmation about the connyected twackers. An option with yewwow text wequiwes a westawt of the connyection ow pwogwam 2 appwy.",
-        "compactView": "Smol wiew",
+        "compactView": "Smol wiew :3",
         "censorSerialNumbers": "aaa hide twacker nyumbews",
         "trackerVisualization": "See twackers :o",
-        "turnOffTrackers": "Cyutely kill aww twackers :3",
+        "turnOffTrackers": "Cyutely kill awltwackers :3",
         "pairing": "Manyage GX(6/2) paiwing",
         "fixTrackers": "Fix hawd-bwicked twackers OwO?",
         "deviceName": "Dewice:",
@@ -77,7 +77,7 @@
         }
     },
     "programSettings": {
-        "title": "Pwogwam meowings",
+        "title": "Pwogwam meowings :3",
         "tooltip": "Set the meowings of the pwogwam. An option with yewwow text wequiwes a westawt of the connyection ow pwogwam 2 appwy.",
         "trackerModel": {
             "title": "Twacker modew",
@@ -88,7 +88,7 @@
         "connectionMode": {
             "title": "Connyection mode",
             "tooltip": "Sewect the connyection mode used 2 connyect 2 the twackers. Muwtipwe modes can be used at the same time if wanted.",
-            "bluetooth": "Bwuetooth (WE)",
+            "bluetooth": "Bwuetooth (LE)",
             "com": "COM / GX(6/2)"
         },
         "comPorts": {
@@ -119,7 +119,7 @@
     },
     "trackerSettings": {
         "title": "Twacker meowings",
-        "tooltip": "Set the gwobaw meowings fow the twackers (can be uVRwiden pew-twacker).",
+        "tooltip": "Set the gwobaw meowings fow the twackers (can be uvwwiden pew-twacker).",
         "fps": {
             "title": "Nyas twansfew wate",
             "tooltip": "Sewect the nyas twansfew wate fow the twackers. If using Bwuetooth, 50FPS may be mowe stabwe.",
@@ -141,7 +141,7 @@
         }
     },
     "about": {
-        "title": "who us :3",
+        "title": "Who us :3",
         "text": "The SwimeTowa pwojyect is a middwewawe pwogwam that awwows u 2 connyect the HawitowaX twackers 2 the SwimeVR servew.",
         "authors": "Meowed by:",
         "credits": {
@@ -154,14 +154,14 @@
     "debugging": {
         "title": "Demeowing",
         "tooltip": "An option with yewwow text wequiwes a westawt of the connyection ow pwogwam 2 appwy.",
-        "text": "Enyabwe ow disabwe demeowing featuwes fow the pwogwam. Using wogging mode 'Aww nibbles (!!!)' wiww cause huge wog fiwes and wag, onwy use if asked ow hawe twacker issues!",
+        "text": "Enyabwe ow disabwe demeowing featuwes fow the pwogwam. Using wogging mode 'Awl nibbles (!!!)' wiww cause huge wog fiwes and wag, onwy use if asked ow hawe twacker issues!",
         "writeToFile": "Wwite 2 wog fiwes",
         "bypassPortLimit": "Bypass powt wimit",
         "loggingMode": {
             "title": "Wogging mode",
             "minimal": "Minyimaw nibbles",
             "extra": "Extwa nibbles",
-            "all": "Aww nibbles (!!!)"
+            "all": "Awl nibbles (!!!)"
         },
         "openLogsFolder": "Meow at wogs fowdew",
         "openSupportPage": "Meow at suppowt page"
@@ -176,7 +176,7 @@
         "steps": {
             "step-2": {
                 "title": "Automatic setup",
-                "text": "Automatic setup awwows u 2 wet the pwogwam twy 2 automaticawwy detect youw meowings and set itsewf up fow u. It is the easiest way 2 get stawted and suppowts aww twacker modews and connyection modes.<br /><br />It is wecommended (but nyot nyecessawy) 2 hawe at weast onye of youw twackers tuwnyed on befowe continyuing. When u awe weady, cwick the \"Nyext\" button."
+                "text": "Automatic setup awwows u 2 wet the pwogwam twy 2 automaticawwy detect youw meowings and set itsewf up fow u. It is the easiest way 2 get stawted and suppowts awltwacker modews and connyection modes.<br /><br />It is wecommended (but nyot nyecessawy) 2 hawe at weast onye of youw twackers tuwnyed on befowe continyuing. When u awe weady, cwick the \"Nyext\" button."
             },
             "step-3": {
                 "title": "Cat-detection",
@@ -193,7 +193,7 @@
             "step-5": {
                 "title": "SwimeVR connyection",
                 "text": "At this point, u wiww nyow want 2 connyect youw VR headset 2 youw PC - it's time 2 put on youw twackers! Make suwe youw twackers (and VR headset) awe connyected and pwess the \"Stawt connyection\" button 2 connyect them 2 the SwimeVR servew.",
-                "text2": "When u see aww youw twackers connyected abuv, check SwimeVR servew and accept aww \"A nyew twacker was found\" pop-ups. Cwick the \"Nyext\" button 2 continyue 2 the nyext step."
+                "text2": "When u see awlyouw twackers connyected abuv, check SwimeVR servew and accept awl\"A nyew twacker was found\" pop-ups. Cwick the \"Nyext\" button 2 continyue 2 the nyext step."
             },
             "step-6": {
                 "title": "Twacker assignment",
@@ -208,7 +208,7 @@
                 "text": "U wiww nyow see a smaww tutowiaw on how 2 pewfowm \"wesets\" in SwimeVR. With SwimeTowa (awong with SwimeVR's buiwt-in tap-2-weset), u may pwess any of the buttons a nyumbew of times (within 0.5s) on youw twackers. See the wist fow the weset options:",
                 "list": {
                     "1": "1 pwess - yaw weset",
-                    "2": "2 pwesses - fuww weset",
+                    "2": "2 pwesses - fuwl weset",
                     "3": "3 pwesses - meowting weset",
                     "4": "4 pwesses - pause/unpause twacking"
                 }
@@ -217,18 +217,18 @@
                 "title": "When 2 weset",
                 "text": "Hewe awe the expwanyations of the thwee diffewent wesets and when they wouwd be used:",
                 "text2": "A <b>yaw</b> weset is the <b>onye u wiww use the most</b>, it ewiminyates most (if nyot aww) dwift on onye axis. This is wess accuwate but the fastest and most conwenyient. U onwy nyeed 2 stwaighten youw wimbs - this can ewen be used whiwe waying ow sitting down!",
-                "text3": "A <b>fuww</b> weset is the most accuwate and compwetewy wesets the skeweton in SwimeVR. U myust be standing up and stwaight whiwe doing this weset.",
-                "text4": "A <b>meowting</b> weset is used when the position of youw twackers hawe physicawwy muvd (ow meowting cawibwation is off). U myust be in a \"ski pose\" whiwe doing this weset.",
-                "caption1": "Fuww weset pose",
+                "text3": "A <b>fuwl</b> weset is the most accuwate and compwetewy wesets the skeweton in SwimeVR. U myust be standing up and stwaight whiwe doing this weset.",
+                "text4": "A <b>meowting</b> weset is used when the position of youw twackers hawe physicawwy muved (ow meowting cawibwation is off). U myust be in a \"ski pose\" whiwe doing this weset.",
+                "caption1": "Fuwl weset pose",
                 "caption2": "Meowting weset pose"
             },
             "step-10": {
                 "title": "Body pwopowtions",
-                "text": "SwimeVR appwies youw body pwopowtions on a wiwtuaw skeweton fow accuwate twacking. Sewect \"Automatic pwopowtions\" and fowwow the on-scween instwuctions cawibwate by fowwowing a set of muvments. <b>U onwy nyeed 2 do this once and is awso optionyaw!</b>\r\n\r\nIf u hawe issues, u can awways wetwy ow use the defauwts (\"Weset aww pwopowtions\")."
+                "text": "SwimeVR appwies youw body pwopowtions on a wiwtuaw skeweton fow accuwate twacking. Sewect \"Automatic pwopowtions\" and fowwow the on-scween instwuctions cawibwate by fowwowing a set of muvments. <b>U onwy nyeed 2 do this once and is awso optionyaw!</b>\r\n\r\nIf u hawe issues, u can awways wetwy ow use the defauwts (\"Weset awlpwopowtions\")."
             },
             "step-11": {
                 "title": "Wewaunching SwimeVR",
-                "text": "When wewaunching SwimeVR, pewfowm a \"Fuww Weset\" and then a \"Meowting Weset\" befowe cawibwating in-game. <strong>Again, u do nyot hawe 2 pewfowm the pwopowtions cawibwation again - it is onwy donye once!</strong> Make suwe 2 wefew 2 the SwimeTowa wiki ow watch videwos on how 2 get the best fwom SwimeVR - ZWock35 is a gweat pewson 2 watch!",
+                "text": "When wewaunching SwimeVR, pewfowm a \"Fuwl Weset\" and then a \"Meowting Weset\" befowe cawibwating in-game. <strong>Again, u do nyot hawe 2 pewfowm the pwopowtions cawibwation again - it is onwy donye once!</strong> Make suwe 2 wefew 2 the SwimeTowa wiki ow watch videwos on how 2 get the best fwom SwimeVR - ZWock35 is a gweat pewson 2 watch!",
                 "watch": "Watch cawibwation videwo"
             }
         }
@@ -265,7 +265,7 @@
         },
         "slimevrNotFound": {
             "title": "SwimeVR nyot found",
-            "message": "SwimeVR servew does nyot seem 2 be wunnying, make suwe it is wunnying and westawt the connyection. If it is awweady wunnying & youw twackers awe connyected, this is safe 2 ignyowe."
+            "message": "SwimeVR servew does nyot seem 2 be wunning, make suwe it is wunning and westawt the connyection. If it is awweady wunning & youw twackers awe connyected, this is safe 2 ignyowe."
         },
         "comPortsMissing": {
             "title": "COM powts missing",
@@ -305,12 +305,12 @@
         },
         "onboarding": {
             "unix": {
-                "title": "Unyix detected",
-                "message": "It seems u awe wunnying SwimeTowa on a Unyix-based system, some extwa setup is wequiwed befowe continyuing.\r\n\r\nThe SwimeTowa wiki wiww open aftew this diawog 2 guide u thwough the nyecessawy steps."
+                "title": "ARCH USER DETECTED!!!!!!!!!!!!!!!!!",
+                "message": "It seems u awe wunning SwimeTowa on a Unyix-wike system, some extwa setup is wequiwed befowe continyuing.\r\n\r\nThe SwimeTowa wiki wiww open aftew this diawog 2 guide u thwough the nyecessawy steps."
             },
             "complete": {
                 "title": "Onboawding compwete!",
-                "message": "SwimeTowa has been successfuwwy set up! U can awways weopen the onboawding scween in the pwogwam meowings. Aftew this diawog, the pwogwam wiww open the wiki page fow u 2 wead mowe infowmation.\r\n\r\nEnjyoy!"
+                "message": "SwimeTowa has been successfuwly set up! U can awways weopen the onboawding scween in the pwogwam meowings. Aftew this diawog, the pwogwam wiww open the wiki page fow u 2 wead mowe infowmation.\r\n\r\nEnjyoy!"
             }
         },
         "autodetect": {
@@ -320,7 +320,7 @@
             },
             "success": {
                 "title": "Auto-detect compweted!",
-                "message": "Auto-detect compweted successfuwwy. Wemembew this may nyot be accuwate, so pwease wewiew the meowings that hawe been appwied bewow: {settings}"
+                "message": "Auto-detect compweted successfuwly. Wemembew this may nyot be accuwate, so pwease wewiew the meowings that hawe been appwied bewow: {settings}"
             },
             "failed": {
                 "title": "Auto-detect faiwed!",
@@ -369,7 +369,7 @@
         },
         "fixTrackers": {
             "title": "Fix bwoken twackers meow",
-            "message": "Fow as wong as this diawog box is open, this featuwe wiww attempt 2 fix youw hawd-bwicked GX(6/2) twackers if they awe boot wooping (tuwnying off immediatewy aftew being powewed on). This wowks by wepeatedwy sending a \"set settings\" command 2 wemuv the powew-off fwag.\r\n\r\nAttempt 2 keep tuwnying on youw twackers untiw they stay on, then cwose this diawog when they awe fixed. If youw twackers awe stiww nyot wowking, pwease wefew 2 the suppowt page.\r\n\r\nAftew pewfowming this, youw settings wiww weset 2 the fowwowing:\r\nSensow mode: 2\r\nFPS: 50\r\nSensow auto cowwection: accew"
+            "message": "Fow as wong as this diawog box is open, this featuwe wiww attempt 2 fix youw hawd-bwicked GX(6/2) twackers if they awe boot-wooping (tuwnying off immediatewy aftew being powewed on). This wowks by wepeatedwy sending a \"set settings\" command 2 wemuv the powew-off fwag.\r\n\r\nAttempt 2 keep tuwnying on youw twackers untiw they stay on, then cwose this diawog when they awe fixed. If youw twackers awe stiww nyot wowking, pwease wefew 2 the suppowt page.\r\n\r\nAftew pewfowming this, youw settings wiww weset 2 the fowwowing:\r\nSensow mode: 2\r\nFPS: 50\r\nSensow auto cowwection: accew"
         }
     }
 }

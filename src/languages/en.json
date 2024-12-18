@@ -306,7 +306,7 @@
         "onboarding": {
             "unix": {
                 "title": "Unix detected",
-                "message": "It seems you are running SlimeTora on a Unix-based system, some extra setup is required before continuing.\r\n\r\nThe SlimeTora wiki will open after this dialog to guide you through the necessary steps."
+                "message": "It seems you are running SlimeTora on a Unix-like system, some extra setup is required before continuing.\r\n\r\nThe SlimeTora wiki will open after this dialog to guide you through the necessary steps."
             },
             "complete": {
                 "title": "Onboarding complete!",
@@ -369,7 +369,7 @@
         },
         "fixTrackers": {
             "title": "Fix trackers",
-            "message": "For as long as this dialog box is open, this feature will attempt to fix your soft-bricked GX(6/2) trackers if they are boot looping (turning off immediately after being powered on). This works by repeatedly sending a \"set settings\" command to remove the power-off flag.\r\n\r\nAttempt to keep turning on your trackers until they stay on, then close this dialog when they are fixed. If your trackers are still not working, please refer to the support page.\r\n\r\nAfter performing this, your settings will reset to the following:\r\nSensor mode: 2\r\nFPS: 50\r\nSensor auto correction: accel"
+            "message": "For as long as this dialog box is open, this feature will attempt to fix your soft-bricked GX(6/2) trackers if they are boot-looping (turning off immediately after being powered on). This works by repeatedly sending a \"set settings\" command to remove the power-off flag.\r\n\r\nAttempt to keep turning on your trackers until they stay on, then close this dialog when they are fixed. If your trackers are still not working, please refer to the support page.\r\n\r\nAfter performing this, your settings will reset to the following:\r\nSensor mode: 2\r\nFPS: 50\r\nSensor auto correction: accel"
         }
     }
 }

@@ -1567,7 +1567,7 @@ window.turnOffTrackers = () => {
 };
 
 window.fixTrackers = () => {
-    window.log("Fixing soft-bricked (power cycling) trackers...");
+    window.log("Fixing soft-bricked (boot-looping) trackers...");
     window.ipc.send("fix-trackers", null);
 
     // Reset settings
