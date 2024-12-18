@@ -761,7 +761,7 @@ ipcMain.handle("autodetect", async () => {
     device = undefined;
 
     log("Initializing new HaritoraX instance...", "detect");
-    initializeDevice(true);
+    initializeDevice();
 
     log("Getting available devices...", "detect");
 
@@ -843,10 +843,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
         return false;
     }
 
-    if (shouldInitializeNewDevice()) {
-        initializeDevice();
-        startDeviceListeners();
-    }
+    if (shouldInitializeNewDevice()) initializeDevice();
 
     mainWindow.webContents.send("set-status", "main.status.searching");
     if (types.includes("bluetooth")) await device.startConnection("bluetooth");
@@ -896,6 +893,8 @@ function initializeDevice(forceDisableLogging: boolean = false) {
         effectiveLoggingMode.toString()
     ] || [false, false, false, false];
     device = new HaritoraX(trackerType, logging, imuProcessing, rawData, printWrites);
+
+    startDeviceListeners();
 }
 
 async function notifyConnectedDevices(): Promise<void> {
