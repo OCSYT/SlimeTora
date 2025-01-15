@@ -4,6 +4,17 @@ import { CompactCard, NormalCard } from "./templates/device-card.js";
  * Global variables
  */
 
+enum TrackerModel {
+    Wireless = "HaritoraX Wireless",
+    Wired = "HaritoraX Wired (1.1b/1.1/1.0)",
+}
+
+enum ConnectionMode {
+    Bluetooth = "Bluetooth (LE)",
+    COM = "COM / GX(6/2)",
+    Both = "Bluetooth (LE) & COM / GX(6/2",
+}
+
 let isActive = false;
 let refreshingDeviceList = false;
 
@@ -306,7 +317,7 @@ async function autodetect() {
     const deviceHandlers: { [key: string]: () => Promise<void> } = {
         "HaritoraX Wireless": async () => {
             simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
-            detectedTrackerModel = "HaritoraX Wireless";
+            detectedTrackerModel = TrackerModel.Wireless;
         },
         "HaritoraX Wired": async () => {
             detectedTrackerModel = "HaritoraX Wired (1.1b/1.1/1.0)";
@@ -321,7 +332,7 @@ async function autodetect() {
             await handleComPorts("GX2");
 
             // Enable BT and COM for HaritoraX Wireless w/ GX2 (no GX6)
-            if (devices.has("HaritoraX Wireless") && !devices.has("GX6")) {
+            if (devices.has(TrackerModel.Wireless) && !devices.has("GX6")) {
                 simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                 detectedConnectionModes.push("Bluetooth");
                 l("Found HaritoraX Wireless and GX2, enabling Bluetooth and COM", "detect");
@@ -330,10 +341,10 @@ async function autodetect() {
         Bluetooth: async () => {
             detectedConnectionModes.push("Bluetooth");
             simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
-            if (!devices.has("HaritoraX Wireless") || !devices.has("HaritoraX Wired")) {
+            if (!devices.has(TrackerModel.Wireless) || !devices.has("HaritoraX Wired")) {
                 // Assume HaritoraX Wireless if no other devices are found
                 l("No other devices found with Bluetooth, assuming HaritoraX Wireless", "detect");
-                detectedTrackerModel = "HaritoraX Wireless";
+                detectedTrackerModel = TrackerModel.Wireless;
                 simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
             }
         },
@@ -422,12 +433,22 @@ async function questions() {
         );
     }
 
-    let trackerModel = "HaritoraX Wireless";
-    let connectionMode = "Bluetooth (LE)";
+    // Reset all settings to default
+    simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("wired-tracker-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("auto-start-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("auto-off-switch") as HTMLInputElement, false);
+
+    // Logic for questions
+    let trackerModel = TrackerModel.Wireless;
+    let connectionMode = ConnectionMode.Bluetooth;
     let selectedPorts = [];
     let autoStart = false;
     let autoOff = false;
     for (const dialog of dialogs) {
+        // Separate logic for COM ports dialog (allows multiple choice for wireless)
         if (dialog === "comPorts") {
             selectedPorts = [];
             let done = false;
@@ -440,6 +461,7 @@ async function questions() {
                     return;
                 }
 
+                // Only allowing one selection for wired, so no need for "Done"
                 const response = await getResponse(dialog, wiredTrackerEnabled ? comPorts : [...comPorts, "Done"]);
 
                 if (response === comPorts.length && trackerModel !== "HaritoraX Wired (1.1b/1.1/1.0)") {
@@ -471,9 +493,9 @@ async function questions() {
             continue;
         }
 
+        // Get response for other dialogs
         let response;
         let btns;
-
         switch (dialog) {
             case "trackerModel":
                 btns = [
@@ -483,13 +505,13 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
-                    trackerModel = "HaritoraX Wireless";
+                    trackerModel = TrackerModel.Wireless;
                 } else if (response === 1) {
                     simulateChangeEvent(document.getElementById("wired-tracker-switch") as HTMLInputElement, true);
-                    trackerModel = "HaritoraX Wired (1.1b/1.1/1.0)";
+                    trackerModel = TrackerModel.Wired;
                     // Skip connectionMode and autoOff dialogs (not supported)
                     dialogs.splice(dialogs.indexOf("connectionMode"), 1);
-                    connectionMode = "COM / GX(6/2)";
+                    connectionMode = ConnectionMode.COM;
                     dialogs.splice(dialogs.indexOf("autoOff"), 1);
                     autoOff = false;
                 }
@@ -503,14 +525,14 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
-                    connectionMode = "Bluetooth (LE)";
+                    connectionMode = ConnectionMode.Bluetooth;
                 } else if (response === 1) {
                     simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
-                    connectionMode = "COM / GX(6/2)";
+                    connectionMode = ConnectionMode.COM;
                 } else if (response === 2) {
                     simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                     simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
-                    connectionMode = "Bluetooth (LE) & COM / GX(6/2)";
+                    connectionMode = ConnectionMode.Both
                 }
                 break;
             case "autoStart":
@@ -541,7 +563,6 @@ Auto-start: ${autoStart}
 Auto-off: ${autoOff}`
                 );
                 await showMessageBox("dialogs.questions.finish.title", newMessage, true, true, false);
-                l(`Finished questions dialog with settings: ${newMessage}`, "questions");
         }
     }
 }
