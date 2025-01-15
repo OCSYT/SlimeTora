@@ -45,13 +45,17 @@ let loggingMode = 1;
  * Renderer functions
  */
 
+const t = async (key: string) => await window.translate(key);
+const l = (key: string, where?: string) => window.log(key, where);
+const e = (key: string, where?: string) => window.error(key, where);
+
 async function updateTranslations() {
     const i18nElements = document.querySelectorAll("[data-i18n]");
     const translationPromises: Promise<void>[] = [];
 
     i18nElements.forEach((element) => {
         const key = element.getAttribute("data-i18n");
-        const translationPromise = window.translate(key).then((translation) => {
+        const translationPromise = t(key).then((translation) => {
             if (translation && translation !== key) {
                 // could be a slight security risk, but makes it so much easier to format text
                 element.innerHTML = translation;
@@ -85,13 +89,13 @@ function setSelectValue(selectId: string, value: string) {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-    window.log("DOM loaded");
+    l("DOM loaded");
 
     // Populate COM ports
     const comPortList = document.getElementById("com-ports");
     const comPorts: string[] = await window.ipc.invoke("get-com-ports", null);
 
-    window.log(`COM ports: ${JSON.stringify(comPorts)}`);
+    l(`COM ports: ${JSON.stringify(comPorts)}`);
 
     let rowHTML = '<div class="com-port-row">';
     comPorts.forEach((port: string, index: number) => {
@@ -201,7 +205,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     let isMissingPorts = false;
     selectedPorts.forEach((port) => {
         if (!comPorts.includes(port)) {
-            window.log(`COM port ${port} in config was not found in user's available COM ports`);
+            l(`COM port ${port} in config was not found in user's available COM ports`);
             selectedPorts.splice(selectedPorts.indexOf(port), 1);
             isMissingPorts = true;
         }
@@ -234,8 +238,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         .getElementById("tracker-count")
         .textContent.replace("{trackerCount}", "0");
 
-    window.log(`Language set to: ${language}`);
-    window.log(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
+    l(`Language set to: ${language}`);
+    l(`Settings loaded:\r\n${JSON.stringify(settings, null, 4)}`);
 
     addEventListeners();
 
@@ -244,7 +248,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 window.addEventListener("storage", (event) => {
     const { key, newValue } = event;
-    window.log(`localStorage event: "${key}" changed to "${newValue}"`);
+    l(`localStorage event: "${key}" changed to "${newValue}"`);
 
     if (newValue === "true") {
         if (key === "autodetect") {
@@ -270,14 +274,14 @@ window.addEventListener("storage", (event) => {
 async function autodetect() {
     showMessageBox("dialogs.autodetect.pre-check.title", "dialogs.autodetect.pre-check.message", true);
 
-    window.log("Starting auto-detection...", "detect");
+    l("Starting auto-detection...", "detect");
     setStatus("main.status.autodetect.running");
 
     const autodetectObject = await window.ipc.invoke("autodetect", null);
     const devices: Set<string> = new Set(autodetectObject.devices);
     const trackerSettings = autodetectObject.trackerSettings;
 
-    window.log(`Found devices: ${Array.from(devices).join(", ")}`, "detect");
+    l(`Found devices: ${Array.from(devices).join(", ")}`, "detect");
 
     let detectedTrackerModel = "";
     let detectedConnectionModes: string[] = [];
@@ -295,8 +299,8 @@ async function autodetect() {
         );
         comPortsParent.dispatchEvent(new Event("change")); // simulate it here again since the actual code for handling COM port changes is in the parent element
 
-        window.log(`Found device: ${deviceName}`, "detect");
-        window.log(`COM ports for device "${deviceName}": ${comPorts}`, "detect");
+        l(`Found device: ${deviceName}`, "detect");
+        l(`COM ports for device "${deviceName}": ${comPorts}`, "detect");
     }
 
     const deviceHandlers: { [key: string]: () => Promise<void> } = {
@@ -320,7 +324,7 @@ async function autodetect() {
             if (devices.has("HaritoraX Wireless") && !devices.has("GX6")) {
                 simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                 detectedConnectionModes.push("Bluetooth");
-                window.log("Found HaritoraX Wireless and GX2, enabling Bluetooth and COM", "detect");
+                l("Found HaritoraX Wireless and GX2, enabling Bluetooth and COM", "detect");
             }
         },
         Bluetooth: async () => {
@@ -328,7 +332,7 @@ async function autodetect() {
             simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
             if (!devices.has("HaritoraX Wireless") || !devices.has("HaritoraX Wired")) {
                 // Assume HaritoraX Wireless if no other devices are found
-                window.log("No other devices found with Bluetooth, assuming HaritoraX Wireless", "detect");
+                l("No other devices found with Bluetooth, assuming HaritoraX Wireless", "detect");
                 detectedTrackerModel = "HaritoraX Wireless";
                 simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
             }
@@ -343,7 +347,7 @@ async function autodetect() {
         await showErrorDialog("dialogs.autodetect.failed.title", "dialogs.autodetect.failed.message");
         setStatus("main.status.autodetect.failed");
     } else {
-        const message = await window.translate("dialogs.autodetect.success.message");
+        const message = await t("dialogs.autodetect.success.message");
 
         const trackerName = detectedTrackerModel;
         const connectionModes = detectedConnectionModes.join(", ");
@@ -405,7 +409,125 @@ Ankle motion detection: ${ankle}`
 }
 
 async function questions() {
+    const dialogs = ["initial", "trackerModel", "connectionMode", "comPorts", "autoStart", "autoOff", "finish"];
 
+    async function getResponse(dialog: string, buttons?: string[]) {
+        return await showMessageBox(
+            `dialogs.questions.${dialog}.title`,
+            `dialogs.questions.${dialog}.message`,
+            true,
+            true,
+            true,
+            buttons
+        );
+    }
+
+    for (const dialog of dialogs) {
+        if (dialog === "comPorts") {
+            const selectedPorts: string[] = [];
+            let done = false;
+
+            while (!done) {
+                const comPorts: string[] = await window.ipc.invoke("get-com-ports", null);
+                if (comPorts.length === 0) {
+                    e("No COM ports found for questions dialog");
+                    await showErrorDialog("dialogs.noComPorts.title", "dialogs.noComPorts.message");
+                    return;
+                }
+
+                const response = await getResponse(dialog, [...comPorts, "Done"]);
+
+                if (response === comPorts.length) {
+                    done = true;
+                } else {
+                    const selectedPort = comPorts[response];
+                    const index = selectedPorts.indexOf(selectedPort);
+                    if (index > -1) {
+                        l(`Deselected COM port: ${selectedPort}`, "questions");
+                        selectedPorts.splice(index, 1);
+                        const portElement = document.getElementById(selectedPort) as HTMLInputElement;
+                        if (portElement) portElement.checked = false;
+                    } else {
+                        l(`Selected COM port: ${selectedPort}`, "questions");
+                        selectedPorts.push(selectedPort);
+                    }
+                    l(`Selected COM ports: ${selectedPorts.join(", ")}`, "questions");
+                }
+            }
+
+            selectedComPorts.push(...selectedPorts);
+
+            selectedPorts.forEach((portId) => {
+                const portElement = document.getElementById(portId) as HTMLInputElement;
+                if (portElement) portElement.checked = true;
+            });
+            continue;
+        }
+
+        let response;
+        let btns;
+
+        switch (dialog) {
+            case "trackerModel":
+                btns = [
+                    await t("dialogs.questions.trackerModel.wireless"),
+                    await t("dialogs.questions.trackerModel.wired"),
+                ];
+                response = await getResponse(dialog, btns);
+                if (response === 0) {
+                    simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
+                    l("Enabled wireless tracker", "questions");
+                } else if (response === 1) {
+                    simulateChangeEvent(document.getElementById("wired-tracker-switch") as HTMLInputElement, true);
+                    l("Enabled wired tracker", "questions");
+                }
+                break;
+            case "connectionMode":
+                btns = [
+                    await t("dialogs.questions.connectionMode.bluetooth"),
+                    await t("dialogs.questions.connectionMode.com"),
+                    await t("dialogs.questions.connectionMode.both"),
+                ];
+                response = await getResponse(dialog, btns);
+                if (response === 0) {
+                    simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
+                    l("Enabled Bluetooth", "questions");
+                } else if (response === 1) {
+                    simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
+                    l("Enabled COM", "questions");
+                } else if (response === 2) {
+                    simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
+                    l("Enabled Bluetooth and COM", "questions");
+                }
+                break;
+            case "autoStart":
+                btns = [await t("dialogs.questions.autoStart.yes"), await t("dialogs.questions.autoStart.no")];
+                response = await getResponse(dialog, btns);
+                if (response === 0) {
+                    simulateChangeEvent(document.getElementById("auto-start-switch") as HTMLInputElement, true);
+                    l("Enabled auto-start", "questions");
+                }
+                break;
+            case "autoOff":
+                btns = [await t("dialogs.questions.autoOff.yes"), await t("dialogs.questions.autoOff.no")];
+                response = await getResponse(dialog, btns);
+                if (response === 0) {
+                    simulateChangeEvent(document.getElementById("auto-off-switch") as HTMLInputElement, true);
+                    l("Enabled auto-off", "questions");
+                }
+                break;
+            case "finish":
+                const msg = await t("dialogs.questions.finish.message");
+                await showMessageBox(
+                    `dialogs.questions.${dialog}.title`,
+                    msg,
+                    true,
+                    true,
+                    true,
+                );
+        }
+    }
 }
 
 /*
@@ -413,13 +535,13 @@ async function questions() {
  */
 
 async function startConnection() {
-    window.log("Starting connection...", "connection");
+    l("Starting connection...", "connection");
 
     try {
         if (!(await handleTrackerModelCheck())) return false;
         if (!(await handleConnectionType())) return false;
     } catch (err) {
-        window.error(`Error starting connection`, "connection", err);
+        e(`Error starting connection: ${err}`, "connection");
         return false;
     }
 
@@ -428,13 +550,13 @@ async function startConnection() {
 
 function stopConnection() {
     if (!isActive) {
-        window.error(
+        e(
             "No connection to stop.. wait a second, you shouldn't be seeing this - get out of inspect element and stop trying to break the program!",
             "connection"
         );
         return;
     }
-    window.log("Stopping connection(s)...", "connection");
+    l("Stopping connection(s)...", "connection");
 
     toggleConnectionButtons(false);
 
@@ -469,7 +591,7 @@ function toggleConnectionButtons(state: boolean) {
 
 async function handleTrackerModelCheck() {
     if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
-        window.error("No tracker model enabled");
+        e("No tracker model enabled");
         setStatus("main.status.noTrackerModel");
         await showErrorDialog("dialogs.noTrackerModel.title", "dialogs.noTrackerModel.message");
         return false;
@@ -484,7 +606,7 @@ async function handleConnectionType() {
             if (bluetoothEnabled) types.push("bluetooth");
             if (comEnabled) {
                 if (selectedComPorts.length === 0) {
-                    window.error("No COM ports selected");
+                    e("No COM ports selected");
                     setStatus("main.status.noComPorts");
                     await showErrorDialog("dialogs.noComPorts.title", "dialogs.noComPorts.message");
                     return false;
@@ -492,10 +614,10 @@ async function handleConnectionType() {
                 types.push("com");
             }
             window.ipc.send("start-connection", { types, ports: selectedComPorts, isActive });
-            window.log(`Starting ${types.join(" and ")} connection with ports: ${selectedComPorts}`, "connection");
+            l(`Starting ${types.join(" and ")} connection with ports: ${selectedComPorts}`, "connection");
             return true;
         } else {
-            window.error("No connection mode enabled");
+            e("No connection mode enabled");
             setStatus("main.status.noConnectionMode");
             await showErrorDialog("dialogs.noConnectionMode.title", "dialogs.noConnectionMode.message");
             return false;
@@ -513,9 +635,9 @@ async function setStatus(status: string, translate: boolean = true) {
     const statusElement = document.getElementById("status");
     if (!statusElement) return;
 
-    const finalStatus = translate ? await window.translate(status) : status;
+    const finalStatus = translate ? await t(status) : status;
     statusElement.innerHTML = finalStatus;
-    window.log(`Set status to: ${finalStatus}`);
+    l(`Set status to: ${finalStatus}`);
 
     if (translate) statusElement.setAttribute("data-i18n", status);
 
@@ -527,7 +649,8 @@ async function showMessageBox(
     messageKey: string,
     blocking: boolean = false,
     translateTitle: boolean = true,
-    translateMessage: boolean = true
+    translateMessage: boolean = true,
+    buttons: string[] = ["OK"]
 ) {
     return await window.ipc.invoke("show-message", {
         title: titleKey,
@@ -535,6 +658,7 @@ async function showMessageBox(
         blocking,
         translateTitle,
         translateMessage,
+        buttons,
     });
 }
 
@@ -545,8 +669,8 @@ async function showErrorDialog(
     translateTitle: boolean = true,
     translateMessage: boolean = true
 ) {
-    const title = translateTitle ? await window.translate(titleKey) : titleKey;
-    const message = translateMessage ? await window.translate(messageKey) : messageKey;
+    const title = translateTitle ? await t(titleKey) : titleKey;
+    const message = translateMessage ? await t(messageKey) : messageKey;
 
     return await window.ipc.invoke("show-error", {
         title,
@@ -584,7 +708,7 @@ function unsavedSettings(unsaved: boolean) {
 window.ipc.on("connect", async (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
-    window.log(`Connected to "${deviceID}"`, "tracker");
+    l(`Connected to "${deviceID}"`, "tracker");
 
     if (!deviceQueue.includes(deviceID)) deviceQueue.push(deviceID);
     await processQueue();
@@ -595,7 +719,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
 
     const settings = await window.ipc.invoke("get-settings", null);
     const exists = settings.trackers?.[deviceID].fpsMode !== undefined;
-    window.log(`Tracker settings for "${deviceID}" exists: ${exists}`, "tracker");
+    l(`Tracker settings for "${deviceID}" exists: ${exists}`, "tracker");
 
     let trackerSettings = undefined;
     if (exists) {
@@ -612,7 +736,7 @@ window.ipc.on("connect", async (_event, deviceID) => {
             sensorAutoCorrection: sensorAutoCorrectionList,
         };
     }
-    window.log(`Got tracker settings for "${deviceID}": ${JSON.stringify(trackerSettings)}`, "tracker");
+    l(`Got tracker settings for "${deviceID}": ${JSON.stringify(trackerSettings)}`, "tracker");
 
     setTrackerSettings(deviceID, trackerSettings);
 });
@@ -627,7 +751,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
         return;
     }
 
-    window.log(`Disconnected from "${deviceID}"`, "tracker");
+    l(`Disconnected from "${deviceID}"`, "tracker");
     document.getElementById(deviceID).remove();
     document.getElementById("tracker-count").textContent = (
         parseInt(document.getElementById("tracker-count").textContent) - 1
@@ -641,7 +765,7 @@ window.ipc.on("disconnect", (_event, deviceID) => {
 window.ipc.on("device-connected-to-server", (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
-    window.log(`Tracker "${deviceID}" connected to server, firing battery and mag events...`, "tracker");
+    l(`Tracker "${deviceID}" connected to server, firing battery and mag events...`, "tracker");
     window.ipc.invoke("fire-tracker-battery", deviceID);
     window.ipc.invoke("fire-tracker-mag", deviceID);
 });
@@ -649,7 +773,7 @@ window.ipc.on("device-connected-to-server", (_event, deviceID) => {
 window.ipc.on("device-error", (_event, deviceID) => {
     if (!deviceID || !isActive) return;
 
-    window.log(`Too many IMU processing errors with device "${deviceID}"`, "tracker");
+    l(`Too many IMU processing errors with device "${deviceID}"`, "tracker");
     setStatus("main.status.failed");
     showErrorDialog("dialogs.trackerIMUError.title", "dialogs.trackerIMUError.message");
 });
@@ -684,7 +808,7 @@ window.ipc.on("device-battery", (_event, arg) => {
         updateTrackerBattery(trackerName, batteryRemaining, batteryVoltage);
     }
 
-    window.log(`Battery for "${trackerName}": ${batteryRemaining}% (${batteryVoltage}V)`, "tracker");
+    l(`Battery for "${trackerName}": ${batteryRemaining}% (${batteryVoltage}V)`, "tracker");
 });
 
 // TODO: change mag status to text instead of color
@@ -730,7 +854,7 @@ async function processQueue() {
 
 async function addDeviceToList(deviceID: string) {
     if (document.getElementById(deviceID)) return;
-    window.log(`Adding device to device list: ${deviceID}`);
+    l(`Adding device to device list: ${deviceID}`);
 
     const settings: { [key: string]: any } = await window.ipc.invoke("get-settings", null);
     const deviceList = document.getElementById("device-list");
@@ -742,7 +866,7 @@ async function addDeviceToList(deviceID: string) {
 
     // Check if device has a user-specified name
     const deviceName: string = settings.trackers?.[deviceID]?.name ?? deviceID;
-    if (deviceName !== deviceID) window.log(`Got user-specified name for "${deviceID}": ${deviceName}`);
+    if (deviceName !== deviceID) l(`Got user-specified name for "${deviceID}": ${deviceName}`);
 
     // Fill the div with device card data (depending on compactView)
     newDevice.innerHTML = compactView ? CompactCard(deviceID, deviceName) : NormalCard(deviceID, deviceName);
@@ -831,7 +955,7 @@ async function addDeviceToList(deviceID: string) {
     if (wiredTrackerEnabled) {
         const settingsButton = newDevice.querySelector("#tracker-settings-button");
         if (settingsButton) settingsButton.setAttribute("disabled", "true");
-        window.log(`Disabled tracker settings button for "${deviceID}" (wired tracker)`);
+        l(`Disabled tracker settings button for "${deviceID}" (wired tracker)`);
     }
 
     deviceList.appendChild(newDevice);
@@ -850,21 +974,18 @@ function setTrackerSettings(deviceID: string, trackerSettings: any) {
 
     if (accelerometerEnabled) {
         sensorAutoCorrection.add("accel");
-        window.log("Added accel to sensor auto correction", "tracker");
+        l("Added accel to sensor auto correction", "tracker");
     }
     if (gyroscopeEnabled) {
         sensorAutoCorrection.add("gyro");
-        window.log("Added gyro to sensor auto correction", "tracker");
+        l("Added gyro to sensor auto correction", "tracker");
     }
     if (magnetometerEnabled) {
         sensorAutoCorrection.add("mag");
-        window.log("Added mag to sensor auto correction", "tracker");
+        l("Added mag to sensor auto correction", "tracker");
     }
 
-    window.log(
-        `Set sensor auto correction for "${deviceID}" to: ${Array.from(sensorAutoCorrection).join(",")}`,
-        "tracker"
-    );
+    l(`Set sensor auto correction for "${deviceID}" to: ${Array.from(sensorAutoCorrection).join(",")}`, "tracker");
 
     window.ipc.send("set-tracker-settings", {
         deviceID,
@@ -937,7 +1058,7 @@ window.ipc.on("localize", (_event, resources) => {
 
 window.ipc.on("version", (_event, version) => {
     document.getElementById("version").textContent = version;
-    window.log(`Got app version: ${version}`);
+    l(`Got app version: ${version}`);
 });
 
 window.ipc.on("set-status", (_event, msg) => {
@@ -986,7 +1107,7 @@ function addEventListeners() {
         // After processing queue, restore last known tracker info
         processQueue().then(() => {
             refreshingDeviceList = false;
-            window.log("Refreshed device list");
+            l("Refreshed device list");
 
             // Restore last known mag statuses
             const newDevices = document.getElementById("device-list").querySelectorAll(".card");
@@ -1002,8 +1123,8 @@ function addEventListeners() {
                 magStatusElement.classList.add(magStatus);
                 batteryElement.innerHTML = batteryText;
 
-                window.log(`Restored last known mag status for ${device.id}: ${magStatus}`);
-                window.log(`Restored last known battery info for ${device.id}: ${batteryText}`);
+                l(`Restored last known mag status for ${device.id}: ${magStatus}`);
+                l(`Restored last known battery info for ${device.id}: ${batteryText}`);
             });
         });
     }
@@ -1014,7 +1135,7 @@ function addEventListeners() {
 
     document.getElementById("compact-view-switch").addEventListener("change", function () {
         compactView = !compactView;
-        window.log(`Switched compact mode: ${compactView}`);
+        l(`Switched compact mode: ${compactView}`);
         window.ipc.send("save-setting", {
             global: {
                 compactView: compactView,
@@ -1033,7 +1154,7 @@ function addEventListeners() {
 
     document.getElementById("censor-serial-switch").addEventListener("change", function () {
         censorSerialNumbers = !censorSerialNumbers;
-        window.log(`Switched censor serial numbers: ${censorSerialNumbers}`);
+        l(`Switched censor serial numbers: ${censorSerialNumbers}`);
         window.ipc.send("save-setting", {
             global: {
                 censorSerialNumbers: censorSerialNumbers,
@@ -1076,7 +1197,7 @@ function addEventListeners() {
 
     document.getElementById("tracker-visualization-switch").addEventListener("change", function () {
         trackerVisualization = !trackerVisualization;
-        window.log(`Switched tracker visualization: ${trackerVisualization}`);
+        l(`Switched tracker visualization: ${trackerVisualization}`);
         window.ipc.send("save-setting", {
             global: {
                 trackerVisualization: trackerVisualization,
@@ -1099,7 +1220,7 @@ function addEventListeners() {
 
     document.getElementById("wireless-tracker-switch").addEventListener("change", function () {
         wirelessTrackerEnabled = !wirelessTrackerEnabled;
-        window.log(`Switched wireless tracker to: ${wirelessTrackerEnabled}`);
+        l(`Switched wireless tracker to: ${wirelessTrackerEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 trackers: {
@@ -1120,7 +1241,7 @@ function addEventListeners() {
 
     document.getElementById("wired-tracker-switch").addEventListener("change", function () {
         wiredTrackerEnabled = !wiredTrackerEnabled;
-        window.log(`Switched wired tracker to: ${wiredTrackerEnabled}`);
+        l(`Switched wired tracker to: ${wiredTrackerEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 trackers: {
@@ -1145,7 +1266,7 @@ function addEventListeners() {
 
     document.getElementById("bluetooth-switch").addEventListener("change", function () {
         bluetoothEnabled = !bluetoothEnabled;
-        window.log(`Switched Bluetooth to: ${bluetoothEnabled}`);
+        l(`Switched Bluetooth to: ${bluetoothEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 connectionMode: {
@@ -1160,7 +1281,7 @@ function addEventListeners() {
 
     document.getElementById("com-switch").addEventListener("change", function () {
         comEnabled = !comEnabled;
-        window.log(`Switched COM to: ${comEnabled}`);
+        l(`Switched COM to: ${comEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 connectionMode: {
@@ -1179,7 +1300,7 @@ function addEventListeners() {
             }
         });
 
-        window.log(`Selected COM ports: ${selectedComPorts}`);
+        l(`Selected COM ports: ${selectedComPorts}`);
         window.ipc.send("save-setting", {
             global: {
                 connectionMode: {
@@ -1209,7 +1330,7 @@ function addEventListeners() {
 
     document.getElementById("auto-start-switch").addEventListener("change", function () {
         autoStart = !autoStart;
-        window.log(`Switched auto start to: ${autoStart}`);
+        l(`Switched auto start to: ${autoStart}`);
         window.ipc.send("save-setting", {
             global: {
                 autoStart: autoStart,
@@ -1220,7 +1341,7 @@ function addEventListeners() {
 
     document.getElementById("auto-off-switch").addEventListener("change", function () {
         autoOff = !autoOff;
-        window.log(`Switched auto off to: ${autoOff}`);
+        l(`Switched auto off to: ${autoOff}`);
         window.ipc.send("save-setting", {
             global: {
                 autoOff: autoOff,
@@ -1233,7 +1354,7 @@ function addEventListeners() {
         trackerVisualizationFPS = parseInt(
             (document.getElementById("tracker-visualization-fps") as HTMLInputElement).value
         );
-        window.log(`Selected tracker visualization FPS: ${trackerVisualizationFPS}`);
+        l(`Selected tracker visualization FPS: ${trackerVisualizationFPS}`);
         window.ipc.send("save-setting", {
             global: {
                 trackerVisualizationFPS: trackerVisualizationFPS,
@@ -1247,7 +1368,7 @@ function addEventListeners() {
         const heartbeatInterval = parseInt(
             (document.getElementById("tracker-heartbeat-interval") as HTMLInputElement).value
         );
-        window.log(`Selected tracker heartbeat interval: ${heartbeatInterval}`);
+        l(`Selected tracker heartbeat interval: ${heartbeatInterval}`);
         window.ipc.send("save-setting", {
             global: {
                 trackers: {
@@ -1261,7 +1382,7 @@ function addEventListeners() {
 
     document.getElementById("server-address").addEventListener("change", async function () {
         serverAddress = (document.getElementById("server-address") as HTMLInputElement).value;
-        window.log(`Changed server address to: ${serverAddress}`);
+        l(`Changed server address to: ${serverAddress}`);
         window.ipc.send("save-setting", {
             global: {
                 serverAddress: serverAddress,
@@ -1273,7 +1394,7 @@ function addEventListeners() {
 
     document.getElementById("server-port").addEventListener("change", async function () {
         serverPort = parseInt((document.getElementById("server-port") as HTMLInputElement).value);
-        window.log(`Changed server port to: ${serverPort}`);
+        l(`Changed server port to: ${serverPort}`);
         window.ipc.send("save-setting", {
             global: {
                 serverPort: serverPort,
@@ -1290,7 +1411,7 @@ function addEventListeners() {
 
     document.getElementById("fps-mode-select").addEventListener("change", async function () {
         fpsMode = parseInt((document.getElementById("fps-mode-select") as HTMLSelectElement).value);
-        window.log(`Changed FPS mode: ${fpsMode}`);
+        l(`Changed FPS mode: ${fpsMode}`);
         window.ipc.send("save-setting", {
             global: {
                 trackers: {
@@ -1304,7 +1425,7 @@ function addEventListeners() {
 
     document.getElementById("sensor-mode-select").addEventListener("change", async function () {
         sensorMode = parseInt((document.getElementById("sensor-mode-select") as HTMLSelectElement).value);
-        window.log(`Selected sensor mode: ${sensorMode}`);
+        l(`Selected sensor mode: ${sensorMode}`);
         window.ipc.send("save-setting", {
             global: {
                 trackers: {
@@ -1322,7 +1443,7 @@ function addEventListeners() {
 
     document.getElementById("accelerometer-switch").addEventListener("change", async function () {
         accelerometerEnabled = !accelerometerEnabled;
-        window.log(`Switched accelerometer to: ${accelerometerEnabled}`);
+        l(`Switched accelerometer to: ${accelerometerEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 trackers: {
@@ -1336,7 +1457,7 @@ function addEventListeners() {
 
     document.getElementById("gyroscope-switch").addEventListener("change", async function () {
         gyroscopeEnabled = !gyroscopeEnabled;
-        window.log(`Switched gyroscope enabled: ${gyroscopeEnabled}`);
+        l(`Switched gyroscope enabled: ${gyroscopeEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 trackers: {
@@ -1350,7 +1471,7 @@ function addEventListeners() {
 
     document.getElementById("magnetometer-switch").addEventListener("change", async function () {
         magnetometerEnabled = !magnetometerEnabled;
-        window.log(`Switched magnetometer enabled: ${magnetometerEnabled}`);
+        l(`Switched magnetometer enabled: ${magnetometerEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 trackers: {
@@ -1368,7 +1489,7 @@ function addEventListeners() {
 
     document.getElementById("app-updates-switch").addEventListener("change", async function () {
         const appUpdatesEnabled = (document.getElementById("app-updates-switch") as HTMLInputElement).checked;
-        window.log(`Switched app updates to: ${appUpdatesEnabled}`);
+        l(`Switched app updates to: ${appUpdatesEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 updates: {
@@ -1381,7 +1502,7 @@ function addEventListeners() {
     document.getElementById("translations-updates-switch").addEventListener("change", async function () {
         const translationsUpdatesEnabled = (document.getElementById("translations-updates-switch") as HTMLInputElement)
             .checked;
-        window.log(`Switched translations updates to: ${translationsUpdatesEnabled}`);
+        l(`Switched translations updates to: ${translationsUpdatesEnabled}`);
         window.ipc.send("save-setting", {
             global: {
                 updates: {
@@ -1393,7 +1514,7 @@ function addEventListeners() {
 
     document.getElementById("update-channel-select").addEventListener("change", async function () {
         const updateChannel = (document.getElementById("update-channel-select") as HTMLSelectElement).value;
-        window.log(`Selected update channel: ${updateChannel}`);
+        l(`Selected update channel: ${updateChannel}`);
         window.ipc.send("save-setting", {
             global: {
                 updates: {
@@ -1409,7 +1530,7 @@ function addEventListeners() {
 
     document.getElementById("log-to-file-switch").addEventListener("change", function () {
         canLogToFile = !canLogToFile;
-        window.log(`Switched log to file: ${canLogToFile}`);
+        l(`Switched log to file: ${canLogToFile}`);
         window.ipc.send("set-log-to-file", canLogToFile);
         window.ipc.send("save-setting", {
             global: {
@@ -1422,7 +1543,7 @@ function addEventListeners() {
 
     document.getElementById("bypass-com-limit-switch").addEventListener("change", function () {
         bypassCOMPortLimit = !bypassCOMPortLimit;
-        window.log(`Switched bypass COM port limit: ${bypassCOMPortLimit}`);
+        l(`Switched bypass COM port limit: ${bypassCOMPortLimit}`);
         window.ipc.send("save-setting", {
             global: {
                 debug: {
@@ -1454,7 +1575,7 @@ function addEventListeners() {
 
     document.getElementById("logging-mode-select").addEventListener("change", async function () {
         loggingMode = parseInt((document.getElementById("logging-mode-select") as HTMLSelectElement).value);
-        window.log(`Selected logging mode: ${loggingMode}`);
+        l(`Selected logging mode: ${loggingMode}`);
         window.ipc.send("set-logging", canLogToFile);
         window.ipc.send("save-setting", {
             global: {
@@ -1467,7 +1588,7 @@ function addEventListeners() {
 }
 
 function selectLanguage(language: string) {
-    window.log(`Changed selected language: ${language}`);
+    l(`Changed selected language: ${language}`);
     window.changeLanguage(language);
     const languageSelect = document.getElementById("language-select") as HTMLSelectElement;
     if (languageSelect) languageSelect.value = language;
@@ -1479,18 +1600,18 @@ function selectLanguage(language: string) {
 }
 
 function showOnboarding() {
-    window.log("Opening onboarding screen...");
+    l("Opening onboarding screen...");
     const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
     window.ipc.send("show-onboarding", language);
 }
 
 function showPairing() {
-    window.log("Opening pairing screen...");
+    l("Opening pairing screen...");
     window.ipc.send("show-pairing", selectedComPorts);
 }
 
 function saveSettings() {
-    window.log("Saving settings...");
+    l("Saving settings...");
     unsavedSettings(false);
 
     // Grab all com-port inputs
@@ -1504,7 +1625,7 @@ function saveSettings() {
         }
     });
 
-    window.log(`Selected COM ports: ${selectedPorts}`);
+    l(`Selected COM ports: ${selectedPorts}`);
 
     // Save settings to config file
     window.ipc.send("save-setting", {
@@ -1554,14 +1675,14 @@ function saveSettings() {
         });
     }
 
-    window.log("Settings saved");
+    l("Settings saved");
 }
 
 function simulateChangeEvent(element: HTMLInputElement, value: boolean) {
     if (element.checked === value) return;
     element.checked = value;
     element.dispatchEvent(new Event("change"));
-    window.log(`${value ? "Enabling" : "Disabling"} element "${element.id}"`);
+    l(`${value ? "Enabling" : "Disabling"} element "${element.id}"`);
 }
 
 /*
@@ -1574,12 +1695,12 @@ window.showOnboarding = showOnboarding;
 window.showPairing = showPairing;
 window.saveSettings = saveSettings;
 window.turnOffTrackers = () => {
-    window.log("Turning off all trackers...");
+    l("Turning off all trackers...");
     window.ipc.send("turn-off-tracker", "all");
 };
 
 window.fixTrackers = () => {
-    window.log("Fixing soft-bricked (boot-looping) trackers...");
+    l("Fixing soft-bricked (boot-looping) trackers...");
     window.ipc.send("fix-trackers", null);
 
     // Reset settings
@@ -1597,18 +1718,19 @@ window.fixTrackers = () => {
 };
 
 window.openTrackerSettings = async (deviceID: string) => {
-    window.log(`Opening tracker settings for "${deviceID}"`);
+    l(`Opening tracker settings for "${deviceID}"`);
     window.ipc.send("open-tracker-settings", deviceID);
 };
 
 window.openLogsFolder = () => {
-    window.log("Opening logs folder...");
+    l("Opening logs folder...");
     window.ipc.send("open-logs-folder", null);
 };
 
 window.openSupport = () => {
-    window.log("Opening support page...");
+    l("Opening support page...");
     window.ipc.send("open-support-page", null);
 };
 
-export {};
+export { };
+

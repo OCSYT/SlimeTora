@@ -317,11 +317,10 @@ async function checkForTranslationUpdates() {
                 const translatedTitleDownloaded = await translate("dialogs.updates.translations.downloaded.title");
                 const translatedMessageDownloaded = await translate("dialogs.updates.translations.downloaded.message");
                 const translatedDetailDownloaded = await translate("dialogs.updates.translations.downloaded.detail");
-                const translatedButtonOk = await translate("dialogs.updates.translations.downloaded.buttons.yes");
 
                 await dialog.showMessageBox({
                     type: "info",
-                    buttons: [translatedButtonOk],
+                    buttons: ["OK"],
                     title: translatedTitleDownloaded,
                     message: translatedMessageDownloaded,
                     detail: translatedDetailDownloaded,
@@ -479,7 +478,7 @@ async function showMessage(
     blocking = false,
     translateTitle = true,
     translateMessage = true,
-    playErrorSound = false
+    buttons = ["OK"],
 ) {
     if (isClosing) return false;
     const show = blocking ? dialog.showMessageBoxSync : dialog.showMessageBox;
@@ -489,7 +488,7 @@ async function showMessage(
     const options: Electron.MessageBoxOptions = {
         title: translatedTitle,
         message: translatedMessage,
-        type: playErrorSound ? "error" : "none",
+        buttons: buttons,
     };
 
     return show(options);
@@ -558,9 +557,10 @@ ipcMain.handle("show-message", async (_event, arg) => {
         blocking = false,
         translateTitle = true,
         translateMessage = true,
-    }: { title: string; message: string; blocking: boolean; translateTitle: boolean; translateMessage: boolean } = arg;
+        buttons = ["OK"],
+    }: { title: string; message: string; blocking: boolean; translateTitle: boolean; translateMessage: boolean, buttons: string[] } = arg;
 
-    return await showMessage(title, message, blocking, translateTitle, translateMessage);
+    return await showMessage(title, message, blocking, translateTitle, translateMessage, buttons);
 });
 
 ipcMain.handle("show-error", async (_event, arg) => {

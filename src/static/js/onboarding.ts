@@ -273,7 +273,7 @@ function startAutoDetection() {
 }
 
 function showQuestions() {
-    localStorage.setItem("showQuestions", "true");
+    localStorage.setItem("questions", "true");
 }
 
 function runStartConnection() {
