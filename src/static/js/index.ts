@@ -422,9 +422,14 @@ async function questions() {
         );
     }
 
+    let trackerModel = "HaritoraX Wireless";
+    let connectionMode = "Bluetooth (LE)";
+    let selectedPorts = [];
+    let autoStart = false;
+    let autoOff = false;
     for (const dialog of dialogs) {
         if (dialog === "comPorts") {
-            const selectedPorts: string[] = [];
+            selectedPorts = [];
             let done = false;
 
             while (!done) {
@@ -435,9 +440,9 @@ async function questions() {
                     return;
                 }
 
-                const response = await getResponse(dialog, [...comPorts, "Done"]);
+                const response = await getResponse(dialog, wiredTrackerEnabled ? comPorts : [...comPorts, "Done"]);
 
-                if (response === comPorts.length) {
+                if (response === comPorts.length && trackerModel !== "HaritoraX Wired (1.1b/1.1/1.0)") {
                     done = true;
                 } else {
                     const selectedPort = comPorts[response];
@@ -450,9 +455,11 @@ async function questions() {
                     } else {
                         l(`Selected COM port: ${selectedPort}`, "questions");
                         selectedPorts.push(selectedPort);
+                        // Only allow one selection if wired tracker is enabled
+                        if (trackerModel === "HaritoraX Wired (1.1b/1.1/1.0)") done = true;
                     }
-                    l(`Selected COM ports: ${selectedPorts.join(", ")}`, "questions");
                 }
+                l(`Selected COM ports: ${selectedPorts.join(", ")}`, "questions");
             }
 
             selectedComPorts.push(...selectedPorts);
@@ -476,10 +483,15 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
-                    l("Enabled wireless tracker", "questions");
+                    trackerModel = "HaritoraX Wireless";
                 } else if (response === 1) {
                     simulateChangeEvent(document.getElementById("wired-tracker-switch") as HTMLInputElement, true);
-                    l("Enabled wired tracker", "questions");
+                    trackerModel = "HaritoraX Wired (1.1b/1.1/1.0)";
+                    // Skip connectionMode and autoOff dialogs (not supported)
+                    dialogs.splice(dialogs.indexOf("connectionMode"), 1);
+                    connectionMode = "COM / GX(6/2)";
+                    dialogs.splice(dialogs.indexOf("autoOff"), 1);
+                    autoOff = false;
                 }
                 break;
             case "connectionMode":
@@ -491,14 +503,14 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
-                    l("Enabled Bluetooth", "questions");
+                    connectionMode = "Bluetooth (LE)";
                 } else if (response === 1) {
                     simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
-                    l("Enabled COM", "questions");
+                    connectionMode = "COM / GX(6/2)";
                 } else if (response === 2) {
                     simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                     simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
-                    l("Enabled Bluetooth and COM", "questions");
+                    connectionMode = "Bluetooth (LE) & COM / GX(6/2)";
                 }
                 break;
             case "autoStart":
@@ -506,7 +518,7 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(document.getElementById("auto-start-switch") as HTMLInputElement, true);
-                    l("Enabled auto-start", "questions");
+                    autoStart = true;
                 }
                 break;
             case "autoOff":
@@ -514,18 +526,22 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(document.getElementById("auto-off-switch") as HTMLInputElement, true);
-                    l("Enabled auto-off", "questions");
+                    autoOff = true;
                 }
                 break;
             case "finish":
                 const msg = await t("dialogs.questions.finish.message");
-                await showMessageBox(
-                    `dialogs.questions.${dialog}.title`,
-                    msg,
-                    true,
-                    true,
-                    true,
+                const newMessage = msg.replace(
+                    "{settings}",
+                    `\n\r
+Tracker model: ${trackerModel}
+Connection mode: ${connectionMode}
+COM ports (if applicable): ${selectedPorts.join(", ")}
+Auto-start: ${autoStart}
+Auto-off: ${autoOff}`
                 );
+                await showMessageBox("dialogs.questions.finish.title", newMessage, true, true, false);
+                l(`Finished questions dialog with settings: ${newMessage}`, "questions");
         }
     }
 }
