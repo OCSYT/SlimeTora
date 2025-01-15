@@ -243,25 +243,29 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 window.addEventListener("storage", (event) => {
-    window.log(`localStorage event: "${event.key}" changed to "${event.newValue}"`);
+    const { key, newValue } = event;
+    window.log(`localStorage event: "${key}" changed to "${newValue}"`);
 
-    if (event.key === "autodetect" && event.newValue === "true") {
-        autodetect();
-        localStorage.setItem("autodetect", "false");
-    } else if (event.key === "startConnection" && event.newValue === "true") {
-        startConnection();
-        localStorage.setItem("startConnection", "false");
-    } else if (event.key === "stopConnection" && event.newValue === "true") {
-        stopConnection();
-        localStorage.setItem("stopConnection", "false");
-    } else if (event.key === "language") {
-        selectLanguage(event.newValue);
+    if (newValue === "true") {
+        if (key === "autodetect") {
+            autodetect();
+            localStorage.setItem("autodetect", "false");
+        } else if (key === "questions") {
+            questions();
+            localStorage.setItem("questions", "false");
+        } else if (key === "startConnection") {
+            startConnection();
+            localStorage.setItem("startConnection", "false");
+        } else if (key === "stopConnection") {
+            stopConnection();
+            localStorage.setItem("stopConnection", "false");
+        }
+    } else {
+        if (key === "language") {
+            selectLanguage(newValue);
+        }
     }
 });
-
-/*
- * Connection handling
- */
 
 async function autodetect() {
     showMessageBox("dialogs.autodetect.pre-check.title", "dialogs.autodetect.pre-check.message", true);
@@ -399,6 +403,14 @@ Ankle motion detection: ${ankle}`
     // Simulate stop connection
     document.getElementById("stop-connection-button").click();
 }
+
+async function questions() {
+
+}
+
+/*
+ * Connection handling
+ */
 
 async function startConnection() {
     window.log("Starting connection...", "connection");
@@ -1599,5 +1611,4 @@ window.openSupport = () => {
     window.ipc.send("open-support-page", null);
 };
 
-export { };
-
+export {};

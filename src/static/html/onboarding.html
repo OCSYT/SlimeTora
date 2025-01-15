@@ -49,7 +49,7 @@
                 <div>
                     <div class="buttons is-centered">
                         <button class="button is-primary" id="step1-button" data-i18n="onboarding.steps.step-2.title">
-                            Automatic setup
+                            Guided setup
                         </button>
                         <button class="button is-danger" id="skip-button" data-i18n="onboarding.manual">
                             Manual setup (skip)
@@ -61,12 +61,11 @@
             <div class="onboarding-step" id="step-2" style="display: none">
                 <div>
                     <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-2.title">
-                        Automatic setup
+                        Guided setup
                     </h2>
                     <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-2.text">
-                        Automatic setup allows you to let the program try to automatically detect your settings and set
-                        up the program for you. It is the easiest way to get started and supports all tracker models and
-                        connection modes.<br />
+                        Guided setup will help you through the process of setting up the program step-by-step. You can
+                        let the program try to auto-detect your settings or answer the questions about your setup.<br />
                         <br />
                         It is recommended (but not necessary) to have at least one of your trackers turned on and
                         connected to your computer before continuing. When you are ready, click the "Next" button.
@@ -84,27 +83,35 @@
             <div class="onboarding-step" id="step-3" style="display: none">
                 <div>
                     <h2 class="title is-2 has-text-centered is-spaced" data-i18n="onboarding.steps.step-3.title">
-                        Auto-detection
+                        Tracker setup
                     </h2>
                     <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-3.text">
-                        Press the button below to start the auto-detection process. The process may take up to 20
-                        seconds to complete, <b>make sure the official software is closed</b>.<br />
-                        <br />
-                        After the process is complete, you will receive a pop-up with the results - make sure they are
-                        accurate. If the process fails, you can try again or set up SlimeTora manually.<br />
+                        Press either button found below to set up the connection (and settings) to your trackers. You
+                        can either let the program try to auto-detect your settings, or answer the questions about your
+                        setup if you prefer / if auto-detection fails.
                     </p>
                 </div>
-                <button
-                    class="button is-primary"
-                    id="autodetect-button"
-                    onclick="autodetect()"
-                    data-i18n="onboarding.steps.step-3.autodetect"
-                >
-                    Start auto-detection
-                </button>
+                <div class="buttons is-centered">
+                    <button
+                        class="button is-primary"
+                        id="questions-button"
+                        onclick="questions()"
+                        data-i18n="onboarding.steps.step-3.questions"
+                    >
+                        Manual (questions)
+                    </button>
+                    <button
+                        class="button is-info"
+                        id="autodetect-button"
+                        onclick="autodetect()"
+                        data-i18n="onboarding.steps.step-3.autodetect"
+                    >
+                        Automatic (auto-detection)
+                    </button>
+                </div>
                 <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-3.text2">
-                    If you are happy with the results, click the "Next" button to continue. Otherwise, you may set up
-                    SlimeTora manually.
+                    If you are happy with the settings you (or auto-detection) has chosen, click the "Next" button to
+                    continue.
                 </p>
                 <div class="buttons is-centered">
                     <button class="button is-info" id="back-step3-button" data-i18n="onboarding.back">Back</button>
@@ -256,8 +263,8 @@
                     </h2>
                     <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-8.text">
                         You will now see a small tutorial on how to perform "resets" in SlimeVR. With SlimeTora (along
-                        with SlimeVR's built-in tap-to-reset), you may press any of the buttons a number of times
-                        (within 0.5s) on your trackers. See the list for the reset options:
+                        with SlimeVR's tap-to-reset), you may physically press any of the buttons on your trackers a
+                        number of times (within 0.5s). See the list for the reset options:
                     </p>
                 </div>
 

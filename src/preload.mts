@@ -117,6 +117,7 @@ declare global {
 
         // onboarding.ts
         autodetect: () => void;
+        questions: () => void;
         runStartConnection: () => void;
         runStopConnection: () => void;
 

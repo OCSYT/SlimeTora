@@ -272,6 +272,10 @@ function startAutoDetection() {
     localStorage.setItem("autodetect", "true");
 }
 
+function showQuestions() {
+    localStorage.setItem("showQuestions", "true");
+}
+
 function runStartConnection() {
     localStorage.setItem("startConnection", "true");
     document.getElementById("start-connection-button").setAttribute("disabled", "true");
@@ -285,8 +289,10 @@ function runStopConnection() {
 }
 
 window.autodetect = startAutoDetection;
+window.questions = showQuestions;
 window.runStartConnection = runStartConnection;
 window.runStopConnection = runStopConnection;
 
 // Required to prevent variable conflicts from other files
-export {};
+export { };
+

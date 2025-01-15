@@ -175,14 +175,15 @@
         "manual": "Manual setup (skip)",
         "steps": {
             "step-2": {
-                "title": "Automatic setup",
-                "text": "Automatic setup allows you to let the program try to automatically detect your settings and set itself up for you. It is the easiest way to get started and supports all tracker models and connection modes.<br /><br />It is recommended (but not necessary) to have at least one of your trackers turned on before continuing. When you are ready, click the \"Next\" button."
+                "title": "Guided setup",
+                "text": "Guided setup will help you through the process of setting up the program step-by-step. You can let the program try to auto-detect your settings or answer the questions about your setup. <br /><br /> It is recommended (but not necessary) to have at least one of your trackers turned on and connected to your computer before continuing. When you are ready, click the \"Next\" button."
             },
             "step-3": {
-                "title": "Auto-detection",
-                "text": "Press the button below to start the auto-detection process. The process may take up to 20 seconds to complete, <b>make sure the official software is closed</b>.<br />After the process is complete, you will receive a pop-up with the results - make sure they are accurate. If the process fails, you can try again or set up SlimeTora manually.",
-                "autodetect": "Start auto-detection",
-                "text2": "If you are happy with the results, click the \"Next\" button to continue. Otherwise, you may set up SlimeTora manually."
+                "title": "Guided setup",
+                "text": "Press either button found below to set up the connection (and settings) to your trackers. You can either let the program try to auto-detect your settings, or answer the questions about your setup if you prefer / if auto-detection fails.",
+                "autodetect": "Automatic (auto-detection)",
+                "questions": "Manual (questions)",
+                "text2": "If you are happy with the settings you (or auto-detection) has chosen, click the \"Next\" button to continue."
             },
             "step-4": {
                 "title": "SlimeVR setup",
@@ -205,7 +206,7 @@
             },
             "step-8": {
                 "title": "Resets & calibration",
-                "text": "You will now see a small tutorial on how to perform \"resets\" in SlimeVR. With SlimeTora (along with SlimeVR's built-in tap-to-reset), you may press any of the buttons a number of times (within 0.5s) on your trackers. See the list for the reset options:",
+                "text": "You will now see a small tutorial on how to perform \"resets\" in SlimeVR. With SlimeTora (along with SlimeVR's tap-to-reset), you may physically press any of the buttons on your trackers a number of times (within 0.5s). See the list for the reset options:",
                 "list": {
                     "1": "1 press - yaw reset",
                     "2": "2 presses - full reset",
