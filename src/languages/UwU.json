@@ -168,15 +168,15 @@
     },
     "onboarding": {
         "title": "Wewcome 2 SwimeTowa! :3",
-        "text": "SwimeTowa is a middwewawe pwogwam that awwows u 2 connyect youw HawitowaX twackers 2 the SwimeVR servew, bypassing the officiaw softwawe!<br /><br />2 get stawted, sewect how u wouwd wike 2 set up the pwogwam. Aftew u set up the pwogwam, u wiww be guided on how 2 set up SwimeVR servew.",
+        "text": "SwimeTowa is a middwewawe pwogwam that awwows u 2 connyect youw HawitowaX twackers 2 the SwimeVR servew, bypassing the officiaw softwawe!<br /><br />2 get stawted, sewect how u wouwd wike 2 set up the pwogwam. Aftew u set up the pwogwam, u wiww be Gwided on how 2 set up SwimeVR servew.",
         "next": "Nyext",
         "back": "Back",
         "finish": "Finyish",
         "manual": "Manyuaw setup (skip)",
         "steps": {
             "step-2": {
-                "title": "Automatic setup",
-                "text": "Automatic setup awwows u 2 wet the pwogwam twy 2 automaticawwy detect youw meowings and set itsewf up fow u. It is the easiest way 2 get stawted and suppowts awltwacker modews and connyection modes.<br /><br />It is wecommended (but nyot nyecessawy) 2 hawe at weast onye of youw twackers tuwnyed on befowe continyuing. When u awe weady, cwick the \"Nyext\" button."
+                "title": "Gwided setup",
+                "text": "Gwided setup wiww hewp you thwough the pwocess of setting up the pwogwam step-by-step. You can wet the pwogwam twy to cat-detect youw settings ow answew the questions about youw setup. <br /><br /> It is wecommended (but nyot nyecessawy) to hawe at weast onye of youw twackers tuwnyed on and connyected to youw computew befowe continyuing. When you awe weady, cwick the \"Nyext\" button."
             },
             "step-3": {
                 "title": "Cat-detection",
@@ -205,11 +205,11 @@
             },
             "step-8": {
                 "title": "Wesets & cawibwation",
-                "text": "U wiww nyow see a smaww tutowiaw on how 2 pewfowm \"wesets\" in SwimeVR. With SwimeTowa (awong with SwimeVR's buiwt-in tap-2-weset), u may pwess any of the buttons a nyumbew of times (within 0.5s) on youw twackers. See the wist fow the weset options:",
+                "text": "You wiww nyow see a smaww tutowiaw on how to pewfowm \"wesets\" in SwimeVR. With SwimeTowa (awong with SwimeVR's tap-to-weset), you may physicawwy pwess any of the buttons on youw twackers a nyumbew of times (within 0.5s). See the wist fow the weset options:",
                 "list": {
                     "1": "1 pwess - yaw weset",
-                    "2": "2 pwesses - fuwl weset",
-                    "3": "3 pwesses - meowting weset",
+                    "2": "2 pwesses - fuww weset",
+                    "3": "3 pwesses - mounting weset",
                     "4": "4 pwesses - pause/unpause twacking"
                 }
             },
@@ -315,16 +315,55 @@
         },
         "autodetect": {
             "pre-check": {
-                "title": "Auto-detect pwe-check",
+                "title": "Cat-detect pwe-check",
                 "message": "This featuwe wiww attempt 2 automaticawwy detect youw twackers, connyection mode, and twacker meowings 2 appwy the meowings in the pwogwam fow u.\r\n\r\nMake suwe the officiaw softwawe is cwosed befowe pwoceeding. It is awso wecommended 2 tuwn on at weast onye of youw twackers 2 find its meowings."
             },
             "success": {
-                "title": "Auto-detect compweted!",
-                "message": "Auto-detect compweted successfuwly. Wemembew this may nyot be accuwate, so pwease wewiew the meowings that hawe been appwied bewow: {settings}"
+                "title": "Cat-detect compweted!",
+                "message": "Cat-detect compweted successfuwly. Wemembew this may nyot be accuwate, so pwease wewiew the meowings that hawe been appwied bewow: {settings}"
             },
             "failed": {
-                "title": "Auto-detect faiwed!",
-                "message": "Auto-detect faiwed. Pwease make suwe u hawe youw Bwuetooth/GX(6/2) dongwes pwugged in & tuwnyed on."
+                "title": "Cat-detect faiwed!",
+                "message": "Cat-detect faiwed. Pwease make suwe u hawe youw Bwuetooth/GX(6/2) dongwes pwugged in & tuwnyed on."
+            }
+        },
+		"questions": {
+            "initial": {
+                "title": "Manyuaw setup",
+                "message": "Pwease answew the fowwowing questions to set up the pwogwam. If you awe unsuwe, you can awways use the cat-detect featuwe in the onboawding scween."
+            },
+            "trackerModel": {
+                "title": "Twacker modew",
+                "message": "Sewect the modew of HawitowaX twackers you hawe fwom the wist.",
+                "wireless": "HawitowaX Wiwewess",
+                "wired": "HawitowaX 1.1b/1.1/1.0"
+            },
+            "connectionMode": {
+                "title": "Connyection mode",
+                "message": "Sewect the connyection mode used to connyect to the twackers. Muwtipwe modes can be meowed at the same time if wan :3",
+                "bluetooth": "Bwuetooth (WE)",
+                "com": "COM / GX(6/2)",
+                "both": "Both!!"
+            },
+            "comPorts": {
+                "title": "COM powts",
+                "message": "Sewect the COM powts youw GX(6/2) dongwes ow HawitowaX 1.1b/1.1/1.0 twackers awe using.\n\r\n\rSewected: {ports}"
+            },
+            "autoStart": {
+                "title": "Auto-stawt connyection",
+                "message": "Awwow the pwogwam to automaticawwy connyect to youw twackers wen openying the pwogwam??",
+                "yes": "okie",
+                "no": "Nyo"
+            },
+            "autoOff": {
+                "title": "Auto-off twackers",
+                "message": "Awwow the pwogwam to automaticawwy kil youw twackers upon cwosing the pwogwam??",
+                "yes": "okie",
+                "no": "Nyo"
+            },
+            "finish": {
+                "title": "Setup compwete",
+                "message": "The pwogwam has been successfuwwy set up with the settings u choosed, you can awways modifwy this latew. Weview what you hawe chosen bewow: {settings}"
             }
         },
         "updates": {
@@ -356,10 +395,7 @@
                 "downloaded": {
                     "title": "Updates downwoaded",
                     "message": "Twanswation updates hawe been downwoaded ",
-                    "detail": "Pwease westawt the appwication 2 appwy the changes.",
-                    "buttons": {
-                        "yes": "okie"
-                    }
+                    "detail": "Pwease westawt the appwication 2 appwy the changes."
                 }
             }
         },
