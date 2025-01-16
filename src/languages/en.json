@@ -348,7 +348,7 @@
             },
             "comPorts": {
                 "title": "COM ports",
-                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using."
+                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using.\n\r\n\rSelected: {ports}"
             },
             "autoStart": {
                 "title": "Auto-start connection",

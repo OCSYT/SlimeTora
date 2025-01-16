@@ -462,7 +462,16 @@ async function questions() {
                 }
 
                 // Only allowing one selection for wired, so no need for "Done"
-                const response = await getResponse(dialog, wiredTrackerEnabled ? comPorts : [...comPorts, "Done"]);
+                const msg = await t("dialogs.questions.comPorts.message");
+                const newMsg = msg.replace("{ports}", `\n\r${selectedPorts.join(", ")}`);
+                const response = await showMessageBox(
+                    "dialogs.questions.comPorts.title",
+                    newMsg,
+                    true,
+                    true,
+                    false,
+                    wiredTrackerEnabled ? comPorts : [...comPorts, "Done"]
+                );
 
                 if (response === comPorts.length && trackerModel !== "HaritoraX Wired (1.1b/1.1/1.0)") {
                     done = true;
@@ -532,7 +541,7 @@ async function questions() {
                 } else if (response === 2) {
                     simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                     simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
-                    connectionMode = ConnectionMode.Both
+                    connectionMode = ConnectionMode.Both;
                 }
                 break;
             case "autoStart":
@@ -553,7 +562,7 @@ async function questions() {
                 break;
             case "finish":
                 const msg = await t("dialogs.questions.finish.message");
-                const newMessage = msg.replace(
+                const newMsg = msg.replace(
                     "{settings}",
                     `\n\r
 Tracker model: ${trackerModel}
@@ -562,7 +571,7 @@ COM ports (if applicable): ${selectedPorts.join(", ")}
 Auto-start: ${autoStart}
 Auto-off: ${autoOff}`
                 );
-                await showMessageBox("dialogs.questions.finish.title", newMessage, true, true, false);
+                await showMessageBox("dialogs.questions.finish.title", newMsg, true, true, false);
         }
     }
 }

@@ -491,7 +491,7 @@ async function showMessage(
         buttons: buttons,
     };
 
-    return show(options);
+    return await show(options);
 }
 
 async function showError(
