@@ -50,13 +50,13 @@
             "text": "Override the global tracker settings for this tracker. Can be useful if only certain trackers have bad mag statuses.",
             "fps": {
                 "title": "FPS transfer rate",
-                "tooltip": "Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.",
+                "tooltip": "Select how many times the trackers send data per second (\"FPS\"). 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS.",
                 "50": "50 FPS",
                 "100": "100 FPS"
             },
             "sensorMode": {
                 "title": "Sensor mode",
-                "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment (mag status is green or yellow). If unstable (mag status is red), use mode 2.",
+                "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best (reduces drift) if you have a stable geomagnetic environment (mag status is green or yellow). If your environment is unstable (mag status is red) or you're not sure, use mode 2 (which is the default).",
                 "1": "Mode 1",
                 "2": "Mode 2"
             },
@@ -122,13 +122,13 @@
         "tooltip": "Set the global settings for the trackers (can be overriden per-tracker).",
         "fps": {
             "title": "FPS transfer rate",
-            "tooltip": "Select the FPS transfer rate for the trackers. If using Bluetooth, 50FPS may be more stable.",
+            "tooltip": "Select how many times the trackers send data per second (\"FPS\"). 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS.",
             "50": "50 FPS",
             "100": "100 FPS"
         },
         "sensorMode": {
             "title": "Sensor mode",
-            "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best if you have a stable geomagnetic environment (mag status is green or yellow). If unstable (mag status is red), use mode 2.",
+            "tooltip": "Select the sensor mode for the trackers. Mode 1 enables the magnetometer which is best (reduces drift) if you have a stable geomagnetic environment (mag status is green or yellow). If your environment is unstable (mag status is red) or you're not sure, use mode 2 (which is the default).",
             "1": "Mode 1",
             "2": "Mode 2"
         },
@@ -348,7 +348,46 @@
             },
             "comPorts": {
                 "title": "COM ports",
-                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using.\n\r\n\rSelected: {ports}"
+                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using.\r\n\r\nSelected: {ports}",
+                "done": "Done"
+            },
+            "sensorMode": {
+                "title": "Sensor mode",
+                "message": "Select the sensor mode for the trackers.\r\n\r\nMode 1 enables the magnetometer which is best (reduces drift) if you have a stable geomagnetic environment (mag status is green or yellow).\r\nIf your environment is unstable (mag status is red) or you're not sure, use mode 2 (which is the default).",
+                "2": "Mode 2 (default)",
+                "1": "Mode 1 (magnetometer)"
+            },
+            "fps": {
+                "title": "FPS transfer rate",
+                "message": "Select how many times the trackers send data per second (\"FPS\"). 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS.",
+                "50": "50 FPS",
+                "100": "100 FPS"
+            },
+            "sensorAutoCorrection": {
+                "title": "Sensor auto correction",
+                "message": "Enable or disable sensor auto correction features (dynamic calibration). Usually not needed to be changed and results vary between environments.\r\n\r\nSelected sensors: {sensors}",
+                "accelerometer": "Accelerometer",
+                "gyroscope": "Gyroscope",
+                "magnetometer": "Magnetometer",
+                "done": "Done"
+            },
+            "appUpdates": {
+                "title": "App updates",
+                "message": "Would you like to allow the program to check for updates on startup?",
+                "yes": "Yes",
+                "no": "No"
+            },
+            "appUpdatesChannel": {
+                "title": "App updates channel",
+                "message": "Select the update channel you would like to receive updates from.\r\nStable is recommended for most users, while beta is for those who want to test new features (but may be more buggy).",
+                "stable": "Stable (default)",
+                "beta": "Beta"
+            },
+            "languageUpdates": {
+                "title": "Language updates",
+                "message": "Would you like to allow the program to check for language updates on startup?",
+                "yes": "Yes",
+                "no": "No"
             },
             "autoStart": {
                 "title": "Auto-start connection",

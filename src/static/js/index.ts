@@ -89,7 +89,7 @@ function appendOptions(selectElement: HTMLElement, options: string[]) {
     selectElement.appendChild(fragment);
 }
 
-function setSwitchState(switchId: string, state: any) {
+function setSwitchState(switchId: string, state: boolean) {
     const switchElement = document.getElementById(switchId) as HTMLInputElement;
     if (switchElement) switchElement.checked = state;
 }
@@ -420,7 +420,21 @@ Ankle motion detection: ${ankle}`
 }
 
 async function questions() {
-    const dialogs = ["initial", "trackerModel", "connectionMode", "comPorts", "autoStart", "autoOff", "finish"];
+    const dialogs = [
+        "initial",
+        "trackerModel",
+        "connectionMode",
+        "comPorts",
+        "sensorMode",
+        "fps",
+        "sensorAutoCorrection",
+        "appUpdates",
+        "appUpdatesChannel",
+        "languageUpdates",
+        "autoStart",
+        "autoOff",
+        "finish",
+    ];
 
     async function getResponse(dialog: string, buttons?: string[]) {
         return await showMessageBox(
@@ -433,18 +447,24 @@ async function questions() {
         );
     }
 
-    // Reset all settings to default
+    // Set all switches to false
+    // todo: for loop and/or assign switches to variables for use later
     simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, false);
     simulateChangeEvent(document.getElementById("wired-tracker-switch") as HTMLInputElement, false);
     simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, false);
     simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("accelerometer-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("gyroscope-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("magnetometer-switch") as HTMLInputElement, false);
     simulateChangeEvent(document.getElementById("auto-start-switch") as HTMLInputElement, false);
     simulateChangeEvent(document.getElementById("auto-off-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("app-updates-switch") as HTMLInputElement, false);
+    simulateChangeEvent(document.getElementById("translations-updates-switch") as HTMLInputElement, false);
 
     // Logic for questions
     let trackerModel = TrackerModel.Wireless;
     let connectionMode = ConnectionMode.Bluetooth;
-    let selectedPorts = [];
+    let selectedPorts: string[] = [];
     let autoStart = false;
     let autoOff = false;
     for (const dialog of dialogs) {
@@ -470,7 +490,7 @@ async function questions() {
                     true,
                     true,
                     false,
-                    wiredTrackerEnabled ? comPorts : [...comPorts, "Done"]
+                    wiredTrackerEnabled ? comPorts : [...comPorts, await t("dialogs.questions.comPorts.done")]
                 );
 
                 if (response === comPorts.length && trackerModel !== "HaritoraX Wired (1.1b/1.1/1.0)") {
@@ -493,12 +513,64 @@ async function questions() {
                 l(`Selected COM ports: ${selectedPorts.join(", ")}`, "questions");
             }
 
-            selectedComPorts.push(...selectedPorts);
+            const comPortsParent = document.getElementById("com-ports");
+            Array.from(comPortsParent.querySelectorAll("input")).forEach((port) =>
+                simulateChangeEvent(port, selectedPorts.includes(port.id))
+            );
+            comPortsParent.dispatchEvent(new Event("change")); // simulate it here again since the actual code for handling COM port changes is in the parent element
+            continue;
+        } else if (dialog === "sensorAutoCorrection") {
+            const sensorAutoCorrectionList: string[] = [];
+            let done = false;
 
-            selectedPorts.forEach((portId) => {
-                const portElement = document.getElementById(portId) as HTMLInputElement;
-                if (portElement) portElement.checked = true;
-            });
+            // Default settings based on tracker model
+            if (trackerModel === TrackerModel.Wireless) {
+                sensorAutoCorrectionList.push("accel");
+            } else if (trackerModel === TrackerModel.Wired) {
+                sensorAutoCorrectionList.push("accel", "gyro");
+            }
+
+            while (!done) {
+                const msg = await t("dialogs.questions.sensorAutoCorrection.message");
+                const newMsg = msg.replace("{sensors}", sensorAutoCorrectionList.join(", "));
+                const btns = [
+                    await t("dialogs.questions.sensorAutoCorrection.accelerometer"),
+                    await t("dialogs.questions.sensorAutoCorrection.gyroscope"),
+                    await t("dialogs.questions.sensorAutoCorrection.magnetometer"),
+                    await t("dialogs.questions.sensorAutoCorrection.done"),
+                ];
+                const response = await showMessageBox(
+                    "dialogs.questions.sensorAutoCorrection.title",
+                    newMsg,
+                    true,
+                    true,
+                    false,
+                    btns
+                );
+
+                if (response === 3) {
+                    done = true;
+                } else {
+                    const sensor = ["accel", "gyro", "mag"][response];
+                    if (sensorAutoCorrectionList.includes(sensor)) {
+                        l(`Deselected sensor auto correction: ${sensor}`, "questions");
+                        sensorAutoCorrectionList.splice(sensorAutoCorrectionList.indexOf(sensor), 1);
+                    } else {
+                        l(`Selected sensor auto correction: ${sensor}`, "questions");
+                        sensorAutoCorrectionList.push(sensor);
+                    }
+                }
+                l(`Selected sensors for auto correction: ${sensorAutoCorrectionList.join(", ")}`, "questions");
+            }
+
+            const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
+            const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
+            const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
+
+            if (sensorAutoCorrectionList.includes("accel")) simulateChangeEvent(accelerometerSwitch, true);
+            if (sensorAutoCorrectionList.includes("gyro")) simulateChangeEvent(gyroscopeSwitch, true);
+            if (sensorAutoCorrectionList.includes("mag")) simulateChangeEvent(magnetometerSwitch, true);
+
             continue;
         }
 
@@ -542,6 +614,59 @@ async function questions() {
                     simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                     simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
                     connectionMode = ConnectionMode.Both;
+                }
+                break;
+            case "sensorMode":
+                btns = [await t("dialogs.questions.sensorMode.2"), await t("dialogs.questions.sensorMode.1")];
+                response = await getResponse(dialog, btns);
+                const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
+                if (response === 0) {
+                    simulateChangeEvent(sensorModeSelect, "2");
+                } else if (response === 1) {
+                    simulateChangeEvent(sensorModeSelect, "1");
+                }
+                break;
+            case "fps":
+                btns = [await t("dialogs.questions.fps.50"), await t("dialogs.questions.fps.100")];
+                response = await getResponse(dialog, btns);
+                const fpsModeSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
+                if (response === 0) {
+                    simulateChangeEvent(fpsModeSelect, "50");
+                } else if (response === 1) {
+                    simulateChangeEvent(fpsModeSelect, "100");
+                }
+                break;
+            case "appUpdates":
+                btns = [await t("dialogs.questions.appUpdates.yes"), await t("dialogs.questions.appUpdates.no")];
+                response = await getResponse(dialog, btns);
+                if (response === 0) {
+                    simulateChangeEvent(document.getElementById("app-updates-switch") as HTMLInputElement, true);
+                }
+                break;
+            case "appUpdatesChannel":
+                btns = [
+                    await t("dialogs.questions.appUpdatesChannel.stable"),
+                    await t("dialogs.questions.appUpdatesChannel.beta"),
+                ];
+                response = await getResponse(dialog, btns);
+                const updateChannelSelect = document.getElementById("update-channel-select") as HTMLSelectElement;
+                if (response === 0) {
+                    simulateChangeEvent(updateChannelSelect, "stable");
+                } else if (response === 1) {
+                    simulateChangeEvent(updateChannelSelect, "beta");
+                }
+                break;
+            case "languageUpdates":
+                btns = [
+                    await t("dialogs.questions.languageUpdates.yes"),
+                    await t("dialogs.questions.languageUpdates.no"),
+                ];
+                response = await getResponse(dialog, btns);
+                if (response === 0) {
+                    simulateChangeEvent(
+                        document.getElementById("translations-updates-switch") as HTMLInputElement,
+                        true
+                    );
                 }
                 break;
             case "autoStart":
@@ -1724,11 +1849,17 @@ function saveSettings() {
     l("Settings saved");
 }
 
-function simulateChangeEvent(element: HTMLInputElement, value: boolean) {
-    if (element.checked === value) return;
-    element.checked = value;
+function simulateChangeEvent(element: HTMLInputElement | HTMLSelectElement, value: boolean | string) {
+    if (element instanceof HTMLInputElement) {
+        if (element.checked === value) return;
+        element.checked = value as boolean;
+        l(`${value ? "Enabling" : "Disabling"} element "${element.id}"`);
+    } else if (element instanceof HTMLSelectElement) {
+        if (element.value === value) return;
+        element.value = value as string;
+        l(`Changed select element "${element.id}" to: ${value}`);
+    }
     element.dispatchEvent(new Event("change"));
-    l(`${value ? "Enabling" : "Disabling"} element "${element.id}"`);
 }
 
 /*
@@ -1778,5 +1909,4 @@ window.openSupport = () => {
     window.ipc.send("open-support-page", null);
 };
 
-export { };
-
+export {};
