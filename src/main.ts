@@ -1106,13 +1106,13 @@ ipcMain.on("save-setting", (_event, data) => {
     saveSetting(data);
 });
 
-import * as _ from "lodash-es";
+import mergeWith from "lodash-es/mergeWith.js";
 function saveSetting(data: { [key: string]: any }) {
     const config: { [key: string]: any } = JSON.parse(fs.readFileSync(configPath).toString());
 
     // Use lodash's mergeWith() to merge the new data with the existing config (not merge() as it doesn't remove old keys if purposely removed by program, e.g. comPorts)
-    const mergedConfig = _.mergeWith(config, data, (objValue: any, srcValue: any) => {
-        if (_.isArray(objValue)) {
+    const mergedConfig = mergeWith(config, data, (objValue: any, srcValue: any) => {
+        if (Array.isArray(objValue)) {
             return srcValue;
         }
     });
