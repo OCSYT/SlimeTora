@@ -498,19 +498,22 @@ async function questions() {
                 // Only allowing one selection for wired, so no need for "Done"
                 const msg = await t("dialogs.questions.comPorts.message");
                 const newMsg = msg.replace("{ports}", `\n\r${selectedComPorts.join(", ")}`);
+                const btns = ["Cancel", ...comPorts];
                 const response = await showMessageBox(
                     "dialogs.questions.comPorts.title",
                     newMsg,
                     true,
                     true,
                     false,
-                    wiredTrackerEnabled ? comPorts : [...comPorts, await t("dialogs.questions.comPorts.done")]
+                    wiredTrackerEnabled ? btns : [...btns, "OK"]
                 );
 
-                if (response === comPorts.length && !wiredTrackerEnabled) {
+                if (response === 0) {
+                    return;
+                } else if (response === btns.length && !wiredTrackerEnabled) {
                     done = true;
                 } else {
-                    const selectedPort = comPorts[response];
+                    const selectedPort = comPorts[response - 1];
                     const index = selectedComPorts.indexOf(selectedPort);
                     if (index > -1) {
                         l(`Deselected COM port: ${selectedPort}`, "questions");
@@ -552,10 +555,11 @@ async function questions() {
                 const msg = await t("dialogs.questions.sensorAutoCorrection.message");
                 const newMsg = msg.replace("{sensors}", sensorAutoCorrectionList.join(", "));
                 const btns = [
+                    "Cancel",
                     await t("dialogs.questions.sensorAutoCorrection.accelerometer"),
                     await t("dialogs.questions.sensorAutoCorrection.gyroscope"),
                     await t("dialogs.questions.sensorAutoCorrection.magnetometer"),
-                    await t("dialogs.questions.sensorAutoCorrection.done"),
+                    "OK",
                 ];
                 const response = await showMessageBox(
                     "dialogs.questions.sensorAutoCorrection.title",
@@ -566,7 +570,9 @@ async function questions() {
                     btns
                 );
 
-                if (response === btns.length - 1) {
+                if (response === 0) {
+                    return;
+                } else if (response === btns.length - 1) {
                     done = true;
                 } else {
                     const sensor = ["accel", "gyro", "mag"][response];
@@ -594,15 +600,18 @@ async function questions() {
         switch (dialog) {
             case "trackerModel":
                 btns = [
+                    "Cancel",
                     await t("dialogs.questions.trackerModel.wireless"),
                     await t("dialogs.questions.trackerModel.wired"),
                 ];
                 response = await getResponse(dialog, btns);
 
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(wirelessSwitch, true);
                     wirelessTrackerEnabled = true;
-                } else if (response === 1) {
+                } else if (response === 2) {
                     simulateChangeEvent(wiredSwitch, true);
                     wiredTrackerEnabled = true;
                     // Skip connectionMode and autoOff dialogs (not supported)
@@ -614,6 +623,7 @@ async function questions() {
                 break;
             case "connectionMode":
                 btns = [
+                    "Cancel",
                     await t("dialogs.questions.connectionMode.bluetooth"),
                     await t("dialogs.questions.connectionMode.com"),
                     await t("dialogs.questions.connectionMode.both"),
@@ -621,12 +631,16 @@ async function questions() {
                 response = await getResponse(dialog, btns);
 
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(bluetoothSwitch, true);
                     bluetoothEnabled = true;
-                } else if (response === 1) {
+                    // skip comPorts dialog if only bluetooth is enabled
+                    dialogs.splice(dialogs.indexOf("comPorts"), 1);
+                } else if (response === 2) {
                     simulateChangeEvent(comSwitch, true);
                     comEnabled = true;
-                } else if (response === 2) {
+                } else if (response === 3) {
                     simulateChangeEvent(bluetoothSwitch, true);
                     simulateChangeEvent(comSwitch, true);
                     bluetoothEnabled = true;
@@ -634,42 +648,49 @@ async function questions() {
                 }
                 break;
             case "sensorMode":
-                btns = [await t("dialogs.questions.sensorMode.2"), await t("dialogs.questions.sensorMode.1")];
+                btns = ["Cancel", await t("dialogs.questions.sensorMode.2"), await t("dialogs.questions.sensorMode.1")];
                 response = await getResponse(dialog, btns);
 
                 const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(sensorModeSelect, "2");
                     sensorMode = 2;
-                } else if (response === 1) {
+                } else if (response === 2) {
                     simulateChangeEvent(sensorModeSelect, "1");
                     sensorMode = 1;
                 }
                 break;
             case "fps":
-                btns = [await t("dialogs.questions.fps.50"), await t("dialogs.questions.fps.100")];
+                btns = ["Cancel", await t("dialogs.questions.fps.50"), await t("dialogs.questions.fps.100")];
                 response = await getResponse(dialog, btns);
 
                 const fpsModeSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(fpsModeSelect, "50");
                     fpsMode = 50;
-                } else if (response === 1) {
+                } else if (response === 2) {
                     simulateChangeEvent(fpsModeSelect, "100");
                     fpsMode = 100;
                 }
                 break;
             case "appUpdates":
-                btns = [await t("dialogs.questions.appUpdates.yes"), await t("dialogs.questions.appUpdates.no")];
+                btns = ["Cancel", await t("dialogs.questions.appUpdates.yes"), await t("dialogs.questions.appUpdates.no")];
                 response = await getResponse(dialog, btns);
 
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(appUpdatesSwitch, true);
                     appUpdates = true;
                 }
                 break;
             case "appUpdatesChannel":
                 btns = [
+                    "Cancel",
                     await t("dialogs.questions.appUpdatesChannel.stable"),
                     await t("dialogs.questions.appUpdatesChannel.beta"),
                 ];
@@ -677,39 +698,48 @@ async function questions() {
 
                 const updateChannelSelect = document.getElementById("update-channel-select") as HTMLSelectElement;
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(updateChannelSelect, "stable");
                     updateChannel = "stable";
-                } else if (response === 1) {
+                } else if (response === 2) {
                     simulateChangeEvent(updateChannelSelect, "beta");
                     updateChannel = "beta";
                 }
                 break;
             case "languageUpdates":
                 btns = [
+                    "Cancel",
                     await t("dialogs.questions.languageUpdates.yes"),
                     await t("dialogs.questions.languageUpdates.no"),
                 ];
                 response = await getResponse(dialog, btns);
 
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(translationsUpdatesSwitch, true);
                     translationUpdates = true;
                 }
                 break;
             case "autoStart":
-                btns = [await t("dialogs.questions.autoStart.yes"), await t("dialogs.questions.autoStart.no")];
+                btns = ["Cancel", await t("dialogs.questions.autoStart.yes"), await t("dialogs.questions.autoStart.no")];
                 response = await getResponse(dialog, btns);
 
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(autoStartSwitch, true);
                     autoStart = true;
                 }
                 break;
             case "autoOff":
-                btns = [await t("dialogs.questions.autoOff.yes"), await t("dialogs.questions.autoOff.no")];
+                btns = ["Cancel", await t("dialogs.questions.autoOff.yes"), await t("dialogs.questions.autoOff.no")];
                 response = await getResponse(dialog, btns);
 
                 if (response === 0) {
+                    return;
+                } else if (response === 1) {
                     simulateChangeEvent(autoOffSwitch, true);
                     autoOff = true;
                 }

@@ -348,8 +348,7 @@
             },
             "comPorts": {
                 "title": "COM ports",
-                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Ports automatically selected by the program are most likely your trackers and you may not need to do anything.\r\n\r\nSelected: {ports}",
-                "done": "Done"
+                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Ports automatically selected by the program are most likely your trackers and you may not need to do anything.\r\n\r\nSelected: {ports}"
             },
             "sensorMode": {
                 "title": "Sensor mode",
@@ -368,8 +367,7 @@
                 "message": "Enable or disable sensor auto correction features (dynamic calibration). Usually not needed to be changed and results vary between environments.\r\n\r\nSelected sensors: {sensors}",
                 "accelerometer": "Accelerometer",
                 "gyroscope": "Gyroscope",
-                "magnetometer": "Magnetometer",
-                "done": "Done"
+                "magnetometer": "Magnetometer"
             },
             "appUpdates": {
                 "title": "App updates",
