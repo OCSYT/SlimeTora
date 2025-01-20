@@ -420,6 +420,18 @@ Ankle motion detection: ${ankle}`
 }
 
 async function questions() {
+    const wirelessSwitch = document.getElementById("wireless-tracker-switch") as HTMLInputElement;
+    const wiredSwitch = document.getElementById("wired-tracker-switch") as HTMLInputElement;
+    const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
+    const comSwitch = document.getElementById("com-switch") as HTMLInputElement;
+    const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
+    const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
+    const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
+    const autoStartSwitch = document.getElementById("auto-start-switch") as HTMLInputElement;
+    const autoOffSwitch = document.getElementById("auto-off-switch") as HTMLInputElement;
+    const appUpdatesSwitch = document.getElementById("app-updates-switch") as HTMLInputElement;
+    const translationsUpdatesSwitch = document.getElementById("translations-updates-switch") as HTMLInputElement;
+
     const dialogs = [
         "initial",
         "trackerModel",
@@ -449,17 +461,17 @@ async function questions() {
 
     // Set all switches to false
     // todo: for loop and/or assign switches to variables for use later
-    simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("wired-tracker-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("accelerometer-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("gyroscope-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("magnetometer-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("auto-start-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("auto-off-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("app-updates-switch") as HTMLInputElement, false);
-    simulateChangeEvent(document.getElementById("translations-updates-switch") as HTMLInputElement, false);
+    simulateChangeEvent(wirelessSwitch, false);
+    simulateChangeEvent(wiredSwitch, false);
+    simulateChangeEvent(bluetoothSwitch, false);
+    simulateChangeEvent(comSwitch, false);
+    simulateChangeEvent(accelerometerSwitch, false);
+    simulateChangeEvent(gyroscopeSwitch, false);
+    simulateChangeEvent(magnetometerSwitch, false);
+    simulateChangeEvent(autoStartSwitch, false);
+    simulateChangeEvent(autoOffSwitch, false);
+    simulateChangeEvent(appUpdatesSwitch, false);
+    simulateChangeEvent(translationsUpdatesSwitch, false);
 
     // Logic for questions
     let trackerModel = TrackerModel.Wireless;
@@ -563,10 +575,6 @@ async function questions() {
                 l(`Selected sensors for auto correction: ${sensorAutoCorrectionList.join(", ")}`, "questions");
             }
 
-            const accelerometerSwitch = document.getElementById("accelerometer-switch") as HTMLInputElement;
-            const gyroscopeSwitch = document.getElementById("gyroscope-switch") as HTMLInputElement;
-            const magnetometerSwitch = document.getElementById("magnetometer-switch") as HTMLInputElement;
-
             if (sensorAutoCorrectionList.includes("accel")) simulateChangeEvent(accelerometerSwitch, true);
             if (sensorAutoCorrectionList.includes("gyro")) simulateChangeEvent(gyroscopeSwitch, true);
             if (sensorAutoCorrectionList.includes("mag")) simulateChangeEvent(magnetometerSwitch, true);
@@ -585,10 +593,10 @@ async function questions() {
                 ];
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
-                    simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(wirelessSwitch, true);
                     trackerModel = TrackerModel.Wireless;
                 } else if (response === 1) {
-                    simulateChangeEvent(document.getElementById("wired-tracker-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(wiredSwitch, true);
                     trackerModel = TrackerModel.Wired;
                     // Skip connectionMode and autoOff dialogs (not supported)
                     dialogs.splice(dialogs.indexOf("connectionMode"), 1);
@@ -605,14 +613,14 @@ async function questions() {
                 ];
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
-                    simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(bluetoothSwitch, true);
                     connectionMode = ConnectionMode.Bluetooth;
                 } else if (response === 1) {
-                    simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(comSwitch, true);
                     connectionMode = ConnectionMode.COM;
                 } else if (response === 2) {
-                    simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
-                    simulateChangeEvent(document.getElementById("com-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(bluetoothSwitch, true);
+                    simulateChangeEvent(comSwitch, true);
                     connectionMode = ConnectionMode.Both;
                 }
                 break;
@@ -640,7 +648,7 @@ async function questions() {
                 btns = [await t("dialogs.questions.appUpdates.yes"), await t("dialogs.questions.appUpdates.no")];
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
-                    simulateChangeEvent(document.getElementById("app-updates-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(appUpdatesSwitch, true);
                 }
                 break;
             case "appUpdatesChannel":
@@ -663,17 +671,14 @@ async function questions() {
                 ];
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
-                    simulateChangeEvent(
-                        document.getElementById("translations-updates-switch") as HTMLInputElement,
-                        true
-                    );
+                    simulateChangeEvent(translationsUpdatesSwitch, true);
                 }
                 break;
             case "autoStart":
                 btns = [await t("dialogs.questions.autoStart.yes"), await t("dialogs.questions.autoStart.no")];
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
-                    simulateChangeEvent(document.getElementById("auto-start-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(autoStartSwitch, true);
                     autoStart = true;
                 }
                 break;
@@ -681,7 +686,7 @@ async function questions() {
                 btns = [await t("dialogs.questions.autoOff.yes"), await t("dialogs.questions.autoOff.no")];
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
-                    simulateChangeEvent(document.getElementById("auto-off-switch") as HTMLInputElement, true);
+                    simulateChangeEvent(autoOffSwitch, true);
                     autoOff = true;
                 }
                 break;
