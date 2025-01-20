@@ -480,19 +480,19 @@ async function questions() {
             selectedComPorts.length = 0;
             let done = false;
 
+            if (wirelessTrackerEnabled) {
+                const gx6Ports = await window.ipc.invoke("get-com-ports", "GX6");
+                const gx2Ports = await window.ipc.invoke("get-com-ports", "GX2");
+                const wirelessPorts = gx6Ports.concat(gx2Ports).filter(Boolean);
+                selectedComPorts.push(...wirelessPorts);
+            }
+
             while (!done) {
                 const comPorts: string[] = await window.ipc.invoke("get-com-ports", null);
                 if (comPorts.length === 0) {
                     e("No COM ports found for questions dialog");
                     await showErrorDialog("dialogs.noComPorts.title", "dialogs.noComPorts.message");
                     return;
-                }
-                
-                if (wirelessTrackerEnabled) {
-                    const gx6Ports = await window.ipc.invoke("get-com-ports", "GX6");
-                    const gx2Ports = await window.ipc.invoke("get-com-ports", "GX2");
-                    const wirelessPorts = gx6Ports.concat(gx2Ports).filter(Boolean);
-                    selectedComPorts.push(...wirelessPorts);
                 }
 
                 // Only allowing one selection for wired, so no need for "Done"
@@ -566,7 +566,7 @@ async function questions() {
                     btns
                 );
 
-                if (response === 3) {
+                if (response === btns.length - 1) {
                     done = true;
                 } else {
                     const sensor = ["accel", "gyro", "mag"][response];
@@ -598,6 +598,7 @@ async function questions() {
                     await t("dialogs.questions.trackerModel.wired"),
                 ];
                 response = await getResponse(dialog, btns);
+
                 if (response === 0) {
                     simulateChangeEvent(wirelessSwitch, true);
                     wirelessTrackerEnabled = true;
@@ -618,6 +619,7 @@ async function questions() {
                     await t("dialogs.questions.connectionMode.both"),
                 ];
                 response = await getResponse(dialog, btns);
+
                 if (response === 0) {
                     simulateChangeEvent(bluetoothSwitch, true);
                     bluetoothEnabled = true;
@@ -634,6 +636,7 @@ async function questions() {
             case "sensorMode":
                 btns = [await t("dialogs.questions.sensorMode.2"), await t("dialogs.questions.sensorMode.1")];
                 response = await getResponse(dialog, btns);
+
                 const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
                 if (response === 0) {
                     simulateChangeEvent(sensorModeSelect, "2");
@@ -646,6 +649,7 @@ async function questions() {
             case "fps":
                 btns = [await t("dialogs.questions.fps.50"), await t("dialogs.questions.fps.100")];
                 response = await getResponse(dialog, btns);
+
                 const fpsModeSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
                 if (response === 0) {
                     simulateChangeEvent(fpsModeSelect, "50");
@@ -658,6 +662,7 @@ async function questions() {
             case "appUpdates":
                 btns = [await t("dialogs.questions.appUpdates.yes"), await t("dialogs.questions.appUpdates.no")];
                 response = await getResponse(dialog, btns);
+
                 if (response === 0) {
                     simulateChangeEvent(appUpdatesSwitch, true);
                     appUpdates = true;
@@ -669,6 +674,7 @@ async function questions() {
                     await t("dialogs.questions.appUpdatesChannel.beta"),
                 ];
                 response = await getResponse(dialog, btns);
+
                 const updateChannelSelect = document.getElementById("update-channel-select") as HTMLSelectElement;
                 if (response === 0) {
                     simulateChangeEvent(updateChannelSelect, "stable");
@@ -684,6 +690,7 @@ async function questions() {
                     await t("dialogs.questions.languageUpdates.no"),
                 ];
                 response = await getResponse(dialog, btns);
+
                 if (response === 0) {
                     simulateChangeEvent(translationsUpdatesSwitch, true);
                     translationUpdates = true;
@@ -692,6 +699,7 @@ async function questions() {
             case "autoStart":
                 btns = [await t("dialogs.questions.autoStart.yes"), await t("dialogs.questions.autoStart.no")];
                 response = await getResponse(dialog, btns);
+
                 if (response === 0) {
                     simulateChangeEvent(autoStartSwitch, true);
                     autoStart = true;
@@ -700,6 +708,7 @@ async function questions() {
             case "autoOff":
                 btns = [await t("dialogs.questions.autoOff.yes"), await t("dialogs.questions.autoOff.no")];
                 response = await getResponse(dialog, btns);
+
                 if (response === 0) {
                     simulateChangeEvent(autoOffSwitch, true);
                     autoOff = true;
