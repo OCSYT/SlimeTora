@@ -46,8 +46,8 @@ let trackerHeartbeatInterval = 2000;
 let serverAddress = "255.255.255.255";
 let serverPort = 6969;
 
-let appUpdatesEnabled = true;
-let translationsUpdatesEnabled = true;
+let appUpdates = true;
+let translationUpdates = true;
 let updateChannel = "stable";
 
 let loggingMode = 1;
@@ -157,8 +157,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     magnetometerEnabled = settings.global?.trackers?.magnetometerEnabled ?? false;
     autoStart = settings.global?.autoStart ?? false;
     autoOff = settings.global?.autoOff ?? false;
-    appUpdatesEnabled = settings.global?.updates?.appUpdatesEnabled ?? true;
-    translationsUpdatesEnabled = settings.global?.updates?.translationsUpdatesEnabled ?? true;
+    appUpdates = settings.global?.updates?.appUpdatesEnabled ?? true;
+    translationUpdates = settings.global?.updates?.translationsUpdatesEnabled ?? true;
     updateChannel = settings.global?.updates?.updateChannel ?? "stable";
     canLogToFile = settings.global?.debug?.canLogToFile ?? true;
     loggingMode = settings.global?.debug?.loggingMode ?? 1;
@@ -179,8 +179,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("magnetometer-switch", magnetometerEnabled);
     setSwitchState("auto-start-switch", autoStart);
     setSwitchState("auto-off-switch", autoOff);
-    setSwitchState("app-updates-switch", appUpdatesEnabled);
-    setSwitchState("translations-updates-switch", translationsUpdatesEnabled);
+    setSwitchState("app-updates-switch", appUpdates);
+    setSwitchState("translations-updates-switch", translationUpdates);
     setSwitchState("log-to-file-switch", canLogToFile);
     setSwitchState("bypass-com-limit-switch", bypassCOMPortLimit);
 
@@ -474,15 +474,10 @@ async function questions() {
     simulateChangeEvent(translationsUpdatesSwitch, false);
 
     // Logic for questions
-    let trackerModel = TrackerModel.Wireless;
-    let connectionMode = ConnectionMode.Bluetooth;
-    let selectedPorts: string[] = [];
-    let autoStart = false;
-    let autoOff = false;
     for (const dialog of dialogs) {
         // Separate logic for COM ports dialog (allows multiple choice for wireless)
         if (dialog === "comPorts") {
-            selectedPorts = [];
+            selectedComPorts.length = 0;
             let done = false;
 
             while (!done) {
@@ -495,7 +490,7 @@ async function questions() {
 
                 // Only allowing one selection for wired, so no need for "Done"
                 const msg = await t("dialogs.questions.comPorts.message");
-                const newMsg = msg.replace("{ports}", `\n\r${selectedPorts.join(", ")}`);
+                const newMsg = msg.replace("{ports}", `\n\r${selectedComPorts.join(", ")}`);
                 const response = await showMessageBox(
                     "dialogs.questions.comPorts.title",
                     newMsg,
@@ -505,43 +500,47 @@ async function questions() {
                     wiredTrackerEnabled ? comPorts : [...comPorts, await t("dialogs.questions.comPorts.done")]
                 );
 
-                if (response === comPorts.length && trackerModel !== "HaritoraX Wired (1.1b/1.1/1.0)") {
+                if (response === comPorts.length && !wiredTrackerEnabled) {
                     done = true;
                 } else {
                     const selectedPort = comPorts[response];
-                    const index = selectedPorts.indexOf(selectedPort);
+                    const index = selectedComPorts.indexOf(selectedPort);
                     if (index > -1) {
                         l(`Deselected COM port: ${selectedPort}`, "questions");
-                        selectedPorts.splice(index, 1);
+                        selectedComPorts.splice(index, 1);
                         const portElement = document.getElementById(selectedPort) as HTMLInputElement;
                         if (portElement) portElement.checked = false;
                     } else {
                         l(`Selected COM port: ${selectedPort}`, "questions");
-                        selectedPorts.push(selectedPort);
+                        selectedComPorts.push(selectedPort);
                         // Only allow one selection if wired tracker is enabled
-                        if (trackerModel === "HaritoraX Wired (1.1b/1.1/1.0)") done = true;
+                        if (wiredTrackerEnabled) done = true;
                     }
                 }
-                l(`Selected COM ports: ${selectedPorts.join(", ")}`, "questions");
+                l(`Selected COM ports: ${selectedComPorts.join(", ")}`, "questions");
             }
 
             const comPortsParent = document.getElementById("com-ports");
             Array.from(comPortsParent.querySelectorAll("input")).forEach((port) =>
-                simulateChangeEvent(port, selectedPorts.includes(port.id))
+                simulateChangeEvent(port, selectedComPorts.includes(port.id))
             );
             comPortsParent.dispatchEvent(new Event("change")); // simulate it here again since the actual code for handling COM port changes is in the parent element
             continue;
         } else if (dialog === "sensorAutoCorrection") {
-            const sensorAutoCorrectionList: string[] = [];
             let done = false;
 
             // Default settings based on tracker model
-            if (trackerModel === TrackerModel.Wireless) {
-                sensorAutoCorrectionList.push("accel");
-            } else if (trackerModel === TrackerModel.Wired) {
-                sensorAutoCorrectionList.push("accel", "gyro");
+            if (wirelessTrackerEnabled) {
+                accelerometerEnabled = true;
+            } else if (wiredTrackerEnabled) {
+                accelerometerEnabled = true;
+                gyroscopeEnabled = true;
             }
 
+            const sensorAutoCorrectionList = [];
+            if (accelerometerEnabled) sensorAutoCorrectionList.push("accel");
+            if (gyroscopeEnabled) sensorAutoCorrectionList.push("gyro");
+            if (magnetometerEnabled) sensorAutoCorrectionList.push("mag");
             while (!done) {
                 const msg = await t("dialogs.questions.sensorAutoCorrection.message");
                 const newMsg = msg.replace("{sensors}", sensorAutoCorrectionList.join(", "));
@@ -594,13 +593,13 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(wirelessSwitch, true);
-                    trackerModel = TrackerModel.Wireless;
+                    wirelessTrackerEnabled = true;
                 } else if (response === 1) {
                     simulateChangeEvent(wiredSwitch, true);
-                    trackerModel = TrackerModel.Wired;
+                    wiredTrackerEnabled = true;
                     // Skip connectionMode and autoOff dialogs (not supported)
                     dialogs.splice(dialogs.indexOf("connectionMode"), 1);
-                    connectionMode = ConnectionMode.COM;
+                    comEnabled = true;
                     dialogs.splice(dialogs.indexOf("autoOff"), 1);
                     autoOff = false;
                 }
@@ -614,14 +613,15 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(bluetoothSwitch, true);
-                    connectionMode = ConnectionMode.Bluetooth;
+                    bluetoothEnabled = true;
                 } else if (response === 1) {
                     simulateChangeEvent(comSwitch, true);
-                    connectionMode = ConnectionMode.COM;
+                    comEnabled = true;
                 } else if (response === 2) {
                     simulateChangeEvent(bluetoothSwitch, true);
                     simulateChangeEvent(comSwitch, true);
-                    connectionMode = ConnectionMode.Both;
+                    bluetoothEnabled = true;
+                    comEnabled = true;
                 }
                 break;
             case "sensorMode":
@@ -630,8 +630,10 @@ async function questions() {
                 const sensorModeSelect = document.getElementById("sensor-mode-select") as HTMLSelectElement;
                 if (response === 0) {
                     simulateChangeEvent(sensorModeSelect, "2");
+                    sensorMode = 2;
                 } else if (response === 1) {
                     simulateChangeEvent(sensorModeSelect, "1");
+                    sensorMode = 1;
                 }
                 break;
             case "fps":
@@ -640,8 +642,10 @@ async function questions() {
                 const fpsModeSelect = document.getElementById("fps-mode-select") as HTMLSelectElement;
                 if (response === 0) {
                     simulateChangeEvent(fpsModeSelect, "50");
+                    fpsMode = 50;
                 } else if (response === 1) {
                     simulateChangeEvent(fpsModeSelect, "100");
+                    fpsMode = 100;
                 }
                 break;
             case "appUpdates":
@@ -649,6 +653,7 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(appUpdatesSwitch, true);
+                    appUpdates = true;
                 }
                 break;
             case "appUpdatesChannel":
@@ -660,8 +665,10 @@ async function questions() {
                 const updateChannelSelect = document.getElementById("update-channel-select") as HTMLSelectElement;
                 if (response === 0) {
                     simulateChangeEvent(updateChannelSelect, "stable");
+                    updateChannel = "stable";
                 } else if (response === 1) {
                     simulateChangeEvent(updateChannelSelect, "beta");
+                    updateChannel = "beta";
                 }
                 break;
             case "languageUpdates":
@@ -672,6 +679,7 @@ async function questions() {
                 response = await getResponse(dialog, btns);
                 if (response === 0) {
                     simulateChangeEvent(translationsUpdatesSwitch, true);
+                    translationUpdates = true;
                 }
                 break;
             case "autoStart":
@@ -692,16 +700,38 @@ async function questions() {
                 break;
             case "finish":
                 const msg = await t("dialogs.questions.finish.message");
+                const trackerModel = wirelessTrackerEnabled ? TrackerModel.Wireless : TrackerModel.Wired;
+                const connectionMode =
+                    bluetoothEnabled && comEnabled
+                        ? ConnectionMode.Both
+                        : bluetoothEnabled
+                        ? ConnectionMode.Bluetooth
+                        : ConnectionMode.COM;
+                const sensorAutoCorrectionList = [];
+                if (accelerometerEnabled) sensorAutoCorrectionList.push("accel");
+                if (gyroscopeEnabled) sensorAutoCorrectionList.push("gyro");
+                if (magnetometerEnabled) sensorAutoCorrectionList.push("mag");
+
                 const newMsg = msg.replace(
                     "{settings}",
                     `\n\r
+Tracker settings:
 Tracker model: ${trackerModel}
 Connection mode: ${connectionMode}
-COM ports (if applicable): ${selectedPorts.join(", ")}
+COM ports (if applicable): ${selectedComPorts.join(", ")}
+Sensor mode: ${sensorMode}
+FPS transfer rate: ${fpsMode}
+Sensor auto correction: ${sensorAutoCorrectionList.join(", ")}
+
+Program settings:
 Auto-start: ${autoStart}
-Auto-off: ${autoOff}`
+Auto-off: ${autoOff}
+App updates: ${appUpdates}
+App updates channel (if applicable): ${updateChannel}
+Language updates: ${translationUpdates}`
                 );
                 await showMessageBox("dialogs.questions.finish.title", newMsg, true, true, false);
+                saveSettings();
         }
     }
 }
@@ -1830,8 +1860,8 @@ function saveSettings() {
                 loggingMode: loggingMode,
             },
             updates: {
-                appUpdatesEnabled: appUpdatesEnabled,
-                translationsUpdatesEnabled: translationsUpdatesEnabled,
+                appUpdatesEnabled: appUpdates,
+                translationsUpdatesEnabled: translationUpdates,
                 updateChannel: updateChannel,
             },
         },
@@ -1914,4 +1944,5 @@ window.openSupport = () => {
     window.ipc.send("open-support-page", null);
 };
 
-export {};
+export { };
+
