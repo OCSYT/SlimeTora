@@ -348,7 +348,7 @@
             },
             "comPorts": {
                 "title": "COM ports",
-                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using.\r\n\r\nSelected: {ports}",
+                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Ports automatically selected by the program are most likely your trackers and you may not need to do anything.\r\n\r\nSelected: {ports}",
                 "done": "Done"
             },
             "sensorMode": {

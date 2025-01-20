@@ -478,7 +478,7 @@ async function showMessage(
     blocking = false,
     translateTitle = true,
     translateMessage = true,
-    buttons = ["OK"],
+    buttons = ["OK"]
 ) {
     if (isClosing) return false;
     const show = blocking ? dialog.showMessageBoxSync : dialog.showMessageBox;
@@ -558,7 +558,14 @@ ipcMain.handle("show-message", async (_event, arg) => {
         translateTitle = true,
         translateMessage = true,
         buttons = ["OK"],
-    }: { title: string; message: string; blocking: boolean; translateTitle: boolean; translateMessage: boolean, buttons: string[] } = arg;
+    }: {
+        title: string;
+        message: string;
+        blocking: boolean;
+        translateTitle: boolean;
+        translateMessage: boolean;
+        buttons: string[];
+    } = arg;
 
     return await showMessage(title, message, blocking, translateTitle, translateMessage, buttons);
 });
@@ -655,6 +662,7 @@ ipcMain.on("set-server-port", (_event, arg) => {
 ipcMain.on("fix-trackers", async () => {
     log("Fixing soft-bricked (boot-looping) trackers...", "connection");
 
+    // @ts-ignore
     const ports: ActivePorts = device.getComInstance().getActivePorts();
     // Sensor mode 2, 50 FPS, Accel sensor auto correction, ankle disabled
     const commands = ["o0:00000000101000", `o1:00000000101000`];

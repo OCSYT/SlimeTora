@@ -487,6 +487,13 @@ async function questions() {
                     await showErrorDialog("dialogs.noComPorts.title", "dialogs.noComPorts.message");
                     return;
                 }
+                
+                if (wirelessTrackerEnabled) {
+                    const gx6Ports = await window.ipc.invoke("get-com-ports", "GX6");
+                    const gx2Ports = await window.ipc.invoke("get-com-ports", "GX2");
+                    const wirelessPorts = gx6Ports.concat(gx2Ports).filter(Boolean);
+                    selectedComPorts.push(...wirelessPorts);
+                }
 
                 // Only allowing one selection for wired, so no need for "Done"
                 const msg = await t("dialogs.questions.comPorts.message");
