@@ -460,7 +460,6 @@ async function questions() {
     }
 
     // Set all switches to false
-    // todo: for loop and/or assign switches to variables for use later
     simulateChangeEvent(wirelessSwitch, false);
     simulateChangeEvent(wiredSwitch, false);
     simulateChangeEvent(bluetoothSwitch, false);
@@ -474,6 +473,7 @@ async function questions() {
     simulateChangeEvent(translationsUpdatesSwitch, false);
 
     // Logic for questions
+    const sensorAutoCorrectionList: string[] = [];
     for (const dialog of dialogs) {
         // Separate logic for COM ports dialog (allows multiple choice for wireless)
         if (dialog === "comPorts") {
@@ -547,10 +547,8 @@ async function questions() {
                 gyroscopeEnabled = true;
             }
 
-            const sensorAutoCorrectionList = [];
             if (accelerometerEnabled) sensorAutoCorrectionList.push("accel");
             if (gyroscopeEnabled) sensorAutoCorrectionList.push("gyro");
-            if (magnetometerEnabled) sensorAutoCorrectionList.push("mag");
             while (!done) {
                 const msg = await t("dialogs.questions.sensorAutoCorrection.message");
                 const newMsg = msg.replace("{sensors}", sensorAutoCorrectionList.join(", "));
@@ -575,7 +573,7 @@ async function questions() {
                 } else if (response === btns.length - 1) {
                     done = true;
                 } else {
-                    const sensor = ["accel", "gyro", "mag"][response];
+                    const sensor = ["accel", "gyro", "mag"][response - 1];
                     if (sensorAutoCorrectionList.includes(sensor)) {
                         l(`Deselected sensor auto correction: ${sensor}`, "questions");
                         sensorAutoCorrectionList.splice(sensorAutoCorrectionList.indexOf(sensor), 1);
@@ -678,7 +676,11 @@ async function questions() {
                 }
                 break;
             case "appUpdates":
-                btns = ["Cancel", await t("dialogs.questions.appUpdates.yes"), await t("dialogs.questions.appUpdates.no")];
+                btns = [
+                    "Cancel",
+                    await t("dialogs.questions.appUpdates.yes"),
+                    await t("dialogs.questions.appUpdates.no"),
+                ];
                 response = await getResponse(dialog, btns);
 
                 if (response === 0) {
@@ -686,6 +688,9 @@ async function questions() {
                 } else if (response === 1) {
                     simulateChangeEvent(appUpdatesSwitch, true);
                     appUpdates = true;
+                } else if (response === 2) {
+                    // Skip appUpdatesChannel dialog if app updates are disabled
+                    dialogs.splice(dialogs.indexOf("appUpdatesChannel"), 1);
                 }
                 break;
             case "appUpdatesChannel":
@@ -723,7 +728,11 @@ async function questions() {
                 }
                 break;
             case "autoStart":
-                btns = ["Cancel", await t("dialogs.questions.autoStart.yes"), await t("dialogs.questions.autoStart.no")];
+                btns = [
+                    "Cancel",
+                    await t("dialogs.questions.autoStart.yes"),
+                    await t("dialogs.questions.autoStart.no"),
+                ];
                 response = await getResponse(dialog, btns);
 
                 if (response === 0) {
@@ -753,10 +762,8 @@ async function questions() {
                         : bluetoothEnabled
                         ? ConnectionMode.Bluetooth
                         : ConnectionMode.COM;
-                const sensorAutoCorrectionList = [];
-                if (accelerometerEnabled) sensorAutoCorrectionList.push("accel");
-                if (gyroscopeEnabled) sensorAutoCorrectionList.push("gyro");
-                if (magnetometerEnabled) sensorAutoCorrectionList.push("mag");
+                    
+                    window.log(`sensorAutoCorrectionList: ${sensorAutoCorrectionList}`);
 
                 const newMsg = msg.replace(
                     "{settings}",
@@ -770,11 +777,11 @@ FPS transfer rate: ${fpsMode}
 Sensor auto correction: ${sensorAutoCorrectionList.join(", ")}
 
 Program settings:
-Auto-start: ${autoStart}
-Auto-off: ${autoOff}
 App updates: ${appUpdates}
 App updates channel (if applicable): ${updateChannel}
-Language updates: ${translationUpdates}`
+Language updates: ${translationUpdates}
+Auto-start: ${autoStart}
+Auto-off: ${autoOff}`
                 );
                 await showMessageBox("dialogs.questions.finish.title", newMsg, true, true, false);
                 saveSettings();

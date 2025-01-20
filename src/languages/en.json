@@ -93,7 +93,7 @@
         },
         "comPorts": {
             "title": "COM ports",
-            "tooltip": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2) unless checks are bypassed."
+            "tooltip": "Select the COM port(s) your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Up to 4 ports can be selected (3 for GX6 and 1 for GX2) unless checks are bypassed."
         },
         "other": {
             "title": "Other settings",
@@ -176,13 +176,13 @@
         "steps": {
             "step-2": {
                 "title": "Guided setup",
-                "text": "Guided setup will help you through the process of setting up the program step-by-step. You can let the program try to auto-detect your settings or answer the questions about your setup. <br /><br /> It is recommended (but not necessary) to have at least one of your trackers turned on and connected to your computer before continuing. When you are ready, click the \"Next\" button."
+                "text": "Guided setup will help you through the process of setting up the program step-by-step. You can answer questions about your setup or let the program try to auto-detect your settings.<br /><br />It is recommended (but not necessary) to have at least one of your trackers turned on and connected to your computer before continuing. When you are ready, click the \"Next\" button."
             },
             "step-3": {
                 "title": "Guided setup",
-                "text": "Press either button found below to set up the connection (and settings) to your trackers. You can either let the program try to auto-detect your settings, or answer the questions about your setup if you prefer / if auto-detection fails.",
+                "text": "Press either button found below to set up the connection (and settings) to your trackers. It is recommended to use manual and answer the questions, but auto-detection is always an option.",
                 "autodetect": "Automatic (auto-detection)",
-                "questions": "Manual (questions)",
+                "questions": "Manual (questions, recommended)",
                 "text2": "If you are happy with the settings you (or auto-detection) has chosen, click the \"Next\" button to continue."
             },
             "step-4": {
@@ -348,7 +348,7 @@
             },
             "comPorts": {
                 "title": "COM ports",
-                "message": "Select the COM ports your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Ports automatically selected by the program are most likely your trackers and you may not need to do anything.\r\n\r\nSelected: {ports}"
+                "message": "Select the COM port(s) your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using. Ports automatically selected by the program are most likely your trackers and you may not need to do anything.\r\n\r\nSelected: {ports}"
             },
             "sensorMode": {
                 "title": "Sensor mode",
