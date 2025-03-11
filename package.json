@@ -20,7 +20,7 @@
     "scripts": {
         "start": "npm run preload && cross-env DEVELOPMENT=true && electron .",
         "dev": "cross-env DEVELOPMENT=true && tsc && npm run copy-files && electron .",
-        "build": "npm run preload && npx @electron/packager . SlimeTora --arch=x64,arm64 --overwrite --out=build/ --icon=src/static/images/icon.ico --asar --extra-resource=src/languages --prune --ignore=\"^/(src|docs|.vscode|.eslintrc.cjs|.prettierrc|tsconfig.json|README.md|.gitignore|.txt)$\"",
+        "build": "npm run preload && npx @electron/packager . SlimeTora --arch=x64,arm64 --overwrite --out=build/ --icon=src/static/images/icon.ico --asar --extra-resource=src/languages --prune --ignore=\"^/(src|docs|.vscode|.eslintrc.cjs|.prettierrc|tsconfig.json|README.md|.gitignore|notes.txt|.github)$\"",
         "preload": "npx @electron/rebuild && npx del-cli dist/ && tsc && npm run copy-files",
         "copy-files": "npx copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.png\" \"src/**/*.webp\" \"src/**/*.webm\" \"src/**/*.svg\" \"src/**/*.fbx\" src/languages/* dist/",
         "build-bulma": "npx sass --watch ./src/static/css/index.scss ./src/static/css/index.css",
@@ -32,27 +32,27 @@
         "@electron/packager": "^18.3.6",
         "@electron/rebuild": "^3.7.1",
         "@types/lodash-es": "^4.17.12",
-        "@types/node": "^22.10.7",
-        "@types/three": "^0.172.0",
+        "@types/node": "^22.13.9",
+        "@types/three": "^0.174.0",
         "bulma": "^1.0.3",
         "copyfiles": "^2.4.1",
         "cross-env": "^7.0.3",
         "del-cli": "^6.0.0",
         "electron": "^31.7.7",
-        "eslint": "^9.18.0",
+        "eslint": "^9.21.0",
         "node-gyp-build": "^4.8.4",
-        "sass": "^1.83.4",
-        "typescript": "^5.7.3"
+        "sass": "^1.85.1",
+        "typescript": "^5.8.2"
     },
     "dependencies": {
         "@slimevr/common": "^0.1.2",
         "@slimevr/firmware-protocol": "^0.6.5",
         "@slimevr/tracker-emulation": "^0.2.4",
         "haritorax-interpreter": "^3.2.3",
-        "i18next": "^24.2.1",
+        "i18next": "^24.2.2",
         "loc-i18next": "^0.1.6",
         "lodash-es": "^4.17.21",
-        "quaternion": "^2.0.1",
-        "three": "^0.172.0"
+        "quaternion": "2.0.1",
+        "three": "^0.174.0"
     }
 }
