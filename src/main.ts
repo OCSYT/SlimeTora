@@ -14,6 +14,7 @@ const __dirname = dirname(__filename);
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = path.resolve(mainPath, "config.json");
+const dataDebugPath = path.resolve(mainPath, "debug.txt");
 const isMac = process.platform === "darwin";
 // don't mess with this or languages will fail to load cause of how the project is structured, lol
 // i hate how this is done.
@@ -31,6 +32,7 @@ let connectedDevices = new Map<string, EmulatedTracker>();
 let deviceBattery: {
     [key: string]: { batteryRemaining: number; batteryVoltage: number };
 } = {};
+let dataDebug: string | null;
 
 /*
  * Renderer variables
@@ -360,10 +362,17 @@ function clearTrackers() {
 const createWindow = async () => {
     mainWindow = createBrowserWindow("SlimeTora: Main", "index.html", "en", null, 900, 700);
 
+    try {
+        await fs.promises.access(dataDebugPath);
+    } catch (err) {
+        dataDebug = null;
+    }
+
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", resources);
         mainWindow.webContents.send("version", app.getVersion());
         mainWindow.webContents.send("set-switch", { id: "accelerometer-switch", state: true });
+        if (dataDebug !== null) mainWindow.webContents.send("found-data-debug");
 
         if (firstLaunch) onboarding("en");
 
@@ -386,7 +395,7 @@ const closeApp = async () => {
         log("Auto-off is enabled, turning off all trackers (if available)...", "connection");
         const activeTrackers = Array.from(connectedDevices.keys());
         const powerOffPromises = activeTrackers.map(async (tracker) => {
-            await device.powerOffTracker(tracker as string);
+            await device.powerOffTracker(tracker);
             log(`Turned off tracker: ${tracker}`, "connection");
         });
 
@@ -543,6 +552,35 @@ ipcMain.on("update-titles", async () => {
     }
     if (trackerSettingsWindow && !trackerSettingsWindow.isDestroyed()) {
         trackerSettingsWindow.setTitle(await translate("main.windowTitle.settings"));
+    }
+});
+
+ipcMain.on("debug-trackers", async () => {
+    if (dataDebug === null) return;
+
+    const response = await dialog.showMessageBox({
+        type: "info",
+        buttons: ["OK"],
+        title: "Secret debugging function",
+        message:
+            "You've found a secret debugging function (haii)! We will start emulating COM trackers from debug.txt after this dialog...",
+    });
+
+    if (response.response === 0) {
+        dataDebug = fs.readFileSync(dataDebugPath, "utf-8");
+        const lines = dataDebug.split("\n");
+
+        for (const line of lines) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            device.getComInstance().processData(line, "DEBUG");
+        }
+
+        await dialog.showMessageBox({
+            type: "info",
+            buttons: ["OK"],
+            title: "Debug data processed",
+            message: "All debug data has been parsed and processed.",
+        });
     }
 });
 

@@ -762,8 +762,8 @@ async function questions() {
                         : bluetoothEnabled
                         ? ConnectionMode.Bluetooth
                         : ConnectionMode.COM;
-                    
-                    window.log(`sensorAutoCorrectionList: ${sensorAutoCorrectionList}`);
+
+                window.log(`sensorAutoCorrectionList: ${sensorAutoCorrectionList}`);
 
                 const newMsg = msg.replace(
                     "{settings}",
@@ -1320,6 +1320,10 @@ window.ipc.on("version", (_event, version) => {
     l(`Got app version: ${version}`);
 });
 
+window.ipc.on("found-data-debug", () => {
+    document.getElementById("debugging-button").classList.remove("is-hidden");
+});
+
 window.ipc.on("set-status", (_event, msg) => {
     setStatus(msg);
 });
@@ -1869,6 +1873,11 @@ function showPairing() {
     window.ipc.send("show-pairing", selectedComPorts);
 }
 
+function turnOffTrackers() {
+    l("Turning off all trackers...");
+    window.ipc.send("turn-off-tracker", "all");
+}
+
 function saveSettings() {
     l("Saving settings...");
     unsavedSettings(false);
@@ -1937,6 +1946,11 @@ function saveSettings() {
     l("Settings saved");
 }
 
+function debugTrackers() {
+    l("Emulating COM trackers via debug.txt...");
+    window.ipc.send("debug-trackers", null);
+}
+
 function simulateChangeEvent(element: HTMLInputElement | HTMLSelectElement, value: boolean | string) {
     if (element instanceof HTMLInputElement) {
         if (element.checked === value) return;
@@ -1959,10 +1973,8 @@ window.stopConnection = stopConnection;
 window.showOnboarding = showOnboarding;
 window.showPairing = showPairing;
 window.saveSettings = saveSettings;
-window.turnOffTrackers = () => {
-    l("Turning off all trackers...");
-    window.ipc.send("turn-off-tracker", "all");
-};
+window.turnOffTrackers = turnOffTrackers;
+window.debugTrackers = debugTrackers;
 
 window.fixTrackers = () => {
     l("Fixing soft-bricked (boot-looping) trackers...");
@@ -1997,5 +2009,4 @@ window.openSupport = () => {
     window.ipc.send("open-support-page", null);
 };
 
-export { };
-
+export {};
