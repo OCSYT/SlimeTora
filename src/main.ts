@@ -692,7 +692,7 @@ ipcMain.on("fix-trackers", async () => {
     };
 
     const intervalId = setInterval(sendCommands, 100);
-    await dialog.showMessageBox(dialogOptions);
+    await dialog.showMessageBox(mainWindow, dialogOptions);
     clearInterval(intervalId);
 
     const endTime = Date.now();
