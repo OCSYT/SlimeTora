@@ -1,0 +1,88 @@
+name: Build application
+
+on:
+    push:
+    workflow_dispatch:
+    create:
+
+jobs:
+    build:
+        strategy:
+          matrix:
+            os: [ubuntu-latest, windows-latest, macos-latest]
+        runs-on: ${{ matrix.os }}
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+
+            - name: Install dependencies on Ubuntu
+              if: matrix.os == 'ubuntu-latest'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y libudev-dev
+            - name: Install Node.js dependencies
+              run: npm install
+
+            - name: Build the application
+              run: npm run build
+
+            - name: Compress Linux build artifacts (x64)
+              if: matrix.os == 'ubuntu-latest'
+              run: |
+                zip -r build/SlimeTora-linux-x64.zip build/SlimeTora-linux-x64
+                zip -r build/SlimeTora-linux-arm64.zip build/SlimeTora-linux-arm64
+            - name: Compress Windows build artifacts
+              if: matrix.os == 'windows-latest'
+              run: |
+                powershell Compress-Archive -Path build\SlimeTora-win32-arm64\* -DestinationPath build\SlimeTora-win32-arm64.zip
+                powershell Compress-Archive -Path build\SlimeTora-win32-x64\* -DestinationPath build\SlimeTora-win32-x64.zip
+            - name: Compress macOS build artifacts
+              if: matrix.os == 'macos-latest'
+              run: |
+                zip -r build/SlimeTora-darwin-arm64.zip build/SlimeTora-darwin-arm64
+                zip -r build/SlimeTora-darwin-x64.zip build/SlimeTora-darwin-x64
+            - name: Archive build artifacts for Linux (x64)
+              if: matrix.os == 'ubuntu-latest'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-artifacts-linux-x64
+                  path: build/SlimeTora-linux-x64.zip
+            - name: Archive build artifacts for Linux (arm64)
+              if: matrix.os == 'ubuntu-latest'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-artifacts-linux-arm64
+                  path: build/SlimeTora-linux-arm64.zip
+
+            - name: Archive build artifacts for Windows (x64)
+              if: matrix.os == 'windows-latest'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-artifacts-win32-x64
+                  path: build/SlimeTora-win32-x64.zip
+            - name: Archive build artifacts for Windows (arm64)
+              if: matrix.os == 'windows-latest'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-artifacts-win32-arm64
+                  path: build/SlimeTora-win32-arm64.zip
+
+            - name: Archive build artifacts for macOS (arm64)
+              if: matrix.os == 'macos-latest'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-artifacts-macos-arm64
+                  path: build/SlimeTora-darwin-arm64.zip
+            - name: Archive build artifacts for macOS (x64)
+              if: matrix.os == 'macos-latest'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-artifacts-macos-x64
+                  path: build/SlimeTora-darwin-x64.zip

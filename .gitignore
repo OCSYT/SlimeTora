@@ -103,3 +103,5 @@ out/
 notes.txt
 src/static/css/index.css
 src/static/css/index.css.map
+
+config.json
