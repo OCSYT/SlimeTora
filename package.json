@@ -53,6 +53,7 @@
         "loc-i18next": "^0.1.6",
         "lodash-es": "^4.17.21",
         "quaternion": "2.0.1",
+        "rand-seed": "^2.1.7",
         "three": "^0.174.0"
     }
 }

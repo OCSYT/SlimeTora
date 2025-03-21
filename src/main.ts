@@ -1166,6 +1166,7 @@ import { EmulatedTracker } from "@slimevr/tracker-emulation";
 import { ActivePorts } from "haritorax-interpreter/dist/mode/com";
 import BetterQuaternion from "quaternion";
 import { ParsedUrlQueryInput } from "querystring";
+import Rand from "rand-seed"
 
 // For haritorax-interpreter
 // Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
@@ -1239,6 +1240,11 @@ async function addTracker(trackerName: string) {
     processQueue();
 }
 
+function MacAddressFromName(name: string) {
+    const rand = new Rand(name);
+    return new MACAddress(new Array(6).fill(0).map(() => Math.floor(rand.next() * 256)) as any)
+}
+
 async function processQueue() {
     if (isProcessingQueue || trackerQueue.length === 0) return;
     isProcessingQueue = true;
@@ -1251,7 +1257,7 @@ async function processQueue() {
         if (connectedDevices.get(trackerName) !== undefined) return;
 
         // Check if tracker has a MAC address assigned already in the config
-        let macAddress = MACAddress.random();
+        let macAddress = MacAddressFromName(trackerName);
         let macBytes = config.trackers?.[trackerName]?.macAddress?.bytes;
         if (macBytes && macBytes.length === 6) {
             macAddress = new MACAddress(macBytes);
