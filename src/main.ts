@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
-const configPath = path.resolve(mainPath, "config.json");
+const configPath = app.isPackaged ? path.resolve(mainPath, "config.json") : path.resolve(path.join(mainPath, ".."), "config.json")
 const isMac = process.platform === "darwin";
 // don't mess with this or languages will fail to load cause of how the project is structured, lol
 // i hate how this is done.
