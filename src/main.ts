@@ -19,7 +19,7 @@ const isMac = process.platform === "darwin";
 // i hate how this is done.
 const languagesPath = path.resolve(
     mainPath,
-    isMac ? ".." : "",
+    (isMac && app.isPackaged) ? ".." : "",
     app.isPackaged ? (isMac ? "Resources/languages" : "resources/languages") : "languages"
 );
 let mainWindow: BrowserWindow;
