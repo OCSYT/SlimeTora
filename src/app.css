@@ -1,1 +1,43 @@
 @import "tailwindcss";
+
+@theme {
+	--color-body: var(--body);
+	--color-panel: var(--panel);
+    --color-text: var(--text);
+    --color-text-alt: var(--text-alt);
+
+    --color-button: var(--button);
+    --color-primary: var(--primary);
+    --color-secondary: var(--secondary);
+    --color-tertiary: var(--tertiary);
+
+	--background-color-body: var(--body);
+
+    --font-heading: var(--font-heading);
+    --font-body: var(--font-body);
+}
+
+:root {
+	--body: #2C2D30;
+	--panel: #3B3C40;
+    --text: #FFFFFF;
+    --text-alt: rgba(255, 255, 255, 0.75);
+
+    --button: var(--tertiary);
+    --primary: #9A48EE;
+    --secondary: #F05D38;
+    --tertiary: #62656A;
+
+    --slimetora-gradient: linear-gradient(90deg, rgba(240, 93, 56, 1) 0%, rgba(154, 72, 238, 1) 100%);
+
+    --font-heading: "Chekra Petch", sans-serif;
+    --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, sans-serif;
+}
+
+body {
+    @apply bg-body font-body text-white;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    @apply font-heading text-white;
+}
