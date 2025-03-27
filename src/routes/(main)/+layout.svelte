@@ -1,6 +1,6 @@
 <script>
-    import Header from "../../lib/components/Header.svelte";
-    import Navbar from "../../lib/components/Navbar.svelte";
+    import Header from "$lib/components/layout/Header.svelte";
+    import Navbar from "$lib/components/layout/Navbar.svelte";
 
     let { children } = $props();
 </script>
@@ -8,10 +8,10 @@
 <div class="flex flex-col h-full min-h-screen">
     <Header />
     <div class="flex flex-row flex-grow">
-        <div class="flex-1">
+        <div>
             <Navbar />
         </div>
-        <div class="w-full h-full">
+        <div class="flex-1">
             {@render children()}
         </div>
     </div>

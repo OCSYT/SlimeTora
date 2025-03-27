@@ -36,7 +36,7 @@
 </nav>
 
 <style>
-    @reference "../../app.css";
+    @reference "../../../app.css";
 
     .selected {
         @apply bg-secondary/24 border-r-2 border-secondary;

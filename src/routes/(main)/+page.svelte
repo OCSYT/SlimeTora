@@ -1,6 +1,7 @@
 <script lang="ts">
+    import PowerButton from "$lib/components/visual/PowerButton.svelte";
 </script>
 
 <div class="flex w-full h-full">
-    <div class="text-center text-2xl text-blue-500">Hello, World!</div>
+    <PowerButton />
 </div>
