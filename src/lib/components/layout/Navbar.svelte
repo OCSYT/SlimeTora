@@ -12,10 +12,7 @@
     <div>
         {#each navLinks as { name, icon, link }}
             {@const same = path === link}
-            <a
-                href={link}
-                class="flex flex-col items-center justify-center h-16 {same ? 'selected' : ''}"
-            >
+            <a href={link} class="link {same ? 'selected' : ''}">
                 <Icon class={same ? "text-white" : "text-text-alt"} {icon} width={28} />
             </a>
         {/each}
@@ -27,7 +24,7 @@
                 href={link}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="flex flex-col items-center justify-center h-16"
+                class="link"
             >
                 <Icon class="text-text-alt" {icon} width={28} />
             </a>
@@ -38,7 +35,15 @@
 <style>
     @reference "../../../app.css";
 
+    .link {
+        @apply flex flex-col items-center justify-center h-16;
+    }
+
+    .link:hover {
+        @apply bg-secondary/12;
+    }
+
     .selected {
-        @apply bg-secondary/24 border-r-2 border-secondary;
+        @apply bg-secondary/24 pl-[2px] border-r-2 border-secondary;
     }
 </style>

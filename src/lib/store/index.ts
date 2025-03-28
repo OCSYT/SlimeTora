@@ -1,7 +1,16 @@
+import { invoke } from '@tauri-apps/api/core';
 import { writable } from 'svelte/store';
 
-export const currentPath = writable('/');
+export const isOn = writable(null);
+isOn.subscribe(async (value) => {
+    if (value) {
+        await invoke('start');
+    } else if (value === false) {
+        await invoke('stop');
+    }
+});
 
+export const currentPath = writable('/');
 export const navLinks = [
     {
         name: "Home",
@@ -24,7 +33,6 @@ export const navLinks = [
         link: "/about",
     },
 ];
-
 export const externalNavLinks = [
     {
         name: "GitHub",
