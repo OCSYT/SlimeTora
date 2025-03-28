@@ -48,3 +48,11 @@ h5,
 h6 {
     @apply font-heading text-white;
 }
+
+.hoverable {
+    @apply transition duration-200 ease-in-out cursor-pointer;
+}
+
+.button {
+    @apply text-white min-w-[200px] min-h-12 px-6 py-2 rounded-lg;
+}

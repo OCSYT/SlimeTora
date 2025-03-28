@@ -14,7 +14,7 @@
 <div class="w-full h-16 bg-panel drop-shadow-xl z-10">
     <div class="flex items-center justify-between h-full px-3">
         <div class="flex flex-row items-center gap-3">
-            <img src="/logo.png" alt="Logo" class="h-10 w-10 rounded-md" />
+            <img src="/logo-transparent.png" alt="Logo" class=" w-10 rounded-md bg-contain" />
             <h1 class="text-xl font-bold">SlimeTora <span class="text-xs text-text-alt">v2.0.0</span></h1>
         </div>
         <div class="flex flex-row items-center gap-2 pr-1">

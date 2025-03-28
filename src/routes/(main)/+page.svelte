@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { goto } from "$app/navigation";
     import Icon from "@iconify/svelte";
     import { invoke } from "@tauri-apps/api/core";
 
@@ -20,6 +21,10 @@
             invoke("stop");
         }
     }
+
+    function openOnboarding() {
+        goto("/onboarding");
+    }
 </script>
 
 <div class="flex flex-col justify-center items-center w-full h-full gap-12">
@@ -30,19 +35,21 @@
         <Icon class="icon text-white" icon="ri:shut-down-line" width={78} />
     </button>
     <p class="text-xl text-text-alt font-heading"><span id="tracker-count">0</span> connected trackers</p>
+
+    <button onclick={openOnboarding}>Open onboarding</button>
 </div>
 
 <style>
     @reference "../../app.css";
 
     .power-button-bg {
-        @apply absolute w-[200px] h-[200px] rounded-full z-[-10];
+        @apply absolute w-[200px] h-[200px] z-[-10];
         background: linear-gradient(135deg, #9a48ee 0%, #f05d38 100%);
         filter: blur(100px);
     }
 
     .power-button {
-        @apply w-[200px] h-[200px] flex justify-center items-center rounded-full shadow-lg relative;
+        @apply w-[200px] h-[200px] flex justify-center items-center rounded-full shadow-lg relative hover:bg-secondary/24 active:bg-secondary/12;
         background: var(--slimetora-gradient-alt);
     }
 
@@ -54,13 +61,5 @@
             linear-gradient(#fff 0 0) content-box,
             linear-gradient(#fff 0 0);
         mask-composite: exclude;
-    }
-
-    button:hover {
-        @apply bg-secondary/24;
-    }
-
-    button:active {
-        @apply bg-secondary/12;
     }
 </style>
