@@ -14,10 +14,12 @@
   "license": "MIT",
   "dependencies": {
     "@fontsource/chakra-petch": "^5.2.5",
+    "@mnlphlp/plugin-blec": "^0.4.1",
     "@tailwindcss/vite": "^4.0.16",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "tailwindcss": "^4.0.16"
+    "tailwindcss": "^4.0.16",
+    "tauri-plugin-serialplugin": "^2.10.2"
   },
   "devDependencies": {
     "@iconify/svelte": "^4.2.0",

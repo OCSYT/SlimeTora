@@ -5,10 +5,12 @@
       "name": "slimetora",
       "dependencies": {
         "@fontsource/chakra-petch": "^5.2.5",
+        "@mnlphlp/plugin-blec": "^0.4.1",
         "@tailwindcss/vite": "^4.0.16",
         "@tauri-apps/api": "^2",
         "@tauri-apps/plugin-opener": "^2",
         "tailwindcss": "^4.0.16",
+        "tauri-plugin-serialplugin": "^2.10.2",
       },
       "devDependencies": {
         "@iconify/svelte": "^4.2.0",
@@ -92,6 +94,8 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.0", "", {}, "sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.25", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ=="],
+
+    "@mnlphlp/plugin-blec": ["@mnlphlp/plugin-blec@0.4.1", "", { "dependencies": { "@tauri-apps/api": ">=2.0.0-beta.6" } }, "sha512-oxxgZVjh3anarvkp+nyHuM9/5KMQr6EdU6SWEult7Y4ZJFf314nDYZR8ExRoKQP9YOBQZ3tmpJlhchqRKjLXdA=="],
 
     "@polka/url": ["@polka/url@1.0.0-next.28", "", {}, "sha512-8LduaNlMZGwdZ6qWrKlfa+2M4gahzFkprZiAt2TF8uS0qQgBizKXpXURqvTJ4WtmupWxaLqjRb2UCTe72mu+Aw=="],
 
@@ -306,6 +310,8 @@
     "tailwindcss": ["tailwindcss@4.0.16", "", {}, "sha512-i/SbG7ThTIcLshcFJL+je7hCv9dPis4Xl4XNeel6iZNX42pp/BZ+la+SbZIPoYE+PN8zhKbnHblpQ/lhOWwIeQ=="],
 
     "tapable": ["tapable@2.2.1", "", {}, "sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ=="],
+
+    "tauri-plugin-serialplugin": ["tauri-plugin-serialplugin@2.10.2", "", { "dependencies": { "@tauri-apps/api": "^2.4.0" } }, "sha512-x8QS1kIh4Ts4f8/syiVZGa2p4f3XCgqU58GdgJH/CATp1V8vtqmLt2ZXppt20hf0MK51Gho1fjOCgl/fLoXlPQ=="],
 
     "totalist": ["totalist@3.0.1", "", {}, "sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ=="],
 
