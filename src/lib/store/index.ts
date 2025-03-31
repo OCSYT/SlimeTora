@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
-import { writable } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
 
-export const isOn = writable(null);
+export const isOn: Writable<Boolean | null> = writable(null);
 isOn.subscribe(async (value) => {
     if (value) {
         await invoke('start');

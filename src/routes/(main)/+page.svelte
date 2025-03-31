@@ -1,42 +1,38 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { isOn } from "$lib/store";
     import Icon from "@iconify/svelte";
-    import { invoke } from "@tauri-apps/api/core";
+    import { onMount } from "svelte";
 
-    function toggleConnection() {
-        // example rn
-        const status = document.getElementById("tracker-status")!;
-        const count = document.getElementById("tracker-count")!;
-        const button = document.querySelector(".power-button")!;
+    onMount(async () => {
+        isOn.subscribe((value) => {
+            const status = document.getElementById("tracker-status")!;
+            const count = document.getElementById("tracker-count")!;
+            const button = document.querySelector(".power-button")!;
 
-        if (status.innerText === "Trackers are not connected") {
-            status.innerText = "Trackers are connected";
-            count.innerText = "2";
-            button.classList.add("connected");
-            invoke("start");
-        } else {
-            status.innerText = "Trackers are not connected";
-            count.innerText = "0";
-            button.classList.remove("connected");
-            invoke("stop");
-        }
-    }
-
-    function openOnboarding() {
-        goto("/onboarding");
-    }
+            if (value) {
+                status.innerText = "Trackers are connected";
+                count.innerText = "6";
+                button.classList.add("connected");
+            } else {
+                status.innerText = "Trackers are not connected";
+                count.innerText = "0";
+                button.classList.remove("connected");
+            }
+        });
+    });
 </script>
 
 <div class="flex flex-col justify-center items-center w-full h-full gap-12">
     <div class="power-button-bg"></div>
 
     <p class="text-2xl font-heading" id="tracker-status">Trackers are not connected</p>
-    <button class="power-button" onclick={toggleConnection}>
+    <button class="power-button hoverable" onclick={() => isOn.update((value) => !value)}>
         <Icon class="icon text-white" icon="ri:shut-down-line" width={78} />
     </button>
     <p class="text-xl text-text-alt font-heading"><span id="tracker-count">0</span> connected trackers</p>
 
-    <button onclick={openOnboarding}>Open onboarding</button>
+    <button onclick={() => goto("/onboarding")}>Open onboarding</button>
 </div>
 
 <style>
@@ -51,6 +47,15 @@
     .power-button {
         @apply w-[200px] h-[200px] flex justify-center items-center rounded-full shadow-lg relative hover:bg-secondary/24 active:bg-secondary/12;
         background: var(--slimetora-gradient-alt);
+    }
+
+    .power-button:global(.connected) {
+        background: var(--slimetora-gradient);
+        z-index: 0;
+    }
+
+    .power-button:global(.connected)::before {
+        background: rgba(0, 0, 0, 0.2);
     }
 
     .power-button::before {

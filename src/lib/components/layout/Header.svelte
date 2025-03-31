@@ -12,12 +12,12 @@
 </script>
 
 <div class="w-full h-16 bg-panel drop-shadow-xl z-10">
-    <div class="flex items-center justify-between h-full px-2">
+    <div class="flex items-center justify-between h-full px-3">
         <div class="flex flex-row items-center gap-2">
-            <img src="/logo-transparent.png" alt="Logo" class="w-14 rounded-md" />
+            <img src="/logo-transparent.png" alt="Logo" class="w-10 rounded-md" />
             <h1 class="text-xl font-bold">SlimeTora <span class="text-xs text-text-alt">v2.0.0</span></h1>
         </div>
-        <div class="flex flex-row items-center gap-2 pr-2">
+        <div class="flex flex-row items-center gap-2 pr-1">
             <Icon icon={currentNavLink.icon} width={20} />
             <p class="text-xl">{currentNavLink.name}</p>
         </div>
