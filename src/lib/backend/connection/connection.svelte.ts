@@ -22,7 +22,7 @@ export abstract class ConnectionMode {
 		return Promise.reject(new Error("write not implemented"));
 	}
 
-	public async read(device: string): Promise<string> {
+	public async read(device: string): Promise<string | undefined> {
 		console.error("read not implemented");
 		return Promise.reject(new Error("read not implemented"));
 	}

@@ -17,9 +17,13 @@ export class Serial extends ConnectionMode {
 		// TODO: permission check for mac and linux
 		SerialPort.available_ports()
 			.then((ports) => {
-				this.isAvailable = true;
-				this.availablePorts = Object.values(ports).map((port: { path: string }) => port.path);
-				console.log(`Available ports: ${ports}`);
+				if (ports) {
+					this.isAvailable = true;
+					this.availablePorts = Object.values(ports).map((port: { path: string }) => port.path);
+					console.log(`Serial ports are available: ${ports}`);
+				} else {
+					console.warn("Serial ports are not available");
+				}
 			})
 			.catch((error) => {
 				this.isAvailable = false;
@@ -79,60 +83,81 @@ export class Serial extends ConnectionMode {
 	public async write(device: string, data: string): Promise<void> {
 		const port = this.activePorts.find((port) => port.options.path === device);
 		const finalData = `\n${data}\n`;
+		let errorMsg;
 		if (port) {
 			try {
 				await port.write(finalData);
 				console.log(`Sent data to ${device}:`, data);
+				return Promise.resolve();
 			} catch (error) {
 				console.error(`Failed to write to ${device}:`, error);
+				errorMsg = (error as Error).message;
 			}
 		} else {
-			console.error(`Port ${device} not found in active ports.`);
+			errorMsg = `Port ${device} not found in active ports.`;
+			console.error(errorMsg);
 		}
+
+		if (errorMsg) throw new Error(errorMsg);
 	}
 
-	public async read(device: string): Promise<string> {
+	public async read(device: string): Promise<string | undefined> {
 		const port = this.activePorts.find((port) => port.options.path === device);
+		let errorMsg;
 		if (port) {
 			try {
 				const data = await port.read();
-				console.log(`Received data from ${device}:`, data);
+				console.log(`Received data from ${device}: ${data}`);
 				return data;
 			} catch (error) {
-				console.error(`Failed to read from ${device}:`, error);
-				throw error;
+				console.error(`Failed to read from ${device}: ${error}`);
+				errorMsg = (error as Error).message;
 			}
 		} else {
-			console.error(`Port ${device} not found in active ports.`);
-			throw new Error(`Port ${device} not found in active ports.`);
+			errorMsg = `Port ${device} not found in active ports.`;
+			console.error(errorMsg);
 		}
+
+		if (errorMsg) throw new Error(errorMsg);
 	}
-	
+
 	public async listen(device: string, callback: (data: string) => void): Promise<void> {
 		const port = this.activePorts.find((port) => port.options.path === device);
+		let errorMsg;
 		if (port) {
 			try {
 				await port.listen(callback);
 				console.log(`Listening on ${device}`);
+				return Promise.resolve();
 			} catch (error) {
-				console.error(`Failed to listen on ${device}:`, error);
+				console.error(`Failed to start listening on ${device}: ${error}`);
+				errorMsg = (error as Error).message;
 			}
 		} else {
-			console.error(`Port ${device} not found in active ports.`);
+			errorMsg = `Port ${device} not found in active ports.`;
+			console.error(errorMsg);
 		}
+
+		if (errorMsg) throw new Error(errorMsg);
 	}
 
 	public async stopListening(device: string): Promise<void> {
 		const port = this.activePorts.find((port) => port.options.path === device);
+		let errorMsg;
 		if (port) {
 			try {
 				await port.stopListening();
 				console.log(`Stopped listening on ${device}`);
+				return Promise.resolve();
 			} catch (error) {
-				console.error(`Failed to stop listening on ${device}:`, error);
+				console.error(`Failed to stop listening on ${device}: ${error}`);
+				errorMsg = (error as Error).message;
 			}
 		} else {
 			console.error(`Port ${device} not found in active ports.`);
+			errorMsg = `Port ${device} not found in active ports.`;
 		}
+
+		if (errorMsg) throw new Error(errorMsg);
 	}
 }
