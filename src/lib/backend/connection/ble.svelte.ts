@@ -1,7 +1,9 @@
 import { ConnectionMode } from "./connection.svelte";
+import { type BleDevice } from "@mnlphlp/plugin-blec";
+import * as ble from "@mnlphlp/plugin-blec";
 
-export class Serial extends ConnectionMode {
-	public name: string = "Serial";
+export class BLE extends ConnectionMode {
+	public name: string = "Bluetooth";
 	public isActive: boolean = false;
 	public isAvailable: boolean = false;
 	public supportedTrackers: string[] = [];
@@ -18,10 +20,5 @@ export class Serial extends ConnectionMode {
 	public async stopConnection() {
 		console.error("stopConnection not implemented");
 		return Promise.reject(new Error("stopConnection not implemented"));
-	}
-
-	public getDevices() {
-		console.error("getDevices not implemented");
-		return [];
 	}
 }
