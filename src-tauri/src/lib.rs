@@ -1,9 +1,13 @@
-use std::{thread::sleep, time::{self, Duration}};
+use std::{
+    thread::sleep,
+    time::{self, Duration},
+};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+use futures::stream::StreamExt;
 use tauri_plugin_btleplug::{
     btleplug::{
-        api::{Central, Manager as _, Peripheral, ScanFilter},
+        api::{bleuuid::BleUuid, Central, CentralEvent, Manager as _, Peripheral, ScanFilter},
         platform::Manager,
     },
     BtleplugExt,
@@ -17,40 +21,60 @@ async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
         .btleplug()
         .btleplug_context_spawn(async move {
             let manager = Manager::new().await.map_err(|e| e.to_string())?;
-            let adapter_list = manager.adapters().await.map_err(|e| e.to_string())?;
-            if adapter_list.is_empty() {
+            let adapters = manager.adapters().await.unwrap();
+            if adapters.is_empty() {
                 return Err("No Bluetooth adapters found".to_string());
             }
-            util::log(&format!(
-                "Found {} Bluetooth adapters",
-                adapter_list.len()
-            ));
+            util::log(&format!("Found {} Bluetooth adapters", adapters.len()));
 
-            for adapter in adapter_list {
-                let info = adapter.adapter_info().await.unwrap_or_else(|_| "Unknown".to_string());
-                util::log(&format!("Adapter: {}", info));
-                adapter
-                    .start_scan(ScanFilter::default())
-                    .await
-                    .expect("Failed to start scan");
-                sleep(Duration::from_secs(2));
-                let devices = adapter.peripherals().await.map_err(|e| e.to_string())?;
-                if devices.is_empty() {
-                    util::log("No devices found");
-                } else {
-                    for device in devices {
-                        let properties = device.properties().await.map_err(|e| e.to_string());
-                        let name = properties
-                            .and_then(|p| Ok(p.unwrap().local_name))
-                            .map(|n| n.unwrap_or_default());
-                        util::log(&format!(
-                            "Found Bluetooth device: {}",
-                            name.unwrap_or("Unknown".to_string())
-                        ));
+            let central = adapters.into_iter().nth(0).unwrap();
+            let central_state = central.adapter_state().await.unwrap();
+            println!("Central state: {:?}", central_state);
+
+            let mut events = central.events().await.unwrap();
+
+            let _ = central.start_scan(ScanFilter::default()).await;
+
+            while let Some(event) = events.next().await {
+                match event {
+                    CentralEvent::DeviceDiscovered(device) => {
+                        let peripheral = central.peripheral(&device).await.unwrap();
+                        let name = peripheral.properties().await.unwrap().unwrap().local_name;
+                        if let Some(name) = name {
+                            util::log(&format!("Discovered device: {}", name));
+                        } else {
+                            util::log("Discovered device with no name");
+                        }
                     }
+                    CentralEvent::StateUpdate(state) => {
+                        println!("AdapterStatusUpdate {:?}", state);
+                    }
+                    CentralEvent::DeviceConnected(id) => {
+                        println!("DeviceConnected: {:?}", id);
+                    }
+                    CentralEvent::DeviceDisconnected(id) => {
+                        println!("DeviceDisconnected: {:?}", id);
+                    }
+                    CentralEvent::ManufacturerDataAdvertisement {
+                        id,
+                        manufacturer_data,
+                    } => {
+                        println!(
+                            "ManufacturerDataAdvertisement: {:?}, {:?}",
+                            id, manufacturer_data
+                        );
+                    }
+                    CentralEvent::ServiceDataAdvertisement { id, service_data } => {
+                        println!("ServiceDataAdvertisement: {:?}, {:?}", id, service_data);
+                    }
+                    CentralEvent::ServicesAdvertisement { id, services } => {
+                        let services: Vec<String> =
+                            services.into_iter().map(|s| s.to_short_string()).collect();
+                        println!("ServicesAdvertisement: {:?}, {:?}", id, services);
+                    }
+                    _ => {}
                 }
             }
-
             Ok(())
         })
         .await
