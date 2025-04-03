@@ -41,15 +41,20 @@ fn main() {
 async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
     let ble_task = task::spawn(ble::start(app_handle.clone()));
     let serial_task = task::spawn(serial::start(app_handle.clone()));
-    log("Started connection");
 
     let _ = tokio::try_join!(ble_task, serial_task).map_err(|e| e.to_string())?;
+    log("Started connection");
     Ok(())
 }
 
 #[tauri::command]
-fn stop() {
+async fn stop(app_handle: tauri::AppHandle) -> Result<(), String> {
+    let ble_task = task::spawn(ble::stop(app_handle.clone()));
+    let serial_task = task::spawn(serial::stop(app_handle.clone()));
+
+    let _ = tokio::try_join!(ble_task, serial_task).map_err(|e| e.to_string())?;
     log("Stopped connection");
+    Ok(())
 }
 
 

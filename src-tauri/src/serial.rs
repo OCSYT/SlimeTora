@@ -5,3 +5,9 @@ pub fn start(app_handle: tauri::AppHandle) -> impl std::future::Future<Output = 
     async {
     }
 }
+
+pub fn stop(app_handle: tauri::AppHandle) -> impl std::future::Future<Output = ()> {
+    log("Stopped serial connection");
+    async {
+    }
+}
