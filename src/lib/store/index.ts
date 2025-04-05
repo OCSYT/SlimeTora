@@ -4,9 +4,11 @@ import { writable, type Writable } from "svelte/store";
 export const isOn: Writable<Boolean | null> = writable(null);
 isOn.subscribe(async (value) => {
 	if (value) {
-		await invoke("start");
+        console.log("Starting connection from Svelte");
+		invoke("start", { modes: ["ble"] })
 	} else if (value === false) {
-		await invoke("stop");
+        console.log("Stopping connection from Svelte");
+		invoke("stop", { modes: ["ble"] })
 	}
 });
 

@@ -1,13 +1,11 @@
 use crate::util::log;
 
-pub fn start(app_handle: tauri::AppHandle) -> impl std::future::Future<Output = ()> {
+pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
     log("Started serial connection");
-    async {
-    }
+    Ok(())
 }
 
-pub fn stop(app_handle: tauri::AppHandle) -> impl std::future::Future<Output = ()> {
+pub async fn stop(app_handle: tauri::AppHandle) -> Result<(), String> {
     log("Stopped serial connection");
-    async {
-    }
+    Ok(())
 }

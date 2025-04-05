@@ -8,7 +8,7 @@ use futures::stream::StreamExt;
 use once_cell::sync::Lazy;
 use tauri_plugin_btleplug::{
     btleplug::{
-        api::{bleuuid::BleUuid, Central, CentralEvent, CharPropFlags, Manager as _, Peripheral, ScanFilter},
+        api::{Central, CentralEvent, CharPropFlags, Manager as _, Peripheral, ScanFilter},
         platform::{Manager, PeripheralId},
     },
     BtleplugExt,
@@ -79,7 +79,7 @@ static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
     }))
 });
 
-pub async fn start(app_handle: tauri::AppHandle) {
+pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
     log("Started BLE connection");
     let app_handle_clone = app_handle.clone();
     let _ = app_handle_clone
@@ -137,9 +137,12 @@ pub async fn start(app_handle: tauri::AppHandle) {
         })
         .await
         .expect("error during btleplug task");
+
+    log("Started BLE connection");
+    Ok(())
 }
 
-pub async fn stop(app_handle: tauri::AppHandle) {
+pub async fn stop(app_handle: tauri::AppHandle) -> Result<(), String> {
     log("Stopping BLE connection");
     let _ = app_handle
         .btleplug()
@@ -178,6 +181,7 @@ pub async fn stop(app_handle: tauri::AppHandle) {
         .expect("error during btleplug stop task");
 
     log("Stopped BLE connection");
+    Ok(())
 }
 
 async fn check_device(
