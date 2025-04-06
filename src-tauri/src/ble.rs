@@ -1,6 +1,6 @@
+use futures::StreamExt;
 use std::collections::HashMap;
 use std::sync::Arc;
-use futures::StreamExt;
 use tauri::Emitter;
 use tauri_plugin_btleplug::BtleplugExt;
 use tokio::sync::Mutex;
@@ -8,10 +8,10 @@ use tokio::sync::Mutex;
 use crate::util::log;
 use once_cell::sync::Lazy;
 use tauri_plugin_btleplug::btleplug::{
-        self,
-        api::{Central, CentralEvent, CharPropFlags, Manager as _, Peripheral, ScanFilter},
-        platform::{Manager, PeripheralId},
-    };
+    self,
+    api::{Central, CentralEvent, CharPropFlags, Manager as _, Peripheral, ScanFilter},
+    platform::{Manager, PeripheralId},
+};
 
 /*
  * BLE constants
@@ -81,6 +81,15 @@ static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
     }))
 });
 
+async fn get_device_name(device: &btleplug::platform::Peripheral) -> String {
+    device
+        .properties()
+        .await
+        .map(|p| p.and_then(|pp| pp.local_name))
+        .unwrap_or(Some("Unknown".to_string()))
+        .unwrap_or_else(|| "Unknown".to_string())
+}
+
 pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
     log("Started BLE connection");
     let btleplug_result = app_handle
@@ -127,10 +136,20 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
                         println!("AdapterStatusUpdate {:?}", state);
                     }
                     CentralEvent::DeviceConnected(id) => {
-                        println!("DeviceConnected: {:?}", id);
+                        let name = get_device_name(&central.peripheral(&id).await.unwrap()).await;
+                        println!("DeviceConnected: {:?} ({:?})", name, id);
+
+                        app_handle
+                            .emit("device_connected", name.clone())
+                            .map_err(|e| e.to_string())?;
                     }
                     CentralEvent::DeviceDisconnected(id) => {
-                        println!("DeviceDisconnected: {:?}", id);
+                        let name = get_device_name(&central.peripheral(&id).await.unwrap()).await;
+                        println!("DeviceDisconnected: {:?} ({:?})", name, id);
+
+                        app_handle
+                            .emit("device_disconnected", name.clone())
+                            .map_err(|e| e.to_string())?;
                     }
                     _ => {}
                 }
@@ -199,15 +218,7 @@ async fn check_device(
     device: btleplug::platform::Peripheral,
     id: PeripheralId,
 ) {
-    let properties = device
-        .properties()
-        .await
-        .map_err(|e| e.to_string())
-        .unwrap();
-    let name = properties
-        .unwrap()
-        .local_name
-        .unwrap_or_else(|| "Unknown".to_string());
+    let name = get_device_name(&device).await;
 
     if name.contains("Haritora") {
         println!("Found Haritora device: {:?}", id);
@@ -252,7 +263,6 @@ async fn connect(
         println!("Characteristic: {:?}", char);
     }
 
-    // TODO: if find all required services and characteristics, start broadcasting data to frontend
     if REQUIRED_SERVICES
         .keys()
         .all(|service| services.iter().any(|s| s.uuid.to_string() == *service))
@@ -300,16 +310,16 @@ async fn broadcasting(
                 Ok(_) => {
                     println!("Subscribed to characteristic: {:?}", characteristic);
 
-                    let characteristic_name = CHARACTERISTICS
-                        .iter()
-                        .find_map(|(uuid, name)| {
-                            if characteristic.uuid.to_string() == *uuid {
-                                Some(*name)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or("Unknown");
+                    // let characteristic_name = CHARACTERISTICS
+                    //     .iter()
+                    //     .find_map(|(uuid, name)| {
+                    //         if characteristic.uuid.to_string() == *uuid {
+                    //             Some(*name)
+                    //         } else {
+                    //             None
+                    //         }
+                    //     })
+                    //     .unwrap_or("Unknown");
 
                     let notification_stream_result = device_clone.notifications().await;
                     match notification_stream_result {
