@@ -1,23 +1,17 @@
-import { invoke } from "@tauri-apps/api/core";
-import { get, writable, type Writable } from "svelte/store";
-import { connection } from "./settings";
+import { writable, type Writable } from "svelte/store";
+import type { ConnectionMode } from "$lib/types/connection";
+import { startInterpreting, stopInterpreting } from "$lib/backend/interpreter";
 
 export * as settings from "./settings";
 
-export const activeModes = writable<string[]>([]);
+export const activeModes = writable<ConnectionMode[]>([]);
 export const isOn: Writable<Boolean | null> = writable(null);
 isOn.subscribe(async (value) => {
 	console.log(`isOn: ${value}`);
 	if (value) {
-		const modes = get(connection).modes;
-		console.log(`Starting connection from frontend with modes: ${modes}`);
-		invoke("start", { modes })
-
-		activeModes.set(modes);
+		startInterpreting();
 	} else if (value === false) {
-		const modes = get(activeModes);
-		console.log(`Stopping connection from frontend with modes: ${modes}`);
-		invoke("stop", { modes })
+		stopInterpreting();
 	}
 });
 

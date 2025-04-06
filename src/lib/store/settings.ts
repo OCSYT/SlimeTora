@@ -1,3 +1,5 @@
+import { ConnectionMode } from "$lib/types/connection"
+import { TrackerModel, FPSMode, SensorAutoCorrection, SensorMode } from "$lib/types/tracker"
 import { writable } from "svelte/store"
 
 export type ProgramSettings = {
@@ -10,7 +12,7 @@ export type ProgramSettings = {
 }
 
 export type ConnectionSettings = {
-    model: string,
+    model: TrackerModel,
     modes: string[],
     ports: string[],
     slimevrIP: string,
@@ -18,9 +20,9 @@ export type ConnectionSettings = {
 }
 
 export type TrackerSettings = {
-    fps: number,
-    mode: number,
-    dynamicCalibration: string[]
+    fps: FPSMode,
+    mode: SensorMode,
+    dynamicCalibration: SensorAutoCorrection[]
 }
 
 export const program = writable<ProgramSettings>({
@@ -33,8 +35,8 @@ export const program = writable<ProgramSettings>({
 })
 
 export const connection = writable<ConnectionSettings>({
-    model: "wireless2",
-    modes: ["ble"],
+    model: TrackerModel.X2,
+    modes: [ConnectionMode.BLE],
     ports: [],
     slimevrIP: "255.255.255.255",
     slimevrPort: 6969,
@@ -43,5 +45,5 @@ export const connection = writable<ConnectionSettings>({
 export const tracker = writable<TrackerSettings>({
     fps: 100,
     mode: 2,
-    dynamicCalibration: ["Accelerometer"]
+    dynamicCalibration: [SensorAutoCorrection.Accel]
 })
