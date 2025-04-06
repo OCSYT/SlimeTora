@@ -2,6 +2,7 @@
     import { goto } from "$app/navigation";
     import { isOn } from "$lib/store";
     import Icon from "@iconify/svelte";
+	import { listen } from "@tauri-apps/api/event";
     import { onMount } from "svelte";
 
     onMount(async () => {
@@ -12,13 +13,26 @@
 
             if (value) {
                 status.innerText = "Trackers are connected";
-                count.innerText = "6";
                 button.classList.add("connected");
             } else {
                 status.innerText = "Trackers are not connected";
-                count.innerText = "0";
                 button.classList.remove("connected");
+                count.innerText = "0";
             }
+        });
+
+        listen("device_connected", () => {
+            // increment the count of connected trackers
+            const count = document.getElementById("tracker-count")!;
+            const currentCount = parseInt(count.innerText);
+            count.innerText = (currentCount + 1).toString();
+        });
+
+        listen("device_disconnected", () => {
+            // decrement the count of connected trackers
+            const count = document.getElementById("tracker-count")!;
+            const currentCount = parseInt(count.innerText);
+            count.innerText = (currentCount - 1).toString();
         });
     });
 </script>

@@ -17,7 +17,7 @@ use tauri_plugin_btleplug::btleplug::{
  * BLE constants
 */
 
-// HaritoraX Wireless
+// HaritoraX Wireless (2?)
 static SERVICES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     let mut map = HashMap::new();
     map.insert("1800", "Generic Access");
@@ -30,7 +30,7 @@ static SERVICES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     map
 });
 
-// HaritoraX Wireless
+// HaritoraX Wireless (2?)
 static CHARACTERISTICS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     let mut map = HashMap::new();
     map.insert("2a19", "BatteryLevel");
@@ -92,8 +92,8 @@ async fn get_device_name(device: &btleplug::platform::Peripheral) -> String {
 
 pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
     log("Started BLE connection");
-    let btleplug_result = app_handle
-        .clone()
+    let app_handle_clone = app_handle.clone();
+    let btleplug_result = app_handle_clone
         .btleplug()
         .btleplug_context_spawn(async move {
             let manager = Manager::new().await.map_err(|e| e.to_string())?;
@@ -114,6 +114,7 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
             }
 
             let mut events = central.events().await.map_err(|e| e.to_string())?;
+            let central_clone = central.clone();
 
             let _ = central
                 .start_scan(ScanFilter::default())
@@ -123,33 +124,76 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
             while let Some(event) = events.next().await {
                 match event {
                     CentralEvent::DeviceDiscovered(id) => {
-                        let peripheral =
-                            central.peripheral(&id).await.map_err(|e| e.to_string())?;
-                        check_device(app_handle.clone(), peripheral, id).await;
+                        let app_handle_clone = app_handle.clone();
+                        let central_clone = central_clone.clone();
+                        tokio::spawn(async move {
+                            match central_clone.peripheral(&id).await {
+                                Ok(peripheral) => {
+                                    if let Err(e) =
+                                        check_device(app_handle_clone, peripheral, id).await
+                                    {
+                                        log(&format!("Error checking device: {}", e));
+                                    }
+                                }
+                                Err(e) => log(&format!("Error getting peripheral: {}", e)),
+                            }
+                        });
                     }
                     CentralEvent::DeviceUpdated(id) => {
-                        let peripheral =
-                            central.peripheral(&id).await.map_err(|e| e.to_string())?;
-                        check_device(app_handle.clone(), peripheral, id).await;
+                        let app_handle_clone = app_handle.clone();
+                        let central_clone = central_clone.clone();
+                        tokio::spawn(async move {
+                            match central_clone.peripheral(&id).await {
+                                Ok(peripheral) => {
+                                    if let Err(e) =
+                                        check_device(app_handle_clone, peripheral, id).await
+                                    {
+                                        log(&format!("Error checking device: {}", e));
+                                    }
+                                }
+                                Err(e) => log(&format!("Error getting peripheral: {}", e)),
+                            }
+                        });
                     }
                     CentralEvent::StateUpdate(state) => {
                         println!("AdapterStatusUpdate {:?}", state);
                     }
                     CentralEvent::DeviceConnected(id) => {
-                        let name = get_device_name(&central.peripheral(&id).await.unwrap()).await;
-                        println!("DeviceConnected: {:?} ({:?})", name, id);
+                        let app_handle_clone = app_handle.clone();
+                        let central_clone = central_clone.clone();
+                        tokio::spawn(async move {
+                            match central_clone.peripheral(&id).await {
+                                Ok(peripheral) => {
+                                    let name = get_device_name(&peripheral).await;
+                                    log(&format!("DeviceConnected: {} ({:?})", name, id));
 
-                        app_handle
-                            .emit("device_connected", name.clone())
-                            .map_err(|e| e.to_string())?;
+                                    if let Err(e) = app_handle_clone.emit("device_connected", name)
+                                    {
+                                        log(&format!("Failed to emit device_connected: {}", e));
+                                    }
+                                }
+                                Err(e) => log(&format!("Error getting peripheral: {}", e)),
+                            }
+                        });
                     }
                     CentralEvent::DeviceDisconnected(id) => {
-                        let name = get_device_name(&central.peripheral(&id).await.unwrap()).await;
-                        println!("DeviceDisconnected: {:?} ({:?})", name, id);
+                        let app_handle_clone = app_handle.clone();
+                        let central_clone = central_clone.clone();
+                        tokio::spawn(async move {
+                            match central_clone.peripheral(&id).await {
+                                Ok(peripheral) => {
+                                    let name = get_device_name(&peripheral).await;
+                                    log(&format!("DeviceDisconnected: {} ({:?})", name, id));
 
-                        app_handle
-                            .emit("device_disconnected", name.clone())
-                            .map_err(|e| e.to_string())?;
+                                    if let Err(e) =
+                                        app_handle_clone.emit("device_disconnected", name)
+                                    {
+                                        log(&format!("Failed to emit device_disconnected: {}", e));
+                                    }
+                                }
+                                Err(e) => log(&format!("Error getting peripheral: {}", e)),
+                            }
+                        });
                     }
                     _ => {}
                 }
@@ -217,16 +261,21 @@ async fn check_device(
     app_handle: tauri::AppHandle,
     device: btleplug::platform::Peripheral,
     id: PeripheralId,
-) {
+) -> Result<(), String> {
     let name = get_device_name(&device).await;
 
     if name.contains("Haritora") {
         println!("Found Haritora device: {:?}", id);
-        connect(app_handle, device.clone()).await.unwrap();
+        if let Err(e) = connect(app_handle, device.clone()).await {
+            log(&format!("Failed to connect to device {:?}: {}", id, e));
+            return Err(e);
+        }
         let mut state = BLE_STATE.lock().await;
         state.connected_devices.push(id.clone());
         println!("Connected devices: {:?}", state.connected_devices);
     }
+
+    Ok(())
 }
 
 static REQUIRED_SERVICES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
@@ -338,9 +387,8 @@ async fn broadcasting(
                                     let peripheral_name = device_clone
                                         .properties()
                                         .await
-                                        .map(|p| p.and_then(|pp| pp.local_name))
-                                        .unwrap_or(Some("Unknown".to_string()))
-                                        .unwrap_or_else(|| "Unknown".to_string());
+                                        .and_then(|p| Ok(p.unwrap().local_name))
+                                        .unwrap_or(Some("Unknown".to_string()));
                                     let service_name = SERVICES
                                         .iter()
                                         .find_map(|(uuid, name)| {
