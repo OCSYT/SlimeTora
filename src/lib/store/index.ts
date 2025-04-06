@@ -1,6 +1,6 @@
 import { writable, type Writable } from "svelte/store";
 import type { ConnectionMode } from "$lib/types/connection";
-import { startInterpreting, stopInterpreting } from "$lib/backend/interpreter";
+import { startInterpreting, stopInterpreting } from "$lib/backend";
 
 export * as settings from "./settings";
 
