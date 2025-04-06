@@ -1,18 +1,17 @@
 use std::collections::HashMap;
 use std::sync::Arc;
+use futures::StreamExt;
 use tauri::Emitter;
+use tauri_plugin_btleplug::BtleplugExt;
 use tokio::sync::Mutex;
 
 use crate::util::log;
-use futures::stream::StreamExt;
 use once_cell::sync::Lazy;
-use tauri_plugin_btleplug::{
-    btleplug::{
+use tauri_plugin_btleplug::btleplug::{
+        self,
         api::{Central, CentralEvent, CharPropFlags, Manager as _, Peripheral, ScanFilter},
         platform::{Manager, PeripheralId},
-    },
-    BtleplugExt,
-};
+    };
 
 /*
  * BLE constants
@@ -50,7 +49,10 @@ static CHARACTERISTICS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(||
     map.insert("ef844202-90a9-11ed-a1eb-0242ac120002", "FpsSetting");
     map.insert("ef8443f6-90a9-11ed-a1eb-0242ac120002", "TofSetting");
     map.insert("ef8445c2-90a9-11ed-a1eb-0242ac120002", "SensorModeSetting");
-    map.insert("ef84c300-90a9-11ed-a1eb-0242ac120002", "WirelessModeSetting");
+    map.insert(
+        "ef84c300-90a9-11ed-a1eb-0242ac120002",
+        "WirelessModeSetting",
+    );
     map.insert(
         "ef84c305-90a9-11ed-a1eb-0242ac120002",
         "AutoCalibrationSetting",
@@ -67,7 +69,7 @@ static CHARACTERISTICS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(||
 
 struct BleState {
     manager: Option<Manager>,
-    central: Option<tauri_plugin_btleplug::btleplug::platform::Adapter>,
+    central: Option<btleplug::platform::Adapter>,
     connected_devices: Vec<PeripheralId>,
 }
 
@@ -81,8 +83,8 @@ static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
 
 pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
     log("Started BLE connection");
-    let app_handle_clone = app_handle.clone();
-    let _ = app_handle_clone
+    let btleplug_result = app_handle
+        .clone()
         .btleplug()
         .btleplug_context_spawn(async move {
             let manager = Manager::new().await.map_err(|e| e.to_string())?;
@@ -136,7 +138,15 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
             Ok(())
         })
         .await
-        .expect("error during btleplug task");
+        .map_err(|e| e.to_string())?;
+
+    match btleplug_result {
+        Ok(_) => {}
+        Err(e) => {
+            log(&format!("Error during btleplug task: {}", e));
+            return Err(e);
+        }
+    }
 
     log("Started BLE connection");
     Ok(())
@@ -186,7 +196,7 @@ pub async fn stop(app_handle: tauri::AppHandle) -> Result<(), String> {
 
 async fn check_device(
     app_handle: tauri::AppHandle,
-    device: tauri_plugin_btleplug::btleplug::platform::Peripheral,
+    device: btleplug::platform::Peripheral,
     id: PeripheralId,
 ) {
     let properties = device
@@ -219,12 +229,13 @@ static REQUIRED_CHARS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| 
     let mut map = HashMap::new();
     map.insert("00dbf1c6-90aa-11ed-a1eb-0242ac120002", "Sensor");
     map.insert("00dbf450-90aa-11ed-a1eb-0242ac120002", "MainButton");
+    map.insert("00dbf586-90aa-11ed-a1eb-0242ac120002", "SecondaryButton");
     map
 });
 
 async fn connect(
     app_handle: tauri::AppHandle,
-    device: tauri_plugin_btleplug::btleplug::platform::Peripheral,
+    device: btleplug::platform::Peripheral,
 ) -> Result<(), String> {
     device.connect().await.map_err(|e| e.to_string())?;
     device
@@ -270,62 +281,25 @@ async fn connect(
     Ok(())
 }
 
-async fn disconnect(
-    device: tauri_plugin_btleplug::btleplug::platform::Peripheral,
-) -> Result<(), String> {
+async fn disconnect(device: btleplug::platform::Peripheral) -> Result<(), String> {
     device.disconnect().await.map_err(|e| e.to_string())?;
     Ok(())
 }
 
 async fn broadcasting(
     app_handle: tauri::AppHandle,
-    device: tauri_plugin_btleplug::btleplug::platform::Peripheral,
+    device: btleplug::platform::Peripheral,
 ) -> Result<(), String> {
     let characteristics = device.characteristics();
     let device_clone = device.clone();
     for characteristic in characteristics {
         // check if you can subscribe to characteristic, and if so, subscribe to notify frontend
         if characteristic.properties.contains(CharPropFlags::NOTIFY) {
-            let _ = device_clone
-            .subscribe(&characteristic)
-            .await
-            .map_err(|e| e.to_string())?;
-            println!("Subscribed to characteristic: {:?}", characteristic);
+            let subscribe_result = device_clone.subscribe(&characteristic).await;
+            match subscribe_result {
+                Ok(_) => {
+                    println!("Subscribed to characteristic: {:?}", characteristic);
 
-            let characteristic_name = CHARACTERISTICS
-                .iter()
-                .find_map(|(uuid, name)| {
-                    if characteristic.uuid.to_string() == *uuid {
-                        Some(*name)
-                    } else {
-                        None
-                    }
-                })
-                .unwrap_or("Unknown");
-
-            let mut notification_stream = device_clone.notifications().await.map_err(|e| e.to_string())?;
-            let app_handle_clone = app_handle.clone();
-            let device_clone = device.clone();
-
-            tokio::spawn(async move {
-                while let Some(data) = notification_stream.next().await {
-                    println!(
-                        "Received data from {} ({}): {:?}",
-                        characteristic_name, characteristic.uuid, data.value
-                    );
-
-                    // emit data to tauri frontend with name of peripheral, service, characteristic, and data
-                    let peripheral_name = device_clone.properties().await.unwrap().unwrap().local_name.unwrap_or_else(|| "Unknown".to_string());
-                    let service_name = SERVICES
-                        .iter()
-                        .find_map(|(uuid, name)| {
-                            if characteristic.service_uuid.to_string() == *uuid {
-                                Some(*name)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or("Unknown");
                     let characteristic_name = CHARACTERISTICS
                         .iter()
                         .find_map(|(uuid, name)| {
@@ -336,21 +310,78 @@ async fn broadcasting(
                             }
                         })
                         .unwrap_or("Unknown");
-                    let data = data.value.clone();
 
-                    if let Err(e) = app_handle_clone.emit(
-                        "ble_notification",
-                        serde_json::json!({
-                            "peripheral_name": peripheral_name,
-                            "service_name": service_name,
-                            "characteristic_name": characteristic_name,
-                            "data": data,
-                        }),
-                    ) {
-                        log(&format!("Failed to emit BLE notification: {}", e));
+                    let notification_stream_result = device_clone.notifications().await;
+                    match notification_stream_result {
+                        Ok(mut notification_stream) => {
+                            let app_handle_clone = app_handle.clone();
+                            let device_clone = device.clone();
+
+                            tokio::spawn(async move {
+                                while let Some(data) = notification_stream.next().await {
+                                    // println!(
+                                    //     "Received data from {} ({}): {:?}",
+                                    //     characteristic_name, characteristic.uuid, data.value
+                                    // );
+
+                                    // emit data to tauri frontend with name of peripheral, service, characteristic, and data
+                                    let peripheral_name = device_clone
+                                        .properties()
+                                        .await
+                                        .map(|p| p.and_then(|pp| pp.local_name))
+                                        .unwrap_or(Some("Unknown".to_string()))
+                                        .unwrap_or_else(|| "Unknown".to_string());
+                                    let service_name = SERVICES
+                                        .iter()
+                                        .find_map(|(uuid, name)| {
+                                            if characteristic.service_uuid.to_string() == *uuid {
+                                                Some(*name)
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .unwrap_or("Unknown");
+                                    let characteristic_name = CHARACTERISTICS
+                                        .iter()
+                                        .find_map(|(uuid, name)| {
+                                            if characteristic.uuid.to_string() == *uuid {
+                                                Some(*name)
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .unwrap_or("Unknown");
+                                    let data = data.value.clone();
+
+                                    if let Err(e) = app_handle_clone.emit(
+                                        "ble_notification",
+                                        serde_json::json!({
+                                            "peripheral_name": peripheral_name,
+                                            "service_name": service_name,
+                                            "characteristic_name": characteristic_name,
+                                            "data": data,
+                                        }),
+                                    ) {
+                                        log(&format!("Failed to emit BLE notification: {}", e));
+                                    }
+                                }
+                            });
+                        }
+                        Err(e) => {
+                            log(&format!(
+                                "Failed to get notification stream for characteristic {:?}: {}",
+                                characteristic, e
+                            ));
+                        }
                     }
                 }
-            });
+                Err(e) => {
+                    log(&format!(
+                        "Failed to subscribe to characteristic {:?}: {}",
+                        characteristic, e
+                    ));
+                }
+            }
         }
     }
     Ok(())
