@@ -3564,6 +3564,7 @@ dependencies = [
  "once_cell",
  "serde",
  "serde_json",
+ "serialport",
  "tauri",
  "tauri-build",
  "tauri-plugin-btleplug",
