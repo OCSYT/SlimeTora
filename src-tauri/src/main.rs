@@ -6,9 +6,9 @@ use std::collections::HashMap;
 use futures::future::{self};
 use once_cell::sync::Lazy;
 use tauri::AppHandle;
+use tauri_plugin_prevent_default::Flags;
 use tokio::task;
 use util::log;
-use tauri_plugin_prevent_default::Flags;
 
 mod ble;
 mod serial;
@@ -45,7 +45,12 @@ fn main() {
                 .expect("error while requesting permissions");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![start, stop, get_serial_ports, filter_ports])
+        .invoke_handler(tauri::generate_handler![
+            start,
+            stop,
+            get_serial_ports,
+            filter_ports
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -55,7 +60,11 @@ fn main() {
  */
 
 #[tauri::command]
-async fn start(app_handle: AppHandle, modes: Vec<String>, ports: Vec<String>) -> Result<(), String> {
+async fn start(
+    app_handle: AppHandle,
+    modes: Vec<String>,
+    ports: Vec<String>,
+) -> Result<(), String> {
     let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
 
     log(&format!("Starting connection with modes: {:?}", modes));
@@ -69,9 +78,29 @@ async fn start(app_handle: AppHandle, modes: Vec<String>, ports: Vec<String>) ->
             return Err("No serial ports provided".to_string());
         }
 
-        let serial_task = task::spawn(async move { serial::start(app_handle.clone(), ports).await });
+        // find path of the serial port from the provided port names
+        // TODO: check if this works on linux/macos (for windows, simply "COM(x)" is the path)
+        let port_paths: Vec<String> = serialport::available_ports()
+            .map_err(|e| format!("Failed to list serial ports: {}", e))?
+            .into_iter()
+            .filter_map(|port| {
+                if ports.contains(&port.port_name) {
+                    Some(port.port_name)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        if port_paths.is_empty() {
+            log("No path found for the provided serial ports");
+            return Err("No path found for the provided serial ports".to_string());
+        }
+        log(&format!("Port paths: {:?}", port_paths));
+
+        let serial_task =
+            task::spawn(async move { serial::start(app_handle.clone(), port_paths).await });
         tasks.push(serial_task);
-        log("Starting Serial connection");
+        log("Starting serial connection");
     } else {
         return Err("No valid connection type provided".to_string());
     }
@@ -127,7 +156,6 @@ fn get_serial_ports() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 fn filter_ports(ports: Vec<String>) -> Result<Vec<String>, String> {
-    // to filter to haritora ports, check the portinfo and the VID and PID (referring to DONGLES)
     let filtered_ports: Vec<String> = ports
         .into_iter()
         .filter_map(|port| {
