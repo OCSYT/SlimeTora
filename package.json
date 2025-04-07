@@ -9,17 +9,15 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "tauri": "tauri"
+    "tauri": "cross-env WEBKIT_DISABLE_DMABUF_RENDERER=1 tauri"
   },
   "license": "MIT",
   "dependencies": {
     "@fontsource/chakra-petch": "^5.2.5",
-    "@mnlphlp/plugin-blec": "^0.4.1",
     "@tailwindcss/vite": "^4.0.16",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "tailwindcss": "^4.0.16",
-    "tauri-plugin-serialplugin": "^2.10.2"
+    "tailwindcss": "^4.0.16"
   },
   "devDependencies": {
     "@iconify/svelte": "^4.2.0",
@@ -27,6 +25,7 @@
     "@sveltejs/kit": "^2.9.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
     "@tauri-apps/cli": "^2",
+    "cross-env": "^7.0.3",
     "prettier": "^3.5.3",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",

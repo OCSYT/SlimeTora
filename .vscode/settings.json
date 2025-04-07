@@ -1,3 +1,7 @@
 {
-  "svelte.enable-ts-plugin": true
+  "svelte.enable-ts-plugin": true,
+  "rust-analyzer.server.path": "rust-analyzer",
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "rust-analyzer.cargo.loadOutDirsFromCheck": true,
+  "rust-analyzer.procMacro.enable": true
 }

@@ -3571,7 +3571,6 @@ dependencies = [
  "tauri-plugin-btleplug",
  "tauri-plugin-opener",
  "tauri-plugin-prevent-default",
- "tauri-plugin-serialplugin",
  "tokio",
  "tokio-macros",
 ]
@@ -4009,20 +4008,6 @@ dependencies = [
  "thiserror 2.0.12",
  "webview2-com",
  "windows 0.60.0",
-]
-
-[[package]]
-name = "tauri-plugin-serialplugin"
-version = "2.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa678fccb5d878fa905bd7271a29a56db72e99598d9735f2377c3b0a13382241"
-dependencies = [
- "serde",
- "serde_json",
- "serialport",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.12",
 ]
 
 [[package]]

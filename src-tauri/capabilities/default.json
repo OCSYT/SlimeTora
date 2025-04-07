@@ -7,7 +7,6 @@
     "core:default",
     "core:webview:allow-set-webview-zoom",
     "opener:default",
-    "serialplugin:default",
     "prevent-default:default",
     {
       "identifier": "opener:allow-open-path",

@@ -30,7 +30,6 @@ fn main() {
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_serialplugin::init())
         .plugin(tauri_plugin_btleplug::init())
         .setup(|app: &mut tauri::App| {
             #[cfg(mobile)]
@@ -78,27 +77,9 @@ async fn start(
             return Err("No serial ports provided".to_string());
         }
 
-        // find path of the serial port from the provided port names
-        // TODO: check if this works on linux/macos (for windows, simply "COM(x)" is the path)
-        let port_paths: Vec<String> = serialport::available_ports()
-            .map_err(|e| format!("Failed to list serial ports: {}", e))?
-            .into_iter()
-            .filter_map(|port| {
-                if ports.contains(&port.port_name) {
-                    Some(port.port_name)
-                } else {
-                    None
-                }
-            })
-            .collect();
-        if port_paths.is_empty() {
-            log("No path found for the provided serial ports");
-            return Err("No path found for the provided serial ports".to_string());
-        }
-        log(&format!("Port paths: {:?}", port_paths));
-
-        let serial_task =
-            task::spawn(async move { serial::start(app_handle.clone(), port_paths).await });
+        let serial_task = task::spawn(async move {
+            serial::start(ports).await
+        });
         tasks.push(serial_task);
         log("Starting serial connection");
     } else {
@@ -130,10 +111,24 @@ async fn stop(app_handle: AppHandle, modes: Vec<String>) -> Result<(), String> {
         let ble_task = task::spawn(async move { ble::stop(app_handle.clone()).await });
         tasks.push(ble_task);
     } else if modes.contains(&"serial".to_string()) {
-        let serial_task = task::spawn(async move { serial::stop(app_handle.clone()).await });
+        let serial_task = task::spawn(async move { serial::stop().await });
         tasks.push(serial_task);
     } else {
         return Err("No valid connection type provided".to_string());
+    }
+
+
+    for result in future::join_all(tasks).await {
+        match result {
+            Ok(inner_result) => inner_result.map_err(|e| {
+                log(&format!("Failed to stop connection: {}", e));
+                "Failed to stop connection".to_string()
+            })?,
+            Err(join_error) => {
+                log(&format!("Task join error: {}", join_error));
+                return Err("Failed to stop connection".to_string());
+            }
+        }
     }
 
     log("Stopped connection");
