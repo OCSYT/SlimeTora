@@ -45,10 +45,17 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            // utilities
+            get_serial_ports,
+            filter_ports,
+
+            // commands
             start,
             stop,
-            get_serial_ports,
-            filter_ports
+            write_ble,
+            read_ble,
+            write_serial,
+            read_serial,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -77,9 +84,8 @@ async fn start(
             return Err("No serial ports provided".to_string());
         }
 
-        let serial_task = task::spawn(async move {
-            serial::start(app_handle.clone(), ports).await
-        });
+        let serial_task =
+            task::spawn(async move { serial::start(app_handle.clone(), ports).await });
         tasks.push(serial_task);
         log("Starting serial connection");
     } else {
@@ -117,7 +123,6 @@ async fn stop(app_handle: AppHandle, modes: Vec<String>) -> Result<(), String> {
         return Err("No valid connection type provided".to_string());
     }
 
-
     for result in future::join_all(tasks).await {
         match result {
             Ok(inner_result) => inner_result.map_err(|e| {
@@ -133,6 +138,95 @@ async fn stop(app_handle: AppHandle, modes: Vec<String>) -> Result<(), String> {
 
     log("Stopped connection");
     Ok(())
+}
+
+#[tauri::command]
+async fn write_ble(
+    device_name: String,
+    characteristic_uuid: String,
+    data: Vec<u8>,
+    expecting_response: bool,
+) -> Result<Option<Vec<u8>>, String> {
+    let response = ble::write(
+        &device_name,
+        &characteristic_uuid,
+        data,
+        expecting_response,
+    ).await;
+
+    match response {
+        Ok(result) => {
+            log("Successfully wrote to BLE device");
+            if expecting_response {
+                log(&format!("Received response from BLE device: {:?}", result));
+                Ok(result)
+            } else {
+                Ok(None)
+            }
+        }
+        Err(e) => {
+            log(&format!("Failed to write to BLE device: {}", e));
+            Err("Failed to write to BLE device".to_string())
+        }
+    }
+}
+
+#[tauri::command]
+async fn read_ble(
+    device_name: String,
+    characteristic_uuid: String,
+) -> Result<Vec<u8>, String> {
+    let response = ble::read(&device_name, &characteristic_uuid).await;
+
+    match response {
+        Ok(result) => {
+            log("Successfully read from BLE device");
+            log(&format!("Received data from BLE device: {:?}", result));
+            Ok(result)
+        }
+        Err(e) => {
+            log(&format!("Failed to read from BLE device: {}", e));
+            Err("Failed to read from BLE device".to_string())
+        }
+    }
+}
+
+#[tauri::command]
+async fn write_serial(
+    port_path: String,
+    data: String,
+) -> Result<(), String> {
+    let response = serial::write(port_path, data).await;
+
+    match response {
+        Ok(_) => {
+            log("Successfully wrote to serial port");
+            Ok(())
+        }
+        Err(e) => {
+            log(&format!("Failed to write to serial port: {}", e));
+            Err("Failed to write to serial port".to_string())
+        }
+    }
+}
+
+#[tauri::command]
+async fn read_serial(
+    port_path: String,
+) -> Result<String, String> {
+    let response = serial::read(port_path).await;
+
+    match response {
+        Ok(result) => {
+            log("Successfully read from serial port");
+            log(&format!("Received data from serial port: {}", result));
+            Ok(result)
+        }
+        Err(e) => {
+            log(&format!("Failed to read from serial port: {}", e));
+            Err("Failed to read from serial port".to_string())
+        }
+    }
 }
 
 #[tauri::command]
@@ -175,6 +269,6 @@ fn filter_ports(ports: Vec<String>) -> Result<Vec<String>, String> {
     if filtered_ports.is_empty() {
         return Err("No Haritora ports found".to_string());
     }
-    log(&format!("Filtered haritora ports: {:?}", filtered_ports));
+    log(&format!("Filtered Haritora ports: {:?}", filtered_ports));
     Ok(filtered_ports)
 }

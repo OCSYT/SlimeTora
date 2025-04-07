@@ -73,7 +73,6 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                         } else {
                                             String::new()
                                         };
-                                        log(&format!("Identifier: {}, Data: {}", identifier, data));
 
                                         if let Err(e) = app_handle_clone.emit(
                                             "serial_notification",
@@ -127,4 +126,42 @@ pub async fn stop() -> Result<(), String> {
 
     log("Stopped serial connection");
     Ok(())
+}
+
+pub async fn write(port_path: String, data: String) -> Result<(), String> {
+    let mut ports = PORTS.lock().unwrap();
+    for port in ports.iter_mut() {
+        if let Some(name) = port.name() {
+            if name == port_path {
+                let data_bytes = data.as_bytes();
+                port.write_all(data_bytes)
+                    .map_err(|e| format!("Failed to write to port {}: {}", port_path, e))?;
+                return Ok(());
+            }
+        }
+    }
+    Err(format!("Port {} not found", port_path))
+}
+
+pub async fn read(port_path: String) -> Result<String, String> {
+    let mut ports = PORTS.lock().unwrap();
+    for port in ports.iter_mut() {
+        if let Some(name) = port.name() {
+            if name == port_path {
+                let mut buffer = [0u8; 1024];
+                match port.read(&mut buffer) {
+                    Ok(bytes_read) => {
+                        if bytes_read > 0 {
+                            return String::from_utf8(buffer[..bytes_read].to_vec())
+                                .map_err(|e| format!("Failed to convert message to UTF-8: {}", e));
+                        }
+                    }
+                    Err(e) => {
+                        return Err(format!("Error reading from port: {}", e));
+                    }
+                }
+            }
+        }
+    }
+    Err(format!("Port {} not found or no data available", port_path))
 }

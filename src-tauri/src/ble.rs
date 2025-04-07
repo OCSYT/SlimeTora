@@ -2,7 +2,7 @@ use futures::StreamExt;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::Emitter;
-use tauri_plugin_btleplug::BtleplugExt;
+use tauri_plugin_btleplug::{btleplug::api::WriteType, BtleplugExt};
 use tokio::sync::Mutex;
 
 use crate::util::log;
@@ -257,6 +257,97 @@ pub async fn stop(app_handle: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+pub async fn write(
+    device_name: &str,
+    characteristic_uuid: &str,
+    data: Vec<u8>,
+    expecting_response: bool,
+) -> Result<Option<Vec<u8>>, String> {
+    let device = find_device_by_name(device_name).await?;
+
+    if let Some(characteristic) = find_characteristic_by_uuid(&device, characteristic_uuid) {
+        let write_type = if expecting_response {
+            WriteType::WithResponse
+        } else {
+            WriteType::WithoutResponse
+        };
+
+        if let Err(e) = device.write(&characteristic, &data, write_type).await {
+            log(&format!(
+                "Failed to write to characteristic {:?}: {}",
+                characteristic, e
+            ));
+            return Err(e.to_string());
+        }
+
+        if expecting_response {
+            return device
+                .read(&characteristic)
+                .await
+                .map(Some)
+                .map_err(|e| {
+                    log(&format!(
+                        "Failed to read response from characteristic {:?}: {}",
+                        characteristic, e
+                    ));
+                    e.to_string()
+                });
+        }
+
+        Ok(None)
+    } else {
+        Err("Characteristic not found".to_string())
+    }
+}
+
+pub async fn read(
+    device_name: &str,
+    characteristic_uuid: &str,
+) -> Result<Vec<u8>, String> {
+    let device = find_device_by_name(device_name).await?;
+
+    if let Some(characteristic) = find_characteristic_by_uuid(&device, characteristic_uuid) {
+        device
+            .read(&characteristic)
+            .await
+            .map_err(|_| "Failed to read from characteristic".to_string())
+    } else {
+        Err("Characteristic not found".to_string())
+    }
+}
+
+async fn find_device_by_name(
+    device_name: &str,
+) -> Result<btleplug::platform::Peripheral, String> {
+    let state = BLE_STATE.lock().await;
+
+    let central = state.central.as_ref().ok_or("Central not initialized")?;
+    let peripherals = central.peripherals().await.map_err(|e| e.to_string())?;
+
+    peripherals
+        .into_iter()
+        .find(|p| {
+            let device_name = device_name.to_string();
+            let properties = tokio::runtime::Handle::current().block_on(async {
+                p.properties().await.ok().flatten()
+            });
+            properties
+                .and_then(|props| props.local_name)
+                .map_or(false, |name| name == device_name)
+        })
+        .ok_or("Device not found".to_string())
+}
+
+fn find_characteristic_by_uuid(
+    device: &btleplug::platform::Peripheral,
+    characteristic_uuid: &str,
+) -> Option<btleplug::api::Characteristic> {
+    device
+        .characteristics()
+        .into_iter()
+        .find(|char| char.uuid.to_string() == characteristic_uuid)
+}
+
 async fn check_device(
     app_handle: tauri::AppHandle,
     device: btleplug::platform::Peripheral,
@@ -386,7 +477,8 @@ async fn broadcasting(
                                     // emit data to tauri frontend with name of peripheral, service, characteristic, and data
                                     let peripheral_name = device_clone
                                         .properties()
-                                        .await.map(|p| p.unwrap().local_name)
+                                        .await
+                                        .map(|p| p.unwrap().local_name)
                                         .unwrap_or(Some("Unknown".to_string()));
                                     let service_name = SERVICES
                                         .iter()
