@@ -1,17 +1,11 @@
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
-use tokio::sync::broadcast;
 
 use serialport::SerialPort;
 
 use crate::util::log;
 
 static PORTS: Mutex<Vec<Box<dyn SerialPort + Send>>> = Mutex::new(Vec::new());
-
-static CLOSE_SIGNAL: Lazy<broadcast::Sender<()>> = Lazy::new(|| {
-    let (tx, _) = broadcast::channel(1);
-    tx
-});
 
 static STOP_CHANNELS: Lazy<Mutex<Vec<std::sync::mpsc::Sender<()>>>> = Lazy::new(|| {
     Mutex::new(Vec::new())
@@ -58,7 +52,7 @@ pub async fn start(port_paths: Vec<String>) -> Result<(), String> {
                         if bytes_read > 0 {
                             accumulator.extend_from_slice(&buffer[..bytes_read]);
                             
-                            // Process complete messages
+                            // process complete messages
                             while let Some(delimiter_index) = accumulator.iter().position(|&b| b == b'\n') {
                                 let message_bytes = accumulator.drain(..delimiter_index).collect::<Vec<u8>>();
                                 accumulator.remove(0);

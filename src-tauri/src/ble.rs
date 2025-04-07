@@ -103,7 +103,7 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
             }
             log(&format!("Found {} Bluetooth adapters", adapters.len()));
 
-            let central = adapters.into_iter().nth(0).unwrap();
+            let central = adapters.into_iter().next().unwrap();
             let central_state = central.adapter_state().await.map_err(|e| e.to_string())?;
             println!("Central state: {:?}", central_state);
 
@@ -116,7 +116,7 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
             let mut events = central.events().await.map_err(|e| e.to_string())?;
             let central_clone = central.clone();
 
-            let _ = central
+            central
                 .start_scan(ScanFilter::default())
                 .await
                 .map_err(|e| e.to_string())?;
@@ -386,8 +386,7 @@ async fn broadcasting(
                                     // emit data to tauri frontend with name of peripheral, service, characteristic, and data
                                     let peripheral_name = device_clone
                                         .properties()
-                                        .await
-                                        .and_then(|p| Ok(p.unwrap().local_name))
+                                        .await.map(|p| p.unwrap().local_name)
                                         .unwrap_or(Some("Unknown".to_string()));
                                     let service_name = SERVICES
                                         .iter()
