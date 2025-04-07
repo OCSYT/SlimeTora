@@ -65,7 +65,12 @@ export function stopInterpreting() {
 async function startNotifyBLE() {
 	unlistenBLE = await listen("ble_notification", (event) => {
 		console.log("BLE notification received");
-		const payload = event.payload as any; // it already is a JSON object
+		const payload = event.payload as {
+			peripheral_name: string;
+			characteristic_name: string;
+			service_name: string;
+			data: string;
+		};
 
 		const device = payload.peripheral_name;
 		const characteristic = payload.characteristic_name;
@@ -94,14 +99,11 @@ async function startNotifyBLE() {
 
 async function startNotifySerial() {
 	unlistenSerial = await listen("serial_notification", (event) => {
-		const payload = event.payload as string;
-		console.log(payload);
+		const payload = event.payload as { identifier: string; data: string };
+		const identifier = payload.identifier;
+		const data = payload.data;
 
-		const identifier = payload.split(":")[0];
-		const data = payload.split(":")[1];
-
-		console.log(`Identifier: ${identifier}, Data: ${data}`);
-		// TODO: interpreter for serial (serialport-rs cargo package)
+		console.log(`Identifier: ${identifier}, data: ${data}`);
 	});
 }
 

@@ -1,5 +1,6 @@
-use std::sync::Mutex;
 use once_cell::sync::Lazy;
+use std::sync::Mutex;
+use tauri::Emitter;
 
 use serialport::SerialPort;
 
@@ -7,11 +8,10 @@ use crate::util::log;
 
 static PORTS: Mutex<Vec<Box<dyn SerialPort + Send>>> = Mutex::new(Vec::new());
 
-static STOP_CHANNELS: Lazy<Mutex<Vec<std::sync::mpsc::Sender<()>>>> = Lazy::new(|| {
-    Mutex::new(Vec::new())
-});
+static STOP_CHANNELS: Lazy<Mutex<Vec<std::sync::mpsc::Sender<()>>>> =
+    Lazy::new(|| Mutex::new(Vec::new()));
 
-pub async fn start(port_paths: Vec<String>) -> Result<(), String> {
+pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Result<(), String> {
     log(&format!(
         "Starting serial connection on ports {:?}",
         &port_paths
@@ -34,34 +34,63 @@ pub async fn start(port_paths: Vec<String>) -> Result<(), String> {
         let mut port_clone = port
             .try_clone()
             .map_err(|e| format!("Failed to clone port: {}", e))?;
-        
+
         // channel for stop signals
         let (stop_tx, stop_rx) = std::sync::mpsc::channel();
         STOP_CHANNELS.lock().unwrap().push(stop_tx);
-        
+
+        let app_handle_clone = app_handle.clone();
         std::thread::spawn(move || {
             let mut accumulator = Vec::new();
-            
+
             loop {
                 if stop_rx.try_recv().is_ok() {
                     break;
                 }
-                
+
                 match port_clone.read(&mut buffer) {
                     Ok(bytes_read) => {
                         if bytes_read > 0 {
                             accumulator.extend_from_slice(&buffer[..bytes_read]);
-                            
+
                             // process complete messages
-                            while let Some(delimiter_index) = accumulator.iter().position(|&b| b == b'\n') {
-                                let message_bytes = accumulator.drain(..delimiter_index).collect::<Vec<u8>>();
+                            while let Some(delimiter_index) =
+                                accumulator.iter().position(|&b| b == b'\n')
+                            {
+                                let message_bytes =
+                                    accumulator.drain(..delimiter_index).collect::<Vec<u8>>();
                                 accumulator.remove(0);
-                                
+
                                 match String::from_utf8(message_bytes) {
                                     Ok(message) => {
                                         log(&format!("Received message: {}", message));
+
+                                        // split identifier and data
+                                        let parts: Vec<&str> = message.splitn(2, ':').collect();
+                                        let identifier = parts[0].to_string();
+                                        let data = if parts.len() > 1 {
+                                            parts[1].to_string()
+                                        } else {
+                                            String::new()
+                                        };
+                                        log(&format!("Identifier: {}, Data: {}", identifier, data));
+
+                                        if let Err(e) = app_handle_clone.emit(
+                                            "serial_notification",
+                                            serde_json::json!({
+                                                "identifier": identifier,
+                                                "data": data,
+                                            }),
+                                        ) {
+                                            log(&format!(
+                                                "Failed to emit serial notification: {}",
+                                                e
+                                            ));
+                                        }
                                     }
-                                    Err(e) => log(&format!("Failed to convert message to UTF-8: {}", e))
+                                    Err(e) => {
+                                        log(&format!("Failed to convert message to UTF-8: {}", e))
+                                    }
                                 }
                             }
                         }
@@ -89,13 +118,13 @@ pub async fn stop() -> Result<(), String> {
             let _ = tx.send(());
         }
     }
-    
+
     std::thread::sleep(std::time::Duration::from_millis(100));
-    
+
     let mut ports = PORTS.lock().unwrap();
     log(&format!("Clearing {} ports", ports.len()));
     ports.clear();
-    
+
     log("Stopped serial connection");
     Ok(())
 }

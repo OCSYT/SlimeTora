@@ -78,7 +78,7 @@ async fn start(
         }
 
         let serial_task = task::spawn(async move {
-            serial::start(ports).await
+            serial::start(app_handle.clone(), ports).await
         });
         tasks.push(serial_task);
         log("Starting serial connection");
