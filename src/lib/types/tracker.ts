@@ -1,3 +1,20 @@
+export interface IMUData {
+    trackerName: string;
+    rotation: {
+        x: number;
+        y: number;
+        z: number;
+        w: number;
+    };
+    acceleration: {
+        x: number;
+        y: number;
+        z: number;
+    };
+    ankle?: number;
+    magStatus?: MagStatus;
+}
+
 export enum TrackerModel {
     X2 = "wireless2",
     Wireless = "wireless",

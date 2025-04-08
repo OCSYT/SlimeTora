@@ -4,9 +4,9 @@ import { get } from "svelte/store";
 import { ConnectionMode } from "$lib/types/connection";
 import { listen } from "@tauri-apps/api/event";
 import { TrackerModel } from "$lib/types/tracker";
-import { Wired } from "./haritorax-wired";
-import { Wireless } from "./haritorax-wireless";
-import { Wireless2 } from "./haritorax-2";
+import { Wired } from "./interpreters/haritorax-wired";
+import { Wireless } from "./interpreters/haritorax-wireless";
+import { Wireless2 } from "./interpreters/haritorax-2";
 
 type Interpreter = Wireless | Wired | Wireless2;
 

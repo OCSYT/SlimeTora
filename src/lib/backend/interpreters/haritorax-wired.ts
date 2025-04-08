@@ -1,9 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
-import { TrackerInterpreter } from "./tracker";
+import { TrackerInterpreter } from "../tracker";
 import { TrackerModel } from "$lib/types/tracker";
 
-export class Wireless extends TrackerInterpreter {
-	public name = TrackerModel.Wireless;
+export class Wired extends TrackerInterpreter {
+	public name = TrackerModel.Wired;
 	public isActive: boolean = false;
 	public connectedDevices: string[] = [];
 
@@ -17,13 +17,12 @@ export class Wireless extends TrackerInterpreter {
 	}
 
 	public async read(device: string): Promise<string | undefined> {
-		console.log(`Reading data from device: ${device}`);
-		//const data = await invoke("read", { device });
-		return "Unimplemented";
+		console.log(`Reading data from device ${device}`);
+		return await invoke("read", { device })
 	}
 
 	public async write(device: string, data: string): Promise<void> {
-		console.log(`Writing data to device ${device} with data: ${data}`);
-		await invoke("write", { device, data });
+		console.log(`Writing data to device ${device}: ${data}`);
+		return await invoke("write", { device, data });
 	}
 }
