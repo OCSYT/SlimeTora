@@ -35,7 +35,7 @@ export const program = writable<ProgramSettings>({
 })
 
 export const connection = writable<ConnectionSettings>({
-    model: TrackerModel.X2,
+    model: TrackerModel.Wireless,
     modes: [ConnectionMode.Serial],
     ports: ["/dev/ttyACM0", "/dev/ttyACM1", "/dev/ttyACM2"],
     slimevrIP: "255.255.255.255",

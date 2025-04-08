@@ -63,26 +63,39 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
 
                                 match String::from_utf8(message_bytes) {
                                     Ok(message) => {
-                                        log(&format!("Received message: {}", message));
+                                        //log(&format!("Received message: {}", message));
 
                                         // split identifier and data
                                         let parts: Vec<&str> = message.splitn(2, ':').collect();
-                                        let identifier = parts[0].to_string();
-                                        let data = if parts.len() > 1 {
-                                            parts[1].to_string()
-                                        } else {
-                                            String::new()
-                                        };
+                                        // let identifier = parts[0].to_string();
+                                        // let data = if parts.len() > 1 {
+                                        //     parts[1].to_string()
+                                        // } else {
+                                        //     String::new()
+                                        // };
 
-                                        if let Err(e) = app_handle_clone.emit(
-                                            "serial_notification",
-                                            serde_json::json!({
-                                                "identifier": identifier,
-                                                "data": data,
-                                            }),
-                                        ) {
+                                        // if let Err(e) = app_handle_clone.emit(
+                                        //     "serial_notification",
+                                        //     serde_json::json!({
+                                        //         "identifier": identifier,
+                                        //         "data": data,
+                                        //     }),
+                                        // ) {
+                                        //     log(&format!(
+                                        //         "Failed to emit serial notification: {}",
+                                        //         e
+                                        //     ));
+                                        // }
+
+                                        // Call the interpreter
+                                        let result = crate::interpreters::core::process_serial(
+                                            &app_handle_clone,
+                                            None,
+                                            &message,
+                                        );
+                                        if let Err(e) = result {
                                             log(&format!(
-                                                "Failed to emit serial notification: {}",
+                                                "Failed to parse serial data: {}",
                                                 e
                                             ));
                                         }

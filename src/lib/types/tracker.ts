@@ -16,9 +16,9 @@ export interface IMUData {
 }
 
 export enum TrackerModel {
-    X2 = "wireless2",
-    Wireless = "wireless",
-    Wired = "wired",
+    X2 = "X2",
+    Wireless = "Wireless",
+    Wired = "Wired",
 }
 
 // For serial trackers (wired, or wireless/2 with GX dongle)

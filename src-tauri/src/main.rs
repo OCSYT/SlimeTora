@@ -1,18 +1,27 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::collections::HashMap;
+mod connection {
+    pub mod ble;
+    pub mod serial;
+}
+mod interpreters {
+    pub mod core;
+    pub mod haritorax_2;
+    pub mod haritorax_wired;
+    pub mod haritorax_wireless;
+}
+mod util;
 
+use connection::ble;
+use connection::serial;
 use futures::future::{self};
 use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use tauri::AppHandle;
 use tauri_plugin_prevent_default::Flags;
 use tokio::task;
 use util::log;
-
-mod ble;
-mod serial;
-mod util;
 
 static DONGLES: Lazy<Vec<HashMap<&'static str, &'static str>>> = Lazy::new(|| {
     vec![
@@ -48,7 +57,6 @@ fn main() {
             // utilities
             get_serial_ports,
             filter_ports,
-
             // commands
             start,
             stop,
@@ -68,13 +76,18 @@ fn main() {
 #[tauri::command]
 async fn start(
     app_handle: AppHandle,
+    model: String,
     modes: Vec<String>,
     ports: Vec<String>,
 ) -> Result<(), String> {
-    let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
-
     log(&format!("Starting connection with modes: {:?}", modes));
 
+    // Start the interpreter for the specified model
+    crate::interpreters::core::start_interpreting(&app_handle, &model)?;
+
+    let mut tasks = vec![];
+
+    // Start connections based on modes
     if modes.contains(&"ble".to_string()) {
         let ble_task = task::spawn(async move { ble::start(app_handle.clone()).await });
         tasks.push(ble_task);
@@ -110,8 +123,10 @@ async fn start(
 }
 
 #[tauri::command]
-async fn stop(app_handle: AppHandle, modes: Vec<String>) -> Result<(), String> {
+async fn stop(app_handle: AppHandle, model: String, modes: Vec<String>) -> Result<(), String> {
     let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
+
+    crate::interpreters::core::stop_interpreting(&app_handle, &model)?;
 
     if modes.contains(&"ble".to_string()) {
         let ble_task = task::spawn(async move { ble::stop(app_handle.clone()).await });
@@ -147,12 +162,7 @@ async fn write_ble(
     data: Vec<u8>,
     expecting_response: bool,
 ) -> Result<Option<Vec<u8>>, String> {
-    let response = ble::write(
-        &device_name,
-        &characteristic_uuid,
-        data,
-        expecting_response,
-    ).await;
+    let response = ble::write(&device_name, &characteristic_uuid, data, expecting_response).await;
 
     match response {
         Ok(result) => {
@@ -172,10 +182,7 @@ async fn write_ble(
 }
 
 #[tauri::command]
-async fn read_ble(
-    device_name: String,
-    characteristic_uuid: String,
-) -> Result<Vec<u8>, String> {
+async fn read_ble(device_name: String, characteristic_uuid: String) -> Result<Vec<u8>, String> {
     let response = ble::read(&device_name, &characteristic_uuid).await;
 
     match response {
@@ -192,10 +199,7 @@ async fn read_ble(
 }
 
 #[tauri::command]
-async fn write_serial(
-    port_path: String,
-    data: String,
-) -> Result<(), String> {
+async fn write_serial(port_path: String, data: String) -> Result<(), String> {
     let response = serial::write(port_path, data).await;
 
     match response {
@@ -211,9 +215,7 @@ async fn write_serial(
 }
 
 #[tauri::command]
-async fn read_serial(
-    port_path: String,
-) -> Result<String, String> {
+async fn read_serial(port_path: String) -> Result<String, String> {
     let response = serial::read(port_path).await;
 
     match response {

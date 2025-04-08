@@ -333,7 +333,7 @@ async fn find_device_by_name(
             });
             properties
                 .and_then(|props| props.local_name)
-                .map_or(false, |name| name == device_name)
+                .is_some_and(|name| name == device_name)
         })
         .ok_or("Device not found".to_string())
 }
