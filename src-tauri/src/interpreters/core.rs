@@ -1,6 +1,5 @@
 use crate::util::log;
 use once_cell::sync::Lazy;
-use tauri::utils::acl::Number;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::AppHandle;
@@ -22,13 +21,13 @@ pub trait Interpreter {
         data: &str,
     ) -> Result<(), String>;
 
-    fn parse_serial(app_handle: &AppHandle, data: &str) -> Result<(), String>;
+    fn parse_serial(app_handle: &AppHandle, tracker_name: &str, data: &str) -> Result<(), String>;
 }
 
 // Function signature for interpreter functions
 type InterpreterBLEFn = fn(&AppHandle, Option<&str>, &str, &str) -> Result<(), String>;
 
-type InterpreterSerialFn = fn(&AppHandle, &str) -> Result<(), String>;
+type InterpreterSerialFn = fn(&AppHandle, &str, &str) -> Result<(), String>;
 
 #[derive(Debug, Clone)]
 pub struct IMUData {
@@ -172,7 +171,7 @@ pub fn stop_interpreting(model: &str) -> Result<(), String> {
 }
 
 // Process data with all active interpreters or a specific one if device ID can be matched
-pub fn process_serial(app_handle: &AppHandle, data: &str) -> Result<(), String> {
+pub fn process_serial(app_handle: &AppHandle, tracker_name: &str, data: &str) -> Result<(), String> {
     let active_models = {
         let models = ACTIVE_MODELS.lock().unwrap();
         models.clone()
@@ -185,7 +184,7 @@ pub fn process_serial(app_handle: &AppHandle, data: &str) -> Result<(), String> 
     // Try all active interpreters or use device_id to determine which one to use
     for model in active_models {
         if let Some(interpreter_fn) = INTERPRETER_MAP_SERIAL.get(&model) {
-            match interpreter_fn(app_handle, data) {
+            match interpreter_fn(app_handle, tracker_name, data) {
                 Ok(_) => return Ok(()),
                 Err(e) => log(&format!("Interpreter for {:?} failed: {}", model, e)),
             }

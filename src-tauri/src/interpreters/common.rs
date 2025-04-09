@@ -31,7 +31,7 @@ static BUTTON_MAP: Lazy<HashMap<&'static str, u8>> = Lazy::new(|| {
 /// - HaritoraX Wired (1.0/1.1/1.1b)
 /// - HaritoraX Wireless
 /// - HaritoraX 2
-pub fn decode_imu_packet(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
+pub fn decode_imu(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
     if tracker_name.is_empty() || data.len() < 14 {
         return Err(format!(
             "Invalid data for IMU packet: {}",

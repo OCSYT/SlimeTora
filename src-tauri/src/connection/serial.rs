@@ -4,11 +4,38 @@ use std::sync::Mutex;
 use serialport::SerialPort;
 
 use crate::util::log;
+use std::collections::HashMap;
 
 static PORTS: Mutex<Vec<Box<dyn SerialPort + Send>>> = Mutex::new(Vec::new());
 
 static STOP_CHANNELS: Lazy<Mutex<Vec<std::sync::mpsc::Sender<()>>>> =
     Lazy::new(|| Mutex::new(Vec::new()));
+
+// tracker part, [tracker id, port, port id]
+static TRACKER_ASSIGNMENT: Lazy<Mutex<HashMap<&'static str, [String; 3]>>> = Lazy::new(|| {
+    let entries = [
+        ("DONGLE", "0"),
+        ("chest", "1"),
+        ("leftKnee", "2"),
+        ("leftAnkle", "3"),
+        ("rightKnee", "4"),
+        ("rightAnkle", "5"),
+        ("hip", "6"),
+        ("leftElbow", "7"),
+        ("rightElbow", "8"),
+        ("leftWrist", "9"),
+        ("rightWrist", "10"),
+        ("head", "11"),
+        ("leftFoot", "12"),
+        ("rightFoot", "13"),
+    ];
+
+    let map = entries.into_iter().map(|(key, id)| {
+        (key, [id.to_string(), "".to_string(), "".to_string()])
+    }).collect();
+
+    Mutex::new(map)
+});
 
 pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Result<(), String> {
     log(&format!(
@@ -28,11 +55,12 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
     log(&format!("Opened ports: {:?}", &port_paths));
 
     // listen to ports
-    for port in ports.iter_mut() {
+    for port in ports.iter_mut() {        
         let mut buffer = [0u8; 1024];
         let mut port_clone = port
             .try_clone()
             .map_err(|e| format!("Failed to clone port: {}", e))?;
+        let port_path = port_clone.name().unwrap_or("Unknown".to_string());
 
         // channel for stop signals
         let (stop_tx, stop_rx) = std::sync::mpsc::channel();
@@ -65,30 +93,39 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                         //log(&format!("Received message: {}", message));
 
                                         // split identifier and data
-                                        // let parts: Vec<&str> = message.splitn(2, ':').collect();
-                                        // let identifier = parts[0].to_string();
-                                        // let data = if parts.len() > 1 {
-                                        //     parts[1].to_string()
-                                        // } else {
-                                        //     String::new()
-                                        // };
+                                        let parts: Vec<&str> = message.splitn(2, ':').collect();
+                                        let identifier = parts[0].to_lowercase();
+                                        let port_id = identifier.chars().find(|c| c.is_digit(10)).unwrap_or('0').to_string();
+                                        let port_data = parts[1].clone();
 
-                                        // if let Err(e) = app_handle_clone.emit(
-                                        //     "serial_notification",
-                                        //     serde_json::json!({
-                                        //         "identifier": identifier,
-                                        //         "data": data,
-                                        //     }),
-                                        // ) {
-                                        //     log(&format!(
-                                        //         "Failed to emit serial notification: {}",
-                                        //         e
-                                        //     ));
-                                        // }
+                                        // Silently listen to data and assign any missing trackers
+                                        let mut tracker_assignment = TRACKER_ASSIGNMENT.lock().unwrap();
+                                        for (key, value) in tracker_assignment.iter_mut() {
+                                            if value[1].is_empty() && identifier.starts_with('r') {
+                                                if let Some(tracker_id_char) = port_data.chars().nth(4) {
+                                                    if let Ok(tracker_id) = tracker_id_char.to_string().parse::<i32>() {
+                                                        if value[0].parse::<i32>().unwrap_or(0) == tracker_id && tracker_id != 0 {
+                                                            value[1] = port_path.clone();
+                                                            value[2] = port_id.clone();
+                                                            log(&format!("Setting {} to port {} with port ID {}", key, port_path, port_id));
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        let mut tracker_name = None;
+                                        for (key, value) in TRACKER_ASSIGNMENT.lock().unwrap().iter() {
+                                            if value[1] == port_path && value[2] == port_id {
+                                                tracker_name = Some(*key);
+                                                break;
+                                            }
+                                        }
 
                                         // Call the interpreter
                                         let result = crate::interpreters::core::process_serial(
                                             &app_handle_clone,
+                                            tracker_name.unwrap_or(""),
                                             &message,
                                         );
                                         if let Err(e) = result {

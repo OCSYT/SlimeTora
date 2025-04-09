@@ -14,7 +14,7 @@ impl Interpreter for HaritoraX2 {
         Ok(())
     }
 
-    fn parse_serial(app_handle: &AppHandle, data: &str) -> Result<(), String> {
+    fn parse_serial(app_handle: &AppHandle, tracker_name: &str, data: &str) -> Result<(), String> {
         // Implement serial parsing logic for HaritoraX 2
         Ok(())
     }
