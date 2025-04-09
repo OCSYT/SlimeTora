@@ -3561,7 +3561,9 @@ name = "slimetora"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
+ "byteorder",
  "futures",
+ "hex",
  "once_cell",
  "serde",
  "serde_json",

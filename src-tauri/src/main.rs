@@ -7,6 +7,7 @@ mod connection {
 }
 mod interpreters {
     pub mod core;
+    pub mod common;
     pub mod haritorax_2;
     pub mod haritorax_wired;
     pub mod haritorax_wireless;
@@ -40,9 +41,9 @@ fn main() {
         )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_btleplug::init())
-        .setup(|app: &mut tauri::App| {
+        .setup(|_app: &mut tauri::App| {
             #[cfg(mobile)]
-            app.btleplug()
+            _app.btleplug()
                 .request_permissions(tauri_plugin_btleplug::permission::RequestPermission {
                     bluetooth: true,
                     bluetooth_admin: true,
@@ -83,7 +84,7 @@ async fn start(
     log(&format!("Starting connection with modes: {:?}", modes));
 
     // Start the interpreter for the specified model
-    crate::interpreters::core::start_interpreting(&app_handle, &model)?;
+    crate::interpreters::core::start_interpreting(&model)?;
 
     let mut tasks = vec![];
 
@@ -126,7 +127,7 @@ async fn start(
 async fn stop(app_handle: AppHandle, model: String, modes: Vec<String>) -> Result<(), String> {
     let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
 
-    crate::interpreters::core::stop_interpreting(&app_handle, &model)?;
+    crate::interpreters::core::stop_interpreting(&model)?;
 
     if modes.contains(&"ble".to_string()) {
         let ble_task = task::spawn(async move { ble::stop(app_handle.clone()).await });

@@ -14,12 +14,12 @@ impl Interpreter for HaritoraXWireless {
         Ok(())
     }
 
-    fn parse_serial(app_handle: &AppHandle, device_id: Option<&str>, data: &str) -> Result<(), String> {
+    fn parse_serial(app_handle: &AppHandle, data: &str) -> Result<(), String> {
         // Implement serial parsing logic for HaritoraX Wireless
 
         let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
 
-        log(&format!("Device: {:?}, identifier: {}, data: {}", device_id, identifier, data));
+        log(&format!("Received identifier: {}, data: {}", identifier, data));
 
         Ok(())
     }

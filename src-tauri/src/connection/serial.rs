@@ -1,6 +1,5 @@
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
-use tauri::Emitter;
 
 use serialport::SerialPort;
 
@@ -66,7 +65,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                         //log(&format!("Received message: {}", message));
 
                                         // split identifier and data
-                                        let parts: Vec<&str> = message.splitn(2, ':').collect();
+                                        // let parts: Vec<&str> = message.splitn(2, ':').collect();
                                         // let identifier = parts[0].to_string();
                                         // let data = if parts.len() > 1 {
                                         //     parts[1].to_string()
@@ -90,7 +89,6 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                         // Call the interpreter
                                         let result = crate::interpreters::core::process_serial(
                                             &app_handle_clone,
-                                            None,
                                             &message,
                                         );
                                         if let Err(e) = result {
