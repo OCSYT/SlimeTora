@@ -2,7 +2,7 @@
     "name": "slimetora",
     "productName": "SlimeTora",
     "type": "module",
-    "version": "1.5.0-beta3",
+    "version": "1.5.0-beta4",
     "description": "A middleware program that connects the HaritoraX full body trackers to the SlimeVR server",
     "private": true,
     "author": {
@@ -48,12 +48,12 @@
         "@slimevr/common": "^0.1.2",
         "@slimevr/firmware-protocol": "^0.6.5",
         "@slimevr/tracker-emulation": "^0.2.4",
-        "haritorax-interpreter": "^3.3.1",
+        "haritorax-interpreter": "^3.3.2",
         "i18next": "^24.2.3",
         "loc-i18next": "^0.1.6",
         "lodash-es": "^4.17.21",
         "quaternion": "2.0.1",
-        "three": "^0.175.0",
-        "rand-seed": "^2.1.7"
+        "rand-seed": "^2.1.7",
+        "three": "^0.175.0"
     }
 }
