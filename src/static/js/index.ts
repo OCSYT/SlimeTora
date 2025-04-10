@@ -45,6 +45,7 @@ let trackerHeartbeatInterval = 2000;
 
 let serverAddress = "255.255.255.255";
 let serverPort = 6969;
+let buttonTimeout = 500;
 
 let appUpdates = true;
 let translationUpdates = true;
@@ -165,6 +166,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit ?? false;
     serverAddress = settings.global?.serverAddress ?? "255.255.255.255";
     serverPort = settings.global?.serverPort ?? 6969;
+    buttonTimeout = settings.global?.buttonTimeout ?? 500;
 
     // Set switch states based on settings
     setSwitchState("compact-view-switch", compactView);
@@ -203,6 +205,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const serverPortInput = document.getElementById("server-port") as HTMLInputElement;
     serverPortInput.value = serverPort.toString();
+
+    const buttonTimeoutInput = document.getElementById("button-timeout") as HTMLInputElement;
+    buttonTimeoutInput.value = buttonTimeout.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
@@ -1665,6 +1670,18 @@ function addEventListeners() {
         });
 
         window.ipc.send("set-server-port", serverPort);
+    });
+
+    document.getElementById("button-timeout").addEventListener("change", async function () {
+        buttonTimeout = parseInt((document.getElementById("button-timeout") as HTMLInputElement).value);
+        l(`Changed button timeout to: ${buttonTimeout}`);
+        window.ipc.send("save-setting", {
+            global: {
+                buttonTimeout: buttonTimeout,
+            },
+        });
+
+        window.ipc.send("set-button-timeout", buttonTimeout);
     });
 
     document.getElementById("language-select").addEventListener("change", async function () {

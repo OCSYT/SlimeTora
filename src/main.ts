@@ -54,6 +54,7 @@ let autoOff = false;
 let appUpdatesEnabled = true;
 let translationsUpdatesEnabled = true;
 let updateChannel = "stable";
+let buttonTimeout = 500;
 // this variable is literally only used so i can fix a stupid issue where with both BT+COM enabled, it sometimes connects the BT trackers again directly after again, breaking the program
 // why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
 // -jovannmc
@@ -90,6 +91,7 @@ try {
     updateChannel = config.global?.updates?.updateChannel ?? "stable";
     heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
     loggingMode = config.global?.debug?.loggingMode ?? 1;
+    buttonTimeout = config.global?.buttonTimeout ?? 500;
 
     serverAddress = config.global?.serverAddress ?? "255.255.255.255";
     serverPort = config.global?.serverPort ?? 6969;
@@ -695,6 +697,11 @@ ipcMain.on("set-server-address", (_event, arg) => {
 ipcMain.on("set-server-port", (_event, arg) => {
     serverPort = arg;
     log(`Server port set to: ${arg}`, "settings");
+});
+
+ipcMain.on("set-button-timeout", (_event, arg) => {
+    buttonTimeout = arg;
+    log(`Button timeout set to: ${arg}`, "settings");
 });
 
 ipcMain.on("fix-trackers", async () => {
@@ -1428,7 +1435,7 @@ function startDeviceListeners() {
             }
 
             clickCounts[key] = 0;
-        }, 750);
+        }, buttonTimeout);
     });
 
     let imuErrorCount: { [key: string]: number } = {};

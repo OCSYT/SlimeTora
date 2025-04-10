@@ -103,7 +103,8 @@
             "trackerVisualizationFPS": "Tracker visualization FPS",
             "heartbeat": "Tracker heartbeat interval",
             "serverAddress": "SlimeVR server address",
-            "serverPort": "SlimeVR server port"
+            "serverPort": "SlimeVR server port",
+            "button": "Tracker button timeout"
         },
         "updates": {
             "title": "Update checking",
