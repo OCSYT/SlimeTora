@@ -158,6 +158,7 @@
         "text": "Enable or disable debugging features for the program. Using logging mode 'All data (!!!)' will cause huge log files and lag, only use if asked or have tracker issues!",
         "writeToFile": "Write to log files",
         "bypassPortLimit": "Bypass port limit",
+        "randomMac": "Randomize tracker MAC address",
         "loggingMode": {
             "title": "Logging mode",
             "minimal": "Minimal data",

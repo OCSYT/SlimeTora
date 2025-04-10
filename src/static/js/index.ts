@@ -33,6 +33,7 @@ let magnetometerEnabled = false;
 
 let canLogToFile = true;
 let bypassCOMPortLimit = false;
+let randomizeMacAddress = false;
 
 let language = "en";
 let censorSerialNumbers = false;
@@ -164,6 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     canLogToFile = settings.global?.debug?.canLogToFile ?? true;
     loggingMode = settings.global?.debug?.loggingMode ?? 1;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit ?? false;
+    randomizeMacAddress = settings.global?.debug?.randomizeMacAddress ?? false;
     serverAddress = settings.global?.serverAddress ?? "255.255.255.255";
     serverPort = settings.global?.serverPort ?? 6969;
     buttonTimeout = settings.global?.buttonTimeout ?? 500;
@@ -185,6 +187,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("translations-updates-switch", translationUpdates);
     setSwitchState("log-to-file-switch", canLogToFile);
     setSwitchState("bypass-com-limit-switch", bypassCOMPortLimit);
+    setSwitchState("randomize-mac-switch", randomizeMacAddress);
 
     // Set select values based on settings
     setSelectValue("fps-mode-select", fpsMode.toString());
@@ -1862,6 +1865,17 @@ function addEventListeners() {
                 debug: {
                     loggingMode: loggingMode,
                 },
+            },
+        });
+    });
+
+    document.getElementById("randomize-mac-switch").addEventListener("change", function () {
+        randomizeMacAddress = !randomizeMacAddress;
+        l(`Switched randomize MAC address: ${randomizeMacAddress}`);
+        window.ipc.send("set-randomize-mac", randomizeMacAddress)
+        window.ipc.send("save-setting", {
+            global: {
+                randomizeMacAddress,
             },
         });
     });

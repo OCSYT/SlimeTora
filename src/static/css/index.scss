@@ -437,6 +437,21 @@ input:disabled + .slider:after {
     border-radius: 34px;
 }
 
+/*
+ * Debugging
+*/
+
+.debugging-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.debugging-container .switch-container,
+.debugging-container .input-container {
+    flex: 1 0 50%;
+}
+
 ::-webkit-scrollbar {
     width: 10px;
 }

@@ -18,10 +18,10 @@
     ],
     "main": "dist/main.js",
     "scripts": {
-        "start": "npm run preload && cross-env DEVELOPMENT=true && electron .",
-        "dev": "cross-env DEVELOPMENT=true && tsc && npm run copy-files && electron .",
-        "build": "npm run preload && npx @electron/packager . SlimeTora --arch=x64,arm64 --overwrite --out=build/ --icon=src/static/images/icon.ico --asar --extra-resource=src/languages --prune --ignore=\"^/(src|docs|.vscode|.eslintrc.cjs|.prettierrc|tsconfig.json|README.md|.gitignore|notes.txt|.github)$\"",
         "preload": "npx @electron/rebuild && npx del-cli dist/ && tsc && npm run copy-files && npm run build-bulma",
+        "start": "npm run preload && cross-env DEVELOPMENT=true && electron .",
+        "dev": "cross-env DEVELOPMENT=true && tsc && npm run copy-files && npm run build-bulma && electron .",
+        "build": "npm run preload && npx @electron/packager . SlimeTora --arch=x64,arm64 --overwrite --out=build/ --icon=src/static/images/icon.ico --asar --extra-resource=src/languages --prune --ignore=\"^/(src|docs|.vscode|.eslintrc.cjs|.prettierrc|tsconfig.json|README.md|.gitignore|notes.txt|.github)$\"",
         "copy-files": "npx copyfiles -u 1 src/static/**/* src/languages/**/* dist/",
         "build-bulma": "npx sass ./src/static/css/index.scss ./dist/static/css/index.css",
         "lint": "eslint ./src/**/*.ts"

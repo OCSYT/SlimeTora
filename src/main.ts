@@ -47,6 +47,7 @@ let serverPort = 6969;
 
 let canLogToFile = true;
 let loggingMode = 1;
+let randomizeMacAddress = false;
 let heartbeatInterval = 2000;
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
@@ -669,9 +670,9 @@ ipcMain.on("set-logging", (_event, arg) => {
     log(`Logging mode set to: ${arg}`, "settings");
 });
 
-ipcMain.on("set-wireless-tracker", (_event, arg) => {
-    wirelessTrackerEnabled = arg;
-    log(`Wireless tracker enabled set to: ${arg}`, "settings");
+ipcMain.on("set-randomize-mac", (_event, arg) => {
+    randomizeMacAddress = arg;
+    log(`Randomize tracker MAC Address set to: ${arg}`, "settings");
 });
 
 ipcMain.on("set-wired-tracker", (_event, arg) => {
@@ -918,7 +919,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 function isValidDeviceConfiguration(types: string[], ports?: string[]): boolean {
     if (
         (!wirelessTrackerEnabled && !wiredTrackerEnabled) ||
-        (types.includes("COM") && (!ports || ports.length === 0))
+        (types.includes("com") && (!ports || ports.length === 0))
     ) {
         return false;
     }
@@ -1286,8 +1287,14 @@ async function addTracker(trackerName: string) {
 }
 
 function MacAddressFromName(name: string) {
-    const rand = new Rand(name);
-    return new MACAddress(new Array(6).fill(0).map(() => Math.floor(rand.next() * 256)) as any)
+    if (randomizeMacAddress) {
+        // random MAC address
+        return MACAddress.random();
+    } else {
+        // get MAC address from name
+        const rand = new Rand(name);
+        return new MACAddress(new Array(6).fill(0).map(() => Math.floor(rand.next() * 256)) as any);
+    }
 }
 
 async function processQueue() {
