@@ -13,14 +13,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
-const configPath = path.resolve(mainPath, "config.json");
+const configPath = app.isPackaged ? path.resolve(mainPath, "config.json") : path.resolve(path.join(mainPath, ".."), "config.json")
 const dataDebugPath = path.resolve(mainPath, "debug.txt");
 const isMac = process.platform === "darwin";
 // don't mess with this or languages will fail to load cause of how the project is structured, lol
 // i hate how this is done.
 const languagesPath = path.resolve(
     mainPath,
-    isMac ? ".." : "",
+    (isMac && app.isPackaged) ? ".." : "",
     app.isPackaged ? (isMac ? "Resources/languages" : "resources/languages") : "languages"
 );
 let mainWindow: BrowserWindow;
@@ -737,7 +737,7 @@ ipcMain.on("fix-trackers", async () => {
     };
 
     const intervalId = setInterval(sendCommands, 100);
-    await dialog.showMessageBox(dialogOptions);
+    await dialog.showMessageBox(mainWindow, dialogOptions);
     clearInterval(intervalId);
 
     const endTime = Date.now();
@@ -1211,6 +1211,7 @@ import { EmulatedTracker } from "@slimevr/tracker-emulation";
 import { ActivePorts } from "haritorax-interpreter/dist/mode/com";
 import BetterQuaternion from "quaternion";
 import { ParsedUrlQueryInput } from "querystring";
+import Rand from "rand-seed"
 
 // For haritorax-interpreter
 // Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
@@ -1284,6 +1285,11 @@ async function addTracker(trackerName: string) {
     processQueue();
 }
 
+function MacAddressFromName(name: string) {
+    const rand = new Rand(name);
+    return new MACAddress(new Array(6).fill(0).map(() => Math.floor(rand.next() * 256)) as any)
+}
+
 async function processQueue() {
     if (isProcessingQueue || trackerQueue.length === 0) return;
     isProcessingQueue = true;
@@ -1296,7 +1302,7 @@ async function processQueue() {
         if (connectedDevices.get(trackerName) !== undefined) return;
 
         // Check if tracker has a MAC address assigned already in the config
-        let macAddress = MACAddress.random();
+        let macAddress = MacAddressFromName(trackerName);
         let macBytes = config.trackers?.[trackerName]?.macAddress?.bytes;
         if (macBytes && macBytes.length === 6) {
             macAddress = new MACAddress(macBytes);
