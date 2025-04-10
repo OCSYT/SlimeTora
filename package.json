@@ -2,7 +2,7 @@
     "name": "slimetora",
     "productName": "SlimeTora",
     "type": "module",
-    "version": "1.4.0",
+    "version": "1.5.0-beta3",
     "description": "A middleware program that connects the HaritoraX full body trackers to the SlimeVR server",
     "private": true,
     "author": {
@@ -21,9 +21,10 @@
         "start": "npm run preload && cross-env DEVELOPMENT=true && electron .",
         "dev": "cross-env DEVELOPMENT=true && tsc && npm run copy-files && electron .",
         "build": "npm run preload && npx @electron/packager . SlimeTora --arch=x64,arm64 --overwrite --out=build/ --icon=src/static/images/icon.ico --asar --extra-resource=src/languages --prune --ignore=\"^/(src|docs|.vscode|.eslintrc.cjs|.prettierrc|tsconfig.json|README.md|.gitignore|notes.txt|.github)$\"",
-        "preload": "npx @electron/rebuild && npx del-cli dist/ && tsc && npm run copy-files",
+        "build-bulma": "npx sass ./src/static/css/index.scss ./src/static/css/index.css",
+        "build-bulma:watch": "npx sass --watch ./src/static/css/index.scss ./src/static/css/index.css",
+        "preload": "npm run build-bulma && npx @electron/rebuild && npx del-cli dist/ && tsc && npm run copy-files",
         "copy-files": "npx copyfiles -u 1 \"src/**/*.js\" \"src/**/*.html\" \"src/**/*.css\" \"src/**/*.ico\" \"src/**/*.png\" \"src/**/*.webp\" \"src/**/*.webm\" \"src/**/*.svg\" \"src/**/*.fbx\" src/languages/* dist/",
-        "build-bulma": "npx sass --watch ./src/static/css/index.scss ./src/static/css/index.css",
         "lint": "eslint ./src/**/*.ts"
     },
     "keywords": [],
