@@ -4,7 +4,7 @@
 
 # SlimeTora
 
-A program that connects the HaritoraX trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting both the `HaritoraX Wireless` and `HaritoraX Wired` (1.1b/1.1/1.0). Supports `Bluetooth` (low energy), `Bluetooth` (classic) (w/ `COM`), and the `GX(6/2)` communication dongles (w/ `COM`).
+A program that connects the HaritoraX trackers to the [SlimeVR server](https://docs.slimevr.dev/server/index.html), supporting the `HaritoraX 2`, `HaritoraX Wireless` and`HaritoraX Wired` (1.1b/1.1/1.0). Supports `Bluetooth` (low energy), `Bluetooth` (classic) (w/ `COM`), and the `GX(6/2)` communication dongles (w/ `COM`).
 
 Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 
@@ -25,16 +25,16 @@ Read the wiki to get started: https://github.com/OCSYT/SlimeTora/wiki
 # Features
 
 -   Support for all currently-released HaritoraX trackers
-    -   Supports `HaritoraX Wireless` and `HaritoraX Wired` (1.1b/1.1/1.0)
+    -   Supports `HaritoraX 2`, `HaritoraX Wireless`, and `HaritoraX Wired` (1.1b/1.1/1.0)
     -   Unknown support for `Haritora` (before Shiftall // DIY)
--   `Bluetooth` (LE/Classic) and `COM`/`GX(6/2)` support (with all at the same time supported on `HaritoraX Wireless`)
+-   `Bluetooth` (LE/Classic) and `COM`/`GX(6/2)` support (with all at the same time supported on `HaritoraX 2` & `HaritoraX Wireless`)
 -   Use of [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter) package to process tracker data
 -   Get started with the program (and SlimeVR Server) easily through the guided onboarding process!
     -   Through the "automatic setup", run auto-detection to let the program **_set itself up for you_**!
     -   Automatically detect your tracker model, connection mode (including COM ports), and tracker settings
 -   Manage GX(6/2) dongles in-app - tracker pairing & changing 2.4GHz channels
--   Set tracker settings per-tracker (`HaritoraX Wireless` only)
--   Turn off one or all trackers (`HaritoraX Wireless` w/ `GX(6/2)` dongles only)
+-   Set tracker settings per-tracker (`HaritoraX 2` & `HaritoraX Wireless` only)
+-   Turn off one or all trackers (`HaritoraX 2`/`HaritoraX Wireless` w/ `GX(6/2)` dongles only)
 -   Localization support
     -   You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 -   Linux & macOS support
