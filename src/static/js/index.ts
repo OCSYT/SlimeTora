@@ -1133,7 +1133,7 @@ async function addDeviceToList(deviceID: string) {
     if (deviceName !== deviceID) l(`Got user-specified name for "${deviceID}": ${deviceName}`);
 
     // Fill the div with device card data (depending on compactView)
-    newDevice.innerHTML = compactView ? CompactCard(deviceID, deviceName) : NormalCard(deviceID, deviceName);
+    newDevice.innerHTML = compactView ? CompactCard(deviceName, deviceID) : NormalCard(deviceName, deviceID);
 
     const deviceNameElement = newDevice.querySelector("#device-name");
     const deviceIDElement = newDevice.querySelector("#device-id");
