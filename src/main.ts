@@ -675,6 +675,11 @@ ipcMain.on("set-randomize-mac", (_event, arg) => {
     log(`Randomize tracker MAC Address set to: ${arg}`, "settings");
 });
 
+ipcMain.on("set-wireless-tracker", (_event, arg) => {
+    wirelessTrackerEnabled = arg;
+    log(`Wireless tracker enabled set to: ${arg}`, "settings");
+});
+
 ipcMain.on("set-wired-tracker", (_event, arg) => {
     wiredTrackerEnabled = arg;
     log(`Wired tracker enabled set to: ${arg}`, "settings");
@@ -917,10 +922,12 @@ ipcMain.on("start-connection", async (_event, arg) => {
 });
 
 function isValidDeviceConfiguration(types: string[], ports?: string[]): boolean {
-    if (
-        (!wirelessTrackerEnabled && !wiredTrackerEnabled) ||
-        (types.includes("com") && (!ports || ports.length === 0))
-    ) {
+    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
+        log("Device configuration invalid: Both wireless and wired trackers are disabled.", "validation");
+        return false;
+    }
+    if (types.includes("com") && (!ports || ports.length === 0)) {
+        log("Device configuration invalid: COM type selected but no ports provided.", "validation");
         return false;
     }
     return true;
