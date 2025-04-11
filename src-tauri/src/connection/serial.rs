@@ -30,9 +30,10 @@ static TRACKER_ASSIGNMENT: Lazy<Mutex<HashMap<&'static str, [String; 3]>>> = Laz
         ("rightFoot", "13"),
     ];
 
-    let map = entries.into_iter().map(|(key, id)| {
-        (key, [id.to_string(), "".to_string(), "".to_string()])
-    }).collect();
+    let map = entries
+        .into_iter()
+        .map(|(key, id)| (key, [id.to_string(), "".to_string(), "".to_string()]))
+        .collect();
 
     Mutex::new(map)
 });
@@ -55,7 +56,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
     log(&format!("Opened ports: {:?}", &port_paths));
 
     // listen to ports
-    for port in ports.iter_mut() {        
+    for port in ports.iter_mut() {
         let mut buffer = [0u8; 1024];
         let mut port_clone = port
             .try_clone()
@@ -90,35 +91,60 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
 
                                 match String::from_utf8(message_bytes) {
                                     Ok(message) => {
-                                        //log(&format!("Received message: {}", message));
-
                                         // split identifier and data
                                         let parts: Vec<&str> = message.splitn(2, ':').collect();
-                                        let identifier = parts[0].to_lowercase();
-                                        let port_id = identifier.chars().find(|c| c.is_digit(10)).unwrap_or('0').to_string();
-                                        let port_data = parts[1].clone();
+                                        if parts.len() < 2 {
+                                            // not enough parts.. somehow
+                                            continue;
+                                        }
 
-                                        // Silently listen to data and assign any missing trackers
-                                        let mut tracker_assignment = TRACKER_ASSIGNMENT.lock().unwrap();
-                                        for (key, value) in tracker_assignment.iter_mut() {
-                                            if value[1].is_empty() && identifier.starts_with('r') {
-                                                if let Some(tracker_id_char) = port_data.chars().nth(4) {
-                                                    if let Ok(tracker_id) = tracker_id_char.to_string().parse::<i32>() {
-                                                        if value[0].parse::<i32>().unwrap_or(0) == tracker_id && tracker_id != 0 {
-                                                            value[1] = port_path.clone();
-                                                            value[2] = port_id.clone();
-                                                            log(&format!("Setting {} to port {} with port ID {}", key, port_path, port_id));
-                                                        }
-                                                    }
+                                        let identifier = parts[0].to_lowercase();
+                                        let port_id = identifier
+                                            .chars()
+                                            .find(|c| c.is_digit(10))
+                                            .unwrap_or('0')
+                                            .to_string();
+                                        let port_data = parts[1];
+
+                                        // try to find find tracker name via assignments map
+                                        let mut tracker_name = None;
+                                        {
+                                            let tracker_assignment_ref =
+                                                TRACKER_ASSIGNMENT.lock().unwrap();
+                                            for (key, value) in tracker_assignment_ref.iter() {
+                                                if value[1] == port_path && value[2] == port_id {
+                                                    tracker_name = Some(*key);
+                                                    break;
                                                 }
                                             }
                                         }
 
-                                        let mut tracker_name = None;
-                                        for (key, value) in TRACKER_ASSIGNMENT.lock().unwrap().iter() {
-                                            if value[1] == port_path && value[2] == port_id {
-                                                tracker_name = Some(*key);
-                                                break;
+                                        // silently listen and see if we can assign any missing trackers
+                                        if identifier.starts_with('r') {
+                                            let mut tracker_assignment =
+                                                TRACKER_ASSIGNMENT.lock().unwrap();
+                                            for (key, value) in tracker_assignment.iter_mut() {
+                                                if value[1].is_empty() {
+                                                    if let Some(tracker_id_char) =
+                                                        port_data.chars().nth(4)
+                                                    {
+                                                        if let Ok(tracker_id) = tracker_id_char
+                                                            .to_string()
+                                                            .parse::<i32>()
+                                                        {
+                                                            if value[0].parse::<i32>().unwrap_or(0)
+                                                                == tracker_id
+                                                                && tracker_id != 0
+                                                            {
+                                                                value[1] = port_path.clone();
+                                                                value[2] = port_id.clone();
+                                                                log(&format!("Setting {} to port {} with port ID {}", key, port_path, port_id));
+
+                                                                tracker_name = Some(*key);
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
 
@@ -144,6 +170,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                     }
                     Err(e) => {
                         if e.kind() == std::io::ErrorKind::TimedOut {
+                            log("Read timed out, continuing...");
                             continue;
                         } else {
                             log(&format!("Error reading from port: {}", e));

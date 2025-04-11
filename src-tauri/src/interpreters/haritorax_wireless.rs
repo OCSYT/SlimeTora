@@ -26,8 +26,9 @@ impl Interpreter for HaritoraXWireless {
             identifier, data
         ));
 
-        match identifier {
-            "x" => {
+        let normalized_identifier = identifier.to_lowercase().chars().next();
+        match normalized_identifier {
+            Some('x') => {
                 // turn data into a buffer
                 let buffer = base64::engine::general_purpose::STANDARD
                     .decode(data)
@@ -58,25 +59,22 @@ fn process_imu_data(
     } else {
         None
     };
+    let mut mag_status: Option<&str> = None;
 
     if !tracker_name.starts_with("HaritoraXW") {
         let magnetometer_data = buffer_data.chars().nth(buffer_data.len() - 5);
-        let mag_status = match magnetometer_data {
-            Some('A') => "VERY_BAD",
-            Some('B') => "BAD",
-            Some('C') => "OKAY",
-            Some('D') => "GREAT",
-            _ => "Unknown",
+        mag_status = match magnetometer_data {
+            Some('A') => Some("VERY_BAD"),
+            Some('B') => Some("BAD"),
+            Some('C') => Some("OKAY"),
+            Some('D') => Some("GREAT"),
+            _ => Some("UNKNOWN"),
         };
-        log(&format!(
-            "Tracker: {}, Magnetometer Status: {}",
-            tracker_name, mag_status
-        ));
     }
 
     log(&format!(
-        "Tracker: {}, IMU Data: {:?}, Ankle: {:?}",
-        tracker_name, imu_data, ankle
+        "Tracker: {} - IMU: {:?} - Mag: {:?} -  Ankle: {:?}",
+        tracker_name, imu_data, mag_status, ankle
     ));
 
     // TODO: send the data to SlimeVR, then to UI
