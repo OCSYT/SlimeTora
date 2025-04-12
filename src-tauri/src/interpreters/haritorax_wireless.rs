@@ -1,6 +1,6 @@
 use crate::{interpreters::core::Interpreter, util::log};
 use base64::Engine;
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 use super::common::decode_imu;
 
@@ -49,7 +49,14 @@ fn process_imu_data(
     tracker_name: &str,
     data: Vec<u8>,
 ) -> Result<(), String> {
-    let imu_data = decode_imu(&data, tracker_name);
+    let imu_data = match decode_imu(&data, tracker_name) {
+        Ok(data) => data,
+        Err(e) => {
+            log(&format!("Failed to decode IMU data for tracker {}: {}", tracker_name, e));
+            return Err(format!("Failed to decode IMU data: {}", e));
+        }
+    };
+
     // since we are in wireless trackers, the ankle and wireless data is actually within the data
     // this probably also applies to X2's, but ofc it's very different (with the new LiDAR sensor)
     let buffer_data = base64::engine::general_purpose::STANDARD.encode(data.clone());
@@ -78,6 +85,23 @@ fn process_imu_data(
     ));
 
     // TODO: send the data to SlimeVR, then to UI
+    // for now we'll just send to UI, where slimevr-node will send to slimevr
+    let imu_payload = serde_json::json!({
+        "tracker": tracker_name,
+        "data": {
+            "rotation": imu_data.rotation,
+            "acceleration": imu_data.acceleration,
+            "ankle": ankle,
+        },
+    });
+    let mag_payload = serde_json::json!({
+        "tracker": tracker_name,
+        "data": {
+            "magnetometer": mag_status,
+        },
+    });
+    app_handle.emit("imu", imu_payload).map_err(|e| format!("Failed to emit IMU data: {}", e))?;
+    app_handle.emit("mag", mag_payload).map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
 
     Ok(())
 }

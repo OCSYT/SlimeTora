@@ -20,6 +20,8 @@ let interpreters: Interpreter[] | null = null;
 
 let unlistenBLE: any = null;
 let unlistenSerial: any = null;
+let unlistenIMU: any = null;
+let unlistenMag: any = null;
 
 export function startInterpreting() {
 	const modes = get(settings.connection).modes as ConnectionMode[];
@@ -47,6 +49,8 @@ export function startInterpreting() {
 	} else if (modes.includes(ConnectionMode.Serial)) {
 		startNotifySerial();
 	}
+
+	startNotifyIMU();
 }
 
 export function stopInterpreting() {
@@ -107,6 +111,26 @@ async function startNotifySerial() {
 	});
 }
 
+export function startNotifyIMU() {
+    unlistenIMU = listen("imu", (event) => {
+        const payload = event.payload as { tracker: string; data: { rotation: any; acceleration: any; ankle: any } };
+        const tracker = payload.tracker;
+        const data = payload.data;
+
+        console.log(`IMU notification received from ${tracker}: ${JSON.stringify(data)}`);
+    });
+}
+
+export function startNotifyMag() {
+    unlistenMag = listen("mag", (event) => {
+        const payload = event.payload as { tracker: string; data: { magnetometer: any } };
+        const tracker = payload.tracker;
+        const data = payload.data;
+
+        console.log(`Magnetometer notification received from ${tracker}: ${JSON.stringify(data)}`);
+    });
+}
+
 function stopNotify() {
 	if (unlistenBLE) {
 		unlistenBLE();
@@ -115,5 +139,13 @@ function stopNotify() {
 	if (unlistenSerial) {
 		unlistenSerial();
 		console.log("Stopped listening to Serial notifications");
+	}
+	if (unlistenIMU) {
+		unlistenIMU();
+		console.log("Stopped listening to IMU notifications");
+	}
+	if (unlistenMag) {
+		unlistenMag();
+		console.log("Stopped listening to Magnetometer notifications");
 	}
 }

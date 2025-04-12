@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use tauri::AppHandle;
 
 use super::{haritorax_2, haritorax_wired, haritorax_wireless};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum TrackerModel {
@@ -29,7 +30,7 @@ type InterpreterBLEFn = fn(&AppHandle, Option<&str>, &str, &str) -> Result<(), S
 
 type InterpreterSerialFn = fn(&AppHandle, &str, &str) -> Result<(), String>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IMUData {
     pub tracker_name: String,
     pub rotation: Rotation,
@@ -38,14 +39,14 @@ pub struct IMUData {
     pub mag_status: Option<MagStatus>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatteryData {
     pub remaining: Option<u8>,
     pub voltage: Option<u16>,
     pub status: Option<ChargeStatus>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InfoData {
     pub version: String,
     pub model: String,
@@ -54,7 +55,7 @@ pub struct InfoData {
     pub communication_type: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Rotation {
     pub x: f32,
     pub y: f32,
@@ -62,14 +63,14 @@ pub struct Rotation {
     pub w: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Acceleration {
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MagStatus {
     Great,
     Okay,
@@ -78,7 +79,7 @@ pub enum MagStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChargeStatus {
     Discharging,
     Charging,
