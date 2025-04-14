@@ -124,10 +124,12 @@ async fn start(
 }
 
 #[tauri::command]
-async fn stop(app_handle: AppHandle, model: String, modes: Vec<String>) -> Result<(), String> {
+async fn stop(app_handle: AppHandle, model: Vec<String>, modes: Vec<String>) -> Result<(), String> {
     let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
 
-    crate::interpreters::core::stop_interpreting(&model)?;
+    for m in model {
+        crate::interpreters::core::stop_interpreting(&m)?;
+    }
 
     if modes.contains(&"ble".to_string()) {
         let ble_task = task::spawn(async move { ble::stop(app_handle.clone()).await });

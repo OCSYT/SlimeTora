@@ -1,18 +1,26 @@
 export interface IMUData {
-    trackerName: string;
-    rotation: {
-        x: number;
-        y: number;
-        z: number;
-        w: number;
-    };
-    acceleration: {
-        x: number;
-        y: number;
-        z: number;
+    tracker: string;
+    data: {
+        rotation: {
+            x: number;
+            y: number;
+            z: number;
+            w: number;
+        };
+        acceleration: {
+            x: number;
+            y: number;
+            z: number;
+        };
     };
     ankle?: number;
-    magStatus?: MagStatus;
+}
+
+export interface MagData {
+    tracker: string;
+    data: {
+        magnetometer: MagStatus;
+    };
 }
 
 export enum TrackerModel {

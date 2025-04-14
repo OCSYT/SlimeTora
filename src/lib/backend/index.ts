@@ -3,7 +3,7 @@ import { activeModes, settings } from "$lib/store";
 import { get } from "svelte/store";
 import { ConnectionMode } from "$lib/types/connection";
 import { listen } from "@tauri-apps/api/event";
-import { TrackerModel } from "$lib/types/tracker";
+import { TrackerModel, type IMUData } from "$lib/types/tracker";
 import { Wired } from "./interpreters/haritorax-wired";
 import { Wireless } from "./interpreters/haritorax-wireless";
 import { Wireless2 } from "./interpreters/haritorax-2";
@@ -51,18 +51,20 @@ export function startInterpreting() {
 	}
 
 	startNotifyIMU();
+	startNotifyMag();
 }
 
 export function stopInterpreting() {
+	const model = get(settings.connection).model as TrackerModel[];
 	const modes = get(activeModes);
 
-	console.log(`Stopping interpreting with modes: ${modes}`);
+	console.log(`Stopping interpreting with modes: ${modes}, model: ${model}`);
 
 	if (modes.length === 0) {
 		return console.error("No modes to stop");
 	}
 
-	invoke("stop", { modes });
+	invoke("stop", { model, modes });
 	stopNotify();
 }
 
@@ -111,18 +113,19 @@ async function startNotifySerial() {
 	});
 }
 
-export function startNotifyIMU() {
-    unlistenIMU = listen("imu", (event) => {
-        const payload = event.payload as { tracker: string; data: { rotation: any; acceleration: any; ankle: any } };
-        const tracker = payload.tracker;
-        const data = payload.data;
+async function startNotifyIMU() {
+    unlistenIMU = await listen("imu", (event) => {
+		const payload = event.payload as IMUData
+		const data = payload.data as { rotation: any; acceleration: any };
+		const trackerName = payload.tracker;
+		const { rotation, acceleration } = data;
 
-        console.log(`IMU notification received from ${tracker}: ${JSON.stringify(data)}`);
+        console.log(`IMU notification received from ${trackerName}: ${JSON.stringify({ rotation, acceleration })}`);
     });
 }
 
-export function startNotifyMag() {
-    unlistenMag = listen("mag", (event) => {
+async function startNotifyMag() {
+    unlistenMag = await listen("mag", (event) => {
         const payload = event.payload as { tracker: string; data: { magnetometer: any } };
         const tracker = payload.tracker;
         const data = payload.data;

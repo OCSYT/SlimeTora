@@ -12,7 +12,7 @@ export type ProgramSettings = {
 }
 
 export type ConnectionSettings = {
-    model: TrackerModel,
+    model: TrackerModel[],
     modes: string[],
     ports: string[],
     slimevrIP: string,
@@ -35,7 +35,7 @@ export const program = writable<ProgramSettings>({
 })
 
 export const connection = writable<ConnectionSettings>({
-    model: TrackerModel.Wireless,
+    model: [TrackerModel.Wireless],
     modes: [ConnectionMode.Serial],
     ports: ["COM3", "COM4", "COM5"],
     slimevrIP: "255.255.255.255",
