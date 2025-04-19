@@ -1,7 +1,8 @@
-use crate::interpreters::core::{Acceleration, BatteryData, IMUData, InfoData, Rotation};
+use crate::interpreters::core::{Acceleration, BatteryData, IMUData, InfoData, Rotations, Rotation};
 use crate::util::log;
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
+use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::io::Cursor;
@@ -21,7 +22,6 @@ static BUTTON_MAP: Lazy<HashMap<&'static str, u8>> = Lazy::new(|| {
     map.insert("tertiary", 0);
     map
 });
-
 
 /// ### Connections supported:
 /// - Serial
@@ -80,16 +80,19 @@ pub fn decode_imu(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
         as f32
         * GRAVITY_SCALAR;
 
-    // Create rotation object
-    let rotation = Rotation {
+    let rotation_obj = Rotation {
         x: rotation_x,
         y: rotation_y,
         z: rotation_z,
         w: rotation_w,
     };
 
-    // Quaternion calculations
-    let rc = [rotation.w, rotation.x, rotation.y, rotation.z];
+    let rc = [
+        rotation_obj.w,
+        rotation_obj.x,
+        rotation_obj.y,
+        rotation_obj.z,
+    ];
     let r = [rc[0], -rc[1], -rc[2], -rc[3]];
     let p = [0.0, 0.0, 0.0, GRAVITY_CONSTANT];
 
@@ -114,11 +117,37 @@ pub fn decode_imu(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
         z: raw_gravity_z - h_final[3] * GRAVITY_ADJUSTMENT,
     };
 
+    // Convert rotation to degrees
+    let quaternion = UnitQuaternion::from_quaternion(Quaternion::new(
+        rotation_obj.w as f32,
+        rotation_obj.x as f32,
+        rotation_obj.y as f32,
+        rotation_obj.z as f32,
+    )); // changed rotation to rotation_obj
+    let euler_angles = quaternion.euler_angles();
+
+    // Convert radians to degrees
+    let x = euler_angles.0 * (180.0 / std::f32::consts::PI);
+    let y = euler_angles.1 * (180.0 / std::f32::consts::PI);
+    let z = euler_angles.2 * (180.0 / std::f32::consts::PI);
+
+    let rotation_degrees = Rotation {
+        x,
+        y,
+        z,
+        w: 0.0,
+    };
+
+    let rotations = Rotations {
+        raw: rotation_obj,
+        degrees: rotation_degrees,
+    };
+
     // ankle and magStatus processed within interpreters, not here
 
     Ok(IMUData {
         tracker_name: tracker_name.to_string(),
-        rotation,
+        rotation: rotations,
         acceleration,
         ankle: None,
         mag_status: None,
@@ -126,11 +155,11 @@ pub fn decode_imu(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
 }
 
 /// Processes battery data for a tracker.
-/// 
+///
 /// ### Connections supported:
 /// - Serial
 /// - BLE
-/// 
+///
 /// ### Trackers supported:
 /// - HaritoraX Wired (1.0/1.1/1.1b)
 /// - HaritoraX Wireless

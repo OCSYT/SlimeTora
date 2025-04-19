@@ -89,7 +89,7 @@ fn process_imu_data(
     let imu_payload = serde_json::json!({
         "tracker": tracker_name,
         "data": {
-            "rotation": imu_data.rotation,
+            "rotation": imu_data.rotation.degrees,
             "acceleration": imu_data.acceleration,
             "ankle": ankle,
         },

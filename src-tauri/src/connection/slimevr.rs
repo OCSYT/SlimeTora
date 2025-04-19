@@ -1,2 +1,3 @@
 // TODO: actually set up sliimevr communication here
-// for now we'll just use slimevr-node to get this completed quickly
+// can't use slimevr-node because it relies on nodejs' eventemitters so uh, a
+

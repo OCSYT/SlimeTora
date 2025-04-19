@@ -33,10 +33,16 @@ type InterpreterSerialFn = fn(&AppHandle, &str, &str) -> Result<(), String>;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IMUData {
     pub tracker_name: String,
-    pub rotation: Rotation,
+    pub rotation: Rotations,
     pub acceleration: Acceleration,
     pub ankle: Option<f32>,
     pub mag_status: Option<MagStatus>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Rotations {
+    pub raw: Rotation,
+    pub degrees: Rotation,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

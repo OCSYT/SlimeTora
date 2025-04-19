@@ -2,33 +2,19 @@ import { invoke } from "@tauri-apps/api/core";
 import { activeModes, settings } from "$lib/store";
 import { get } from "svelte/store";
 import { ConnectionMode } from "$lib/types/connection";
-import { listen } from "@tauri-apps/api/event";
-import { TrackerModel, type IMUData } from "$lib/types/tracker";
-import { Wired } from "./interpreters/haritorax-wired";
-import { Wireless } from "./interpreters/haritorax-wireless";
-import { Wireless2 } from "./interpreters/haritorax-2";
+import { TrackerModel } from "$lib/types/tracker";
+import { Notification, Notifications, type NotificationType } from "./notifications";
 
-type Interpreter = Wireless | Wired | Wireless2;
+let notification: Notification | null = null;
 
-const interpreterMap = {
-	[TrackerModel.X2]: Wireless2,
-	[TrackerModel.Wireless]: Wireless,
-	[TrackerModel.Wired]: Wired,
-};
+export async function startInterpreting() {
+	if (!notification) notification = new Notification();
 
-let interpreters: Interpreter[] | null = null;
-
-let unlistenBLE: any = null;
-let unlistenSerial: any = null;
-let unlistenIMU: any = null;
-let unlistenMag: any = null;
-
-export function startInterpreting() {
 	const modes = get(settings.connection).modes as ConnectionMode[];
-	const model = get(settings.connection).model as TrackerModel;
+	const models = get(settings.connection).models as TrackerModel[];
 	const ports = get(settings.connection).ports as string[];
 
-	if (modes.length === 0 || !model) {
+	if (modes.length === 0 || !models) {
 		return console.error("No modes or model selected for connection");
 	}
 
@@ -36,119 +22,40 @@ export function startInterpreting() {
 		return console.error("No ports selected for serial connection");
 	}
 
-	console.log(`Starting interpreting with modes: ${modes}, model: ${model}, ports: ${ports}`);
-	if (!interpreters) {
-		interpreters = Object.values(interpreterMap).map((InterpreterClass) => new InterpreterClass());
-	}
+	console.log(`Starting interpreting with modes: ${modes}, models: ${models}, ports: ${ports}`);
 
-	invoke("start", { modes, model, ports });
+	for (const model of models) {
+		invoke("start", { model, modes, ports });
+	}
 	activeModes.set(modes);
 
-	if (modes.includes(ConnectionMode.BLE)) {
-		startNotifyBLE();
-	} else if (modes.includes(ConnectionMode.Serial)) {
-		startNotifySerial();
+	for (const notif of Notifications) {
+		notification.start(notif);
 	}
 
-	startNotifyIMU();
-	startNotifyMag();
+	console.log(`Active notifications started: ${notification.getActiveNotifications().join(", ")}`);
 }
 
 export function stopInterpreting() {
-	const model = get(settings.connection).model as TrackerModel[];
+	const models = get(settings.connection).models as TrackerModel[];
 	const modes = get(activeModes);
 
-	console.log(`Stopping interpreting with modes: ${modes}, model: ${model}`);
+	console.log(`Stopping interpreting with modes: ${modes}, model: ${models}`);
 
 	if (modes.length === 0) {
 		return console.error("No modes to stop");
 	}
 
-	invoke("stop", { model, modes });
-	stopNotify();
-}
+	invoke("stop", { models, modes });
 
-async function startNotifyBLE() {
-	unlistenBLE = await listen("ble_notification", (event) => {
-		console.log("BLE notification received");
-		const payload = event.payload as {
-			peripheral_name: string;
-			characteristic_name: string;
-			service_name: string;
-			data: string;
-		};
+	if (notification === null) return console.error("No notification instance to stop");
+	let activeNotifications = notification.getActiveNotifications();
+	if (activeNotifications.length === 0) return console.error("No active notifications to stop");
 
-		const device = payload.peripheral_name;
-		const characteristic = payload.characteristic_name;
-		const service = payload.service_name;
-		const data = payload.data;
+	console.log(`Stopping notifications: ${activeNotifications.join(", ")}`);
 
-		console.log(`Device: ${device}, Characteristic: ${characteristic}, Service: ${service}, Data: ${data}`);
-
-		const model = get(settings.connection).model as TrackerModel;
-		console.log(`Tracker model: ${model}`);
-
-		// find interpreter by model
-		const interpreter = interpreters?.find((interpreter) => interpreter.name === model);
-		if (interpreter) {
-			console.log(`Interpreter found: ${interpreter.name}`);
-			interpreter.parse(data).catch((error) => {
-				console.error("Error parsing data: ", error);
-			});
-		} else {
-			console.error(`Interpreter not found for model: ${model}`);
-		}
-
-		console.log("BLE notification processed");
-	});
-}
-
-async function startNotifySerial() {
-	unlistenSerial = await listen("serial_notification", (event) => {
-		const payload = event.payload as { identifier: string; data: string };
-		const identifier = payload.identifier;
-		const data = payload.data;
-
-		console.log(`Identifier: ${identifier}, data: ${data}`);
-	});
-}
-
-async function startNotifyIMU() {
-    unlistenIMU = await listen("imu", (event) => {
-		const payload = event.payload as IMUData
-		const data = payload.data as { rotation: any; acceleration: any };
-		const trackerName = payload.tracker;
-		const { rotation, acceleration } = data;
-
-        console.log(`IMU notification received from ${trackerName}: ${JSON.stringify({ rotation, acceleration })}`);
-    });
-}
-
-async function startNotifyMag() {
-    unlistenMag = await listen("mag", (event) => {
-        const payload = event.payload as { tracker: string; data: { magnetometer: any } };
-        const tracker = payload.tracker;
-        const data = payload.data;
-
-        console.log(`Magnetometer notification received from ${tracker}: ${JSON.stringify(data)}`);
-    });
-}
-
-function stopNotify() {
-	if (unlistenBLE) {
-		unlistenBLE();
-		console.log("Stopped listening to BLE notifications");
+	for (const notif of activeNotifications) {
+		notification.stop(notif);
 	}
-	if (unlistenSerial) {
-		unlistenSerial();
-		console.log("Stopped listening to Serial notifications");
-	}
-	if (unlistenIMU) {
-		unlistenIMU();
-		console.log("Stopped listening to IMU notifications");
-	}
-	if (unlistenMag) {
-		unlistenMag();
-		console.log("Stopped listening to Magnetometer notifications");
-	}
+	notification = null;
 }

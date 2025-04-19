@@ -124,10 +124,10 @@ async fn start(
 }
 
 #[tauri::command]
-async fn stop(app_handle: AppHandle, model: Vec<String>, modes: Vec<String>) -> Result<(), String> {
+async fn stop(app_handle: AppHandle, models: Vec<String>, modes: Vec<String>) -> Result<(), String> {
     let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
 
-    for m in model {
+    for m in models {
         crate::interpreters::core::stop_interpreting(&m)?;
     }
 
