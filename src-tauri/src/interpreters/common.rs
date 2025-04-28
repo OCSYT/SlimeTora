@@ -222,19 +222,20 @@ pub fn process_battery_data(
             .map_err(|e| format!("Failed to parse battery data JSON: {}", e))?;
         battery_data.remaining = battery_info["battery remaining"].as_u64().map(|v| v as u8);
         battery_data.voltage = battery_info["battery voltage"].as_u64().map(|v| v as u16);
-        battery_data.status = battery_info["charge status"]
-            .as_str()
-            .and_then(|s| match s {
-                "discharging" => Some(ChargeStatus::Discharging),
-                "charging" => Some(ChargeStatus::Charging),
-                "charged" => Some(ChargeStatus::Charged),
-                _ => None,
-            });
+        battery_data.status =
+            battery_info["charge status"]
+                .as_str()
+                .and_then(|s| match s.to_lowercase().as_str() {
+                    "discharging" => Some(ChargeStatus::Discharging),
+                    "charging" => Some(ChargeStatus::Charging),
+                    "charged" => Some(ChargeStatus::Charged),
+                    _ => None,
+                });
 
         if battery_data.status.is_none() {
             return Err(format!(
                 "Unknown charge status: {}",
-                battery_info["charge status"]
+                battery_info["charge status"].as_str().unwrap_or("Unknown")
             ));
         }
     }

@@ -1,3 +1,4 @@
+use crate::connection::slimevr::send_battery;
 use crate::log;
 use crate::{
     connection::slimevr::{add_tracker, send_accel, send_rotation},
@@ -7,7 +8,7 @@ use async_trait::async_trait;
 use base64::Engine;
 use tauri::{AppHandle, Emitter};
 
-use super::common::{decode_imu, CONNECTED_TRACKERS};
+use super::common::{decode_imu, process_battery_data, CONNECTED_TRACKERS};
 
 pub struct HaritoraXWireless;
 
@@ -40,9 +41,11 @@ impl Interpreter for HaritoraXWireless {
                     .decode(data)
                     .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
 
-                process_imu_data(app_handle, tracker_name, buffer).await?;
+                process_imu(app_handle, tracker_name, buffer).await?;
             }
-            Some('v') => {}
+            Some('v') => {
+                process_battery(app_handle, tracker_name, data).await?;
+            }
             _ => log!("Unknown identifier: {}", identifier),
         }
 
@@ -50,7 +53,7 @@ impl Interpreter for HaritoraXWireless {
     }
 }
 
-async fn process_imu_data(
+async fn process_imu(
     app_handle: &AppHandle,
     tracker_name: &str,
     data: Vec<u8>,
@@ -139,14 +142,37 @@ async fn process_imu_data(
         imu_data.acceleration.z,
     ];
 
-    let tracker_name = tracker_name.to_string();
-
-    if let Err(e) = send_rotation(&tracker_name, 0, rotation_data).await {
+    if let Err(e) = send_rotation(tracker_name, 0, rotation_data).await {
         log!("Failed to send rotation: {}", e);
     }
 
-    if let Err(e) = send_accel(&tracker_name, 0, accel_data).await {
+    if let Err(e) = send_accel(tracker_name, 0, accel_data).await {
         log!("Failed to send acceleration: {}", e);
+    }
+
+    Ok(())
+}
+
+async fn process_battery(
+    app_handle: &AppHandle,
+    tracker_name: &str,
+    data: &str,
+) -> Result<(), String> {
+    let battery_data = process_battery_data(data, tracker_name, None)?;
+    let payload = serde_json::json!({
+        "tracker": tracker_name,
+        "data": battery_data,
+    });
+    app_handle
+        .emit("battery", payload)
+        .map_err(|e| format!("Failed to emit battery data: {}", e))?;
+
+    log!("Battery data: {:?}", battery_data);
+
+    let battery_percentage = battery_data.remaining.unwrap_or(0) as f32 / 100.0;
+    let battery_voltage = battery_data.voltage.unwrap_or(0) as f32 / 1000.0;
+    if let Err(e) = send_battery(tracker_name, battery_percentage, battery_voltage).await {
+        log!("Failed to send battery data: {}", e);
     }
 
     Ok(())

@@ -33,6 +33,9 @@ export class Notification {
 			case "mag":
 				unlisten = await magNotification();
 				break;
+			case "battery":
+				unlisten = await batteryNotification();
+				break;
 			default:
 				console.error(`No notification type "${type}" available`);
 				return;
@@ -71,7 +74,7 @@ async function imuNotification() {
 		const trackerName = payload.tracker;
 		const { rotation, acceleration } = data;
 
-		console.log(`IMU notification received from ${trackerName}: ${JSON.stringify({ rotation, acceleration })}`);
+		// TODO: Handle IMU data
 	});
 }
 
@@ -81,6 +84,19 @@ async function magNotification() {
 		const tracker = payload.tracker;
 		const data = payload.data;
 
-		console.log(`Mag notification received from ${tracker}: ${JSON.stringify(data)}`);
+		// TODO: Handle magnetometer data
+	});
+}
+
+async function batteryNotification() {
+	return await listen("battery", (event) => {
+		const payload = event.payload as {
+			tracker: string;
+			data: { remaining: number | null; voltage: number | null; status: string | null };
+		};
+		const tracker = payload.tracker;
+		const data = payload.data;
+
+		console.log(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
 	});
 }
