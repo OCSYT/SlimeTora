@@ -37,8 +37,9 @@ pub async fn add_tracker(
         Some(BoardType::Haritora),
         Some(McuType::Haritora),
         Some("255.255.255.255".to_string()), // TODO: get this from the app settings
-        Some(6969),                          // TODO: get this from the app settings
-        Some(5000),                          // TODO: get this from the app settings
+        Some(6969), // TODO: get this from the app settings
+        Some(5000), // TODO: get this from the app settings
+        Some(false), // TODO: get this from the app settings
     )
     .await
     .expect("Failed to create tracker");

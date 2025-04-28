@@ -3,7 +3,7 @@ import { activeModes, settings } from "$lib/store";
 import { get } from "svelte/store";
 import { ConnectionMode } from "$lib/types/connection";
 import { TrackerModel } from "$lib/types/tracker";
-import { Notification, Notifications, type NotificationType } from "./notifications";
+import { Notification, Notifications } from "./notifications";
 
 let notification: Notification | null = null;
 
@@ -25,18 +25,19 @@ export async function startInterpreting() {
 	console.log(`Starting interpreting with modes: ${modes}, models: ${models}, ports: ${ports}`);
 
 	for (const model of models) {
-		invoke("start", { model, modes, ports });
+		await invoke("start", { model, modes, ports });
 	}
 	activeModes.set(modes);
 
 	for (const notif of Notifications) {
-		notification.start(notif);
+		await notification.start(notif);
 	}
 
-	console.log(`Active notifications started: ${notification.getActiveNotifications().join(", ")}`);
+	let activeNotifications = notification.getActiveNotifications();
+	console.log(`Active notifications started: ${activeNotifications.join(", ")}`);
 }
 
-export function stopInterpreting() {
+export async function stopInterpreting() {
 	const models = get(settings.connection).models as TrackerModel[];
 	const modes = get(activeModes);
 
@@ -46,7 +47,7 @@ export function stopInterpreting() {
 		return console.error("No modes to stop");
 	}
 
-	invoke("stop", { models, modes });
+	await invoke("stop", { models, modes });
 
 	if (notification === null) return console.error("No notification instance to stop");
 	let activeNotifications = notification.getActiveNotifications();

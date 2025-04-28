@@ -4643,7 +4643,7 @@ dependencies = [
 [[package]]
 name = "tracker_emulation-rs"
 version = "0.1.0"
-source = "git+https://github.com/JovannMC/tracker_emulation-rs#a95f1e117f3a343ae3c504e407ad2423cbf7b3f6"
+source = "git+https://github.com/JovannMC/tracker_emulation-rs#bf3c63ecf9dad39d31f4e4c6b411f4668b7834a7"
 dependencies = [
  "firmware_protocol",
  "rand 0.9.1",
