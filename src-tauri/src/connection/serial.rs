@@ -1,8 +1,14 @@
 use once_cell::sync::Lazy;
-use std::{io::ErrorKind, sync::Mutex, thread::{self, sleep}, time::Duration, collections::HashMap};
 use serialport::SerialPort;
+use std::{
+    collections::HashMap,
+    io::ErrorKind,
+    sync::Mutex,
+    thread::{self, sleep},
+    time::Duration,
+};
 
-use crate::util::log;
+use crate::log;
 
 static PORTS: Mutex<Vec<Box<dyn SerialPort + Send>>> = Mutex::new(Vec::new());
 
@@ -38,10 +44,7 @@ static TRACKER_ASSIGNMENT: Lazy<Mutex<HashMap<&'static str, [String; 3]>>> = Laz
 });
 
 pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Result<(), String> {
-    log(&format!(
-        "Starting serial connection on ports {:?}",
-        &port_paths
-    ));
+    log!("Starting serial connection on ports {:?}", &port_paths);
 
     let mut ports = PORTS.lock().unwrap();
     for port_path in &port_paths {
@@ -52,7 +55,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
         ports.push(port);
     }
 
-    log(&format!("Opened ports: {:?}", &port_paths));
+    log!("Opened ports: {:?}", &port_paths);
 
     // listen to ports
     for port in ports.iter_mut() {
@@ -138,7 +141,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                                             {
                                                                 value[1] = port_path.clone();
                                                                 value[2] = port_id.clone();
-                                                                log(&format!("Setting {} to port {} with port ID {}", key, port_path, port_id));
+                                                                log!("Setting {} to port {} with port ID {}", key, port_path, port_id);
 
                                                                 tracker_name = Some(*key);
                                                             }
@@ -155,14 +158,14 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                             &message,
                                         ).await;
                                         if let Err(e) = result {
-                                            log(&format!(
+                                            log!(
                                                 "Failed to parse serial data: {}",
                                                 e
-                                            ));
+                                            );
                                         }
                                     }
                                     Err(e) => {
-                                        log(&format!("Failed to convert message to UTF-8: {}", e))
+                                        log!("Failed to convert message to UTF-8: {}", e);
                                     }
                                 }
                             }
@@ -170,10 +173,10 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                     }
                     Err(e) => {
                         if e.kind() == ErrorKind::TimedOut {
-                            log("Read timed out, continuing...");
+                            log!("Read timed out, continuing...");
                             continue;
                         } else {
-                            log(&format!("Error reading from port: {}", e));
+                            log!("Error reading from port: {}", e);
                             break;
                         }
                     }
@@ -197,10 +200,10 @@ pub async fn stop() -> Result<(), String> {
     sleep(Duration::from_millis(100));
 
     let mut ports = PORTS.lock().unwrap();
-    log(&format!("Clearing {} ports", ports.len()));
+    log!("Clearing {} ports", ports.len());
     ports.clear();
 
-    log("Stopped serial connection");
+    log!("Stopped serial connection");
     Ok(())
 }
 

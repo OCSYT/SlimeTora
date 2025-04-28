@@ -1,4 +1,5 @@
 use crate::interpreters::common::CONNECTED_TRACKERS;
+use crate::log;
 use firmware_protocol::{
     ActionType, BoardType, ImuType, McuType, SensorDataType, SensorStatus, SlimeQuaternion,
 };
@@ -11,13 +12,9 @@ use tracker_emulation_rs::EmulatedTracker;
 
 pub async fn start_heartbeat(app_handle: &AppHandle) {
     if !CONNECTED_TRACKERS.contains_key("(HEARTBEAT)") {
-        add_tracker(
-            app_handle,
-            "(HEARTBEAT)",
-            [0, 0, 0, 0, 0, 0],
-        )
-        .await
-        .expect("Failed to add heartbeat tracker");
+        add_tracker(app_handle, "(HEARTBEAT)", [0, 0, 0, 0, 0, 0])
+            .await
+            .expect("Failed to add heartbeat tracker");
     }
 
     // check if heartbeat is connected after we start a connection in the app, if not, warn user that it couldn't find slimevr server (at time of starting connection)
@@ -40,8 +37,8 @@ pub async fn add_tracker(
         Some(BoardType::Haritora),
         Some(McuType::Haritora),
         Some("255.255.255.255".to_string()), // TODO: get this from the app settings
-        Some(6969),                    // TODO: get this from the app settings
-        Some(5000),                    // TODO: get this from the app settings
+        Some(6969),                          // TODO: get this from the app settings
+        Some(5000),                          // TODO: get this from the app settings
     )
     .await
     .expect("Failed to create tracker");
@@ -64,10 +61,10 @@ pub async fn add_tracker(
             tokio::spawn(async move {
                 while status_rx.changed().await.is_ok() {
                     let status = status_rx.borrow().clone();
-                    println!("Tracker status changed: {status}");
+                    log!("Tracker status changed: {status}");
 
                     if status == "initialized" {
-                        println!("Disconnected from server.");
+                        log!("Disconnected from server.");
                     }
                 }
             });
@@ -107,18 +104,17 @@ pub async fn send_rotation(
     if let Some(tracker_ref) = CONNECTED_TRACKERS.get(tracker_name) {
         if let Some(tracker) = tracker_ref.value() {
             // Normalize the quaternion
-            let magnitude = (rotation[0] * rotation[0] + rotation[1] * rotation[1] + rotation[2] * rotation[2] + rotation[3] * rotation[3]).sqrt();
+            let magnitude = (rotation[0] * rotation[0]
+                + rotation[1] * rotation[1]
+                + rotation[2] * rotation[2]
+                + rotation[3] * rotation[3])
+                .sqrt();
             let i = rotation[0] / magnitude;
             let j = rotation[1] / magnitude;
             let k = rotation[2] / magnitude;
             let w = rotation[3] / magnitude;
 
-            let quaternion = SlimeQuaternion {
-                i,
-                j,
-                k,
-                w,
-            };
+            let quaternion = SlimeQuaternion { i, j, k, w };
 
             tracker
                 .send_rotation(sensor_id, SensorDataType::Normal, quaternion, 1)

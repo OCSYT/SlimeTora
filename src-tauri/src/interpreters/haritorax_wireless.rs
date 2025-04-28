@@ -1,7 +1,7 @@
+use crate::log;
 use crate::{
     connection::slimevr::{add_tracker, send_accel, send_rotation},
     interpreters::core::Interpreter,
-    util::log,
 };
 use async_trait::async_trait;
 use base64::Engine;
@@ -31,10 +31,7 @@ impl Interpreter for HaritoraXWireless {
         data: &str,
     ) -> Result<(), String> {
         let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
-        log(&format!(
-            "Received identifier: {}, data: {}",
-            identifier, data
-        ));
+        log!("Received identifier: {}, data: {}", identifier, data);
 
         let normalized_identifier = identifier.to_lowercase().chars().next();
         match normalized_identifier {
@@ -45,7 +42,8 @@ impl Interpreter for HaritoraXWireless {
 
                 process_imu_data(app_handle, tracker_name, buffer).await?;
             }
-            _ => log(&format!("Unknown identifier: {}", identifier)),
+            Some('v') => {}
+            _ => log!("Unknown identifier: {}", identifier),
         }
 
         Ok(())
@@ -58,10 +56,10 @@ async fn process_imu_data(
     data: Vec<u8>,
 ) -> Result<(), String> {
     if !CONNECTED_TRACKERS.contains_key(tracker_name) && !tracker_name.is_empty() {
-        log(&format!("Creating new tracker: {}", tracker_name));
+        log!("Creating new tracker: {}", tracker_name);
 
         if let Err(e) = add_tracker(app_handle, tracker_name, [0, 0, 0, 0, 0, 0x01]).await {
-            log(&format!("Failed to add tracker: {}", e));
+            log!("Failed to add tracker: {}", e);
             return Err(format!("Failed to add tracker: {}", e));
         }
     }
@@ -69,10 +67,11 @@ async fn process_imu_data(
     let imu_data = match decode_imu(&data, tracker_name) {
         Ok(data) => data,
         Err(e) => {
-            log(&format!(
+            log!(
                 "Failed to decode IMU data for tracker {}: {}",
-                tracker_name, e
-            ));
+                tracker_name,
+                e
+            );
             return Err(format!("Failed to decode IMU data: {}", e));
         }
     };
@@ -99,10 +98,13 @@ async fn process_imu_data(
         };
     }
 
-    log(&format!(
+    log!(
         "Tracker: {} - IMU: {:?} - Mag: {:?} -  Ankle: {:?}",
-        tracker_name, imu_data, mag_status, ankle
-    ));
+        tracker_name,
+        imu_data,
+        mag_status,
+        ankle
+    );
 
     let imu_payload = serde_json::json!({
         "tracker": tracker_name,
@@ -140,11 +142,11 @@ async fn process_imu_data(
     let tracker_name = tracker_name.to_string();
 
     if let Err(e) = send_rotation(&tracker_name, 0, rotation_data).await {
-        log(&format!("Failed to send rotation: {}", e));
+        log!("Failed to send rotation: {}", e);
     }
 
     if let Err(e) = send_accel(&tracker_name, 0, accel_data).await {
-        log(&format!("Failed to send acceleration: {}", e));
+        log!("Failed to send acceleration: {}", e);
     }
 
     Ok(())

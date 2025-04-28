@@ -1,14 +1,14 @@
+use super::core::ChargeStatus;
 use crate::interpreters::core::{
     Acceleration, BatteryData, IMUData, InfoData, Rotation, Rotations,
 };
-use crate::util::log;
+use crate::log;
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
+use dashmap::DashMap;
 use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, io::Cursor};
-use super::core::ChargeStatus;
-use dashmap::DashMap;
 use tracker_emulation_rs::EmulatedTracker;
 
 pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> =
@@ -212,10 +212,11 @@ pub fn process_battery_data(
             _ => return Err(format!("Unknown characteristic: {}", characteristic)),
         }
 
-        log(&format!(
+        log!(
             "Processed battery data for tracker \"{}\": {:?}",
-            tracker_name, battery_data
-        ));
+            tracker_name,
+            battery_data
+        );
     } else {
         let battery_info: serde_json::Value = serde_json::from_str(data)
             .map_err(|e| format!("Failed to parse battery data JSON: {}", e))?;
@@ -238,10 +239,13 @@ pub fn process_battery_data(
         }
     }
 
-    log(&format!(
+    log!(
         "Processed battery data for tracker \"{}\": remaining: {:?}%, voltage: {:?}, status: {:?}",
-        tracker_name, battery_data.remaining, battery_data.voltage, battery_data.status
-    ));
+        tracker_name,
+        battery_data.remaining,
+        battery_data.voltage,
+        battery_data.status
+    );
     Ok(battery_data)
 }
 
@@ -301,10 +305,11 @@ pub fn process_button_data(
         }
     }
 
-    log(&format!(
+    log!(
         "Button pressed from tracker {}: {}",
-        tracker_name, button_pressed
-    ));
+        tracker_name,
+        button_pressed
+    );
     Ok(button_pressed.to_string())
 }
 
@@ -334,10 +339,11 @@ pub fn process_info_data(data: &str, tracker_name: &str) -> Result<InfoData, Str
         communication_type,
     };
 
-    log(&format!(
+    log!(
         "Received info data: {:?} requested by tracker: {}",
-        info_data, tracker_name
-    ));
+        info_data,
+        tracker_name
+    );
 
     Ok(info_data)
 }

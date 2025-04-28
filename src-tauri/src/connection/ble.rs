@@ -5,13 +5,14 @@ use tauri::Emitter;
 use tauri_plugin_btleplug::{btleplug::api::WriteType, BtleplugExt};
 use tokio::sync::Mutex;
 
-use crate::util::log;
 use once_cell::sync::Lazy;
 use tauri_plugin_btleplug::btleplug::{
     self,
     api::{Central, CentralEvent, CharPropFlags, Manager as _, Peripheral, ScanFilter},
     platform::{Manager, PeripheralId},
 };
+
+use crate::log;
 
 /*
  * BLE constants
@@ -91,7 +92,7 @@ async fn get_device_name(device: &btleplug::platform::Peripheral) -> String {
 }
 
 pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
-    log("Started BLE connection");
+    log!("Started BLE connection");
     let app_handle_clone = app_handle.clone();
     let btleplug_result = app_handle_clone
         .btleplug()
@@ -101,11 +102,11 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
             if adapters.is_empty() {
                 return Err("No Bluetooth adapters found".to_string());
             }
-            log(&format!("Found {} Bluetooth adapters", adapters.len()));
+            log!("Found {} Bluetooth adapters", adapters.len());
 
             let central = adapters.into_iter().next().unwrap();
             let central_state = central.adapter_state().await.map_err(|e| e.to_string())?;
-            println!("Central state: {:?}", central_state);
+            log!("Central state: {:?}", central_state);
 
             {
                 let mut state = BLE_STATE.lock().await;
@@ -132,10 +133,10 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
                                     if let Err(e) =
                                         check_device(app_handle_clone, peripheral, id).await
                                     {
-                                        log(&format!("Error checking device: {}", e));
+                                        log!("Error checking device: {}", e);
                                     }
                                 }
-                                Err(e) => log(&format!("Error getting peripheral: {}", e)),
+                                Err(e) => log!("Error getting peripheral: {}", e),
                             }
                         });
                     }
@@ -148,15 +149,15 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
                                     if let Err(e) =
                                         check_device(app_handle_clone, peripheral, id).await
                                     {
-                                        log(&format!("Error checking device: {}", e));
+                                        log!("Error checking device: {}", e);
                                     }
                                 }
-                                Err(e) => log(&format!("Error getting peripheral: {}", e)),
+                                Err(e) => log!("Error getting peripheral: {}", e),
                             }
                         });
                     }
                     CentralEvent::StateUpdate(state) => {
-                        println!("AdapterStatusUpdate {:?}", state);
+                        log!("AdapterStatusUpdate {:?}", state);
                     }
                     CentralEvent::DeviceConnected(id) => {
                         let app_handle_clone = app_handle.clone();
@@ -165,14 +166,14 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
                             match central_clone.peripheral(&id).await {
                                 Ok(peripheral) => {
                                     let name = get_device_name(&peripheral).await;
-                                    log(&format!("DeviceConnected: {} ({:?})", name, id));
+                                    log!("DeviceConnected: {} ({:?})", name, id);
 
                                     if let Err(e) = app_handle_clone.emit("device_connected", name)
                                     {
-                                        log(&format!("Failed to emit device_connected: {}", e));
+                                        log!("Failed to emit device_connected: {}", e);
                                     }
                                 }
-                                Err(e) => log(&format!("Error getting peripheral: {}", e)),
+                                Err(e) => log!("Error getting peripheral: {}", e),
                             }
                         });
                     }
@@ -183,15 +184,15 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
                             match central_clone.peripheral(&id).await {
                                 Ok(peripheral) => {
                                     let name = get_device_name(&peripheral).await;
-                                    log(&format!("DeviceDisconnected: {} ({:?})", name, id));
+                                    log!("DeviceDisconnected: {} ({:?})", name, id);
 
                                     if let Err(e) =
                                         app_handle_clone.emit("device_disconnected", name)
                                     {
-                                        log(&format!("Failed to emit device_disconnected: {}", e));
+                                        log!("Failed to emit device_disconnected: {}", e);
                                     }
                                 }
-                                Err(e) => log(&format!("Error getting peripheral: {}", e)),
+                                Err(e) => log!("Error getting peripheral: {}", e),
                             }
                         });
                     }
@@ -206,17 +207,17 @@ pub async fn start(app_handle: tauri::AppHandle) -> Result<(), String> {
     match btleplug_result {
         Ok(_) => {}
         Err(e) => {
-            log(&format!("Error during btleplug task: {}", e));
+            log!("Error during btleplug task: {}", e);
             return Err(e);
         }
     }
 
-    log("Started BLE connection");
+    log!("Started BLE connection");
     Ok(())
 }
 
 pub async fn stop(app_handle: tauri::AppHandle) -> Result<(), String> {
-    log("Stopping BLE connection");
+    log!("Stopping BLE connection");
     let _ = app_handle
         .btleplug()
         .btleplug_context_spawn(async move {
@@ -224,21 +225,21 @@ pub async fn stop(app_handle: tauri::AppHandle) -> Result<(), String> {
 
             if let Some(central) = &state.central {
                 if let Err(e) = central.stop_scan().await {
-                    log(&format!("Error stopping scan: {}", e));
+                    log!("Error stopping scan: {}", e);
                 } else {
-                    log("Stopped BLE scanning");
+                    log!("Stopped BLE scanning");
                 }
             }
 
-            log("Disconnecting all connected devices");
+            log!("Disconnecting all connected devices");
             if let Some(central) = &state.central {
                 for id in &state.connected_devices {
-                    log(&format!("Disconnecting device {:?}", id));
+                    log!("Disconnecting device {:?}", id);
                     if let Ok(device) = central.peripheral(id).await {
                         if let Err(e) = disconnect(device).await {
-                            log(&format!("Failed to disconnect device {:?}: {}", id, e));
+                            log!("Failed to disconnect device {:?}: {}", id, e);
                         } else {
-                            log(&format!("Disconnected device {:?}", id));
+                            log!("Disconnected device {:?}", id);
                         }
                     }
                 }
@@ -253,7 +254,7 @@ pub async fn stop(app_handle: tauri::AppHandle) -> Result<(), String> {
         .await
         .expect("error during btleplug stop task");
 
-    log("Stopped BLE connection");
+    log!("Stopped BLE connection");
     Ok(())
 }
 
@@ -273,25 +274,23 @@ pub async fn write(
         };
 
         if let Err(e) = device.write(&characteristic, &data, write_type).await {
-            log(&format!(
+            log!(
                 "Failed to write to characteristic {:?}: {}",
-                characteristic, e
-            ));
+                characteristic,
+                e
+            );
             return Err(e.to_string());
         }
 
         if expecting_response {
-            return device
-                .read(&characteristic)
-                .await
-                .map(Some)
-                .map_err(|e| {
-                    log(&format!(
-                        "Failed to read response from characteristic {:?}: {}",
-                        characteristic, e
-                    ));
-                    e.to_string()
-                });
+            return device.read(&characteristic).await.map(Some).map_err(|e| {
+                log!(
+                    "Failed to read response from characteristic {:?}: {}",
+                    characteristic,
+                    e
+                );
+                e.to_string()
+            });
         }
 
         Ok(None)
@@ -300,10 +299,7 @@ pub async fn write(
     }
 }
 
-pub async fn read(
-    device_name: &str,
-    characteristic_uuid: &str,
-) -> Result<Vec<u8>, String> {
+pub async fn read(device_name: &str, characteristic_uuid: &str) -> Result<Vec<u8>, String> {
     let device = find_device_by_name(device_name).await?;
 
     if let Some(characteristic) = find_characteristic_by_uuid(&device, characteristic_uuid) {
@@ -316,9 +312,7 @@ pub async fn read(
     }
 }
 
-async fn find_device_by_name(
-    device_name: &str,
-) -> Result<btleplug::platform::Peripheral, String> {
+async fn find_device_by_name(device_name: &str) -> Result<btleplug::platform::Peripheral, String> {
     let state = BLE_STATE.lock().await;
 
     let central = state.central.as_ref().ok_or("Central not initialized")?;
@@ -328,9 +322,8 @@ async fn find_device_by_name(
         .into_iter()
         .find(|p| {
             let device_name = device_name.to_string();
-            let properties = tokio::runtime::Handle::current().block_on(async {
-                p.properties().await.ok().flatten()
-            });
+            let properties = tokio::runtime::Handle::current()
+                .block_on(async { p.properties().await.ok().flatten() });
             properties
                 .and_then(|props| props.local_name)
                 .is_some_and(|name| name == device_name)
@@ -356,14 +349,14 @@ async fn check_device(
     let name = get_device_name(&device).await;
 
     if name.contains("Haritora") {
-        println!("Found Haritora device: {:?}", id);
+        log!("Found Haritora device: {:?}", id);
         if let Err(e) = connect(app_handle, device.clone()).await {
-            log(&format!("Failed to connect to device {:?}: {}", id, e));
+            log!("Failed to connect to device {:?}: {}", id, e);
             return Err(e);
         }
         let mut state = BLE_STATE.lock().await;
         state.connected_devices.push(id.clone());
-        println!("Connected devices: {:?}", state.connected_devices);
+        log!("Connected devices: {:?}", state.connected_devices);
     }
 
     Ok(())
@@ -395,12 +388,12 @@ async fn connect(
         .map_err(|e| e.to_string())?;
     let services = device.services();
     for service in services.iter() {
-        println!("Service: {:?}", service);
+        log!("Service: {:?}", service);
     }
 
     let chars = device.characteristics();
     for char in chars.iter() {
-        println!("Characteristic: {:?}", char);
+        log!("Characteristic: {:?}", char);
     }
 
     if REQUIRED_SERVICES
@@ -410,19 +403,19 @@ async fn connect(
             .keys()
             .all(|char| chars.iter().any(|c| c.uuid.to_string() == *char))
     {
-        println!("All required services and characteristics found");
+        log!("All required services and characteristics found");
         broadcasting(app_handle, device.clone()).await.unwrap();
     } else {
-        println!("Not all required services or characteristics found");
+        log!("Not all required services or characteristics found");
         disconnect(device.clone()).await.unwrap();
         for service in REQUIRED_SERVICES.keys() {
             if !services.iter().any(|s| s.uuid.to_string() == *service) {
-                println!("Missing service: {}", service);
+                log!("Missing service: {}", service);
             }
         }
         for char in REQUIRED_CHARS.keys() {
             if !chars.iter().any(|c| c.uuid.to_string() == *char) {
-                println!("Missing characteristic: {}", char);
+                log!("Missing characteristic: {}", char);
             }
         }
         return Err("Not all required services or characteristics found".to_string());
@@ -448,7 +441,7 @@ async fn broadcasting(
             let subscribe_result = device_clone.subscribe(&characteristic).await;
             match subscribe_result {
                 Ok(_) => {
-                    println!("Subscribed to characteristic: {:?}", characteristic);
+                    log!("Subscribed to characteristic: {:?}", characteristic);
 
                     // let characteristic_name = CHARACTERISTICS
                     //     .iter()
@@ -469,7 +462,7 @@ async fn broadcasting(
 
                             tokio::spawn(async move {
                                 while let Some(data) = notification_stream.next().await {
-                                    // println!(
+                                    // log!(
                                     //     "Received data from {} ({}): {:?}",
                                     //     characteristic_name, characteristic.uuid, data.value
                                     // );
@@ -511,24 +504,26 @@ async fn broadcasting(
                                             "data": data,
                                         }),
                                     ) {
-                                        log(&format!("Failed to emit BLE notification: {}", e));
+                                        log!("Failed to emit BLE notification: {}", e);
                                     }
                                 }
                             });
                         }
                         Err(e) => {
-                            log(&format!(
+                            log!(
                                 "Failed to get notification stream for characteristic {:?}: {}",
-                                characteristic, e
-                            ));
+                                characteristic,
+                                e
+                            );
                         }
                     }
                 }
                 Err(e) => {
-                    log(&format!(
+                    log!(
                         "Failed to subscribe to characteristic {:?}: {}",
-                        characteristic, e
-                    ));
+                        characteristic,
+                        e
+                    );
                 }
             }
         }

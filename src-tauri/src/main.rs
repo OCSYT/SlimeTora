@@ -7,8 +7,8 @@ mod connection {
     pub mod slimevr;
 }
 mod interpreters {
-    pub mod core;
     pub mod common;
+    pub mod core;
     pub mod haritorax_2;
     pub mod haritorax_wired;
     pub mod haritorax_wireless;
@@ -23,7 +23,6 @@ use std::collections::HashMap;
 use tauri::AppHandle;
 use tauri_plugin_prevent_default::Flags;
 use tokio::task;
-use util::log;
 
 static DONGLES: Lazy<Vec<HashMap<&'static str, &'static str>>> = Lazy::new(|| {
     vec![
@@ -82,7 +81,7 @@ async fn start(
     modes: Vec<String>,
     ports: Vec<String>,
 ) -> Result<(), String> {
-    log(&format!("Starting connection with modes: {:?}", modes));
+    log!("Starting connection with modes: {:?}", modes);
 
     crate::interpreters::core::start_interpreting(&model)?;
 
@@ -92,7 +91,7 @@ async fn start(
     if modes.contains(&"ble".to_string()) {
         let ble_task = task::spawn(async move { ble::start(app_handle.clone()).await });
         tasks.push(ble_task);
-        log("Starting BLE connection");
+        log!("Starting BLE connection");
     } else if modes.contains(&"serial".to_string()) {
         if ports.is_empty() {
             return Err("No serial ports provided".to_string());
@@ -101,7 +100,7 @@ async fn start(
         let serial_task =
             task::spawn(async move { serial::start(app_handle.clone(), ports).await });
         tasks.push(serial_task);
-        log("Starting serial connection");
+        log!("Starting serial connection");
     } else {
         return Err("No valid connection type provided".to_string());
     }
@@ -109,22 +108,26 @@ async fn start(
     for result in future::join_all(tasks).await {
         match result {
             Ok(inner_result) => inner_result.map_err(|e| {
-                log(&format!("Failed to start connection: {}", e));
+                log!("Failed to start connection: {}", e);
                 "Failed to start connection".to_string()
             })?,
             Err(join_error) => {
-                log(&format!("Task join error: {}", join_error));
+                log!("Task join error: {}", join_error);
                 return Err("Failed to start connection".to_string());
             }
         }
     }
 
-    log("Started connection");
+    log!("Started connection");
     Ok(())
 }
 
 #[tauri::command]
-async fn stop(app_handle: AppHandle, models: Vec<String>, modes: Vec<String>) -> Result<(), String> {
+async fn stop(
+    app_handle: AppHandle,
+    models: Vec<String>,
+    modes: Vec<String>,
+) -> Result<(), String> {
     let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
 
     for m in models {
@@ -144,17 +147,17 @@ async fn stop(app_handle: AppHandle, models: Vec<String>, modes: Vec<String>) ->
     for result in future::join_all(tasks).await {
         match result {
             Ok(inner_result) => inner_result.map_err(|e| {
-                log(&format!("Failed to stop connection: {}", e));
+                log!("Failed to stop connection: {}", e);
                 "Failed to stop connection".to_string()
             })?,
             Err(join_error) => {
-                log(&format!("Task join error: {}", join_error));
+                log!("Task join error: {}", join_error);
                 return Err("Failed to stop connection".to_string());
             }
         }
     }
 
-    log("Stopped connection");
+    log!("Stopped connection");
     Ok(())
 }
 
@@ -169,16 +172,16 @@ async fn write_ble(
 
     match response {
         Ok(result) => {
-            log("Successfully wrote to BLE device");
+            log!("Successfully wrote to BLE device");
             if expecting_response {
-                log(&format!("Received response from BLE device: {:?}", result));
+                log!("Received response from BLE device: {:?}", result);
                 Ok(result)
             } else {
                 Ok(None)
             }
         }
         Err(e) => {
-            log(&format!("Failed to write to BLE device: {}", e));
+            log!("Failed to write to BLE device: {}", e);
             Err("Failed to write to BLE device".to_string())
         }
     }
@@ -190,12 +193,12 @@ async fn read_ble(device_name: String, characteristic_uuid: String) -> Result<Ve
 
     match response {
         Ok(result) => {
-            log("Successfully read from BLE device");
-            log(&format!("Received data from BLE device: {:?}", result));
+            log!("Successfully read from BLE device");
+            log!("Received data from BLE device: {:?}", result);
             Ok(result)
         }
         Err(e) => {
-            log(&format!("Failed to read from BLE device: {}", e));
+            log!("Failed to read from BLE device: {}", e);
             Err("Failed to read from BLE device".to_string())
         }
     }
@@ -207,11 +210,11 @@ async fn write_serial(port_path: String, data: String) -> Result<(), String> {
 
     match response {
         Ok(_) => {
-            log("Successfully wrote to serial port");
+            log!("Successfully wrote to serial port");
             Ok(())
         }
         Err(e) => {
-            log(&format!("Failed to write to serial port: {}", e));
+            log!("Failed to write to serial port: {}", e);
             Err("Failed to write to serial port".to_string())
         }
     }
@@ -223,12 +226,12 @@ async fn read_serial(port_path: String) -> Result<String, String> {
 
     match response {
         Ok(result) => {
-            log("Successfully read from serial port");
-            log(&format!("Received data from serial port: {}", result));
+            log!("Successfully read from serial port");
+            log!("Received data from serial port: {}", result);
             Ok(result)
         }
         Err(e) => {
-            log(&format!("Failed to read from serial port: {}", e));
+            log!("Failed to read from serial port: {}", e);
             Err("Failed to read from serial port".to_string())
         }
     }
@@ -244,7 +247,7 @@ fn get_serial_ports() -> Result<Vec<String>, String> {
     if ports.is_empty() {
         return Err("No serial ports available".to_string());
     }
-    log(&format!("Available serial ports: {:?}", ports));
+    log!("Available serial ports: {:?}", ports);
     Ok(ports)
 }
 
@@ -274,6 +277,6 @@ fn filter_ports(ports: Vec<String>) -> Result<Vec<String>, String> {
     if filtered_ports.is_empty() {
         return Err("No Haritora ports found".to_string());
     }
-    log(&format!("Filtered Haritora ports: {:?}", filtered_ports));
+    log!("Filtered Haritora ports: {:?}", filtered_ports);
     Ok(filtered_ports)
 }
