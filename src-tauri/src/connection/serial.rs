@@ -12,6 +12,7 @@ static STOP_CHANNELS: Lazy<Mutex<Vec<std::sync::mpsc::Sender<()>>>> =
     Lazy::new(|| Mutex::new(Vec::new()));
 
 // tracker part, [tracker id, port, port id]
+// update: i think i was thinking too much about trying to make it like the TS version, i should probably make this more efficient
 static TRACKER_ASSIGNMENT: Lazy<Mutex<HashMap<&'static str, [String; 3]>>> = Lazy::new(|| {
     let entries = [
         ("DONGLE", "0"),
@@ -69,9 +70,11 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
 
         let app_handle_clone = app_handle.clone();
         std::thread::spawn(move || {
-            let mut accumulator = Vec::new();
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                let mut accumulator = Vec::new();
 
-            loop {
+                loop {
                 if stop_rx.try_recv().is_ok() {
                     break;
                 }
@@ -105,7 +108,6 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                             .unwrap_or('0')
                                             .to_string();
                                         let port_data = parts[1];
-
                                         // try to find find tracker name via assignments map
                                         let mut tracker_name = None;
                                         {
@@ -153,7 +155,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                             &app_handle_clone,
                                             tracker_name.unwrap_or(""),
                                             &message,
-                                        );
+                                        ).await;
                                         if let Err(e) = result {
                                             log(&format!(
                                                 "Failed to parse serial data: {}",
@@ -179,6 +181,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                     }
                 }
             }
+        });
         });
     }
 

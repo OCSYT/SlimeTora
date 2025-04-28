@@ -1,13 +1,20 @@
-use crate::{interpreters::core::Interpreter, util::log};
+use crate::{
+    connection::slimevr::{add_tracker, send_accel, send_rotation},
+    interpreters::core::Interpreter,
+    util::log,
+};
+use async_trait::async_trait;
 use base64::Engine;
 use tauri::{AppHandle, Emitter};
 
-use super::common::decode_imu;
+use super::common::{decode_imu, CONNECTED_TRACKERS};
 
 pub struct HaritoraXWireless;
 
+#[async_trait]
 impl Interpreter for HaritoraXWireless {
-    fn parse_ble(
+    async fn parse_ble(
+        &self,
         app_handle: &AppHandle,
         device_id: Option<&str>,
         characteristic_uuid: &str,
@@ -17,9 +24,12 @@ impl Interpreter for HaritoraXWireless {
         Ok(())
     }
 
-    fn parse_serial(app_handle: &AppHandle, tracker_name: &str, data: &str) -> Result<(), String> {
-        // Implement serial parsing logic for HaritoraX Wireless
-
+    async fn parse_serial(
+        &self,
+        app_handle: &AppHandle,
+        tracker_name: &str,
+        data: &str,
+    ) -> Result<(), String> {
         let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
         log(&format!(
             "Received identifier: {}, data: {}",
@@ -29,30 +39,40 @@ impl Interpreter for HaritoraXWireless {
         let normalized_identifier = identifier.to_lowercase().chars().next();
         match normalized_identifier {
             Some('x') => {
-                // turn data into a buffer
                 let buffer = base64::engine::general_purpose::STANDARD
                     .decode(data)
                     .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
-                process_imu_data(app_handle, tracker_name, buffer)?;
+
+                process_imu_data(app_handle, tracker_name, buffer).await?;
             }
-            _ => {
-                log(&format!("Unknown identifier: {}", identifier));
-            }
+            _ => log(&format!("Unknown identifier: {}", identifier)),
         }
 
         Ok(())
     }
 }
 
-fn process_imu_data(
+async fn process_imu_data(
     app_handle: &AppHandle,
     tracker_name: &str,
     data: Vec<u8>,
 ) -> Result<(), String> {
+    if !CONNECTED_TRACKERS.contains_key(tracker_name) && !tracker_name.is_empty() {
+        log(&format!("Creating new tracker: {}", tracker_name));
+
+        if let Err(e) = add_tracker(app_handle, tracker_name, [0, 0, 0, 0, 0, 0x01]).await {
+            log(&format!("Failed to add tracker: {}", e));
+            return Err(format!("Failed to add tracker: {}", e));
+        }
+    }
+
     let imu_data = match decode_imu(&data, tracker_name) {
         Ok(data) => data,
         Err(e) => {
-            log(&format!("Failed to decode IMU data for tracker {}: {}", tracker_name, e));
+            log(&format!(
+                "Failed to decode IMU data for tracker {}: {}",
+                tracker_name, e
+            ));
             return Err(format!("Failed to decode IMU data: {}", e));
         }
     };
@@ -84,8 +104,6 @@ fn process_imu_data(
         tracker_name, imu_data, mag_status, ankle
     ));
 
-    // TODO: send the data to SlimeVR, then to UI
-    // for now we'll just send to UI, where slimevr-node will send to slimevr
     let imu_payload = serde_json::json!({
         "tracker": tracker_name,
         "data": {
@@ -100,8 +118,34 @@ fn process_imu_data(
             "magnetometer": mag_status,
         },
     });
-    app_handle.emit("imu", imu_payload).map_err(|e| format!("Failed to emit IMU data: {}", e))?;
-    app_handle.emit("mag", mag_payload).map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
+    app_handle
+        .emit("imu", imu_payload)
+        .map_err(|e| format!("Failed to emit IMU data: {}", e))?;
+    app_handle
+        .emit("mag", mag_payload)
+        .map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
+
+    let rotation_data = [
+        imu_data.rotation.raw.x,
+        imu_data.rotation.raw.y,
+        imu_data.rotation.raw.z,
+        imu_data.rotation.raw.w,
+    ];
+    let accel_data = [
+        imu_data.acceleration.x,
+        imu_data.acceleration.y,
+        imu_data.acceleration.z,
+    ];
+
+    let tracker_name = tracker_name.to_string();
+
+    if let Err(e) = send_rotation(&tracker_name, 0, rotation_data).await {
+        log(&format!("Failed to send rotation: {}", e));
+    }
+
+    if let Err(e) = send_accel(&tracker_name, 0, accel_data).await {
+        log(&format!("Failed to send acceleration: {}", e));
+    }
 
     Ok(())
 }

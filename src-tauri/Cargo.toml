@@ -26,4 +26,7 @@ base64 = "0.22.1"
 byteorder = "1.5.0"
 hex = "0.4.3"
 nalgebra = "0.33.2"
-
+firmware_protocol = { git = "https://github.com/JovannMC/SlimeVR-Rust", package = "firmware_protocol", branch = "more-packets" }
+tracker_emulation-rs = { git = "https://github.com/JovannMC/tracker_emulation-rs" }
+dashmap = "6.1.0"
+async-trait = "0.1.88"

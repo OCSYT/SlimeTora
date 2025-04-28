@@ -4,6 +4,7 @@
 mod connection {
     pub mod ble;
     pub mod serial;
+    pub mod slimevr;
 }
 mod interpreters {
     pub mod core;
@@ -83,7 +84,6 @@ async fn start(
 ) -> Result<(), String> {
     log(&format!("Starting connection with modes: {:?}", modes));
 
-    // Start the interpreter for the specified model
     crate::interpreters::core::start_interpreting(&model)?;
 
     let mut tasks = vec![];

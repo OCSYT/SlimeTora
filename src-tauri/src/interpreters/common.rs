@@ -4,10 +4,13 @@ use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
 use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
+use tracker_emulation_rs::EmulatedTracker;
 use std::collections::HashMap;
 use std::io::Cursor;
-
 use super::core::ChargeStatus;
+use dashmap::DashMap;
+
+pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> = Lazy::new(DashMap::new);
 
 const ROTATION_SCALAR: f32 = 0.01 / 180.0;
 const GRAVITY_SCALAR: f32 = 1.0 / 256.0;
