@@ -1,16 +1,18 @@
-use crate::interpreters::core::{Acceleration, BatteryData, IMUData, InfoData, Rotations, Rotation};
+use crate::interpreters::core::{
+    Acceleration, BatteryData, IMUData, InfoData, Rotation, Rotations,
+};
 use crate::util::log;
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
 use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
-use tracker_emulation_rs::EmulatedTracker;
-use std::collections::HashMap;
-use std::io::Cursor;
+use std::{collections::HashMap, io::Cursor};
 use super::core::ChargeStatus;
 use dashmap::DashMap;
+use tracker_emulation_rs::EmulatedTracker;
 
-pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> = Lazy::new(DashMap::new);
+pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> =
+    Lazy::new(DashMap::new);
 
 const ROTATION_SCALAR: f32 = 0.01 / 180.0;
 const GRAVITY_SCALAR: f32 = 1.0 / 256.0;
@@ -134,12 +136,7 @@ pub fn decode_imu(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
     let y = euler_angles.1 * (180.0 / std::f32::consts::PI);
     let z = euler_angles.2 * (180.0 / std::f32::consts::PI);
 
-    let rotation_degrees = Rotation {
-        x,
-        y,
-        z,
-        w: 0.0,
-    };
+    let rotation_degrees = Rotation { x, y, z, w: 0.0 };
 
     let rotations = Rotations {
         raw: rotation_obj,

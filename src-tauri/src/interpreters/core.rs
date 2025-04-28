@@ -1,10 +1,9 @@
 use crate::util::log;
+use async_trait::async_trait;
 use dashmap::{DashMap, DashSet};
 use once_cell::sync::Lazy;
-use std::future::Future;
 use std::sync::Arc;
 use tauri::AppHandle;
-use async_trait::async_trait;
 
 use super::{haritorax_2, haritorax_wired, haritorax_wireless};
 use serde::{Deserialize, Serialize};
@@ -28,13 +27,11 @@ pub trait Interpreter: Send + Sync {
 
     async fn parse_serial(
         &self,
-        app_handle: &AppHandle, 
-        tracker_name: &str, 
-        data: &str
+        app_handle: &AppHandle,
+        tracker_name: &str,
+        data: &str,
     ) -> Result<(), String>;
 }
-type InterpreterBLEFn = Box<dyn for<'a> Fn(&'a AppHandle, Option<&'a str>, &'a str, &'a str) -> Box<dyn Future<Output = Result<(), String>> + Send + 'a> + Send + Sync>;
-type InterpreterSerialFn = Box<dyn for<'a> Fn(&'a AppHandle, &'a str, &'a str) -> Box<dyn Future<Output = Result<(), String>> + Send + 'a> + Send + Sync>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IMUData {
@@ -99,18 +96,28 @@ pub enum ChargeStatus {
     Unknown,
 }
 
-pub static INTERPRETERS: Lazy<DashMap<TrackerModel, Arc<dyn Interpreter + Send + Sync>>> = Lazy::new(DashMap::new);
+pub static INTERPRETERS: Lazy<DashMap<TrackerModel, Arc<dyn Interpreter + Send + Sync>>> =
+    Lazy::new(DashMap::new);
 pub static ACTIVE_MODELS: Lazy<DashSet<TrackerModel>> = Lazy::new(DashSet::new);
 
 // Initialize the interpreters in your init function or at program start
 pub fn init_interpreters() {
     log("Initializing interpreters");
-    
+
     // Store each implementation as a trait object
-    INTERPRETERS.insert(TrackerModel::X2, Arc::new(haritorax_2::HaritoraX2) as Arc<dyn Interpreter + Send + Sync>);
-    INTERPRETERS.insert(TrackerModel::Wireless, Arc::new(haritorax_wireless::HaritoraXWireless) as Arc<dyn Interpreter + Send + Sync>);
-    INTERPRETERS.insert(TrackerModel::Wired, Arc::new(haritorax_wired::HaritoraXWired) as Arc<dyn Interpreter + Send + Sync>);
-    
+    INTERPRETERS.insert(
+        TrackerModel::X2,
+        Arc::new(haritorax_2::HaritoraX2) as Arc<dyn Interpreter + Send + Sync>,
+    );
+    INTERPRETERS.insert(
+        TrackerModel::Wireless,
+        Arc::new(haritorax_wireless::HaritoraXWireless) as Arc<dyn Interpreter + Send + Sync>,
+    );
+    INTERPRETERS.insert(
+        TrackerModel::Wired,
+        Arc::new(haritorax_wired::HaritoraXWired) as Arc<dyn Interpreter + Send + Sync>,
+    );
+
     log("Interpreters initialized");
 }
 
@@ -157,7 +164,11 @@ pub fn stop_interpreting(model: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub async fn process_serial(app_handle: &AppHandle, tracker_name: &str, data: &str) -> Result<(), String> {
+pub async fn process_serial(
+    app_handle: &AppHandle,
+    tracker_name: &str,
+    data: &str,
+) -> Result<(), String> {
     if ACTIVE_MODELS.is_empty() {
         return Err("No active interpreters".to_string());
     }
@@ -177,7 +188,10 @@ pub async fn process_serial(app_handle: &AppHandle, tracker_name: &str, data: &s
     if let Some(model) = model_hint {
         if ACTIVE_MODELS.contains(&model) {
             if let Some(interpreter_ref) = INTERPRETERS.get(&model) {
-                match interpreter_ref.parse_serial(app_handle, tracker_name, data).await {
+                match interpreter_ref
+                    .parse_serial(app_handle, tracker_name, data)
+                    .await
+                {
                     Ok(_) => return Ok(()),
                     Err(e) => log(&format!("Hinted interpreter for {:?} failed: {}", model, e)),
                 }
@@ -188,16 +202,22 @@ pub async fn process_serial(app_handle: &AppHandle, tracker_name: &str, data: &s
     // Try all active interpreters
     for active_model in ACTIVE_MODELS.iter() {
         if let Some(interpreter_ref) = INTERPRETERS.get(active_model.key()) {
-            match interpreter_ref.parse_serial(app_handle, tracker_name, data).await {
+            match interpreter_ref
+                .parse_serial(app_handle, tracker_name, data)
+                .await
+            {
                 Ok(_) => return Ok(()),
-                Err(e) => log(&format!("Serial Interpreter for {:?} failed: {}", active_model.key(), e)),
+                Err(e) => log(&format!(
+                    "Serial Interpreter for {:?} failed: {}",
+                    active_model.key(),
+                    e
+                )),
             }
         }
     }
 
     Err("No interpreter could process the data".to_string())
 }
-
 
 pub async fn process_ble(
     app_handle: &AppHandle,
@@ -225,7 +245,9 @@ pub async fn process_ble(
         if let Some(identified_model) = model {
             if ACTIVE_MODELS.contains(&identified_model) {
                 if let Some(interpreter_ref) = INTERPRETERS.get(&identified_model) {
-                    return interpreter_ref.parse_ble(app_handle, device_id, characteristic_uuid, data).await;
+                    return interpreter_ref
+                        .parse_ble(app_handle, device_id, characteristic_uuid, data)
+                        .await;
                 }
             }
         }
@@ -234,9 +256,16 @@ pub async fn process_ble(
     // If no specific model identified or it failed, try all active interpreters
     for active_model in ACTIVE_MODELS.iter() {
         if let Some(interpreter_ref) = INTERPRETERS.get(active_model.key()) {
-            match interpreter_ref.parse_ble(app_handle, device_id, characteristic_uuid, data).await {
+            match interpreter_ref
+                .parse_ble(app_handle, device_id, characteristic_uuid, data)
+                .await
+            {
                 Ok(_) => return Ok(()),
-                Err(e) => log(&format!("BLE Interpreter for {:?} failed: {}", active_model.key(), e)),
+                Err(e) => log(&format!(
+                    "BLE Interpreter for {:?} failed: {}",
+                    active_model.key(),
+                    e
+                )),
             }
         }
     }

@@ -1,10 +1,8 @@
 use once_cell::sync::Lazy;
-use std::sync::Mutex;
-
+use std::{io::ErrorKind, sync::Mutex, thread::{self, sleep}, time::Duration, collections::HashMap};
 use serialport::SerialPort;
 
 use crate::util::log;
-use std::collections::HashMap;
 
 static PORTS: Mutex<Vec<Box<dyn SerialPort + Send>>> = Mutex::new(Vec::new());
 
@@ -48,7 +46,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
     let mut ports = PORTS.lock().unwrap();
     for port_path in &port_paths {
         let port = serialport::new(port_path, 500000)
-            .timeout(std::time::Duration::from_secs(2))
+            .timeout(Duration::from_secs(2))
             .open()
             .map_err(|e| format!("Failed to open port {}: {}", port_path, e))?;
         ports.push(port);
@@ -69,7 +67,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
         STOP_CHANNELS.lock().unwrap().push(stop_tx);
 
         let app_handle_clone = app_handle.clone();
-        std::thread::spawn(move || {
+        thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 let mut accumulator = Vec::new();
@@ -171,7 +169,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                         }
                     }
                     Err(e) => {
-                        if e.kind() == std::io::ErrorKind::TimedOut {
+                        if e.kind() == ErrorKind::TimedOut {
                             log("Read timed out, continuing...");
                             continue;
                         } else {
@@ -196,7 +194,7 @@ pub async fn stop() -> Result<(), String> {
         }
     }
 
-    std::thread::sleep(std::time::Duration::from_millis(100));
+    sleep(Duration::from_millis(100));
 
     let mut ports = PORTS.lock().unwrap();
     log(&format!("Clearing {} ports", ports.len()));
