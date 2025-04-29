@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use base64::Engine;
 use tauri::{AppHandle, Emitter};
 
-use super::common::{decode_imu, process_battery_data, process_button_data, CONNECTED_TRACKERS};
+use super::common::{decode_imu, process_battery_data, process_button_data, process_settings_data, CONNECTED_TRACKERS};
 
 pub struct HaritoraXWireless;
 
@@ -32,7 +32,7 @@ impl Interpreter for HaritoraXWireless {
         data: &str,
     ) -> Result<(), String> {
         let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
-        log!("Received identifier: {}, data: {}", identifier, data);
+        //log!("Received identifier: {}, data: {}", identifier, data);
 
         let normalized_identifier = identifier.to_lowercase().chars().next();
         match normalized_identifier {
@@ -49,7 +49,7 @@ impl Interpreter for HaritoraXWireless {
             Some('r') => {
                 process_button(app_handle, tracker_name, data).await?;
             }
-            Some('s') => {
+            Some('o') => {
                 process_settings(app_handle, tracker_name, data).await?;
             }
             Some('i') => {
@@ -113,14 +113,6 @@ async fn process_imu(
         };
     }
 
-    log!(
-        "Tracker: {} - IMU: {:?} - Mag: {:?} -  Ankle: {:?}",
-        tracker_name,
-        imu_data,
-        mag_status,
-        ankle
-    );
-
     let imu_payload = serde_json::json!({
         "tracker": tracker_name,
         "data": {
@@ -174,7 +166,7 @@ async fn process_battery(
     if data.is_empty() {
         return Ok(());
     }
-    
+
     let payload = serde_json::json!({
         "tracker": tracker_name,
         "data": battery_data,
@@ -212,8 +204,6 @@ async fn process_button(
     app_handle
         .emit("button", payload)
         .map_err(|e| format!("Failed to emit button data: {}", e))?;
-
-    log!("Button data: {:?}", data);
     Ok(())
 }
 
@@ -222,7 +212,18 @@ async fn process_settings(
     tracker_name: &str,
     data: &str,
 ) -> Result<(), String> {
-    //let settings_data
+    let settings_data = process_settings_data(data, tracker_name)?;
+    if data.is_empty() {
+        return Ok(());
+    }
+
+    let payload = serde_json::json!({
+        "tracker": tracker_name,
+        "data": settings_data,
+    });
+    app_handle
+        .emit("settings", payload)
+        .map_err(|e| format!("Failed to emit settings data: {}", e))?;
     Ok(())
 }
 

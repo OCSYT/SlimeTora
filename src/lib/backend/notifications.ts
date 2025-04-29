@@ -39,6 +39,9 @@ export class Notification {
 			case "button":
 				unlisten = await buttonNotification();
 				break;
+			case "settings":
+				unlisten = await settingsNotification();
+				break;
 			default:
 				console.error(`No notification type "${type}" available`);
 				return;
@@ -111,5 +114,15 @@ async function buttonNotification() {
 		const data = payload.data;
 
 		console.log(`Button notification received from ${tracker}: ${JSON.stringify(data)}`);
+	});
+}
+
+async function settingsNotification() {
+	return await listen("settings", (event) => {
+		const payload = event.payload as { tracker: string; data: { settings: any } };
+		const tracker = payload.tracker;
+		const data = payload.data;
+
+		console.log(`Settings notification received from ${tracker}: ${JSON.stringify(data)}`);
 	});
 }

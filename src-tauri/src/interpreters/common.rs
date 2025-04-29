@@ -23,9 +23,9 @@ const GRAVITY_ADJUSTMENT: f32 = 1.2;
 // map of tracker name and button presses int
 static BUTTON_MAP: Lazy<DashMap<&'static str, u8>> = Lazy::new(|| {
     let map = DashMap::new();
-    map.insert("main", 0);
-    map.insert("sub", 0);
-    map.insert("tertiary", 0);
+    map.insert("main", 255);
+    map.insert("sub", 255);
+    map.insert("tertiary", 255);
     map
 });
 
@@ -171,7 +171,11 @@ pub fn process_battery_data(
     characteristic: Option<&str>,
 ) -> Result<BatteryData, String> {
     if tracker_name.is_empty() || data.is_empty() {
-        return Err("Tracker name or data is empty".to_string());
+        return Ok(BatteryData {
+            remaining: None,
+            voltage: None,
+            status: None,
+        });
     }
 
     let mut battery_data = BatteryData {
@@ -276,8 +280,7 @@ pub fn process_button_data(
 
     let mut button_pressed = "";
     let debounce_threshold = 50;
-    static LAST_PRESS_TIMES: Lazy<DashMap<&'static str, Instant>> =
-        Lazy::new(DashMap::new);
+    static LAST_PRESS_TIMES: Lazy<DashMap<&'static str, Instant>> = Lazy::new(DashMap::new);
 
     // process for BLE
     if let Some(characteristic) = characteristic {
@@ -375,10 +378,66 @@ pub fn process_info_data(data: &str, tracker_name: &str) -> Result<InfoData, Str
     };
 
     log!(
-        "Received info data: {:?} requested by tracker: {}",
-        info_data,
-        tracker_name
+        "Received info data from tracker {}: {:?}",
+        tracker_name,
+        info_data
     );
 
     Ok(info_data)
+}
+
+/// Processes settings data for a tracker.
+///
+/// ### Connections supported:
+/// - Serial
+/// - BLE(?)
+///
+/// ### Trackers supported:
+/// - HaritoraX Wired (1.0/1.1/1.1b)
+/// - HaritoraX Wireless
+/// - HaritoraX 2
+pub fn process_settings_data(data: &str, tracker_name: &str) -> Result<serde_json::Value, String> {
+    let sensor_mode = data.chars().nth(6).unwrap_or('0').to_digit(16).unwrap_or(0) as u8;
+    let fps_mode = data.chars().nth(5).unwrap_or('0').to_digit(16).unwrap_or(0) as u8;
+    let sensor_auto_correction = data
+        .chars()
+        .nth(10)
+        .unwrap_or('0')
+        .to_digit(16)
+        .unwrap_or(0) as u8;
+    let ankle_enabled = data
+        .chars()
+        .nth(13)
+        .unwrap_or('0')
+        .to_digit(16)
+        .unwrap_or(0) as u8;
+
+    let sensor_mode_text = if sensor_mode == 0 { 2 } else { 1 };
+    let fps_mode_text = if fps_mode == 0 { 50 } else { 100 };
+    let ankle_motion_detection_text = ankle_enabled != 0;
+    let sensor_auto_correction_components = ["accel", "gyro", "mag"]
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &name)| {
+            if (sensor_auto_correction & (1 << i)) != 0 {
+                Some(name)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let settings_data = serde_json::json!({
+        "sensor_mode": sensor_mode_text,
+        "fps_mode": fps_mode_text,
+        "sensor_auto_correction": sensor_auto_correction_components,
+        "ankle_enabled": ankle_motion_detection_text,
+    });
+
+    log!(
+        "Received settings data from tracker {}: {:?}",
+        tracker_name, settings_data
+    );
+
+    Ok(settings_data)
 }
