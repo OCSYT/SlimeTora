@@ -93,6 +93,11 @@ pub async fn add_sensor(tracker_name: &str) -> Result<(), String> {
     }
 }
 
+pub async fn clear_trackers() {
+    log!("Clearing all connected trackers");
+    CONNECTED_TRACKERS.clear();
+}
+
 /*
  * Tracking data management
 */

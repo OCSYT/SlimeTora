@@ -134,6 +134,8 @@ async fn stop(
         crate::interpreters::core::stop_interpreting(&m)?;
     }
 
+    connection::slimevr::clear_trackers().await;
+
     if modes.contains(&"ble".to_string()) {
         let ble_task = task::spawn(async move { ble::stop(app_handle.clone()).await });
         tasks.push(ble_task);
