@@ -8,7 +8,7 @@ use byteorder::{LittleEndian, ReadBytesExt};
 use dashmap::DashMap;
 use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
-use std::{collections::HashMap, io::Cursor};
+use std::io::Cursor;
 use tracker_emulation_rs::EmulatedTracker;
 
 pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> =
@@ -20,8 +20,8 @@ const GRAVITY_CONSTANT: f32 = 9.81;
 const GRAVITY_ADJUSTMENT: f32 = 1.2;
 
 // map of tracker name and button presses int
-static BUTTON_MAP: Lazy<HashMap<&'static str, u8>> = Lazy::new(|| {
-    let mut map = HashMap::new();
+static BUTTON_MAP: Lazy<DashMap<&'static str, u8>> = Lazy::new(|| {
+    let map = DashMap::new();
     map.insert("main", 0);
     map.insert("sub", 0);
     map.insert("tertiary", 0);
@@ -251,6 +251,7 @@ pub fn process_battery_data(
 }
 
 /// Processes button data for a tracker.
+/// Returns the button that was pressed.
 ///
 /// ### Connections supported:
 /// - Serial
@@ -290,21 +291,33 @@ pub fn process_button_data(
     } else {
         // tertiary button is handled in the interpreter for wired (only exists on wired trackers)
         // we don't process it in this function (wired is sent as a JSON)
-        let main_button = data.chars().nth(7).unwrap_or('0').to_digit(16).unwrap_or(0) as u8;
-        let sub_button = data.chars().nth(8).unwrap_or('0').to_digit(16).unwrap_or(0) as u8;
+        let main_button = data.chars().nth(6).unwrap_or('0').to_digit(16).unwrap_or(0) as u8;
+        let sub_button = data.chars().nth(9).unwrap_or('0').to_digit(16).unwrap_or(0) as u8;
 
         // compare to BUTTON_MAP to see which button was pressed
-        if let Some(&previous_main) = BUTTON_MAP.get("main") {
-            if previous_main != main_button {
-                button_pressed = "main";
+        {
+            let main_value = BUTTON_MAP.get("main").map(|r| *r.value());
+            if let Some(previous_main) = main_value {
+                if previous_main != main_button {
+                    button_pressed = "main";
+                    BUTTON_MAP.insert("main", main_button);
+                }
             }
         }
-        if let Some(&previous_sub) = BUTTON_MAP.get("sub") {
-            if previous_sub != sub_button {
-                button_pressed = "sub";
+        
+        {
+            let sub_value = BUTTON_MAP.get("sub").map(|r| *r.value());
+            if let Some(previous_sub) = sub_value {
+                if previous_sub != sub_button {
+                    button_pressed = "sub";
+                    BUTTON_MAP.insert("sub", sub_button);
+                }
             }
         }
     }
+
+    // TODO: detect if vrmanager/haritoraconfigurator is open
+    // TODO: tracker button debounce for double register on single click
 
     log!(
         "Button pressed from tracker {}: {}",

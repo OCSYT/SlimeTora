@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use base64::Engine;
 use tauri::{AppHandle, Emitter};
 
-use super::common::{decode_imu, process_battery_data, CONNECTED_TRACKERS};
+use super::common::{decode_imu, process_battery_data, process_button_data, CONNECTED_TRACKERS};
 
 pub struct HaritoraXWireless;
 
@@ -45,6 +45,9 @@ impl Interpreter for HaritoraXWireless {
             }
             Some('v') => {
                 process_battery(app_handle, tracker_name, data).await?;
+            }
+            Some('r') => {
+                process_button(app_handle, tracker_name, data).await?;
             }
             _ => log!("Unknown identifier: {}", identifier),
         }
@@ -175,5 +178,24 @@ async fn process_battery(
         log!("Failed to send battery data: {}", e);
     }
 
+    Ok(())
+}
+
+async fn process_button(
+    app_handle: &AppHandle,
+    tracker_name: &str,
+    data: &str,
+) -> Result<(), String> {
+    let data = process_button_data(data, tracker_name, None)?;
+    let payload = serde_json::json!({
+        "tracker": tracker_name,
+        "data": data,
+    });
+
+    app_handle
+        .emit("button", payload)
+        .map_err(|e| format!("Failed to emit button data: {}", e))?;
+
+    log!("Button data: {:?}", data);
     Ok(())
 }

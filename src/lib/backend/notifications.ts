@@ -36,6 +36,9 @@ export class Notification {
 			case "battery":
 				unlisten = await batteryNotification();
 				break;
+			case "button":
+				unlisten = await buttonNotification();
+				break;
 			default:
 				console.error(`No notification type "${type}" available`);
 				return;
@@ -98,5 +101,15 @@ async function batteryNotification() {
 		const data = payload.data;
 
 		console.log(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
+	});
+}
+
+async function buttonNotification() {
+	return await listen("button", (event) => {
+		const payload = event.payload as { tracker: string; data: { button: string } };
+		const tracker = payload.tracker;
+		const data = payload.data;
+
+		console.log(`Button notification received from ${tracker}: ${JSON.stringify(data)}`);
 	});
 }
