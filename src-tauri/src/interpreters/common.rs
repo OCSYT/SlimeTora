@@ -9,6 +9,7 @@ use dashmap::DashMap;
 use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
 use std::io::Cursor;
+use std::time::Instant;
 use tracker_emulation_rs::EmulatedTracker;
 
 pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> =
@@ -274,6 +275,9 @@ pub fn process_button_data(
     // TODO: find tertiary characteristic for wired
 
     let mut button_pressed = "";
+    let debounce_threshold = 50;
+    static LAST_PRESS_TIMES: Lazy<DashMap<&'static str, Instant>> =
+        Lazy::new(DashMap::new);
 
     // process for BLE
     if let Some(characteristic) = characteristic {
@@ -299,25 +303,42 @@ pub fn process_button_data(
             let main_value = BUTTON_MAP.get("main").map(|r| *r.value());
             if let Some(previous_main) = main_value {
                 if previous_main != main_button {
-                    button_pressed = "main";
-                    BUTTON_MAP.insert("main", main_button);
+                    let now = Instant::now();
+                    let last_press_time = LAST_PRESS_TIMES.get("main").map(|r| *r.value());
+
+                    if last_press_time.is_none()
+                        || now.duration_since(last_press_time.unwrap()).as_millis()
+                            > debounce_threshold
+                    {
+                        button_pressed = "main";
+                        BUTTON_MAP.insert("main", main_button);
+                        LAST_PRESS_TIMES.insert("main", now);
+                    }
                 }
             }
         }
-        
+
         {
             let sub_value = BUTTON_MAP.get("sub").map(|r| *r.value());
             if let Some(previous_sub) = sub_value {
                 if previous_sub != sub_button {
-                    button_pressed = "sub";
-                    BUTTON_MAP.insert("sub", sub_button);
+                    let now = Instant::now();
+                    let last_press_time = LAST_PRESS_TIMES.get("sub").map(|r| *r.value());
+
+                    if last_press_time.is_none()
+                        || now.duration_since(last_press_time.unwrap()).as_millis()
+                            > debounce_threshold
+                    {
+                        button_pressed = "sub";
+                        BUTTON_MAP.insert("sub", sub_button);
+                        LAST_PRESS_TIMES.insert("sub", now);
+                    }
                 }
             }
         }
     }
 
     // TODO: detect if vrmanager/haritoraconfigurator is open
-    // TODO: tracker button debounce for double register on single click
 
     log!(
         "Button pressed from tracker {}: {}",

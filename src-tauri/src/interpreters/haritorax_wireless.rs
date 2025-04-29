@@ -49,6 +49,15 @@ impl Interpreter for HaritoraXWireless {
             Some('r') => {
                 process_button(app_handle, tracker_name, data).await?;
             }
+            Some('s') => {
+                process_settings(app_handle, tracker_name, data).await?;
+            }
+            Some('i') => {
+                process_info(app_handle, tracker_name, data).await?;
+            }
+            Some('a') => {
+                process_tracker(app_handle, tracker_name, data).await?;
+            }
             _ => log!("Unknown identifier: {}", identifier),
         }
 
@@ -162,6 +171,10 @@ async fn process_battery(
     data: &str,
 ) -> Result<(), String> {
     let battery_data = process_battery_data(data, tracker_name, None)?;
+    if data.is_empty() {
+        return Ok(());
+    }
+    
     let payload = serde_json::json!({
         "tracker": tracker_name,
         "data": battery_data,
@@ -187,6 +200,10 @@ async fn process_button(
     data: &str,
 ) -> Result<(), String> {
     let data = process_button_data(data, tracker_name, None)?;
+    if data.is_empty() {
+        return Ok(());
+    }
+
     let payload = serde_json::json!({
         "tracker": tracker_name,
         "data": data,
@@ -197,5 +214,32 @@ async fn process_button(
         .map_err(|e| format!("Failed to emit button data: {}", e))?;
 
     log!("Button data: {:?}", data);
+    Ok(())
+}
+
+async fn process_settings(
+    app_handle: &AppHandle,
+    tracker_name: &str,
+    data: &str,
+) -> Result<(), String> {
+    //let settings_data
+    Ok(())
+}
+
+async fn process_info(
+    app_handle: &AppHandle,
+    tracker_name: &str,
+    data: &str,
+) -> Result<(), String> {
+    //let info_data
+    Ok(())
+}
+
+async fn process_tracker(
+    app_handle: &AppHandle,
+    tracker_name: &str,
+    data: &str,
+) -> Result<(), String> {
+    //let tracker_data
     Ok(())
 }
