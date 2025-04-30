@@ -8,7 +8,7 @@
     });
 </script>
 
-<nav class="w-16 h-full bg-panel drop-shadow-xl flex flex-col justify-between">
+<nav class="fixed w-16 h-[calc(100vh-64px)] top-16 bg-panel drop-shadow-xl flex flex-col justify-between">
     <div>
         {#each navLinks as { name, icon, link }}
             {@const same = path === link}

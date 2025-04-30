@@ -11,7 +11,7 @@
         <div>
             <Navbar />
         </div>
-        <div class="flex-1">
+        <div class="flex-1 mt-16 ml-16">
             {@render children()}
         </div>
     </div>

@@ -11,7 +11,7 @@
     });
 </script>
 
-<div class="w-full h-16 bg-panel drop-shadow-xl z-10">
+<div class="fixed w-full h-16 bg-panel drop-shadow-xl z-10">
     <div class="flex items-center justify-between h-full px-3">
         <div class="flex flex-row items-center gap-2">
             <img src="/logo-transparent.png" alt="Logo" class="w-10 rounded-md" />
