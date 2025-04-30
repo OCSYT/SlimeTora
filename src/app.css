@@ -7,9 +7,11 @@
 	--color-text-alt: var(--text-alt);
 
 	--color-button: var(--button);
+	--color-card: var(--card);
 	--color-primary: var(--primary);
 	--color-secondary: var(--secondary);
 	--color-tertiary: var(--tertiary);
+	--color-quaternary: var(--quaternary);
 
 	--color-slimetora-gradient: var(--slimetora-gradient);
 	--color-slimetora-gradient-alt: var(--slimetora-gradient-alt);
@@ -25,9 +27,11 @@
 	--text-alt: rgba(255, 255, 255, 0.75);
 
 	--button: var(--tertiary);
+	--card: var(--quaternary);
 	--primary: #9a48ee;
 	--secondary: #f05d38;
 	--tertiary: #62656a;
+	--quaternary: #45464A;
 
 	--slimetora-gradient: linear-gradient(180deg, rgba(240, 93, 56, 1) 0%, rgba(154, 72, 238, 1) 100%);
 	--slimetora-gradient-alt: linear-gradient(180deg, rgba(240, 93, 56, 0.24) 0%, rgba(154, 72, 238, 0.24) 100%);
@@ -37,7 +41,7 @@
 }
 
 body {
-	@apply bg-body font-body text-white;
+	@apply bg-body font-body text-white overflow-x-hidden;
 }
 
 h1,
