@@ -1,8 +1,18 @@
 import { writable, type Writable } from "svelte/store";
 import type { ConnectionMode } from "$lib/types/connection";
 import { startInterpreting, stopInterpreting } from "$lib/backend";
+import type { TrackerModel } from "$lib/types/tracker";
 
 export * as settings from "./settings";
+
+export interface Tracker {
+	name: string
+	id: string,
+	connection_mode: ConnectionMode,
+	tracker_type: TrackerModel,
+}
+
+export const trackers = writable<Tracker[]>([]);
 
 export const activeModes = writable<ConnectionMode[]>([]);
 export const isOn: Writable<Boolean | null> = writable(null);

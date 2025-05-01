@@ -1,4 +1,7 @@
-import type { IMUData } from "$lib/types/tracker";
+import { browser } from "$app/environment";
+import { trackers } from "$lib/store";
+import type { ConnectionMode } from "$lib/types/connection";
+import type { IMUData, TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
 
 export const Notifications = [
@@ -41,6 +44,13 @@ export class Notification {
 				break;
 			case "settings":
 				unlisten = await settingsNotification();
+				break;
+			// tracker management
+			case "connect":
+				unlisten = await connectNotification();
+				break;
+			case "disconnect":
+				unlisten = await disconnectNotification();
 				break;
 			default:
 				console.error(`No notification type "${type}" available`);
@@ -124,5 +134,42 @@ async function settingsNotification() {
 		const data = payload.data;
 
 		console.log(`Settings notification received from ${tracker}: ${JSON.stringify(data)}`);
+	});
+}
+
+/*
+ * Tracker management
+ */
+
+async function connectNotification() {
+	return await listen("connect", (event) => {
+		const payload = event.payload as { tracker: string; connection_mode: ConnectionMode; tracker_type: TrackerModel };
+		const tracker = payload.tracker;
+		const connection_mode = payload.connection_mode;
+		const tracker_type = payload.tracker_type;
+
+		console.log(
+			`Tracker connected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`,
+		);
+
+		if (!browser) return;
+		// TODO: get tracker name from config if available
+		// TODO: prob add mac address to tracker object
+		trackers.update((prev) => {
+			return [...prev, { name: tracker, id: tracker, connection_mode, tracker_type }];
+		});
+	});
+}
+
+async function disconnectNotification() {
+	return await listen("disconnect", (event) => {
+		const payload = event.payload as { tracker: string; connection_mode: string; tracker_type: string };
+		const tracker = payload.tracker;
+		const connection_mode = payload.connection_mode;
+		const tracker_type = payload.tracker_type;
+
+		console.log(
+			`Tracker disconnected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`,
+		);
 	});
 }

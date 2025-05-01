@@ -1,5 +1,5 @@
 use crate::connection::slimevr::send_battery;
-use crate::log;
+use crate::{connection, log};
 use crate::{
     connection::slimevr::{add_tracker, send_accel, send_rotation},
     interpreters::core::Interpreter,
@@ -8,7 +8,10 @@ use async_trait::async_trait;
 use base64::Engine;
 use tauri::{AppHandle, Emitter};
 
-use super::common::{decode_imu, process_battery_data, process_button_data, process_settings_data, CONNECTED_TRACKERS};
+use super::common::{
+    decode_imu, process_battery_data, process_button_data, process_settings_data,
+    CONNECTED_TRACKERS,
+};
 
 pub struct HaritoraXWireless;
 
@@ -41,22 +44,22 @@ impl Interpreter for HaritoraXWireless {
                     .decode(data)
                     .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
 
-                process_imu(app_handle, tracker_name, buffer).await?;
+                process_imu(app_handle, tracker_name, "serial", buffer).await?;
             }
             Some('v') => {
-                process_battery(app_handle, tracker_name, data).await?;
+                process_battery(app_handle, tracker_name, "serial", data).await?;
             }
             Some('r') => {
-                process_button(app_handle, tracker_name, data).await?;
+                process_button(app_handle, tracker_name, "serial", data).await?;
             }
             Some('o') => {
-                process_settings(app_handle, tracker_name, data).await?;
+                process_settings(app_handle, tracker_name, "serial", data).await?;
             }
             Some('i') => {
-                process_info(app_handle, tracker_name, data).await?;
+                process_info(app_handle, tracker_name, "serial", data).await?;
             }
             Some('a') => {
-                process_tracker(app_handle, tracker_name, data).await?;
+                process_tracker(app_handle, tracker_name, "serial", data).await?;
             }
             _ => log!("Unknown identifier: {}", identifier),
         }
@@ -68,6 +71,7 @@ impl Interpreter for HaritoraXWireless {
 async fn process_imu(
     app_handle: &AppHandle,
     tracker_name: &str,
+    connection_mode: &str,
     data: Vec<u8>,
 ) -> Result<(), String> {
     if !CONNECTED_TRACKERS.contains_key(tracker_name) && !tracker_name.is_empty() {
@@ -77,6 +81,19 @@ async fn process_imu(
             log!("Failed to add tracker: {}", e);
             return Err(format!("Failed to add tracker: {}", e));
         }
+
+        let payload = serde_json::json!({
+            "tracker": tracker_name,
+            "connection_mode": connection_mode,
+            "tracker_type": "Wireless",
+        });
+
+        app_handle.emit("connect", payload).map_err(|e| {
+            format!(
+                "Failed to emit tracker added event for {}: {}",
+                tracker_name, e
+            )
+        })?;
     }
 
     let imu_data = match decode_imu(&data, tracker_name) {
@@ -115,6 +132,8 @@ async fn process_imu(
 
     let imu_payload = serde_json::json!({
         "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
         "data": {
             "rotation": imu_data.rotation.degrees,
             "acceleration": imu_data.acceleration,
@@ -123,6 +142,8 @@ async fn process_imu(
     });
     let mag_payload = serde_json::json!({
         "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
         "data": {
             "magnetometer": mag_status,
         },
@@ -160,6 +181,7 @@ async fn process_imu(
 async fn process_battery(
     app_handle: &AppHandle,
     tracker_name: &str,
+    connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
     let battery_data = process_battery_data(data, tracker_name, None)?;
@@ -169,6 +191,8 @@ async fn process_battery(
 
     let payload = serde_json::json!({
         "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
         "data": battery_data,
     });
     app_handle
@@ -189,6 +213,7 @@ async fn process_battery(
 async fn process_button(
     app_handle: &AppHandle,
     tracker_name: &str,
+    connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
     let data = process_button_data(data, tracker_name, None)?;
@@ -198,6 +223,8 @@ async fn process_button(
 
     let payload = serde_json::json!({
         "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
         "data": data,
     });
 
@@ -210,6 +237,7 @@ async fn process_button(
 async fn process_settings(
     app_handle: &AppHandle,
     tracker_name: &str,
+    connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
     let settings_data = process_settings_data(data, tracker_name)?;
@@ -219,6 +247,8 @@ async fn process_settings(
 
     let payload = serde_json::json!({
         "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
         "data": settings_data,
     });
     app_handle
@@ -230,6 +260,7 @@ async fn process_settings(
 async fn process_info(
     app_handle: &AppHandle,
     tracker_name: &str,
+    connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
     //let info_data
@@ -239,6 +270,7 @@ async fn process_info(
 async fn process_tracker(
     app_handle: &AppHandle,
     tracker_name: &str,
+    connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
     //let tracker_data
