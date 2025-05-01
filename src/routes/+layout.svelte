@@ -3,8 +3,10 @@
 	import { currentPath } from "$lib/store";
 	import { invoke } from "@tauri-apps/api/core";
 	import { onMount } from "svelte";
+	import { OverlayScrollbars } from "OverlayScrollbars";
 	import "../app.css";
 	import "@fontsource/chakra-petch";
+	import "overlayscrollbars/overlayscrollbars.css";
 
 	let { children } = $props();
 	let ports: string[] = $state([]);
@@ -29,6 +31,15 @@
 			.catch((error) => {
 				console.error(`Error occurred: ${error}`);
 			});
+
+		OverlayScrollbars(document.body, {
+			scrollbars: {
+				autoHide: "leave",
+				autoHideDelay: 100,
+				visibility: "auto",
+				theme: "os-theme-dark",
+			},
+		});
 	});
 </script>
 
