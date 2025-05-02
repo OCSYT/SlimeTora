@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import { trackers } from "$lib/store";
+import { trackers, type BatteryData } from "$lib/store";
 import type { ConnectionMode } from "$lib/types/connection";
 import { ChargeStatus, MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
@@ -111,21 +111,23 @@ async function magNotification() {
 		};
 		const trackerId = payload.tracker;
 		const data = payload.data;
-		trackers.update((prev) => {
-			const index = prev.findIndex((t) => t.id === trackerId);
-			if (index !== -1) {
-				if (prev[index].magnetometer !== data.magnetometer) {
+
+		// check and only update trackers store if it's changed
+		const currentTrackers = get(trackers);
+		const index = currentTrackers.findIndex((t) => t.id === trackerId);
+		if (index !== -1) {
+			if (currentTrackers[index].magnetometer !== data.magnetometer) {
+				trackers.update((prev) => {
 					const updatedTracker = { ...prev[index], magnetometer: data.magnetometer };
 					console.log(
 						`Tracker ${trackerId} magnetometer status changed: ${prev[index].magnetometer} -> ${data.magnetometer}`,
 					);
 					return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
-				}
-				return prev;
+				});
 			}
+		} else {
 			console.warn(`Tracker with id ${trackerId} not found in store`);
-			return prev;
-		});
+		}
 	});
 }
 
@@ -133,7 +135,7 @@ async function batteryNotification() {
 	return await listen("battery", (event) => {
 		const payload = event.payload as {
 			tracker: string;
-			data: { remaining: number | null; voltage: number | null; status: ChargeStatus | null };
+			data: BatteryData;
 		};
 		const tracker = payload.tracker;
 		const data = payload.data;
@@ -143,7 +145,7 @@ async function batteryNotification() {
 		trackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
-				const updatedTracker = { ...prev[index], batteryData: data };
+				const updatedTracker = { ...prev[index], battery: data };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			}
 			console.warn(`Tracker with id ${tracker} not found in store`);

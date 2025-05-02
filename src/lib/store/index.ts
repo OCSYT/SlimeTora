@@ -6,7 +6,7 @@ import type { ChargeStatus, MagStatus, TrackerModel } from "$lib/types/tracker";
 export * as settings from "./settings";
 
 export interface BatteryData {
-	percentage?: number;
+	remaining?: number;
 	voltage?: number;
 	status?: ChargeStatus;
 }

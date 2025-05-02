@@ -10,6 +10,7 @@
 
 	let batteryPercent = $state(-1);
 	let batteryVoltage = $state(-1);
+	let batteryStatus = $state("discharging");
 	let magStatus = $state("N/A");
 
 	function magStatusClass(status: string) {
@@ -19,9 +20,12 @@
 	$effect(() => {
 		const t = $trackerData;
 		if (t) {
-			batteryPercent = t.battery?.percentage ?? -1;
+			batteryPercent = t.battery?.remaining ?? -1;
 			batteryVoltage = t.battery?.voltage ?? -1;
+			batteryStatus = t.battery?.status ?? "discharging";
 			magStatus = t.magnetometer ?? "N/A";
+			// log new tracker data
+			console.log(`Tracker ${t.id} updated: ${batteryPercent}, ${batteryVoltage}, ${batteryStatus}, ${magStatus}`);
 		}
 	});
 </script>
@@ -65,7 +69,15 @@
 		<div class="p-4 bg-panel rounded-lg m-4 mt-[5px] flex flex-col gap-2">
 			<p><b>Device:</b> <span id="device-type">{id} ({type})</span></p>
 			<p><b>IMU:</b> <span id="imu">0, 0, 0 (0, 0, 0)</span></p>
-			<p><b>Battery:</b> <span id="battery-main">{batteryPercent}% ({batteryVoltage}V)</span></p>
+			<p class="flex flex-row items-center">
+				<b>Battery:</b>
+				<span class="flex flex-row items-center justify-center gap-1 ml-1" id="battery-main">
+					<span>{batteryPercent}% ({batteryVoltage / 1000}V)</span>
+					{#if batteryStatus === "charging"}
+						<Icon icon="ri:flashlight-fill" width={16} class="text-yellow-500 inline-block ml-1" />
+					{/if}
+				</span>
+			</p>
 			<p id="mag-main" class="flex items-center gap-1">
 				<b>Magnetometer Status:</b>
 				<Icon
