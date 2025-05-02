@@ -8,6 +8,8 @@
 
 	const trackerData = derived(trackers, ($trackers) => $trackers.find((t) => t.id === id));
 
+	let rotation = $state([0, 0, 0]);
+	let acceleration = $state([0, 0, 0]);
 	let batteryPercent = $state(-1);
 	let batteryVoltage = $state(-1);
 	let batteryStatus = $state("discharging");
@@ -20,12 +22,13 @@
 	$effect(() => {
 		const t = $trackerData;
 		if (t) {
+			// TODO: implement precise data option (2dp)
+			rotation = t.rotation?.map((v) => Number(v.toFixed(0))) ?? [0, 0, 0];
+			acceleration = t.acceleration?.map((v) => Number(v.toFixed(0))) ?? [0, 0, 0];
 			batteryPercent = t.battery?.remaining ?? -1;
 			batteryVoltage = t.battery?.voltage ?? -1;
 			batteryStatus = t.battery?.status ?? "discharging";
 			magStatus = t.magnetometer ?? "N/A";
-			// log new tracker data
-			console.log(`Tracker ${t.id} updated: ${batteryPercent}, ${batteryVoltage}, ${batteryStatus}, ${magStatus}`);
 		}
 	});
 </script>
@@ -68,7 +71,7 @@
 		<!-- Expanded content -->
 		<div class="p-4 bg-panel rounded-lg m-4 mt-[5px] flex flex-col gap-2">
 			<p><b>Device:</b> <span id="device-type">{id} ({type})</span></p>
-			<p><b>IMU:</b> <span id="imu">0, 0, 0 (0, 0, 0)</span></p>
+			<p><b>IMU:</b> <span id="imu">{rotation.join(", ")} ({acceleration.join(", ")})</span></p>
 			<p class="flex flex-row items-center">
 				<b>Battery:</b>
 				<span class="flex flex-row items-center justify-center gap-1 ml-1" id="battery-main">

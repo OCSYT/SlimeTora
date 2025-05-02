@@ -84,6 +84,7 @@ export class Notification {
 	}
 }
 
+const lastImuUpdate: Record<string, number> = {};
 async function imuNotification() {
 	return await listen("imu", (event) => {
 		const payload = event.payload as IMUData;
@@ -91,13 +92,24 @@ async function imuNotification() {
 		const data = payload.data as { rotation: any; acceleration: any };
 		const { rotation, acceleration } = data;
 
-		const card = document.querySelector(`#tracker-card-${tracker}`);
-		if (!card) return;
-		const imuData = card.querySelector("#imu");
-		if (!imuData) return;
+		const now = Date.now();
+		if (lastImuUpdate[tracker] && now - lastImuUpdate[tracker] < 50) return;
+		lastImuUpdate[tracker] = now;
 
-		const newData = `${rotation.x.toFixed(0)}, ${rotation.y.toFixed(0)}, ${rotation.z.toFixed(0)} (${acceleration.x.toFixed(0)}, ${acceleration.y.toFixed(0)}, ${acceleration.z.toFixed(0)})`;
-		imuData.textContent = newData;
+		trackers.update((prev) => {
+			const index = prev.findIndex((t) => t.id === tracker);
+			if (index !== -1) {
+				const updatedTracker = {
+					...prev[index],
+					rotation: [rotation.x, rotation.y, rotation.z],
+					acceleration: [acceleration.x, acceleration.y, acceleration.z],
+				};
+				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
+			} else {
+				console.warn(`Tracker with id ${tracker} not found in store`);
+				return prev;
+			}
+		});
 	});
 }
 
@@ -195,9 +207,18 @@ async function connectNotification() {
 
 		if (!browser) return;
 		// TODO: get tracker name from config if available
-		// TODO: prob add mac address to tracker object
 		trackers.update((prev) => {
-			return [...prev, { name: tracker, id: tracker, connection_mode, tracker_type }];
+			return [
+				...prev,
+				{
+					name: tracker,
+					id: tracker,
+					connection_mode,
+					tracker_type,
+					rotation: [0, 0, 0],
+					acceleration: [0, 0, 0],
+				},
+			];
 		});
 	});
 }

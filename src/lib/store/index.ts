@@ -20,6 +20,8 @@ export interface Tracker {
 	mac?: string;
 	
 	// Data
+	rotation: number[];
+	acceleration: number[];
 	battery?: BatteryData;
 	magnetometer?: MagStatus;
 }
