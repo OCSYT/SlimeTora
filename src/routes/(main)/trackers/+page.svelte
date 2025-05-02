@@ -6,7 +6,6 @@
 <div class="flex flex-col p-4">
 	{#if $trackers.length === 0}
 		<div class="text-center bg-panel rounded-lg py-8">No trackers found! Maybe connect some :)</div>
-		<Card name="guh" id={1} type="X2" />
 	{:else}
 		<div class="flex flex-row gap-x-4">
 			<div class="flex flex-col gap-y-4 flex-1" id="left-column">

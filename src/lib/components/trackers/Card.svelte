@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from "@iconify/svelte";
-	import { trackers } from "$lib/store";
+	import { trackerOpenStates, trackers } from "$lib/store";
 	import { derived } from "svelte/store";
 
 	let { name, id, type } = $props();
@@ -30,14 +30,20 @@
 			batteryStatus = t.battery?.status ?? "discharging";
 			magStatus = t.magnetometer ?? "N/A";
 		}
+
+        isOpen = $trackerOpenStates[id] ?? false;
 	});
+
+	function toggleOpen() {
+        trackerOpenStates.update(states => ({ ...states, [id]: !isOpen }));
+    }
 </script>
 
 <div
 	class={`w-[338px] ${isOpen ? "h-auto" : "h-14"} bg-card rounded-xl shadow-card flex flex-col transition-all duration-300 overflow-hidden`}
 	id="tracker-card-{id}"
 >
-	<button class="flex items-center justify-between px-4 h-14 cursor-pointer" onclick={() => (isOpen = !isOpen)}>
+	<button class="flex items-center justify-between px-4 h-14 cursor-pointer" onclick={toggleOpen}>
 		<div>
 			<p class="text-md text-left font-body">{name}</p>
 			<div class="flex items-center gap-2">

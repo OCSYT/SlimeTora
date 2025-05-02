@@ -27,6 +27,7 @@ export interface Tracker {
 }
 
 export const trackers = writable<Tracker[]>([]);
+export const trackerOpenStates = writable<Record<string, boolean>>({});
 
 export const activeModes = writable<ConnectionMode[]>([]);
 // null if first time / app just launched
