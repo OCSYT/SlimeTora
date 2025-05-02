@@ -1,7 +1,7 @@
 import { browser } from "$app/environment";
 import { trackers } from "$lib/store";
 import type { ConnectionMode } from "$lib/types/connection";
-import type { IMUData, TrackerModel } from "$lib/types/tracker";
+import { MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
 
 export const Notifications = [
@@ -86,21 +86,73 @@ export class Notification {
 async function imuNotification() {
 	return await listen("imu", (event) => {
 		const payload = event.payload as IMUData;
+		const tracker = payload.tracker;
 		const data = payload.data as { rotation: any; acceleration: any };
-		const trackerName = payload.tracker;
 		const { rotation, acceleration } = data;
 
-		// TODO: Handle IMU data
+		const card = document.querySelector(`#tracker-card-${tracker}`);
+		if (!card) return;
+		const imuData = card.querySelector("#imu");
+		if (!imuData) return;
+
+		const newData = `${rotation.x.toFixed(0)}, ${rotation.y.toFixed(0)}, ${rotation.z.toFixed(0)} (${acceleration.x.toFixed(0)}, ${acceleration.y.toFixed(0)}, ${acceleration.z.toFixed(0)})`;
+		imuData.textContent = newData;
 	});
 }
 
 async function magNotification() {
 	return await listen("mag", (event) => {
-		const payload = event.payload as { tracker: string; data: { magnetometer: any } };
+		const payload = event.payload as {
+			tracker: string;
+			connection_mode: ConnectionMode;
+			tracker_type: TrackerModel;
+			data: { magnetometer: MagStatus };
+		};
 		const tracker = payload.tracker;
 		const data = payload.data;
 
-		// TODO: Handle magnetometer data
+		const card = document.querySelector(`#tracker-card-${tracker}`);
+		if (!card) return;
+		const magMain = card.querySelector("#mag-main");
+		const magSmall = card.querySelector("#mag-small");
+
+		const magData = (data.magnetometer as string).toLowerCase();
+
+		if (magMain) {
+			const magIcon = magMain.querySelector("#mag-icon");
+			const magText = magMain.querySelector("#mag-text");
+			if (magIcon && magText) {
+				const currentStatusClass = Array.from(magText.classList).find((cls) => cls.startsWith("mag-status-"));
+				const newStatusClass = `mag-status-${magData}`;
+				if (currentStatusClass !== newStatusClass) {
+					if (currentStatusClass) {
+						magIcon.classList.remove(currentStatusClass);
+						magText.classList.remove(currentStatusClass);
+					}
+					magText.classList.add(newStatusClass);
+					magIcon.classList.add(newStatusClass);
+					magText.textContent = magData.replace("_", " ");
+				}
+			}
+		}
+
+		if (magSmall) {
+			const magIcon = magSmall.querySelector("#mag-icon");
+			const magText = magSmall.querySelector("#mag-text");
+			if (magIcon && magText) {
+				const currentStatusClass = Array.from(magText.classList).find((cls) => cls.startsWith("mag-status-"));
+				const newStatusClass = `mag-status-${magData}`;
+				if (currentStatusClass !== newStatusClass) {
+					if (currentStatusClass) {
+						magIcon.classList.remove(currentStatusClass);
+						magText.classList.remove(currentStatusClass);
+					}
+					magText.classList.add(newStatusClass);
+					magIcon.classList.add(newStatusClass);
+					magText.textContent = magData.replace("_", " ");
+				}
+			}
+		}
 	});
 }
 
@@ -114,6 +166,17 @@ async function batteryNotification() {
 		const data = payload.data;
 
 		console.log(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
+
+		const card = document.querySelector(`#tracker-card-${tracker}`);
+		if (!card) return;
+		const mainBattery = card.querySelector("#battery-main");
+		const smallBattery = card.querySelector("#battery-small");
+		if (!mainBattery || !smallBattery) return;
+
+		const mainBatteryText = `${data.remaining}% (${(data.voltage ? data.voltage / 1000 : 0).toFixed(2)}V)`;
+		const smallBatteryText = `${data.remaining}%`;
+		mainBattery.textContent = mainBatteryText;
+		smallBattery.textContent = smallBatteryText;
 	});
 }
 

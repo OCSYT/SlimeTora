@@ -1,5 +1,8 @@
+import type { ConnectionMode } from "./connection";
 export interface IMUData {
 	tracker: string;
+	connection_mode: ConnectionMode;
+	tracker_type: TrackerModel;
 	data: {
 		rotation: {
 			x: number;
@@ -66,6 +69,6 @@ export enum MagStatus {
 	GREAT = "great",
 	OKAY = "okay",
 	BAD = "bad",
-	VERY_BAD = "very bad",
+	VERY_BAD = "very_bad",
 	Unknown = "unknown",
 }

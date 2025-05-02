@@ -6,6 +6,7 @@
 <div class="flex flex-col p-4">
 	{#if $trackers.length === 0}
 		<div class="text-center bg-panel rounded-lg py-8">No trackers found! Maybe connect some :)</div>
+        <Card name="guh" id={1} />
 	{:else}
 		<div class="flex flex-row gap-x-4">
 			<div class="flex flex-col gap-y-4 flex-1" id="left-column">
@@ -24,23 +25,31 @@
 	<!--  settings panel -->
 	<div class="bg-panel w-full mt-8 p-6 rounded-lg shadow">
 		<h2 class="text-lg font-semibold mb-4">Settings</h2>
-		<div class="flex flex-row gap-4">
-			<label class="flex items-center gap-x-2">
-				<input type="checkbox" />
-				<span>Write logs</span>
-			</label>
-			<label class="flex items-center gap-x-2">
-				<span>Logging mode</span>
-				<select>
-					<option value="minimal">Minimal data</option>
-					<option value="debug">Debug data</option>
-					<option value="all">All data (!!!)</option>
-				</select>
-			</label>
-			<label class="flex items-center gap-x-2">
-				<input type="checkbox" />
-				<span>Bypass serial limit</span>
-			</label>
-		</div>
+        <div class="flex flex-row gap-4">
+            <div class="flex flex-col gap-4 flex-1">
+                <label class="flex items-center gap-x-2">
+                    <input type="checkbox" />
+                    <span>Precise data</span>
+                </label>
+                <label class="flex items-center gap-x-2">
+                    <input type="checkbox" />
+                    <span>Bypass serial limit</span>
+                </label>
+            </div>
+            <div class="flex flex-col gap-4 flex-1">
+                <label class="flex items-center gap-x-2">
+                    <input type="checkbox" />
+                    <span>Write logs</span>
+                </label>
+                <label class="flex items-center gap-x-2">
+                    <span>Logging mode</span>
+                    <select>
+                        <option value="minimal">Minimal data</option>
+                        <option value="debug">Debug data</option>
+                        <option value="all">All data (!!!)</option>
+                    </select>
+                </label>
+            </div>
+        </div>
 	</div>
 </div>

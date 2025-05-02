@@ -60,3 +60,23 @@ h6 {
 .button {
 	@apply text-white min-w-[200px] min-h-12 px-6 py-2 rounded-lg;
 }
+
+.mag-status-very_bad {
+	@apply bg-red-700 text-red-700;
+}
+
+.mag-status-bad {
+	@apply bg-red-500 text-red-500;
+}
+
+.mag-status-okay {
+	@apply bg-yellow-500 text-yellow-500;
+}
+
+.mag-status-great {
+	@apply bg-green-500 text-green-500;
+}
+
+.mag-status-unknown {
+	@apply bg-gray-500 text-gray-500;
+}

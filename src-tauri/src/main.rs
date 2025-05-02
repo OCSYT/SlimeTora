@@ -65,6 +65,7 @@ fn main() {
             read_ble,
             write_serial,
             read_serial,
+            cleanup_connections,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -281,4 +282,18 @@ fn filter_ports(ports: Vec<String>) -> Result<Vec<String>, String> {
     }
     log!("Filtered Haritora ports: {:?}", filtered_ports);
     Ok(filtered_ports)
+}
+
+#[tauri::command]
+async fn cleanup_connections() -> Result<(), String> {
+    if let Err(e) = serial::stop().await {
+        log!("Error stopping serial connections: {}", e);
+    }
+
+    connection::slimevr::clear_trackers().await;
+
+    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+    log!("Cleaned up all connections");
+    Ok(())
 }

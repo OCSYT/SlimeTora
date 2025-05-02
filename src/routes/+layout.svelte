@@ -2,11 +2,12 @@
 	import { onNavigate } from "$app/navigation";
 	import { currentPath } from "$lib/store";
 	import { invoke } from "@tauri-apps/api/core";
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import { OverlayScrollbars } from "OverlayScrollbars";
 	import "../app.css";
 	import "@fontsource/chakra-petch";
 	import "overlayscrollbars/overlayscrollbars.css";
+	import { stopInterpreting } from "$lib/backend";
 
 	let { children } = $props();
 	let ports: string[] = $state([]);
@@ -16,7 +17,14 @@
 		currentPath.set(event.to?.url.pathname ?? "/");
 	});
 
-	onMount(() => {
+	onMount(async () => {
+		try {
+			await invoke("cleanup_connections");
+			console.log("Cleared any existing connections")
+		} catch (error) {
+			console.error(`Failed to clean up connections: ${error}`);
+		}
+
 		invoke("get_serial_ports")
 			.then((result) => {
 				ports = result as string[];
