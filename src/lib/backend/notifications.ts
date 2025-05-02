@@ -1,8 +1,9 @@
 import { browser } from "$app/environment";
 import { trackers } from "$lib/store";
 import type { ConnectionMode } from "$lib/types/connection";
-import { MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
+import { ChargeStatus, MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
+import { get } from "svelte/store";
 
 export const Notifications = [
 	"imu",
@@ -108,51 +109,23 @@ async function magNotification() {
 			tracker_type: TrackerModel;
 			data: { magnetometer: MagStatus };
 		};
-		const tracker = payload.tracker;
+		const trackerId = payload.tracker;
 		const data = payload.data;
-
-		const card = document.querySelector(`#tracker-card-${tracker}`);
-		if (!card) return;
-		const magMain = card.querySelector("#mag-main");
-		const magSmall = card.querySelector("#mag-small");
-
-		const magData = (data.magnetometer as string).toLowerCase();
-
-		if (magMain) {
-			const magIcon = magMain.querySelector("#mag-icon");
-			const magText = magMain.querySelector("#mag-text");
-			if (magIcon && magText) {
-				const currentStatusClass = Array.from(magText.classList).find((cls) => cls.startsWith("mag-status-"));
-				const newStatusClass = `mag-status-${magData}`;
-				if (currentStatusClass !== newStatusClass) {
-					if (currentStatusClass) {
-						magIcon.classList.remove(currentStatusClass);
-						magText.classList.remove(currentStatusClass);
-					}
-					magText.classList.add(newStatusClass);
-					magIcon.classList.add(newStatusClass);
-					magText.textContent = magData.replace("_", " ");
+		trackers.update((prev) => {
+			const index = prev.findIndex((t) => t.id === trackerId);
+			if (index !== -1) {
+				if (prev[index].magnetometer !== data.magnetometer) {
+					const updatedTracker = { ...prev[index], magnetometer: data.magnetometer };
+					console.log(
+						`Tracker ${trackerId} magnetometer status changed: ${prev[index].magnetometer} -> ${data.magnetometer}`,
+					);
+					return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 				}
+				return prev;
 			}
-		}
-
-		if (magSmall) {
-			const magIcon = magSmall.querySelector("#mag-icon");
-			const magText = magSmall.querySelector("#mag-text");
-			if (magIcon && magText) {
-				const currentStatusClass = Array.from(magText.classList).find((cls) => cls.startsWith("mag-status-"));
-				const newStatusClass = `mag-status-${magData}`;
-				if (currentStatusClass !== newStatusClass) {
-					if (currentStatusClass) {
-						magIcon.classList.remove(currentStatusClass);
-						magText.classList.remove(currentStatusClass);
-					}
-					magText.classList.add(newStatusClass);
-					magIcon.classList.add(newStatusClass);
-					magText.textContent = magData.replace("_", " ");
-				}
-			}
-		}
+			console.warn(`Tracker with id ${trackerId} not found in store`);
+			return prev;
+		});
 	});
 }
 
@@ -160,23 +133,22 @@ async function batteryNotification() {
 	return await listen("battery", (event) => {
 		const payload = event.payload as {
 			tracker: string;
-			data: { remaining: number | null; voltage: number | null; status: string | null };
+			data: { remaining: number | null; voltage: number | null; status: ChargeStatus | null };
 		};
 		const tracker = payload.tracker;
 		const data = payload.data;
 
 		console.log(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
 
-		const card = document.querySelector(`#tracker-card-${tracker}`);
-		if (!card) return;
-		const mainBattery = card.querySelector("#battery-main");
-		const smallBattery = card.querySelector("#battery-small");
-		if (!mainBattery || !smallBattery) return;
-
-		const mainBatteryText = `${data.remaining}% (${(data.voltage ? data.voltage / 1000 : 0).toFixed(2)}V)`;
-		const smallBatteryText = `${data.remaining}%`;
-		mainBattery.textContent = mainBatteryText;
-		smallBattery.textContent = smallBatteryText;
+		trackers.update((prev) => {
+			const index = prev.findIndex((t) => t.id === tracker);
+			if (index !== -1) {
+				const updatedTracker = { ...prev[index], batteryData: data };
+				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
+			}
+			console.warn(`Tracker with id ${tracker} not found in store`);
+			return prev;
+		});
 	});
 }
 

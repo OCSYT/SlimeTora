@@ -72,3 +72,9 @@ export enum MagStatus {
 	VERY_BAD = "very_bad",
 	Unknown = "unknown",
 }
+
+export enum ChargeStatus {
+	Discharging = "discharging",
+	Charging = "charging",
+	Charged = "charged",
+}

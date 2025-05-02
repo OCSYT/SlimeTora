@@ -1,21 +1,34 @@
 import { writable, type Writable } from "svelte/store";
 import type { ConnectionMode } from "$lib/types/connection";
 import { startInterpreting, stopInterpreting } from "$lib/backend";
-import type { TrackerModel } from "$lib/types/tracker";
+import type { ChargeStatus, MagStatus, TrackerModel } from "$lib/types/tracker";
 
 export * as settings from "./settings";
 
+export interface BatteryData {
+	percentage?: number;
+	voltage?: number;
+	status?: ChargeStatus;
+}
+
 export interface Tracker {
+	// Info
 	name: string;
 	id: string;
 	connection_mode: ConnectionMode;
 	tracker_type: TrackerModel;
+	mac?: string;
+	
+	// Data
+	battery?: BatteryData;
+	magnetometer?: MagStatus;
 }
 
 export const trackers = writable<Tracker[]>([]);
 
 export const activeModes = writable<ConnectionMode[]>([]);
-export const isOn: Writable<Boolean | null> = writable(null);
+// null if first time / app just launched
+export const isOn: Writable<boolean | null> = writable(null);
 isOn.subscribe(async (value) => {
 	console.log(`isOn: ${value}`);
 	if (value) {
