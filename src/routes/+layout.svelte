@@ -2,12 +2,11 @@
 	import { onNavigate } from "$app/navigation";
 	import { currentPath } from "$lib/store";
 	import { invoke } from "@tauri-apps/api/core";
-	import { onDestroy, onMount } from "svelte";
+	import { onMount } from "svelte";
 	import { OverlayScrollbars } from "OverlayScrollbars";
 	import "../app.css";
 	import "@fontsource/chakra-petch";
 	import "overlayscrollbars/overlayscrollbars.css";
-	import { stopInterpreting } from "$lib/backend";
 
 	let { children } = $props();
 	let ports: string[] = $state([]);
@@ -18,6 +17,8 @@
 	});
 
 	onMount(async () => {
+		currentPath.set(window.location.pathname);
+
 		try {
 			await invoke("cleanup_connections");
 			console.log("Cleared any existing connections")

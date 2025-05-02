@@ -31,6 +31,10 @@
 					<input type="checkbox" />
 					<span>Precise data</span>
 				</label>
+                <label class="flex items-center gap-x-2">
+                    <input type="checkbox" />
+                    <span>Show tracker visualization</span>
+                </label>
 				<label class="flex items-center gap-x-2">
 					<input type="checkbox" />
 					<span>Bypass serial limit</span>
