@@ -6,10 +6,10 @@ import type { TrackerModel } from "$lib/types/tracker";
 export * as settings from "./settings";
 
 export interface Tracker {
-	name: string
-	id: string,
-	connection_mode: ConnectionMode,
-	tracker_type: TrackerModel,
+	name: string;
+	id: string;
+	connection_mode: ConnectionMode;
+	tracker_type: TrackerModel;
 }
 
 export const trackers = writable<Tracker[]>([]);

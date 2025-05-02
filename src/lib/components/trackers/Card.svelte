@@ -8,7 +8,7 @@
 
 <div
 	class={`w-[338px] ${isOpen ? "h-auto" : "h-14"} bg-card rounded-xl shadow-card flex flex-col transition-all duration-300 overflow-hidden`}
-    id="tracker-card-{id}"
+	id="tracker-card-{id}"
 >
 	<button class="flex items-center justify-between px-4 h-14 cursor-pointer" onclick={() => (isOpen = !isOpen)}>
 		<div>

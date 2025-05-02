@@ -143,7 +143,11 @@ async function settingsNotification() {
 
 async function connectNotification() {
 	return await listen("connect", (event) => {
-		const payload = event.payload as { tracker: string; connection_mode: ConnectionMode; tracker_type: TrackerModel };
+		const payload = event.payload as {
+			tracker: string;
+			connection_mode: ConnectionMode;
+			tracker_type: TrackerModel;
+		};
 		const tracker = payload.tracker;
 		const connection_mode = payload.connection_mode;
 		const tracker_type = payload.tracker_type;

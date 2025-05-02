@@ -1,4 +1,4 @@
 export enum ConnectionMode {
-    Serial = "serial",
-    BLE = "ble",
+	Serial = "serial",
+	BLE = "ble",
 }
