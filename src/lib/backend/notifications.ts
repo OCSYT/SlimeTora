@@ -236,6 +236,16 @@ async function disconnectNotification() {
 		console.log(
 			`Tracker disconnected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`,
 		);
+		if (!browser) return;
+		trackers.update((prev) => {
+			const index = prev.findIndex((t) => t.id === tracker);
+			if (index !== -1) {
+				return [...prev.slice(0, index), ...prev.slice(index + 1)];
+			} else {
+				console.warn(`Tracker with id ${tracker} not found in store`);
+				return prev;
+			}
+		});
 	});
 }
 
@@ -248,13 +258,11 @@ async function connectionNotification() {
 			data: { dongle_rssi: number; tracker_rssi: number };
 		};
 		const tracker = payload.tracker;
-		const connection_mode = payload.connection_mode;
-		const tracker_type = payload.tracker_type;
 		const dongle_rssi = payload.data.dongle_rssi;
 		const tracker_rssi = payload.data.tracker_rssi;
 
 		console.log(
-			`Tracker connection changed: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}, Dongle RSSI: ${dongle_rssi}, Tracker RSSI: ${tracker_rssi}`,
+			`Tracker connection changed: ${tracker}, dongle RSSI: ${dongle_rssi}, tracker RSSI: ${tracker_rssi}`,
 		);
 	});
 }

@@ -95,6 +95,22 @@ pub async fn add_sensor(tracker_name: &str) -> Result<(), String> {
     }
 }
 
+pub async fn remove_tracker(tracker_name: &str) -> Result<(), String> {
+    if !CONNECTED_TRACKERS.contains_key(tracker_name) {
+        return Err(format!("Tracker {} not found", tracker_name));
+    }
+
+    if let Some(mut tracker_ref) = CONNECTED_TRACKERS.get_mut(tracker_name) {
+        if let Some(mut tracker) = tracker_ref.take() {
+            tracker.deinit().await.expect("Failed to deinitialize tracker");
+        }
+    }
+
+    CONNECTED_TRACKERS.remove(tracker_name);
+    log!("Removed tracker: {}", tracker_name);
+    Ok(())
+}
+
 pub async fn clear_trackers() {
     log!("Clearing all connected trackers");
     CONNECTED_TRACKERS.clear();

@@ -459,26 +459,41 @@ pub fn process_connection_data(
     let rssi_data = if data == "7f7f7f7f7f7f" {
         None
     } else {
-        if data.len() % 2 != 0 {
+        // TODO: ok this is like extremely inaccurate, no idea if this is actually RSSI or if reading wrong
+        if data.len() != 12 {
             return Err(format!("Invalid RSSI hex string length: {}", data.len()));
         }
-        let bytes = (0..data.len())
-            .step_by(2)
-            .map(|i| u8::from_str_radix(&data[i..i + 2], 16))
-            .collect::<Result<Vec<_>, _>>();
-        match bytes {
-            Ok(rssi_bytes) => {
-                let rssi_values: Vec<i8> = rssi_bytes.iter().map(|b| *b as i8).collect();
-                let (dongle, tracker) = if rssi_values.len() >= 2 {
-                    (Some(rssi_values[0]), Some(rssi_values[1]))
-                } else {
-                    (None, None)
-                };
-                Some((dongle, tracker))
+
+        let dongle_rssi_hex = &data[0..6];
+        let tracker_rssi_hex = &data[6..12];
+
+        let parse_rssi = |hex_string: &str| -> Result<Option<i8>, String> {
+            if hex_string.len() != 6 {
+                return Err(format!(
+                    "Invalid RSSI hex string length: {}",
+                    hex_string.len()
+                ));
             }
-            Err(e) => {
-                return Err(format!("Failed to parse RSSI hex: {}", e));
+
+            let bytes = (0..hex_string.len())
+                .step_by(2)
+                .map(|i| u8::from_str_radix(&hex_string[i..i + 2], 16))
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Failed to parse RSSI hex: {}", e))?;
+
+            if let Some(byte) = bytes.first() {
+                Ok(Some(*byte as i8))
+            } else {
+                Ok(None)
             }
+        };
+
+        let dongle = parse_rssi(dongle_rssi_hex)?;
+        let tracker = parse_rssi(tracker_rssi_hex)?;
+
+        match (dongle, tracker) {
+            (Some(dongle_val), Some(tracker_val)) => Some((dongle_val, tracker_val)),
+            _ => None,
         }
     };
 
@@ -488,16 +503,6 @@ pub fn process_connection_data(
         }
         None => serde_json::json!({ "dongle_rssi": null, "tracker_rssi": null }),
     };
-
-    if tracker_data_value["dongle_rssi"] != serde_json::Value::Null
-        || tracker_data_value["tracker_rssi"] != serde_json::Value::Null
-    {
-        log!(
-            "Received RSSI data from tracker {}: {:?}",
-            tracker_name,
-            tracker_data_value
-        );
-    }
 
     Ok(tracker_data_value)
 }

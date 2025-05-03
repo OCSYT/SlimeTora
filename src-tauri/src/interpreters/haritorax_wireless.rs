@@ -1,4 +1,4 @@
-use crate::connection::slimevr::send_battery;
+use crate::connection::slimevr::{remove_tracker, send_battery};
 use crate::interpreters::common::process_connection_data;
 use crate::log;
 use crate::{
@@ -37,6 +37,9 @@ impl Interpreter for HaritoraXWireless {
     ) -> Result<(), String> {
         let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
         //log!("Received identifier: {}, data: {}", identifier, data);
+        if tracker_name.is_empty() {
+            return Ok(());
+        }
 
         let normalized_identifier = identifier.to_lowercase().chars().next();
         match normalized_identifier {
@@ -279,12 +282,28 @@ async fn process_connection(
     // Check if dongle_rssi and tracker_rssi are null, if so, return early
     let dongle_rssi = data.get("dongle_rssi");
     let tracker_rssi = data.get("tracker_rssi");
-    if dongle_rssi.is_none()
+    if (dongle_rssi.is_none()
         || dongle_rssi.unwrap().is_null()
         || tracker_rssi.is_none()
-        || tracker_rssi.unwrap().is_null()
+        || tracker_rssi.unwrap().is_null())
+        && CONNECTED_TRACKERS.contains_key(tracker_name)
     {
-        // TODO: tracker is not connected - disconnect
+        let payload = serde_json::json!({
+            "tracker": tracker_name,
+            "connection_mode": connection_mode,
+            "tracker_type": "Wireless",
+        });
+
+        if let Err(e) = remove_tracker(tracker_name).await {
+            log!("Failed to remove tracker: {}", e);
+        }
+
+        app_handle.emit("disconnect", payload).map_err(|e| {
+            format!(
+                "Failed to emit tracker disconnected event for {}: {}",
+                tracker_name, e
+            )
+        })?;
         return Ok(());
     }
 
