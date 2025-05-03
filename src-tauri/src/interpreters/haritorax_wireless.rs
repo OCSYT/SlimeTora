@@ -1,5 +1,6 @@
 use crate::connection::slimevr::send_battery;
-use crate::{connection, log};
+use crate::interpreters::common::process_connection_data;
+use crate::log;
 use crate::{
     connection::slimevr::{add_tracker, send_accel, send_rotation},
     interpreters::core::Interpreter,
@@ -59,7 +60,7 @@ impl Interpreter for HaritoraXWireless {
                 process_info(app_handle, tracker_name, "serial", data).await?;
             }
             Some('a') => {
-                process_tracker(app_handle, tracker_name, "serial", data).await?;
+                process_connection(app_handle, tracker_name, "serial", data).await?;
             }
             _ => log!("Unknown identifier: {}", identifier),
         }
@@ -267,12 +268,35 @@ async fn process_info(
     Ok(())
 }
 
-async fn process_tracker(
+// TODO: this is probably RSSI data if connected
+async fn process_connection(
     app_handle: &AppHandle,
     tracker_name: &str,
     connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
-    //let tracker_data
+    let data = process_connection_data(data, tracker_name)?;
+    // Check if dongle_rssi and tracker_rssi are null, if so, return early
+    let dongle_rssi = data.get("dongle_rssi");
+    let tracker_rssi = data.get("tracker_rssi");
+    if dongle_rssi.is_none()
+        || dongle_rssi.unwrap().is_null()
+        || tracker_rssi.is_none()
+        || tracker_rssi.unwrap().is_null()
+    {
+        // TODO: tracker is not connected - disconnect
+        return Ok(());
+    }
+
+    let payload = serde_json::json!({
+        "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
+        "data": data,
+    });
+
+    app_handle
+        .emit("connection", payload)
+        .map_err(|e| format!("Failed to emit connection data: {}", e))?;
     Ok(())
 }

@@ -61,6 +61,7 @@ fn main() {
             // commands
             start,
             stop,
+            start_heartbeat,
             write_ble,
             read_ble,
             write_serial,
@@ -161,6 +162,14 @@ async fn stop(
     }
 
     log!("Stopped connection");
+    Ok(())
+}
+
+#[tauri::command]
+async fn start_heartbeat(app_handle: AppHandle) -> Result<(), String> {
+    log!("Starting heartbeat tracker");
+
+    connection::slimevr::start_heartbeat(&app_handle).await;
     Ok(())
 }
 

@@ -49,6 +49,13 @@
 				theme: "os-theme-dark",
 			},
 		});
+
+		// try {
+		// 	await invoke("start_heartbeat");
+		// 	console.log("Heartbeat tracker started");
+		// } catch (error) {
+		// 	console.error(`Failed to start heartbeat tracker: ${error}`);
+		// }
 	});
 </script>
 

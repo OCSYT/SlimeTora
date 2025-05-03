@@ -9,7 +9,7 @@ export const Notifications = [
 	"imu",
 	"mag",
 	"info",
-	"tracker",
+	"connection",
 	"button",
 	"battery",
 	"settings",
@@ -52,6 +52,9 @@ export class Notification {
 				break;
 			case "disconnect":
 				unlisten = await disconnectNotification();
+				break;
+			case "connection":
+				unlisten = await connectionNotification();
 				break;
 			default:
 				console.error(`No notification type "${type}" available`);
@@ -232,6 +235,26 @@ async function disconnectNotification() {
 
 		console.log(
 			`Tracker disconnected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`,
+		);
+	});
+}
+
+async function connectionNotification() {
+	return await listen("connection", (event) => {
+		const payload = event.payload as {
+			tracker: string;
+			connection_mode: string;
+			tracker_type: string;
+			data: { dongle_rssi: number; tracker_rssi: number };
+		};
+		const tracker = payload.tracker;
+		const connection_mode = payload.connection_mode;
+		const tracker_type = payload.tracker_type;
+		const dongle_rssi = payload.data.dongle_rssi;
+		const tracker_rssi = payload.data.tracker_rssi;
+
+		console.log(
+			`Tracker connection changed: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}, Dongle RSSI: ${dongle_rssi}, Tracker RSSI: ${tracker_rssi}`,
 		);
 	});
 }

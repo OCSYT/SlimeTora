@@ -19,6 +19,8 @@ pub async fn start_heartbeat(app_handle: &AppHandle) {
 
     // check if heartbeat is connected after we start a connection in the app, if not, warn user that it couldn't find slimevr server (at time of starting connection)
     // this would be ran as soon as app is open
+
+    // TODO: figure out why tf pings/heartbeats arent being sent to and from server
 }
 
 pub async fn add_tracker(

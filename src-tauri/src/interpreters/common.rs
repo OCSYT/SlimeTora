@@ -436,8 +436,68 @@ pub fn process_settings_data(data: &str, tracker_name: &str) -> Result<serde_jso
 
     log!(
         "Received settings data from tracker {}: {:?}",
-        tracker_name, settings_data
+        tracker_name,
+        settings_data
     );
 
     Ok(settings_data)
+}
+
+/// Processes connection data for a tracker.
+///
+/// ### Connections supported:
+/// - Serial
+///
+/// ### Trackers supported:
+/// - HaritoraX Wireless
+/// - HaritoraX 2
+pub fn process_connection_data(
+    data: &str,
+    tracker_name: &str,
+) -> Result<serde_json::Value, String> {
+    // data is in format 7f7f7f7f7f7f (tracker not found) OR other hex data like 284128442f30 (RSSI)
+    let rssi_data = if data == "7f7f7f7f7f7f" {
+        None
+    } else {
+        if data.len() % 2 != 0 {
+            return Err(format!("Invalid RSSI hex string length: {}", data.len()));
+        }
+        let bytes = (0..data.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&data[i..i + 2], 16))
+            .collect::<Result<Vec<_>, _>>();
+        match bytes {
+            Ok(rssi_bytes) => {
+                let rssi_values: Vec<i8> = rssi_bytes.iter().map(|b| *b as i8).collect();
+                let (dongle, tracker) = if rssi_values.len() >= 2 {
+                    (Some(rssi_values[0]), Some(rssi_values[1]))
+                } else {
+                    (None, None)
+                };
+                Some((dongle, tracker))
+            }
+            Err(e) => {
+                return Err(format!("Failed to parse RSSI hex: {}", e));
+            }
+        }
+    };
+
+    let tracker_data_value = match rssi_data {
+        Some((dongle, tracker)) => {
+            serde_json::json!({ "dongle_rssi": dongle, "tracker_rssi": tracker })
+        }
+        None => serde_json::json!({ "dongle_rssi": null, "tracker_rssi": null }),
+    };
+
+    if tracker_data_value["dongle_rssi"] != serde_json::Value::Null
+        || tracker_data_value["tracker_rssi"] != serde_json::Value::Null
+    {
+        log!(
+            "Received RSSI data from tracker {}: {:?}",
+            tracker_name,
+            tracker_data_value
+        );
+    }
+
+    Ok(tracker_data_value)
 }
