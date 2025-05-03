@@ -14,6 +14,7 @@
 	let batteryVoltage = $state(-1);
 	let batteryStatus = $state("discharging");
 	let magStatus = $state("N/A");
+	let rssi = $state(1);
 
 	function magStatusClass(status: string) {
 		return `mag-status-${status?.toLowerCase().replace(/\s/g, "_")}`;
@@ -29,14 +30,15 @@
 			batteryVoltage = t.battery?.voltage ?? -1;
 			batteryStatus = t.battery?.status ?? "discharging";
 			magStatus = t.magnetometer ?? "N/A";
+			rssi = t.rssi ?? 1;
 		}
 
-        isOpen = $trackerOpenStates[id] ?? false;
+		isOpen = $trackerOpenStates[id] ?? false;
 	});
 
 	function toggleOpen() {
-        trackerOpenStates.update(states => ({ ...states, [id]: !isOpen }));
-    }
+		trackerOpenStates.update((states) => ({ ...states, [id]: !isOpen }));
+	}
 </script>
 
 <div
@@ -45,8 +47,8 @@
 >
 	<button class="flex items-center justify-between px-4 h-14 cursor-pointer" onclick={toggleOpen}>
 		<div>
-			<p class="text-md text-left font-body">{name}</p>
-			<div class="flex items-center gap-2">
+			<p class="text-left font-body">{name}</p>
+			<div class="flex items-center gap-2 text-sm">
 				<div class="flex items-center gap-1">
 					<Icon icon="ri:battery-fill" width={14} class="text-text-alt" />
 					<p class="text-sm text-text-alt" id="battery-small">{batteryPercent}%</p>
@@ -62,6 +64,10 @@
 						>{magStatus}</span
 					>
 				</p>
+				<div class="flex items-center gap-1" id="rssi-status">
+					<Icon icon="ri:signal-wifi-fill" width={14} class="text-text-alt" />
+					<span class="text-text-alt" id="rssi">-{rssi} dBm</span>
+				</div>
 			</div>
 		</div>
 		<div class="flex items-center gap-2">
@@ -87,16 +93,27 @@
 					{/if}
 				</span>
 			</p>
-			<p id="mag-main" class="flex items-center gap-1">
-				<b>Magnetometer Status:</b>
-				<Icon
-					icon="ri:compass-3-fill"
-					width={14}
-					class={`!bg-transparent ${magStatusClass(magStatus)}`}
-					id="mag-icon"
-				/>
-				<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text">{magStatus}</span>
-			</p>
+			<!-- TODO: add tooltip when hovering statuses (mag/rssi) -->
+			<div id="status" class="flex items-center text-center gap-1">
+				<b>Status:</b>
+				<div class="flex items-center gap-2" id="battery-status">
+					<div class="flex items-center gap-1" id="mag-status">
+						<Icon
+							icon="ri:compass-3-fill"
+							width={16}
+							class={`!bg-transparent ${magStatusClass(magStatus)}`}
+							id="mag-icon"
+						/>
+						<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text"
+							>{magStatus}</span
+						>
+					</div>
+					<div class="flex items-center gap-1" id="rssi-status">
+						<Icon icon="ri:signal-wifi-fill" width={16} class="text-text-alt" />
+						<span class="text-text-alt" id="rssi">-{rssi} dBm</span>
+					</div>
+				</div>
+			</div>
 			<img src="/tracker.png" alt="Tracker" class="mx-auto mt-2" style="width: 150px;" />
 		</div>
 	{/if}

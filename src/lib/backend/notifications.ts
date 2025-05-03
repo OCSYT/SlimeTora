@@ -95,6 +95,7 @@ async function imuNotification() {
 		const data = payload.data as { rotation: any; acceleration: any };
 		const { rotation, acceleration } = data;
 
+		if (!browser) return;
 		const now = Date.now();
 		if (lastImuUpdate[tracker] && now - lastImuUpdate[tracker] < 50) return;
 		lastImuUpdate[tracker] = now;
@@ -128,6 +129,7 @@ async function magNotification() {
 		const data = payload.data;
 
 		// check and only update trackers store if it's changed
+		if (!browser) return;
 		const currentTrackers = get(trackers);
 		const index = currentTrackers.findIndex((t) => t.id === trackerId);
 		if (index !== -1) {
@@ -157,6 +159,7 @@ async function batteryNotification() {
 
 		console.log(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
 
+		if (!browser) return;
 		trackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
@@ -258,11 +261,19 @@ async function connectionNotification() {
 			data: { dongle_rssi: number; tracker_rssi: number };
 		};
 		const tracker = payload.tracker;
-		const dongle_rssi = payload.data.dongle_rssi;
+		//const dongle_rssi = payload.data.dongle_rssi;
 		const tracker_rssi = payload.data.tracker_rssi;
 
-		console.log(
-			`Tracker connection changed: ${tracker}, dongle RSSI: ${dongle_rssi}, tracker RSSI: ${tracker_rssi}`,
-		);
+		if (!browser) return;
+		trackers.update((prev) => {
+			const index = prev.findIndex((t) => t.id === tracker);
+			if (index !== -1) {
+				const updatedTracker = { ...prev[index], rssi: tracker_rssi };
+				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
+			} else {
+				console.warn(`Tracker with id ${tracker} not found in store`);
+				return prev;
+			}
+		});
 	});
 }

@@ -112,8 +112,15 @@ pub async fn remove_tracker(tracker_name: &str) -> Result<(), String> {
 }
 
 pub async fn clear_trackers() {
-    log!("Clearing all connected trackers");
+    for tracker_ref in CONNECTED_TRACKERS.iter() {
+        let tracker_name = tracker_ref.key();
+        if let Err(e) = remove_tracker(tracker_name).await {
+            log!("Failed to remove tracker {}: {}", tracker_name, e);
+        }
+    }
+
     CONNECTED_TRACKERS.clear();
+    log!("Cleared all trackers");
 }
 
 /*

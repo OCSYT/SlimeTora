@@ -22,6 +22,7 @@ export interface Tracker {
 	// Data
 	rotation: number[];
 	acceleration: number[];
+	rssi?: number;
 	battery?: BatteryData;
 	magnetometer?: MagStatus;
 }
