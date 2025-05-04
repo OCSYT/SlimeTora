@@ -3806,6 +3806,7 @@ dependencies = [
  "hex",
  "nalgebra",
  "once_cell",
+ "open",
  "serde",
  "serde_json",
  "serialport",

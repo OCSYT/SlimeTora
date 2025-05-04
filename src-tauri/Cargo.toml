@@ -30,3 +30,4 @@ firmware_protocol = { git = "https://github.com/JovannMC/SlimeVR-Rust", package 
 tracker_emulation-rs = { git = "https://github.com/JovannMC/tracker_emulation-rs" }
 dashmap = "6.1.0"
 async-trait = "0.1.88"
+open = "5.3.2"
