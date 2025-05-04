@@ -19,28 +19,6 @@
 	onMount(async () => {
 		currentPath.set(window.location.pathname);
 
-		try {
-			await invoke("cleanup_connections");
-			console.log("Cleared any existing connections")
-		} catch (error) {
-			console.error(`Failed to clean up connections: ${error}`);
-		}
-
-		invoke("get_serial_ports")
-			.then((result) => {
-				ports = result as string[];
-				console.log(`Available serial ports: ${ports}`);
-
-				return invoke("filter_ports", { ports });
-			})
-			.then((result) => {
-				filteredPorts = result as string[];
-				console.log(`Filtered Haritora ports: ${filteredPorts}`);
-			})
-			.catch((error) => {
-				console.error(`Error occurred: ${error}`);
-			});
-
 		OverlayScrollbars(document.body, {
 			scrollbars: {
 				autoHide: "leave",

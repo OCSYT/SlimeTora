@@ -11,6 +11,7 @@
 
 	let portsInitialized = $state(false);
 	let availablePorts: string[] = [];
+	let haritoraPorts: string[] = $state([]);
 	let serialPorts: Record<string, boolean> = $state({});
 
 	let trackerModels = $state({
@@ -26,12 +27,34 @@
 	let slimevrPort = $state($connection.slimevrPort);
 
 	onMount(async () => {
-		console.log(`Initial connection ports: ${JSON.stringify($connection.ports)}`);
 		try {
-			let ports = await invoke<string[]>("get_serial_ports");
-			ports = ports.sort();
+			await invoke("cleanup_connections");
+			console.log("Cleared any existing connections");
+		} catch (error) {
+			console.error(`Failed to clean up connections: ${error}`);
+		}
 
-			availablePorts = ports;
+		try {
+			let ports: string[] = [];
+			let filteredPorts: string[] = [];
+
+			await invoke("get_serial_ports")
+				.then((result) => {
+					ports = result as string[];
+					console.log(`Available serial ports: ${ports}`);
+
+					return invoke("filter_ports", { ports });
+				})
+				.then((result) => {
+					filteredPorts = result as string[];
+					console.log(`Filtered Haritora ports: ${filteredPorts}`);
+				})
+				.catch((error) => {
+					console.error(`Error occurred: ${error}`);
+				});
+
+			availablePorts = ports.sort();
+			haritoraPorts = filteredPorts.sort();
 
 			const originalPorts = $connection.ports || [];
 
@@ -137,7 +160,12 @@
 			{#if Object.keys(serialPorts).length > 0}
 				<div class="grid grid-cols-2 gap-3 pl-1">
 					{#each Object.entries(serialPorts) as [port, isActive]}
-						<Switch label={port} selected={serialPorts[port]} onChange={(value) => (serialPorts[port] = value)} />
+						<Switch
+							label={port}
+							selected={serialPorts[port]}
+							onChange={(value) => (serialPorts[port] = value)}
+							className={haritoraPorts.includes(port) ? "text-secondary" : ""}
+						/>
 					{/each}
 				</div>
 			{:else}
