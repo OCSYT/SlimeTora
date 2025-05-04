@@ -21,7 +21,6 @@
 		</div>
 	{/if}
 
-	<!--  settings panel -->
 	<div class="bg-panel w-full mt-8 p-6 rounded-lg shadow">
 		<h2 class="text-lg font-semibold mb-4">Settings</h2>
 		<div class="flex flex-row gap-4">

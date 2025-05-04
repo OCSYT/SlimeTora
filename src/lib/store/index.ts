@@ -51,7 +51,7 @@ export const navLinks = [
 	},
 	{
 		name: "Trackers",
-		icon: "ri:gps-line",
+		icon: "ri:compass-3-line",
 		link: "/trackers",
 	},
 	{

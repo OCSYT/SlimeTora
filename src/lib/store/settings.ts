@@ -3,11 +3,11 @@ import { TrackerModel, FPSMode, SensorAutoCorrection, SensorMode } from "$lib/ty
 import { writable } from "svelte/store";
 
 export type ProgramSettings = {
-	checkForUpdates: boolean;
 	autoUpdate: boolean;
+	checkUpdatesApp: boolean;
+	checkUpdatesLanguage: boolean;
 	autoStart: boolean;
 	autoOff: boolean;
-	heartbeat: number;
 	visualizationFPS: number;
 };
 
@@ -23,22 +23,24 @@ export type TrackerSettings = {
 	fps: FPSMode;
 	mode: SensorMode;
 	dynamicCalibration: SensorAutoCorrection[];
+	heartbeat: number;
+	buttonDebounce: number;
 };
 
 export const program = writable<ProgramSettings>({
-	checkForUpdates: true,
 	autoUpdate: false,
+	checkUpdatesApp: false,
+	checkUpdatesLanguage: false,
 	autoStart: false,
 	autoOff: false,
-	heartbeat: 2000,
 	visualizationFPS: 10,
 });
 
 export const connection = writable<ConnectionSettings>({
 	// position of model/modes correspond to each other - e.g. model[0] = mode[0] (Wireless with Serial, X2 with BLE, etc)
-	models: [TrackerModel.Wireless],
-	modes: [ConnectionMode.Serial],
-	ports: ["COM3", "COM4", "COM5"],
+	models: [],
+	modes: [],
+	ports: [],
 	slimevrIP: "255.255.255.255",
 	slimevrPort: 6969,
 });
@@ -47,4 +49,6 @@ export const tracker = writable<TrackerSettings>({
 	fps: 100,
 	mode: 2,
 	dynamicCalibration: [SensorAutoCorrection.Accel],
+	heartbeat: 2000,
+	buttonDebounce: 500,
 });
