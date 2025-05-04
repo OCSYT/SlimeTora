@@ -1,6 +1,11 @@
 <script lang="ts">
+	import Button from "$lib/components/settings/Button.svelte";
+	import Switch from "$lib/components/settings/Switch.svelte";
 	import Card from "$lib/components/trackers/Card.svelte";
 	import { trackers } from "$lib/store";
+
+	let preciseData = $state(false);
+	let showVisualization = $state(false);
 </script>
 
 <div class="flex flex-col p-4">
@@ -25,32 +30,19 @@
 		<h2 class="text-lg font-semibold mb-4">Settings</h2>
 		<div class="flex flex-row gap-4">
 			<div class="flex flex-col gap-4 flex-1">
-				<label class="flex items-center gap-x-2">
-					<input type="checkbox" />
-					<span>Precise data</span>
-				</label>
-                <label class="flex items-center gap-x-2">
-                    <input type="checkbox" />
-                    <span>Show tracker visualization</span>
-                </label>
-				<label class="flex items-center gap-x-2">
-					<input type="checkbox" />
-					<span>Bypass serial limit</span>
-				</label>
-			</div>
-			<div class="flex flex-col gap-4 flex-1">
-				<label class="flex items-center gap-x-2">
-					<input type="checkbox" />
-					<span>Write logs</span>
-				</label>
-				<label class="flex items-center gap-x-2">
-					<span>Logging mode</span>
-					<select>
-						<option value="minimal">Minimal data</option>
-						<option value="debug">Debug data</option>
-						<option value="all">All data (!!!)</option>
-					</select>
-				</label>
+				<Switch label="Precise data" selected={preciseData} onChange={(value) => (preciseData = value)} />
+				<Switch
+					label="Show tracker visualization"
+					selected={showVisualization}
+					onChange={(value) => (showVisualization = value)}
+				/>
+				<Button
+					label="Collapse/expand all trackers"
+					onClick={() => {
+						// TODO: implement collapse all trackers
+						console.log("Collapsing/expanding all trackers");
+					}}
+				/>
 			</div>
 		</div>
 	</div>

@@ -4,13 +4,14 @@
 	interface Props {
 		label: string;
 		value: string | number;
+		className?: string;
         placeholder?: string;
 		type?: string;
 		icon?: string | null;
 		onChange: (value: string | number) => void;
 	}
 
-	let { label, value, type = "text", onChange, icon = null, placeholder }: Props = $props();
+	let { label, value, className, type = "text", onChange, icon = null, placeholder }: Props = $props();
 
 	function handleChange(event: Event) {
 		const target = event.target as HTMLInputElement;
@@ -18,7 +19,7 @@
 	}
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col gap-2 {className}">
 	<label class="font-medium" for="input">{label}</label>
 	<div class="relative w-full">
 		<input

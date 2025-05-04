@@ -38,6 +38,10 @@
 		@apply bg-secondary/12;
 	}
 
+	.link:active {
+		@apply bg-secondary/6;
+	}
+
 	.selected {
 		@apply bg-secondary/24 pl-[2px] border-r-2 border-secondary;
 	}

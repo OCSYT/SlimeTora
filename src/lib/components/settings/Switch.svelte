@@ -1,11 +1,12 @@
 <script lang="ts">
     interface Props {
-        label: string;
+        label?: string;
         selected: boolean;
         onChange: (selected: boolean) => void;
+        className?: string;
     }
 
-    let { label, selected, onChange }: Props = $props();
+    let { label, selected, onChange, className }: Props = $props();
     const uniqueId = `switch-${Math.random().toString(36).substring(2, 9)}`;
 
     function handleChange(event: Event) {
@@ -14,7 +15,7 @@
     }
 </script>
 
-<div class="relative flex items-center gap-3">
+<div class="relative flex items-center gap-3 {className}">
     <input
         type="checkbox"
         class="peer sr-only"

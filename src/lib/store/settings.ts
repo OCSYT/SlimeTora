@@ -1,4 +1,3 @@
-import { ConnectionMode } from "$lib/types/connection";
 import { TrackerModel, FPSMode, SensorAutoCorrection, SensorMode } from "$lib/types/tracker";
 import { writable } from "svelte/store";
 
@@ -23,14 +22,15 @@ export type TrackerSettings = {
 	fps: FPSMode;
 	mode: SensorMode;
 	dynamicCalibration: SensorAutoCorrection[];
+	ankleMotionDetection: boolean;
 	heartbeat: number;
 	buttonDebounce: number;
 };
 
 export const program = writable<ProgramSettings>({
 	autoUpdate: false,
-	checkUpdatesApp: false,
-	checkUpdatesLanguage: false,
+	checkUpdatesApp: true,
+	checkUpdatesLanguage: true,
 	autoStart: false,
 	autoOff: false,
 	visualizationFPS: 10,
@@ -49,6 +49,7 @@ export const tracker = writable<TrackerSettings>({
 	fps: 100,
 	mode: 2,
 	dynamicCalibration: [SensorAutoCorrection.Accel],
+	ankleMotionDetection: false,
 	heartbeat: 2000,
 	buttonDebounce: 500,
 });

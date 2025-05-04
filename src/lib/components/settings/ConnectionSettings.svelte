@@ -11,7 +11,7 @@
 
 	let portsInitialized = $state(false);
 	let availablePorts: string[] = [];
-	let comPorts: Record<string, boolean> = $state({});
+	let serialPorts: Record<string, boolean> = $state({});
 
 	let trackerModels = $state({
 		X2: $connection.models?.includes(TrackerModel.X2),
@@ -28,8 +28,9 @@
 	onMount(async () => {
 		console.log(`Initial connection ports: ${JSON.stringify($connection.ports)}`);
 		try {
-			const ports = await invoke<string[]>("get_serial_ports");
-			console.log(`Available ports from invoke: ${JSON.stringify(ports)}`);
+			let ports = await invoke<string[]>("get_serial_ports");
+			ports = ports.sort();
+
 			availablePorts = ports;
 
 			const originalPorts = $connection.ports || [];
@@ -39,9 +40,9 @@
 				portsState[port] = originalPorts.includes(port);
 			});
 
-			comPorts = portsState;
+			serialPorts = portsState;
 			portsInitialized = true;
-			console.log(`Initialized comPorts: ${JSON.stringify(comPorts)}`);
+			console.log(`Initialized serial ports: ${JSON.stringify(serialPorts)}`);
 		} catch (error) {
 			console.error(`Failed to fetch serial ports: ${error}`);
 			portsInitialized = true;
@@ -62,7 +63,7 @@
 		if (connectionModes.ble) modes.push(ConnectionMode.BLE);
 		if (connectionModes.serial) modes.push(ConnectionMode.Serial);
 
-		const activePorts = Object.entries(comPorts).reduce((acc, [port, isActive]) => {
+		const activePorts = Object.entries(serialPorts).reduce((acc, [port, isActive]) => {
 			if (isActive) acc.push(port);
 			return acc;
 		}, [] as string[]);
@@ -121,7 +122,7 @@
 					onChange={(value) => (connectionModes.ble = value)}
 				/>
 				<Checkbox
-					label="COM / GX(6/2)"
+					label="Serial / GX(6/2)"
 					checked={connectionModes.serial}
 					onChange={(value) => (connectionModes.serial = value)}
 				/>
@@ -133,14 +134,14 @@
 				Serial Ports
 				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
 			</h3>
-			{#if Object.keys(comPorts).length > 0}
+			{#if Object.keys(serialPorts).length > 0}
 				<div class="grid grid-cols-2 gap-3 pl-1">
-					{#each Object.entries(comPorts) as [port, isActive]}
-						<Switch label={port} selected={comPorts[port]} onChange={(value) => (comPorts[port] = value)} />
+					{#each Object.entries(serialPorts) as [port, isActive]}
+						<Switch label={port} selected={serialPorts[port]} onChange={(value) => (serialPorts[port] = value)} />
 					{/each}
 				</div>
 			{:else}
-				<p class="text-text-alt italic">No COM ports detected</p>
+				<p class="text-text-alt italic">No serial ports detected</p>
 			{/if}
 
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
