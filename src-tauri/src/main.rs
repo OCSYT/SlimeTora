@@ -19,7 +19,9 @@ use connection::ble;
 use connection::serial;
 use futures::future::{self};
 use once_cell::sync::Lazy;
+use tauri::Manager;
 use std::collections::HashMap;
+use std::path::Path;
 use tauri::AppHandle;
 use tauri_plugin_prevent_default::Flags;
 use tokio::task;
@@ -58,7 +60,9 @@ fn main() {
             // utilities
             get_serial_ports,
             filter_ports,
-            // commands
+            // general commands
+            open_logs_folder,
+            // tracker commands
             start,
             stop,
             start_heartbeat,
@@ -73,7 +77,35 @@ fn main() {
 }
 
 /*
- * Tauri commands
+ * General commands
+*/
+
+#[tauri::command]
+fn open_logs_folder(app_handle: tauri::AppHandle) {
+    // TODO: we should use an actual app_data_dir instead of the current exe dir in future (since i wanna run only one instance for multiple haritora tracker sets)
+    //let path = app_handle.path().app_data_dir().map(|dir| dir.join("logs"));
+    use std::env;
+
+    let path = match env::current_exe() {
+        Ok(mut exe_path) => {
+            exe_path.pop();
+            exe_path
+        }
+        Err(e) => {
+            log!("Failed to get executable directory: {}", e);
+            return;
+        }
+    };
+
+    if let Err(e) = open::that(path) {
+        log!("Failed to open logs folder: {}", e);
+    } else {
+        log!("Opened logs folder");
+    }
+}
+
+/*
+ * Tracker management commands
  */
 
 #[tauri::command]

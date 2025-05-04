@@ -1,5 +1,6 @@
 <script>
 	import { goto } from "$app/navigation";
+	import Button from "$lib/components/settings/Button.svelte";
 </script>
 
 <div class="flex flex-col justify-between text-center min-h-screen">
@@ -23,9 +24,13 @@
 			on how to set up SlimeVR server.
 		</p>
 		<div class="flex flex-row gap-4">
-			<button class="button bg-secondary hoverable" onclick={() => goto("/onboarding/setup")}>Guided Setup</button
-			>
-			<button class="button bg-button hoverable" onclick={() => goto("/")}>Manual Setup (Skip)</button>
+			<Button
+				type="onboarding"
+				label="Guided Setup"
+				background="secondary"
+				onClick={() => goto("/onboarding/setup")}
+			/>
+			<Button type="onboarding" label="Manual Setup (Skip)" background="button" onClick={() => goto("/")} />
 		</div>
 	</div>
 </div>
