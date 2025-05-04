@@ -1,13 +1,24 @@
 <script lang="ts">
 	import { currentPath, navLinks } from "$lib/store";
 	import Icon from "@iconify/svelte";
+	import { getVersion } from "@tauri-apps/api/app";
+	import { onMount } from "svelte";
 
+	let appVersion = $state("0.0.0");
 	let path = $currentPath;
-	let currentNavLink = { name: "", icon: "" };
+	let currentNavLink = $state({ name: "", icon: "" });
 
 	currentPath.subscribe((value) => {
 		path = value;
 		currentNavLink = navLinks.find((link) => link.link === path) || { name: "", icon: "" };
+	});
+
+	onMount(async () => {
+		try {
+			appVersion = await getVersion();
+		} catch (error) {
+			console.error("Failed to fetch app version:", error);
+		}
 	});
 </script>
 
@@ -15,7 +26,7 @@
 	<div class="flex items-center justify-between h-full px-3">
 		<div class="flex flex-row items-center gap-2">
 			<img src="/logo-transparent.png" alt="Logo" class="w-10 rounded-md" />
-			<h1 class="text-xl font-bold">SlimeTora <span class="text-xs text-text-alt">v2.0.0</span></h1>
+			<h1 class="text-xl font-bold">SlimeTora <span class="text-xs text-text-alt">v{appVersion}</span></h1>
 		</div>
 		<div class="flex flex-row items-center gap-2 pr-1">
 			<Icon icon={currentNavLink.icon} width={20} />
