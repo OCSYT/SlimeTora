@@ -3,7 +3,6 @@
 	import { trackerOpenStates, trackers } from "$lib/store";
 	import { derived } from "svelte/store";
 	import { goto } from "$app/navigation";
-	import Button from "../settings/Button.svelte";
 
 	let { name, id, type } = $props();
 	let isOpen = $state(false);
@@ -34,7 +33,9 @@
 			magStatus = t.magnetometer ?? "N/A";
 			rssi = t.rssi ?? 1;
 		}
+	});
 
+	$effect(() => {
 		isOpen = $trackerOpenStates[id] ?? false;
 	});
 
@@ -78,7 +79,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-1">
 			<button
 				class="p-1 rounded-md hover:bg-secondary/20 active:bg-secondary/10"
 				aria-label="Power off tracker: {name}"
@@ -87,7 +88,7 @@
 					console.log(`Powered off tracker: ${name} (${id})`);
 				}}
 			>
-				<Icon icon="ri:shut-down-line" width={24} class="text-text-alt" />
+				<Icon icon="ri:shut-down-line" width={18} class="text-text-alt" />
 			</button>
 			<button
 				class="p-1 rounded-md hover:bg-secondary/20 active:bg-secondary/10"
@@ -98,7 +99,7 @@
 					goto(`/trackers/settings?trackerId=${id}`);
 				}}
 			>
-				<Icon icon="ri:settings-3-line" width={24} class="text-text-alt" />
+				<Icon icon="ri:settings-3-line" width={18} class="text-text-alt" />
 			</button>
 			{#if isOpen}
 				<Icon icon="ri:arrow-up-s-line" width={24} class="text-text-alt" />
@@ -110,14 +111,14 @@
 
 	{#if isOpen}
 		<!-- Expanded content -->
-		<div class="p-4 bg-panel rounded-lg m-4 mt-[5px] flex flex-col gap-2">
+		<div class="p-4 bg-panel rounded-lg m-4 mt-0 flex flex-col gap-2">
 			<p><b>Device:</b> <span id="device-type">{id} ({type})</span></p>
 			<p><b>IMU:</b> <span id="imu">{rotation.join(", ")} ({acceleration.join(", ")})</span></p>
 			<p class="flex flex-row items-center">
 				<b>Battery:</b>
 				<span class="flex flex-row items-center justify-center gap-1 ml-1" id="battery-main">
 					<span>{batteryPercent}% ({batteryVoltage / 1000}V)</span>
-					{#if batteryStatus === "charging"}
+					{#if batteryStatus === "Charging"}
 						<Icon icon="ri:flashlight-fill" width={16} class="text-yellow-500 inline-block ml-1" />
 					{/if}
 				</span>

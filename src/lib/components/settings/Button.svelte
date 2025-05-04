@@ -3,7 +3,7 @@
 
 	interface Props {
 		label: string;
-		className: string;
+		className?: string;
 		icon?: string;
 		iconPosition?: "left" | "right";
 		background?: string;
