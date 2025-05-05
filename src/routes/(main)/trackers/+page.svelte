@@ -4,9 +4,18 @@
 	import Card from "$lib/components/trackers/Card.svelte";
 	import { info } from "$lib/log";
 	import { trackers } from "$lib/store";
+	import { program } from "$lib/store/settings";
 
 	let preciseData = $state(false);
 	let showVisualization = $state(false);
+
+	$effect(() => {
+		program.update((prev) => ({
+			...prev,
+			preciseData,
+			showVisualization,
+		}));
+	});
 </script>
 
 <div class="flex flex-col p-4">

@@ -12,7 +12,9 @@ export type ProgramSettings = {
 	checkUpdatesLanguage: boolean;
 	autoStart: boolean;
 	autoOff: boolean;
+	visualization: boolean;
 	visualizationFPS: number;
+	preciseData: boolean;
 };
 
 export type ConnectionSettings = {
@@ -38,7 +40,9 @@ export const program = writable<ProgramSettings>({
 	checkUpdatesLanguage: true,
 	autoStart: false,
 	autoOff: false,
+	visualization: false,
 	visualizationFPS: 10,
+	preciseData: false,
 });
 
 export const connection = writable<ConnectionSettings>({
@@ -75,18 +79,41 @@ try {
 	error(`Failed to load settings from config.json: ${e}`);
 }
 
-// Auto-save settings to config.json on change
-// Subscribe once to all settings and save when any changes
+let lastSettings: any = null;
+
 derived([program, connection, tracker], ([$program, $connection, $tracker]) => ({
-	program: $program,
-	connection: $connection,
-	tracker: $tracker,
+    program: $program,
+    connection: $connection,
+    tracker: $tracker,
 })).subscribe(async (settings) => {
-	try {
+    try {
+		if (lastSettings) {
+			const changed: string[] = [];
+			type SettingsType = {
+				[key: string]: any;
+				program: ProgramSettings;
+				connection: ConnectionSettings;
+				tracker: TrackerSettings;
+			};
+			for (const key of Object.keys(settings)) {
+				const current = (settings as SettingsType)[key]
+				const previous = lastSettings[key]
+				if (typeof current === "object" && current !== null && previous) {
+					for (const subKey of Object.keys(current)) {
+						if (JSON.stringify(current[subKey]) !== JSON.stringify(previous[subKey])) {
+							info(`Changed "${key}.${subKey}": from ${JSON.stringify(previous[subKey])} to ${JSON.stringify(current[subKey])}`)
+						}
+					}
+				} else if (JSON.stringify(current) !== JSON.stringify(previous)) {
+					info(`Changed "${key}": from ${JSON.stringify(previous)} to ${JSON.stringify(current)}`)
+				}
+			}
+		}
 		await config.set("settings", settings);
-		await config.save();
-		info(`Saved all settings to config.json`);
-	} catch (e) {
-		error(`Failed to save settings: ${e}`);
-	}
+        await config.save();
+        info(`Settings saved`);
+        lastSettings = JSON.parse(JSON.stringify(settings));
+    } catch (e) {
+        error(`Failed to save settings: ${e}`);
+    }
 });

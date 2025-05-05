@@ -4,11 +4,15 @@
 	import { derived } from "svelte/store";
 	import { goto } from "$app/navigation";
 	import { info } from "@tauri-apps/plugin-log";
+	import { program } from "$lib/store/settings";
 
 	let { name, id, type } = $props();
 	let isOpen = $state(false);
 
 	const trackerData = derived(trackers, ($trackers) => $trackers.find((t) => t.id === id));
+	let preciseData = $state($program.preciseData);
+	let Visualization = $state($program.visualization);
+	let VisualizationFPS = $state($program.visualizationFPS);
 
 	let rotation = $state([0, 0, 0]);
 	let acceleration = $state([0, 0, 0]);
@@ -25,14 +29,22 @@
 	$effect(() => {
 		const t = $trackerData;
 		if (t) {
-			// TODO: implement precise data option (2dp)
-			rotation = t.rotation?.map((v) => Number(v.toFixed(0))) ?? [0, 0, 0];
-			acceleration = t.acceleration?.map((v) => Number(v.toFixed(0))) ?? [0, 0, 0];
+			rotation = t.rotation?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
+			acceleration = t.acceleration?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
 			batteryPercent = t.battery?.remaining ?? -1;
 			batteryVoltage = t.battery?.voltage ?? -1;
 			batteryStatus = t.battery?.status ?? "discharging";
 			magStatus = t.magnetometer ?? "N/A";
 			rssi = t.rssi ?? 1;
+		}
+	});
+
+	$effect(() => {
+		const p = $program;
+		if (p) {
+			preciseData = p.preciseData;
+			Visualization = p.visualization;
+			VisualizationFPS = p.visualizationFPS;
 		}
 	});
 

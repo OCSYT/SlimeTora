@@ -5,8 +5,6 @@
 	import AdvancedSettings from "$lib/components/settings/AdvancedSettings.svelte";
 </script>
 
-<!-- TODO: implement config saving/loading and log files -->
-<!-- TODO: AND FIX THAT DAMN TIMEOUT ADMSKG -->
 <div class="flex flex-col p-4 gap-8">
 	<ProgramSettings />
 	<ConnectionSettings />
