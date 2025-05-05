@@ -1,6 +1,6 @@
 use crate::interpreters::core::Interpreter;
-use tauri::AppHandle;
 use async_trait::async_trait;
+use tauri::AppHandle;
 
 pub struct HaritoraX2;
 
@@ -17,7 +17,12 @@ impl Interpreter for HaritoraX2 {
         Ok(())
     }
 
-    async fn parse_serial(&self, app_handle: &AppHandle, tracker_name: &str, data: &str) -> Result<(), String> {
+    async fn parse_serial(
+        &self,
+        app_handle: &AppHandle,
+        tracker_name: &str,
+        data: &str,
+    ) -> Result<(), String> {
         // Implement serial parsing logic for HaritoraX 2
         Ok(())
     }

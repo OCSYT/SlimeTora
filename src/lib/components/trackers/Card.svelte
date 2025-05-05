@@ -3,6 +3,7 @@
 	import { trackerOpenStates, trackers } from "$lib/store";
 	import { derived } from "svelte/store";
 	import { goto } from "$app/navigation";
+	import { info } from "@tauri-apps/plugin-log";
 
 	let { name, id, type } = $props();
 	let isOpen = $state(false);
@@ -85,7 +86,7 @@
 				aria-label="Power off tracker: {name}"
 				onclick={(e) => {
 					e.stopPropagation();
-					console.log(`Powered off tracker: ${name} (${id})`);
+					info(`Powered off tracker: ${name} (${id})`);
 				}}
 			>
 				<Icon icon="ri:shut-down-line" width={18} class="text-text-alt" />
@@ -95,7 +96,7 @@
 				aria-label="Open tracker settings for: {name}"
 				onclick={(e) => {
 					e.stopPropagation();
-					console.log(`Settings clicked for: ${name}`);
+					info(`Settings clicked for: ${name}`);
 					goto(`/trackers/settings?trackerId=${id}`);
 				}}
 			>
@@ -152,7 +153,7 @@
 					icon="ri:settings-3-line"
 					background="tertiary"
 					onClick={() => {
-						console.log(`Settings clicked for: ${name}`);
+						info(`Settings clicked for: ${name}`);
 						goto(`/trackers/settings?trackerId=${id}`);
 					}}
 				/>
@@ -162,7 +163,7 @@
 					icon="ri:shut-down-line"
 					background="danger"
 					onClick={() => {
-						console.log(`Powering off tracker: ${name}`);
+						info(`Powering off tracker: ${name}`);
 					}}
 				/>
 			</div> -->

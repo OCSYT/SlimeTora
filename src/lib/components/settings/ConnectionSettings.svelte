@@ -8,6 +8,7 @@
 	import Switch from "./Switch.svelte";
 	import Input from "./Input.svelte";
 	import Checkbox from "./Checkbox.svelte";
+	import { error, info } from "$lib/log";
 
 	let portsInitialized = $state(false);
 	let availablePorts: string[] = [];
@@ -29,9 +30,9 @@
 	onMount(async () => {
 		try {
 			await invoke("cleanup_connections");
-			console.log("Cleared any existing connections");
-		} catch (error) {
-			console.error(`Failed to clean up connections: ${error}`);
+			info("Cleared any existing connections");
+		} catch (err) {
+			error(`Failed to clean up connections: ${err}`);
 		}
 
 		try {
@@ -41,16 +42,16 @@
 			await invoke("get_serial_ports")
 				.then((result) => {
 					ports = result as string[];
-					console.log(`Available serial ports: ${ports}`);
+					info(`Available serial ports: ${ports}`);
 
 					return invoke("filter_ports", { ports });
 				})
 				.then((result) => {
 					filteredPorts = result as string[];
-					console.log(`Filtered Haritora ports: ${filteredPorts}`);
+					info(`Filtered Haritora ports: ${filteredPorts}`);
 				})
-				.catch((error) => {
-					console.error(`Error occurred: ${error}`);
+				.catch((err) => {
+					err(`Error occurred: ${err}`);
 				});
 
 			availablePorts = ports.sort();
@@ -65,9 +66,9 @@
 
 			serialPorts = portsState;
 			portsInitialized = true;
-			console.log(`Initialized serial ports: ${JSON.stringify(serialPorts)}`);
-		} catch (error) {
-			console.error(`Failed to fetch serial ports: ${error}`);
+			info(`Initialized serial ports: ${JSON.stringify(serialPorts)}`);
+		} catch (err) {
+			error(`Failed to fetch serial ports: ${err}`);
 			portsInitialized = true;
 		}
 	});

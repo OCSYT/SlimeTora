@@ -31,3 +31,8 @@ tracker_emulation-rs = { git = "https://github.com/JovannMC/tracker_emulation-rs
 dashmap = "6.1.0"
 async-trait = "0.1.88"
 open = "5.3.2"
+tauri-plugin-store = "2"
+tauri-plugin-log = "2"
+log = "0.4.27"
+dirs = "6.0.0"
+chrono = "0.4.41"

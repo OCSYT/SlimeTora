@@ -7,6 +7,7 @@
     import Button from "$lib/components/settings/Button.svelte";
 
     import { goto } from "$app/navigation";
+	import { error, info } from "$lib/log";
 
     let trackerId: string | null = null;
     let trackerData: any = $state(null);
@@ -15,7 +16,7 @@
     $effect(() => {
         const newId = page.url.searchParams.get("trackerId");
         if (!newId) {
-            console.error("Tracker ID is undefined. Redirecting to trackers list.");
+            error("Tracker ID is undefined. Redirecting to trackers list.");
             goto("/trackers");
             return;
         }
@@ -24,7 +25,7 @@
             trackerData = $trackers.find((tracker) => tracker.id === trackerId);
 
             if (!trackerData) {
-                console.error(`Tracker with ID ${trackerId} not found. Redirecting to trackers list.`);
+                error(`Tracker with ID ${trackerId} not found. Redirecting to trackers list.`);
                 goto("/trackers");
             }
         }
@@ -40,12 +41,12 @@
     });
 
     function getTrackerSettings() {
-        console.log(`Getting settings for tracker ${trackerId}`);
+        info(`Getting settings for tracker ${trackerId}`);
         // Add logic to fetch tracker settings
     }
 
     function resetSettings() {
-        console.log(`Resetting settings for tracker ${trackerId}`);
+        info(`Resetting settings for tracker ${trackerId}`);
         // Add logic to reset tracker settings
     }
 </script>

@@ -2,7 +2,7 @@ use super::core::ChargeStatus;
 use crate::interpreters::core::{
     Acceleration, BatteryData, IMUData, InfoData, Rotation, Rotations,
 };
-use crate::log;
+use log::{error, info, warn};
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
 use dashmap::DashMap;
@@ -217,7 +217,7 @@ pub fn process_battery_data(
             _ => return Err(format!("Unknown characteristic: {}", characteristic)),
         }
 
-        log!(
+        info!(
             "Processed battery data for tracker \"{}\": {:?}",
             tracker_name,
             battery_data
@@ -245,7 +245,7 @@ pub fn process_battery_data(
         }
     }
 
-    log!(
+    info!(
         "Processed battery data for tracker \"{}\": remaining: {:?}%, voltage: {:?}, status: {:?}",
         tracker_name,
         battery_data.remaining,
@@ -343,7 +343,7 @@ pub fn process_button_data(
 
     // TODO: detect if vrmanager/haritoraconfigurator is open
 
-    log!(
+    info!(
         "Button pressed from tracker {}: {}",
         tracker_name,
         button_pressed
@@ -377,7 +377,7 @@ pub fn process_info_data(data: &str, tracker_name: &str) -> Result<InfoData, Str
         communication_type,
     };
 
-    log!(
+    info!(
         "Received info data from tracker {}: {:?}",
         tracker_name,
         info_data
@@ -434,7 +434,7 @@ pub fn process_settings_data(data: &str, tracker_name: &str) -> Result<serde_jso
         "ankle_enabled": ankle_motion_detection_text,
     });
 
-    log!(
+    info!(
         "Received settings data from tracker {}: {:?}",
         tracker_name,
         settings_data

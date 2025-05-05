@@ -1,6 +1,6 @@
 use crate::connection::slimevr::{remove_tracker, send_battery};
 use crate::interpreters::common::process_connection_data;
-use crate::log;
+use log::{error, info, warn};
 use crate::{
     connection::slimevr::{add_tracker, send_accel, send_rotation},
     interpreters::core::Interpreter,
@@ -36,7 +36,7 @@ impl Interpreter for HaritoraXWireless {
         data: &str,
     ) -> Result<(), String> {
         let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
-        //log!("Received identifier: {}, data: {}", identifier, data);
+        //info!("Received identifier: {}, data: {}", identifier, data);
         if tracker_name.is_empty() {
             return Ok(());
         }
@@ -65,7 +65,7 @@ impl Interpreter for HaritoraXWireless {
             Some('a') => {
                 process_connection(app_handle, tracker_name, "serial", data).await?;
             }
-            _ => log!("Unknown identifier: {}", identifier),
+            _ => warn!("Unknown identifier: {}", identifier),
         }
 
         Ok(())
@@ -79,10 +79,10 @@ async fn process_imu(
     data: Vec<u8>,
 ) -> Result<(), String> {
     if !CONNECTED_TRACKERS.contains_key(tracker_name) && !tracker_name.is_empty() {
-        log!("Creating new tracker: {}", tracker_name);
+        info!("Creating new tracker: {}", tracker_name);
 
         if let Err(e) = add_tracker(app_handle, tracker_name, [0, 0, 0, 0, 0, 0x01]).await {
-            log!("Failed to add tracker: {}", e);
+            error!("Failed to add tracker: {}", e);
             return Err(format!("Failed to add tracker: {}", e));
         }
 
@@ -103,7 +103,7 @@ async fn process_imu(
     let imu_data = match decode_imu(&data, tracker_name) {
         Ok(data) => data,
         Err(e) => {
-            log!(
+            error!(
                 "Failed to decode IMU data for tracker {}: {}",
                 tracker_name,
                 e
@@ -172,11 +172,11 @@ async fn process_imu(
     ];
 
     if let Err(e) = send_rotation(tracker_name, 0, rotation_data).await {
-        log!("Failed to send rotation: {}", e);
+        error!("Failed to send rotation: {}", e);
     }
 
     if let Err(e) = send_accel(tracker_name, 0, accel_data).await {
-        log!("Failed to send acceleration: {}", e);
+        error!("Failed to send acceleration: {}", e);
     }
 
     Ok(())
@@ -203,12 +203,12 @@ async fn process_battery(
         .emit("battery", payload)
         .map_err(|e| format!("Failed to emit battery data: {}", e))?;
 
-    log!("Battery data: {:?}", battery_data);
+    info!("Battery data: {:?}", battery_data);
 
     let battery_percentage = battery_data.remaining.unwrap_or(0) as f32 / 100.0;
     let battery_voltage = battery_data.voltage.unwrap_or(0) as f32 / 1000.0;
     if let Err(e) = send_battery(tracker_name, battery_percentage, battery_voltage).await {
-        log!("Failed to send battery data: {}", e);
+        error!("Failed to send battery data: {}", e);
     }
 
     Ok(())
@@ -295,7 +295,7 @@ async fn process_connection(
         });
 
         if let Err(e) = remove_tracker(tracker_name).await {
-            log!("Failed to remove tracker: {}", e);
+            error!("Failed to remove tracker: {}", e);
         }
 
         app_handle.emit("disconnect", payload).map_err(|e| {

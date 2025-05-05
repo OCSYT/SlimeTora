@@ -1,4 +1,4 @@
-use crate::log;
+use log::{error, info, warn};
 use async_trait::async_trait;
 use dashmap::{DashMap, DashSet};
 use once_cell::sync::Lazy;
@@ -102,7 +102,7 @@ pub static ACTIVE_MODELS: Lazy<DashSet<TrackerModel>> = Lazy::new(DashSet::new);
 
 // Initialize the interpreters in your init function or at program start
 pub fn init_interpreters() {
-    log!("Initializing interpreters");
+    info!("Initializing interpreters");
 
     // Store each implementation as a trait object
     INTERPRETERS.insert(
@@ -118,7 +118,7 @@ pub fn init_interpreters() {
         Arc::new(haritorax_wired::HaritoraXWired) as Arc<dyn Interpreter + Send + Sync>,
     );
 
-    log!("Interpreters initialized");
+    info!("Interpreters initialized");
 }
 
 pub fn start_interpreting(model: &str) -> Result<(), String> {
@@ -126,7 +126,7 @@ pub fn start_interpreting(model: &str) -> Result<(), String> {
         init_interpreters();
     }
 
-    log!("Starting interpreter for model: {}", model);
+    info!("Starting interpreter for model: {}", model);
 
     // Convert string to enum
     let tracker_model = match model {
@@ -143,12 +143,12 @@ pub fn start_interpreting(model: &str) -> Result<(), String> {
 
     // Add the model to active models
     ACTIVE_MODELS.insert(tracker_model);
-    log!("Interpreter started for model: {}", model);
+    info!("Interpreter started for model: {}", model);
     Ok(())
 }
 
 pub fn stop_interpreting(model: &str) -> Result<(), String> {
-    log!("Stopping interpreter for model: {}", model);
+    info!("Stopping interpreter for model: {}", model);
 
     // Convert string to enum
     let tracker_model = match model {
@@ -160,7 +160,7 @@ pub fn stop_interpreting(model: &str) -> Result<(), String> {
 
     // Remove the model from active models
     ACTIVE_MODELS.remove(&tracker_model);
-    log!("Interpreter stopped for model: {}", model);
+    info!("Interpreter stopped for model: {}", model);
     Ok(())
 }
 
@@ -193,7 +193,7 @@ pub async fn process_serial(
                     .await
                 {
                     Ok(_) => return Ok(()),
-                    Err(e) => log!("Hinted interpreter for {:?} failed: {}", model, e),
+                    Err(e) => error!("Hinted interpreter for {:?} failed: {}", model, e),
                 }
             }
         }
@@ -207,7 +207,7 @@ pub async fn process_serial(
                 .await
             {
                 Ok(_) => return Ok(()),
-                Err(e) => log!(
+                Err(e) => error!(
                     "Serial Interpreter for {:?} failed: {}",
                     active_model.key(),
                     e
@@ -261,7 +261,7 @@ pub async fn process_ble(
                 .await
             {
                 Ok(_) => return Ok(()),
-                Err(e) => log!("BLE Interpreter for {:?} failed: {}", active_model.key(), e),
+                Err(e) => error!("BLE Interpreter for {:?} failed: {}", active_model.key(), e),
             }
         }
     }

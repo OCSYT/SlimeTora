@@ -4,6 +4,7 @@
     import Checkbox from "./Checkbox.svelte";
     import Select from "./Select.svelte";
 	import Button from "./Button.svelte";
+	import { error } from "$lib/log";
     
     let bypassSerialLimit = $state(false);
     let writeLogs = $state(false);
@@ -12,8 +13,8 @@
     async function openLogsFolder() {
         try {
             await invoke("open_logs_folder");
-        } catch (error) {
-            console.error("Failed to open logs folder:", error);
+        } catch (err) {
+            error("Failed to open logs folder:", err);
         }
     }
 </script>

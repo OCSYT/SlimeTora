@@ -3,6 +3,7 @@
 	import Icon from "@iconify/svelte";
 	import { getVersion } from "@tauri-apps/api/app";
 	import { onMount } from "svelte";
+	import { error } from "$lib/log";
 
 	let appVersion = $state("0.0.0");
 	let path = $currentPath;
@@ -16,8 +17,8 @@
 	onMount(async () => {
 		try {
 			appVersion = await getVersion();
-		} catch (error) {
-			console.error("Failed to fetch app version:", error);
+		} catch (err) {
+			error("Failed to fetch app version:", err);
 		}
 	});
 </script>

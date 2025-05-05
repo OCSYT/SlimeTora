@@ -4,6 +4,7 @@ import { get } from "svelte/store";
 import { ConnectionMode } from "$lib/types/connection";
 import { TrackerModel } from "$lib/types/tracker";
 import { Notification, Notifications } from "./notifications";
+import { info, error } from "$lib/log";
 
 let notification: Notification | null = null;
 
@@ -15,14 +16,14 @@ export async function startInterpreting() {
 	const ports = get(settings.connection).ports as string[];
 
 	if (modes.length === 0 || !models) {
-		return console.error("No modes or model selected for connection");
+		return error("No modes or model selected for connection");
 	}
 
 	if (modes.includes(ConnectionMode.Serial) && ports.length === 0) {
-		return console.error("No ports selected for serial connection");
+		return error("No ports selected for serial connection");
 	}
 
-	console.log(`Starting interpreting with modes: ${modes}, models: ${models}, ports: ${ports}`);
+	info(`Starting interpreting with modes: ${modes}, models: ${models}, ports: ${ports}`);
 
 	for (const model of models) {
 		await invoke("start", { model, modes, ports });
@@ -34,26 +35,26 @@ export async function startInterpreting() {
 	}
 
 	let activeNotifications = notification.getActiveNotifications();
-	console.log(`Active notifications started: ${activeNotifications.join(", ")}`);
+	info(`Active notifications started: ${activeNotifications.join(", ")}`);
 }
 
 export async function stopInterpreting() {
 	const models = get(settings.connection).models as TrackerModel[];
 	const modes = get(activeModes);
 
-	console.log(`Stopping interpreting with modes: ${modes}, model: ${models}`);
+	info(`Stopping interpreting with modes: ${modes}, model: ${models}`);
 
 	if (modes.length === 0) {
-		return console.error("No modes to stop");
+		return error("No modes to stop");
 	}
 
 	await invoke("stop", { models, modes });
 
-	if (notification === null) return console.error("No notification instance to stop");
+	if (notification === null) return error("No notification instance to stop");
 	let activeNotifications = notification.getActiveNotifications();
-	if (activeNotifications.length === 0) return console.error("No active notifications to stop");
+	if (activeNotifications.length === 0) return error("No active notifications to stop");
 
-	console.log(`Stopping notifications: ${activeNotifications.join(", ")}`);
+	info(`Stopping notifications: ${activeNotifications.join(", ")}`);
 
 	for (const notif of activeNotifications) {
 		notification.stop(notif);

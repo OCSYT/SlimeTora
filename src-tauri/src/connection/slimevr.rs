@@ -1,8 +1,8 @@
 use crate::interpreters::common::CONNECTED_TRACKERS;
-use crate::log;
 use firmware_protocol::{
     ActionType, BoardType, ImuType, McuType, SensorDataType, SensorStatus, SlimeQuaternion,
 };
+use log::{error, info, warn};
 use tauri::AppHandle;
 use tracker_emulation_rs::EmulatedTracker;
 
@@ -64,10 +64,10 @@ pub async fn add_tracker(
             tokio::spawn(async move {
                 while status_rx.changed().await.is_ok() {
                     let status = status_rx.borrow().clone();
-                    log!("Tracker status changed: {status}");
+                    info!("Tracker status changed: {status}");
 
                     if status == "initialized" {
-                        log!("Disconnected from server.");
+                        info!("Disconnected from server.");
                     }
                 }
             });
@@ -102,12 +102,15 @@ pub async fn remove_tracker(tracker_name: &str) -> Result<(), String> {
 
     if let Some(mut tracker_ref) = CONNECTED_TRACKERS.get_mut(tracker_name) {
         if let Some(mut tracker) = tracker_ref.take() {
-            tracker.deinit().await.expect("Failed to deinitialize tracker");
+            tracker
+                .deinit()
+                .await
+                .expect("Failed to deinitialize tracker");
         }
     }
 
     CONNECTED_TRACKERS.remove(tracker_name);
-    log!("Removed tracker: {}", tracker_name);
+    info!("Removed tracker: {}", tracker_name);
     Ok(())
 }
 
@@ -115,12 +118,12 @@ pub async fn clear_trackers() {
     for tracker_ref in CONNECTED_TRACKERS.iter() {
         let tracker_name = tracker_ref.key();
         if let Err(e) = remove_tracker(tracker_name).await {
-            log!("Failed to remove tracker {}: {}", tracker_name, e);
+            error!("Failed to remove tracker {}: {}", tracker_name, e);
         }
     }
 
     CONNECTED_TRACKERS.clear();
-    log!("Cleared all trackers");
+    info!("Cleared all trackers");
 }
 
 /*

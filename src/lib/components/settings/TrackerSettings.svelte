@@ -28,7 +28,7 @@
 			fps: fps === "50" ? FPSMode.Mode50 : FPSMode.Mode100,
 			mode: sensorMode === "1" ? SensorMode.MagEnabled : SensorMode.MagDisabled,
 			dynamicCalibration: calibrations,
-			heartbeatInterval: heartbeat,
+			heartbeat,
 			buttonDebounce,
 		}));
 	});

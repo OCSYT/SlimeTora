@@ -2,6 +2,7 @@ import { writable, type Writable } from "svelte/store";
 import type { ConnectionMode } from "$lib/types/connection";
 import { startInterpreting, stopInterpreting } from "$lib/backend";
 import type { ChargeStatus, MagStatus, TrackerModel } from "$lib/types/tracker";
+import { info } from "$lib/log";
 
 export * as settings from "./settings";
 
@@ -34,7 +35,7 @@ export const activeModes = writable<ConnectionMode[]>([]);
 // null if first time / app just launched
 export const isOn: Writable<boolean | null> = writable(null);
 isOn.subscribe(async (value) => {
-	console.log(`isOn: ${value}`);
+	info(`isOn: ${value}`);
 	if (value) {
 		startInterpreting();
 	} else if (value === false) {

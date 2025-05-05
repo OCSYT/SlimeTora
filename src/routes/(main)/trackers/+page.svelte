@@ -2,6 +2,7 @@
 	import Button from "$lib/components/settings/Button.svelte";
 	import Switch from "$lib/components/settings/Switch.svelte";
 	import Card from "$lib/components/trackers/Card.svelte";
+	import { info } from "$lib/log";
 	import { trackers } from "$lib/store";
 
 	let preciseData = $state(false);
@@ -40,7 +41,7 @@
 					label="Collapse/expand all trackers"
 					onClick={() => {
 						// TODO: implement collapse all trackers
-						console.log("Collapsing/expanding all trackers");
+						info("Collapsing/expanding all trackers");
 					}}
 				/>
 			</div>

@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "core:webview:allow-set-webview-zoom",
@@ -12,9 +14,14 @@
       "identifier": "opener:allow-open-path",
       "allow": [
         {
-          "path": ["https://**", "**/*"]
+          "path": [
+            "https://**",
+            "**/*"
+          ]
         }
       ]
-    }
+    },
+    "store:default",
+    "log:default"
   ]
 }

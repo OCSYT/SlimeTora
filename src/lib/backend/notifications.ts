@@ -1,9 +1,10 @@
 import { browser } from "$app/environment";
 import { trackers, type BatteryData } from "$lib/store";
 import type { ConnectionMode } from "$lib/types/connection";
-import { ChargeStatus, MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
+import { MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
 import { get } from "svelte/store";
+import { error, info, warn } from "$lib/log";
 
 export const Notifications = [
 	"imu",
@@ -25,7 +26,7 @@ export class Notification {
 
 	async start(type: NotificationType) {
 		if (this.activeNotifications.has(type)) {
-			console.warn(`Already listening to "${type}" notifications`);
+			warn(`Already listening to "${type}" notifications`);
 			return;
 		}
 
@@ -57,7 +58,7 @@ export class Notification {
 				unlisten = await connectionNotification();
 				break;
 			default:
-				console.error(`No notification type "${type}" available`);
+				error(`No notification type "${type}" available`);
 				return;
 		}
 
@@ -66,14 +67,14 @@ export class Notification {
 
 	stop(type: NotificationType) {
 		if (!this.activeNotifications.has(type)) {
-			console.warn(`Not listening to "${type}" notifications`);
+			warn(`Not listening to "${type}" notifications`);
 			return;
 		}
 
 		const unlisten = this.activeNotifications.get(type);
 		if (unlisten) unlisten();
 		this.activeNotifications.delete(type);
-		console.log(`Stopped listening to "${type}" notifications`);
+		info(`Stopped listening to "${type}" notifications`);
 	}
 
 	getActiveNotifications() {
@@ -83,7 +84,7 @@ export class Notification {
 	clearAllNotifications() {
 		this.activeNotifications.forEach((unlisten) => unlisten());
 		this.activeNotifications.clear();
-		console.log(`Stopped listening to all notifications`);
+		info(`Stopped listening to all notifications`);
 	}
 }
 
@@ -110,7 +111,6 @@ async function imuNotification() {
 				};
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			} else {
-				console.warn(`Tracker with id ${tracker} not found in store`);
 				return prev;
 			}
 		});
@@ -136,14 +136,12 @@ async function magNotification() {
 			if (currentTrackers[index].magnetometer !== data.magnetometer) {
 				trackers.update((prev) => {
 					const updatedTracker = { ...prev[index], magnetometer: data.magnetometer };
-					console.log(
+					info(
 						`Tracker ${trackerId} magnetometer status changed: ${prev[index].magnetometer} -> ${data.magnetometer}`,
 					);
 					return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 				});
 			}
-		} else {
-			console.warn(`Tracker with id ${trackerId} not found in store`);
 		}
 	});
 }
@@ -157,7 +155,7 @@ async function batteryNotification() {
 		const tracker = payload.tracker;
 		const data = payload.data;
 
-		console.log(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
+		info(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
 
 		if (!browser) return;
 		trackers.update((prev) => {
@@ -166,7 +164,6 @@ async function batteryNotification() {
 				const updatedTracker = { ...prev[index], battery: data };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			}
-			console.warn(`Tracker with id ${tracker} not found in store`);
 			return prev;
 		});
 	});
@@ -178,7 +175,7 @@ async function buttonNotification() {
 		const tracker = payload.tracker;
 		const data = payload.data;
 
-		console.log(`Button notification received from ${tracker}: ${JSON.stringify(data)}`);
+		info(`Button notification received from ${tracker}: ${JSON.stringify(data)}`);
 	});
 }
 
@@ -188,7 +185,7 @@ async function settingsNotification() {
 		const tracker = payload.tracker;
 		const data = payload.data;
 
-		console.log(`Settings notification received from ${tracker}: ${JSON.stringify(data)}`);
+		info(`Settings notification received from ${tracker}: ${JSON.stringify(data)}`);
 	});
 }
 
@@ -207,7 +204,7 @@ async function connectNotification() {
 		const connection_mode = payload.connection_mode;
 		const tracker_type = payload.tracker_type;
 
-		console.log(
+		info(
 			`Tracker connected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`,
 		);
 
@@ -236,7 +233,7 @@ async function disconnectNotification() {
 		const connection_mode = payload.connection_mode;
 		const tracker_type = payload.tracker_type;
 
-		console.log(
+		info(
 			`Tracker disconnected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`,
 		);
 		if (!browser) return;
@@ -245,7 +242,6 @@ async function disconnectNotification() {
 			if (index !== -1) {
 				return [...prev.slice(0, index), ...prev.slice(index + 1)];
 			} else {
-				console.warn(`Tracker with id ${tracker} not found in store`);
 				return prev;
 			}
 		});
@@ -271,7 +267,7 @@ async function connectionNotification() {
 				const updatedTracker = { ...prev[index], rssi: tracker_rssi };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			} else {
-				console.warn(`Tracker with id ${tracker} not found in store`);
+				warn(`Tracker with id ${tracker} not found in store`);
 				return prev;
 			}
 		});
