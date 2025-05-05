@@ -1,11 +1,11 @@
 <script lang="ts">
 	import Icon from "@iconify/svelte";
 
-    interface Props {
-        label: string;
-        checked: boolean;
-        onChange: (checked: boolean) => void;
-    }
+	interface Props {
+		label: string;
+		checked: boolean;
+		onChange: (checked: boolean) => void;
+	}
 
 	let { label, checked = $bindable(), onChange }: Props = $props();
 

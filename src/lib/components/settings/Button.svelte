@@ -11,7 +11,15 @@
 		onClick: () => void;
 	}
 
-	let { label, className, icon, iconPosition = "left", background = "quaternary", type = "main", onClick }: Props = $props();
+	let {
+		label,
+		className,
+		icon,
+		iconPosition = "left",
+		background = "quaternary",
+		type = "main",
+		onClick,
+	}: Props = $props();
 
 	const bgClasses = {
 		primary: "bg-primary hover:bg-primary/70 active:bg-primary/50",

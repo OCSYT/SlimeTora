@@ -5,7 +5,7 @@
 		label: string;
 		value: string | number;
 		className?: string;
-        placeholder?: string;
+		placeholder?: string;
 		type?: string;
 		icon?: string | null;
 		onChange: (value: string | number) => void;
@@ -41,14 +41,14 @@
 </div>
 
 <style>
-    /* Hide number input spinners on hover */
-    input[type="number"]:hover {
-        -moz-appearance: textfield;
-        appearance: textfield;
-    }
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
+	/* Hide number input spinners on hover */
+	input[type="number"]:hover {
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
+	input[type="number"]::-webkit-inner-spin-button,
+	input[type="number"]::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
 </style>

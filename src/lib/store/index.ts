@@ -19,7 +19,7 @@ export interface Tracker {
 	connection_mode: ConnectionMode;
 	tracker_type: TrackerModel;
 	mac?: string;
-	
+
 	// Data
 	rotation: number[];
 	acceleration: number[];

@@ -204,9 +204,7 @@ async function connectNotification() {
 		const connection_mode = payload.connection_mode;
 		const tracker_type = payload.tracker_type;
 
-		info(
-			`Tracker connected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`,
-		);
+		info(`Tracker connected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`);
 
 		if (!browser) return;
 		// TODO: get tracker name from config if available
@@ -233,9 +231,7 @@ async function disconnectNotification() {
 		const connection_mode = payload.connection_mode;
 		const tracker_type = payload.tracker_type;
 
-		info(
-			`Tracker disconnected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`,
-		);
+		info(`Tracker disconnected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`);
 		if (!browser) return;
 		trackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);

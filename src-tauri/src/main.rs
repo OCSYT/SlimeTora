@@ -73,7 +73,6 @@ fn main() {
                     } else {
                         "Rust"
                     };
-                    println!("{}", record.target().to_string());
                     out.finish(format_args!(
                         "{} [{}, {}]: {}",
                         chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),

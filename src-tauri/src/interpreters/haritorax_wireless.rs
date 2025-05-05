@@ -1,12 +1,12 @@
 use crate::connection::slimevr::{remove_tracker, send_battery};
 use crate::interpreters::common::process_connection_data;
-use log::{error, info, warn};
 use crate::{
     connection::slimevr::{add_tracker, send_accel, send_rotation},
     interpreters::core::Interpreter,
 };
 use async_trait::async_trait;
 use base64::Engine;
+use log::{error, info, warn};
 use tauri::{AppHandle, Emitter};
 
 use super::common::{
@@ -105,8 +105,7 @@ async fn process_imu(
         Err(e) => {
             error!(
                 "Failed to decode IMU data for tracker {}: {}",
-                tracker_name,
-                e
+                tracker_name, e
             );
             return Err(format!("Failed to decode IMU data: {}", e));
         }

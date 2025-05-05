@@ -2,10 +2,10 @@ use super::core::ChargeStatus;
 use crate::interpreters::core::{
     Acceleration, BatteryData, IMUData, InfoData, Rotation, Rotations,
 };
-use log::{error, info, warn};
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
 use dashmap::DashMap;
+use log::{error, info, warn};
 use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
 use std::io::Cursor;
@@ -219,8 +219,7 @@ pub fn process_battery_data(
 
         info!(
             "Processed battery data for tracker \"{}\": {:?}",
-            tracker_name,
-            battery_data
+            tracker_name, battery_data
         );
     } else {
         let battery_info: serde_json::Value = serde_json::from_str(data)
@@ -247,10 +246,7 @@ pub fn process_battery_data(
 
     info!(
         "Processed battery data for tracker \"{}\": remaining: {:?}%, voltage: {:?}, status: {:?}",
-        tracker_name,
-        battery_data.remaining,
-        battery_data.voltage,
-        battery_data.status
+        tracker_name, battery_data.remaining, battery_data.voltage, battery_data.status
     );
     Ok(battery_data)
 }
@@ -345,8 +341,7 @@ pub fn process_button_data(
 
     info!(
         "Button pressed from tracker {}: {}",
-        tracker_name,
-        button_pressed
+        tracker_name, button_pressed
     );
     Ok(button_pressed.to_string())
 }
@@ -379,8 +374,7 @@ pub fn process_info_data(data: &str, tracker_name: &str) -> Result<InfoData, Str
 
     info!(
         "Received info data from tracker {}: {:?}",
-        tracker_name,
-        info_data
+        tracker_name, info_data
     );
 
     Ok(info_data)
@@ -436,8 +430,7 @@ pub fn process_settings_data(data: &str, tracker_name: &str) -> Result<serde_jso
 
     info!(
         "Received settings data from tracker {}: {:?}",
-        tracker_name,
-        settings_data
+        tracker_name, settings_data
     );
 
     Ok(settings_data)

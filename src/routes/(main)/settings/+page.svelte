@@ -8,7 +8,7 @@
 <!-- TODO: implement config saving/loading and log files -->
 <!-- TODO: AND FIX THAT DAMN TIMEOUT ADMSKG -->
 <div class="flex flex-col p-4 gap-8">
-    <ProgramSettings />
+	<ProgramSettings />
 	<ConnectionSettings />
 	<TrackerSettings />
 	<AdvancedSettings />

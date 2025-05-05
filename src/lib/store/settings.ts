@@ -7,61 +7,65 @@ import { error, info } from "$lib/log";
 export const config = await load("config.json", { autoSave: true });
 
 export type ProgramSettings = {
-    autoUpdate: boolean;
-    checkUpdatesApp: boolean;
-    checkUpdatesLanguage: boolean;
-    autoStart: boolean;
-    autoOff: boolean;
-    visualizationFPS: number;
+	autoUpdate: boolean;
+	checkUpdatesApp: boolean;
+	checkUpdatesLanguage: boolean;
+	autoStart: boolean;
+	autoOff: boolean;
+	visualizationFPS: number;
 };
 
 export type ConnectionSettings = {
-    models: TrackerModel[];
-    modes: string[];
-    ports: string[];
-    slimevrIP: string;
-    slimevrPort: number;
+	models: TrackerModel[];
+	modes: string[];
+	ports: string[];
+	slimevrIP: string;
+	slimevrPort: number;
 };
 
 export type TrackerSettings = {
-    fps: FPSMode;
-    mode: SensorMode;
-    dynamicCalibration: SensorAutoCorrection[];
-    ankleMotionDetection: boolean;
-    heartbeat: number;
-    buttonDebounce: number;
+	fps: FPSMode;
+	mode: SensorMode;
+	dynamicCalibration: SensorAutoCorrection[];
+	ankleMotionDetection: boolean;
+	heartbeat: number;
+	buttonDebounce: number;
 };
 
 export const program = writable<ProgramSettings>({
-    autoUpdate: false,
-    checkUpdatesApp: true,
-    checkUpdatesLanguage: true,
-    autoStart: false,
-    autoOff: false,
-    visualizationFPS: 10,
+	autoUpdate: false,
+	checkUpdatesApp: true,
+	checkUpdatesLanguage: true,
+	autoStart: false,
+	autoOff: false,
+	visualizationFPS: 10,
 });
 
 export const connection = writable<ConnectionSettings>({
-    models: [],
-    modes: [],
-    ports: [],
-    slimevrIP: "255.255.255.255",
-    slimevrPort: 6969,
+	models: [],
+	modes: [],
+	ports: [],
+	slimevrIP: "255.255.255.255",
+	slimevrPort: 6969,
 });
 
 export const tracker = writable<TrackerSettings>({
-    fps: 100,
-    mode: 2,
-    dynamicCalibration: [SensorAutoCorrection.Accel],
-    ankleMotionDetection: false,
-    heartbeat: 2000,
-    buttonDebounce: 500,
+	fps: 100,
+	mode: 2,
+	dynamicCalibration: [SensorAutoCorrection.Accel],
+	ankleMotionDetection: false,
+	heartbeat: 2000,
+	buttonDebounce: 500,
 });
 
 try {
 	const loaded = await config.get("settings");
 	if (loaded && typeof loaded === "object") {
-		const settings = loaded as { program?: ProgramSettings; connection?: ConnectionSettings; tracker?: TrackerSettings };
+		const settings = loaded as {
+			program?: ProgramSettings;
+			connection?: ConnectionSettings;
+			tracker?: TrackerSettings;
+		};
 		if (settings.program) program.set(settings.program);
 		if (settings.connection) connection.set(settings.connection);
 		if (settings.tracker) tracker.set(settings.tracker);

@@ -276,8 +276,7 @@ pub async fn write(
         if let Err(e) = device.write(&characteristic, &data, write_type).await {
             error!(
                 "Failed to write to characteristic {:?}: {}",
-                characteristic,
-                e
+                characteristic, e
             );
             return Err(e.to_string());
         }
@@ -286,8 +285,7 @@ pub async fn write(
             return device.read(&characteristic).await.map(Some).map_err(|e| {
                 error!(
                     "Failed to read response from characteristic {:?}: {}",
-                    characteristic,
-                    e
+                    characteristic, e
                 );
                 e.to_string()
             });
@@ -512,8 +510,7 @@ async fn broadcasting(
                         Err(e) => {
                             error!(
                                 "Failed to get notification stream for characteristic {:?}: {}",
-                                characteristic,
-                                e
+                                characteristic, e
                             );
                         }
                     }
@@ -521,8 +518,7 @@ async fn broadcasting(
                 Err(e) => {
                     error!(
                         "Failed to subscribe to characteristic {:?}: {}",
-                        characteristic,
-                        e
+                        characteristic, e
                     );
                 }
             }
