@@ -6,10 +6,13 @@ import { error, info } from "$lib/log";
 
 export const config = await load("config.json", { autoSave: true });
 
+export type LoggingMode = "minimal" | "debug" | "all";
+
 export type ProgramSettings = {
 	autoUpdate: boolean;
 	checkUpdatesApp: boolean;
 	checkUpdatesLanguage: boolean;
+	updateChannel: string;
 	autoStart: boolean;
 	autoOff: boolean;
 	visualization: boolean;
@@ -34,10 +37,17 @@ export type TrackerSettings = {
 	buttonDebounce: number;
 };
 
+export type AdvancedSettings = {
+	bypassSerialLimit: boolean;
+	writeLogs: boolean;
+	loggingMode: LoggingMode;
+}
+
 export const program = writable<ProgramSettings>({
 	autoUpdate: false,
 	checkUpdatesApp: true,
 	checkUpdatesLanguage: true,
+	updateChannel: "stable",
 	autoStart: false,
 	autoOff: false,
 	visualization: false,
@@ -62,6 +72,12 @@ export const tracker = writable<TrackerSettings>({
 	buttonDebounce: 500,
 });
 
+export const advanced = writable<AdvancedSettings>({
+	bypassSerialLimit: false,
+	writeLogs: true,
+	loggingMode: "minimal"
+});
+
 try {
 	const loaded = await config.get("settings");
 	if (loaded && typeof loaded === "object") {
@@ -69,10 +85,12 @@ try {
 			program?: ProgramSettings;
 			connection?: ConnectionSettings;
 			tracker?: TrackerSettings;
+			advanced?: AdvancedSettings;
 		};
 		if (settings.program) program.set(settings.program);
 		if (settings.connection) connection.set(settings.connection);
 		if (settings.tracker) tracker.set(settings.tracker);
+		if (settings.advanced) advanced.set(settings.advanced);
 	}
 	info(`Loaded settings from config.json: ${JSON.stringify(loaded)}`);
 } catch (e) {
@@ -81,10 +99,11 @@ try {
 
 let lastSettings: any = null;
 
-derived([program, connection, tracker], ([$program, $connection, $tracker]) => ({
+derived([program, connection, tracker, advanced], ([$program, $connection, $tracker, $advanced]) => ({
 	program: $program,
 	connection: $connection,
 	tracker: $tracker,
+	advanced: $advanced,
 })).subscribe(async (settings) => {
 	try {
 		if (lastSettings) {
@@ -93,6 +112,7 @@ derived([program, connection, tracker], ([$program, $connection, $tracker]) => (
 				program: ProgramSettings;
 				connection: ConnectionSettings;
 				tracker: TrackerSettings;
+				advanced: AdvancedSettings;
 			};
 			for (const key of Object.keys(settings)) {
 				const current = (settings as SettingsType)[key];

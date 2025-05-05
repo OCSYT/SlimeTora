@@ -5,10 +5,11 @@
 	import Select from "./Select.svelte";
 	import Button from "./Button.svelte";
 	import { error } from "$lib/log";
+	import { advanced, type LoggingMode } from "$lib/store/settings";
 
-	let bypassSerialLimit = $state(false);
-	let writeLogs = $state(false);
-	let loggingMode = $state("minimal");
+	let bypassSerialLimit = $state($advanced.bypassSerialLimit);
+	let writeLogs = $state($advanced.writeLogs);
+	let loggingMode = $state($advanced.loggingMode) as LoggingMode;
 
 	async function openLogsFolder() {
 		try {
@@ -17,6 +18,15 @@
 			error("Failed to open logs folder:", err);
 		}
 	}
+
+	$effect(() => {
+		advanced.update((settings) => ({
+			...settings,
+			bypassSerialLimit,
+			writeLogs,
+			loggingMode,
+		}));
+	});
 </script>
 
 <div class="bg-panel rounded-lg p-6 shadow">
@@ -64,7 +74,7 @@
 							{ value: "all", label: "All data (!!!)" },
 						]}
 						selected={loggingMode}
-						onChange={(value) => (loggingMode = value)}
+						onChange={(value) => (loggingMode = value as LoggingMode)}
 					/>
 					<div class="mt-2">
 						<Button

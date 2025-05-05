@@ -10,7 +10,7 @@
 	let visualizationFPS = $state($program.visualizationFPS);
 	let appUpdates = $state($program.checkUpdatesApp);
 	let languageUpdates = $state($program.checkUpdatesLanguage);
-	let updateChannel = $state("stable");
+	let updateChannel = $state($program.updateChannel);
 
 	$effect(() => {
 		program.update((prev) => ({
@@ -20,6 +20,7 @@
 			visualizationFPS,
 			checkUpdatesApp: appUpdates,
 			checkUpdatesLanguage: languageUpdates,
+			updateChannel
 		}));
 	});
 </script>
