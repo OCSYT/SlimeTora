@@ -82,13 +82,12 @@ try {
 let lastSettings: any = null;
 
 derived([program, connection, tracker], ([$program, $connection, $tracker]) => ({
-    program: $program,
-    connection: $connection,
-    tracker: $tracker,
+	program: $program,
+	connection: $connection,
+	tracker: $tracker,
 })).subscribe(async (settings) => {
-    try {
+	try {
 		if (lastSettings) {
-			const changed: string[] = [];
 			type SettingsType = {
 				[key: string]: any;
 				program: ProgramSettings;
@@ -96,24 +95,34 @@ derived([program, connection, tracker], ([$program, $connection, $tracker]) => (
 				tracker: TrackerSettings;
 			};
 			for (const key of Object.keys(settings)) {
-				const current = (settings as SettingsType)[key]
-				const previous = lastSettings[key]
-				if (typeof current === "object" && current !== null && previous) {
+				const current = (settings as SettingsType)[key];
+				const previous = lastSettings[key];
+				// what even is this
+				if (Array.isArray(current) || Array.isArray(previous)) {
+					if (JSON.stringify(current) !== JSON.stringify(previous))
+						info(`Changed "${key}": from ${JSON.stringify(previous)} to ${JSON.stringify(current)}`);
+				} else if (
+					typeof current === "object" &&
+					current !== null &&
+					previous &&
+					typeof previous === "object"
+				) {
 					for (const subKey of Object.keys(current)) {
-						if (JSON.stringify(current[subKey]) !== JSON.stringify(previous[subKey])) {
-							info(`Changed "${key}.${subKey}": from ${JSON.stringify(previous[subKey])} to ${JSON.stringify(current[subKey])}`)
-						}
+						if (JSON.stringify(current[subKey]) !== JSON.stringify(previous[subKey]))
+							info(
+								`Changed "${key}.${subKey}": from ${JSON.stringify(previous[subKey])} to ${JSON.stringify(current[subKey])}`,
+							);
 					}
 				} else if (JSON.stringify(current) !== JSON.stringify(previous)) {
-					info(`Changed "${key}": from ${JSON.stringify(previous)} to ${JSON.stringify(current)}`)
+					info(`Changed "${key}": from ${JSON.stringify(previous)} to ${JSON.stringify(current)}`);
 				}
 			}
 		}
 		await config.set("settings", settings);
-        await config.save();
-        info(`Settings saved`);
-        lastSettings = JSON.parse(JSON.stringify(settings));
-    } catch (e) {
-        error(`Failed to save settings: ${e}`);
-    }
+		await config.save();
+		info(`Settings saved`);
+		lastSettings = JSON.parse(JSON.stringify(settings));
+	} catch (e) {
+		error(`Failed to save settings: ${e}`);
+	}
 });

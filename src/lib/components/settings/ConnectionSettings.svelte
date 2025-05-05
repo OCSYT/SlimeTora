@@ -29,13 +29,6 @@
 
 	onMount(async () => {
 		try {
-			await invoke("cleanup_connections");
-			info("Cleared any existing connections");
-		} catch (err) {
-			error(`Failed to clean up connections: ${err}`);
-		}
-
-		try {
 			let ports: string[] = [];
 			let filteredPorts: string[] = [];
 
