@@ -42,7 +42,7 @@ export type AdvancedSettings = {
 	bypassSerialLimit: boolean;
 	writeLogs: boolean;
 	loggingMode: LoggingMode;
-}
+};
 
 export const program = writable<ProgramSettings>({
 	autoUpdate: false,
@@ -77,7 +77,7 @@ export const tracker = writable<TrackerSettings>({
 export const advanced = writable<AdvancedSettings>({
 	bypassSerialLimit: false,
 	writeLogs: true,
-	loggingMode: "minimal"
+	loggingMode: "minimal",
 });
 
 try {
@@ -94,13 +94,20 @@ try {
 		if (settings.tracker) tracker.set(settings.tracker);
 		if (settings.advanced) advanced.set(settings.advanced);
 	}
-	info(`Loaded settings from config.json: ${JSON.stringify(loaded)}`);
+	info(`Loaded settings from config.json: ${JSON.stringify(loaded, null, 2)}`);
 } catch (e) {
 	error(`Failed to load settings from config.json: ${e}`);
 }
 
-let lastSettings: any = null;
+type SettingsType = {
+	[key: string]: any;
+	program: ProgramSettings;
+	connection: ConnectionSettings;
+	tracker: TrackerSettings;
+	advanced: AdvancedSettings;
+};
 
+let lastSettings: any = null;
 derived([program, connection, tracker, advanced], ([$program, $connection, $tracker, $advanced]) => ({
 	program: $program,
 	connection: $connection,
@@ -108,21 +115,17 @@ derived([program, connection, tracker, advanced], ([$program, $connection, $trac
 	advanced: $advanced,
 })).subscribe(async (settings) => {
 	try {
+		let changed = false;
 		if (lastSettings) {
-			type SettingsType = {
-				[key: string]: any;
-				program: ProgramSettings;
-				connection: ConnectionSettings;
-				tracker: TrackerSettings;
-				advanced: AdvancedSettings;
-			};
 			for (const key of Object.keys(settings)) {
 				const current = (settings as SettingsType)[key];
 				const previous = lastSettings[key];
 				// what even is this
 				if (Array.isArray(current) || Array.isArray(previous)) {
-					if (JSON.stringify(current) !== JSON.stringify(previous))
+					if (JSON.stringify(current) !== JSON.stringify(previous)) {
 						info(`Changed "${key}": from ${JSON.stringify(previous)} to ${JSON.stringify(current)}`);
+						changed = true;
+					}
 				} else if (
 					typeof current === "object" &&
 					current !== null &&
@@ -130,20 +133,28 @@ derived([program, connection, tracker, advanced], ([$program, $connection, $trac
 					typeof previous === "object"
 				) {
 					for (const subKey of Object.keys(current)) {
-						if (JSON.stringify(current[subKey]) !== JSON.stringify(previous[subKey]))
+						if (JSON.stringify(current[subKey]) !== JSON.stringify(previous[subKey])) {
 							info(
 								`Changed "${key}.${subKey}": from ${JSON.stringify(previous[subKey])} to ${JSON.stringify(current[subKey])}`,
 							);
+							changed = true;
+						}
 					}
 				} else if (JSON.stringify(current) !== JSON.stringify(previous)) {
 					info(`Changed "${key}": from ${JSON.stringify(previous)} to ${JSON.stringify(current)}`);
+					changed = true;
 				}
 			}
+		} else {
+			changed = true; // first run, save so that programs the stores aren't undefined lol
 		}
-		await config.set("settings", settings);
-		await config.save();
-		info(`Settings saved`);
-		lastSettings = JSON.parse(JSON.stringify(settings));
+
+		if (changed) {
+			await config.set("settings", settings);
+			await config.save();
+			info(`Settings saved`);
+			lastSettings = JSON.parse(JSON.stringify(settings));
+		}
 	} catch (e) {
 		error(`Failed to save settings: ${e}`);
 	}

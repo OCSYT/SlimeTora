@@ -364,7 +364,6 @@ fn filter_ports(ports: Vec<String>) -> Result<Vec<String>, String> {
     if filtered_ports.is_empty() {
         return Err("No Haritora ports found".to_string());
     }
-    info!("Filtered Haritora ports: {:?}", filtered_ports);
     Ok(filtered_ports)
 }
 
