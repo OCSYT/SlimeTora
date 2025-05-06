@@ -18,6 +18,7 @@ export type ProgramSettings = {
 	visualization: boolean;
 	visualizationFPS: number;
 	preciseData: boolean;
+	fastData: boolean;
 };
 
 export type ConnectionSettings = {
@@ -53,6 +54,7 @@ export const program = writable<ProgramSettings>({
 	visualization: false,
 	visualizationFPS: 10,
 	preciseData: false,
+	fastData: false,
 });
 
 export const connection = writable<ConnectionSettings>({

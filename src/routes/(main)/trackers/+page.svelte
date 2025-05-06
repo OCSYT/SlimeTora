@@ -6,13 +6,15 @@
 	import { trackers } from "$lib/store";
 	import { program } from "$lib/store/settings";
 
-	let preciseData = $state(false);
-	let visualization = $state(false);
+	let preciseData = $state($program.preciseData);
+	let fastData = $state($program.fastData);
+	let visualization = $state($program.visualization);
 
 	$effect(() => {
 		program.update((prev) => ({
 			...prev,
 			preciseData,
+			fastData,
 			visualization,
 		}));
 	});
@@ -49,6 +51,7 @@
 				/>
 				<div class="flex flex-row items-center justify-evenly gap-2">
 					<Switch label="Precise data" selected={preciseData} onChange={(value) => (preciseData = value)} />
+					<Switch label="Fast data" selected={fastData} onChange={(value) => (fastData = value)} />
 					<Switch
 						label="Show tracker visualization"
 						selected={visualization}

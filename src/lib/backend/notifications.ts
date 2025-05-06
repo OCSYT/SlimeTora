@@ -5,6 +5,7 @@ import { MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
 import { get } from "svelte/store";
 import { error, info, warn } from "$lib/log";
+import { program } from "$lib/store/settings";
 
 export const Notifications = [
 	"imu",
@@ -20,6 +21,11 @@ export const Notifications = [
 	"unpaired",
 ] as const;
 export type NotificationType = (typeof Notifications)[number];
+
+let fastData = get(program).fastData;
+program.subscribe((value) => {
+	fastData = value.fastData;
+});
 
 export class Notification {
 	private activeNotifications = new Map<NotificationType, Function>();
@@ -98,7 +104,7 @@ async function imuNotification() {
 
 		if (!browser) return;
 		const now = Date.now();
-		if (lastImuUpdate[tracker] && now - lastImuUpdate[tracker] < 50) return;
+		if (!fastData && lastImuUpdate[tracker] && now - lastImuUpdate[tracker] < 50) return;
 		lastImuUpdate[tracker] = now;
 
 		trackers.update((prev) => {
