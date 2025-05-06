@@ -4,6 +4,7 @@
 	import Checkbox from "$lib/components/settings/Checkbox.svelte";
 	import Input from "$lib/components/settings/Input.svelte";
 	import Select from "$lib/components/settings/Select.svelte";
+	import Tooltip from "$lib/components/settings/Tooltip.svelte";
 
 	let autoStart = $state($program.autoStart);
 	let autoOff = $state($program.autoOff);
@@ -35,7 +36,12 @@
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				App Behavior
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Controls general behavior of the app."
+					icon="ri:information-line"
+					position="up"
+					width="200px"
+				/>
 			</h3>
 			<div class="flex flex-col gap-3 pl-1">
 				<Checkbox

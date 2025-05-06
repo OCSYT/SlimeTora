@@ -143,6 +143,7 @@
 				</span>
 			</p>
 			<!-- TODO: add tooltip when hovering statuses (mag/rssi) -->
+			<!-- TODO: toast notif system -->
 			<div id="status" class="flex items-center text-center gap-1">
 				<b>Status:</b>
 				<div class="flex items-center gap-2" id="battery-status">
