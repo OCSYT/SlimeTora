@@ -2,13 +2,31 @@
 	import Button from "$lib/components/settings/Button.svelte";
 	import Switch from "$lib/components/settings/Switch.svelte";
 	import Card from "$lib/components/trackers/Card.svelte";
-	import { info } from "$lib/log";
-	import { trackers } from "$lib/store";
+	import { trackerOpenStates, trackers } from "$lib/store";
 	import { program } from "$lib/store/settings";
 
 	let preciseData = $state($program.preciseData);
 	let fastData = $state($program.fastData);
 	let visualization = $state($program.visualization);
+
+	function toggleTrackers() {
+		let anyOpen = Object.values($trackerOpenStates).some((isOpen) => isOpen);
+
+		trackerOpenStates.update((states: any) => {
+			const newStates = { ...states };
+			for (const id in newStates) {
+				newStates[id] = anyOpen ? false : true;
+			}
+			return newStates;
+		});
+
+		setTimeout(() => {
+			window.scrollTo({
+				top: document.body.scrollHeight,
+				behavior: "instant",
+			});
+		}, 0);
+	}
 
 	$effect(() => {
 		program.update((prev) => ({
@@ -42,13 +60,7 @@
 		<h2 class="text-lg font-semibold mb-4">Settings</h2>
 		<div class="flex flex-row gap-4">
 			<div class="flex flex-col gap-4 flex-1">
-				<Button
-					label="Collapse/expand all trackers"
-					onClick={() => {
-						// TODO: implement collapse all trackers
-						info("Collapsing/expanding all trackers");
-					}}
-				/>
+				<Button label="Collapse/expand all trackers" onClick={() => toggleTrackers()} />
 				<div class="flex flex-row items-center justify-evenly gap-2">
 					<Switch label="Precise data" selected={preciseData} onChange={(value) => (preciseData = value)} />
 					<Switch label="Fast data" selected={fastData} onChange={(value) => (fastData = value)} />

@@ -50,7 +50,10 @@
 	});
 
 	$effect(() => {
-		isOpen = $trackerOpenStates[id] ?? false;
+		const states = $trackerOpenStates;
+		if (states) {
+			isOpen = states[id] ?? false;
+		}
 	});
 
 	function toggleOpen() {
