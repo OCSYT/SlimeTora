@@ -8,10 +8,9 @@
 	import Switch from "./Switch.svelte";
 	import Input from "./Input.svelte";
 	import Checkbox from "./Checkbox.svelte";
-	import { error, info } from "$lib/log";
+	import { error, info, warn } from "$lib/log";
 
 	let portsInitialized = $state(false);
-	let availablePorts: string[] = [];
 	let haritoraPorts: string[] = $state([]);
 	let serialPorts: Record<string, boolean> = $state({});
 
@@ -29,14 +28,15 @@
 
 	onMount(async () => {
 		try {
+			serialPorts = {};
+
 			let ports: string[] = [];
 			let filteredPorts: string[] = [];
 
 			await invoke("get_serial_ports")
 				.then((result) => {
-					ports = result as string[];
+					ports = (result as string[]).sort();
 					info(`Available serial ports: ${ports}`);
-
 					return invoke("filter_ports", { ports });
 				})
 				.then((result) => {
@@ -44,10 +44,9 @@
 					info(`Filtered Haritora ports: ${filteredPorts}`);
 				})
 				.catch((err) => {
-					err(`Error occurred: ${err}`);
+					warn(`Error occurred: ${err}`);
 				});
 
-			availablePorts = ports.sort();
 			haritoraPorts = filteredPorts.sort();
 
 			const originalPorts = $connection.ports || [];
@@ -59,7 +58,6 @@
 
 			serialPorts = portsState;
 			portsInitialized = true;
-			info(`Initialized serial ports: ${JSON.stringify(serialPorts)}`);
 		} catch (err) {
 			error(`Failed to fetch serial ports: ${err}`);
 			portsInitialized = true;
