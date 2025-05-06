@@ -7,13 +7,13 @@
 	import { program } from "$lib/store/settings";
 
 	let preciseData = $state(false);
-	let showVisualization = $state(false);
+	let visualization = $state(false);
 
 	$effect(() => {
 		program.update((prev) => ({
 			...prev,
 			preciseData,
-			showVisualization,
+			visualization,
 		}));
 	});
 </script>
@@ -40,12 +40,6 @@
 		<h2 class="text-lg font-semibold mb-4">Settings</h2>
 		<div class="flex flex-row gap-4">
 			<div class="flex flex-col gap-4 flex-1">
-				<Switch label="Precise data" selected={preciseData} onChange={(value) => (preciseData = value)} />
-				<Switch
-					label="Show tracker visualization"
-					selected={showVisualization}
-					onChange={(value) => (showVisualization = value)}
-				/>
 				<Button
 					label="Collapse/expand all trackers"
 					onClick={() => {
@@ -53,6 +47,14 @@
 						info("Collapsing/expanding all trackers");
 					}}
 				/>
+				<div class="flex flex-row items-center justify-evenly gap-2">
+					<Switch label="Precise data" selected={preciseData} onChange={(value) => (preciseData = value)} />
+					<Switch
+						label="Show tracker visualization"
+						selected={visualization}
+						onChange={(value) => (visualization = value)}
+					/>
+				</div>
 			</div>
 		</div>
 	</div>

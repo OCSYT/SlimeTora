@@ -5,14 +5,15 @@
 	import { goto } from "$app/navigation";
 	import { info } from "@tauri-apps/plugin-log";
 	import { program } from "$lib/store/settings";
+	import TrackerVisualization from "./TrackerVisualization.svelte";
 
 	let { name, id, type } = $props();
 	let isOpen = $state(false);
 
 	const trackerData = derived(trackers, ($trackers) => $trackers.find((t) => t.id === id));
 	let preciseData = $state($program.preciseData);
-	let Visualization = $state($program.visualization);
-	let VisualizationFPS = $state($program.visualizationFPS);
+	let visualization = $state($program.visualization);
+	let visualizationFPS = $state($program.visualizationFPS);
 
 	let rotation = $state([0, 0, 0]);
 	let acceleration = $state([0, 0, 0]);
@@ -43,8 +44,8 @@
 		const p = $program;
 		if (p) {
 			preciseData = p.preciseData;
-			Visualization = p.visualization;
-			VisualizationFPS = p.visualizationFPS;
+			visualization = p.visualization;
+			visualizationFPS = p.visualizationFPS;
 		}
 	});
 
@@ -58,16 +59,18 @@
 </script>
 
 <div
-	class={`w-[338px] ${isOpen ? "h-auto" : "h-14"} bg-card rounded-xl shadow-card flex flex-col transition-all duration-300 overflow-hidden`}
+	class={`w-[338px] h-auto bg-card rounded-xl shadow-card flex flex-col transition-all duration-300 overflow-hidden`}
 	id="tracker-card-{id}"
-	role="button"
-	aria-expanded={isOpen}
-	tabindex="0"
-	onclick={toggleOpen}
-	onkeydown={(e) => e.key === "Enter" && toggleOpen()}
 >
 	<!-- Unexpanded card info / button -->
-	<div class="flex items-center justify-between px-4 h-14 hoverable">
+	<div
+		class="flex items-center justify-between px-4 h-14 hoverable"
+		role="button"
+		aria-expanded={isOpen}
+		tabindex="0"
+		onclick={toggleOpen}
+		onkeydown={(e) => e.key === "Enter" && toggleOpen()}
+	>
 		<div>
 			<p class="text-left font-body">{name}</p>
 			<div class="flex items-center gap-2 text-sm">
@@ -157,28 +160,13 @@
 					</div>
 				</div>
 			</div>
-			<img src="/tracker.png" alt="Tracker" class="mx-auto mt-2" style="width: 150px;" />
-			<!-- <hr class="border-t border-border my-2" />
-			<div class="flex flex-row justify-end gap-2 mt-4">
-				<Button
-					label="Settings"
-					icon="ri:settings-3-line"
-					background="tertiary"
-					onClick={() => {
-						info(`Settings clicked for: ${name}`);
-						goto(`/trackers/settings?trackerId=${id}`);
-					}}
-				/>
 
-				<Button
-					label="Power Off"
-					icon="ri:shut-down-line"
-					background="danger"
-					onClick={() => {
-						info(`Powering off tracker: ${name}`);
-					}}
-				/>
-			</div> -->
+			{#if visualization}
+				<TrackerVisualization {rotation} {acceleration} fps={visualizationFPS} />
+			{:else}
+				<!-- <img src="/tracker.png" alt="Tracker" class="mx-auto mt-2" style="width: 150px;" /> -->
+				<!-- TODO: maybe a fallback? like an image of the tracker? -->
+			{/if}
 		</div>
 	{/if}
 </div>
