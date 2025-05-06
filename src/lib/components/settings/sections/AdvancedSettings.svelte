@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { invoke } from "@tauri-apps/api/core";
 	import Icon from "@iconify/svelte";
-	import Checkbox from "./Checkbox.svelte";
-	import Select from "./Select.svelte";
-	import Button from "./Button.svelte";
+	import Checkbox from "$lib/components/settings/Checkbox.svelte";
+	import Select from "$lib/components/settings/Select.svelte";
+	import Button from "$lib/components/settings/Button.svelte";
 	import { error } from "$lib/log";
 	import { advanced, type LoggingMode } from "$lib/store/settings";
 

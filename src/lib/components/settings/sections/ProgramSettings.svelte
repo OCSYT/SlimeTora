@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { program } from "$lib/store/settings";
 	import Icon from "@iconify/svelte";
-	import Checkbox from "./Checkbox.svelte";
-	import Input from "./Input.svelte";
-	import Select from "./Select.svelte";
+	import Checkbox from "$lib/components/settings/Checkbox.svelte";
+	import Input from "$lib/components/settings/Input.svelte";
+	import Select from "$lib/components/settings/Select.svelte";
 
 	let autoStart = $state($program.autoStart);
 	let autoOff = $state($program.autoOff);

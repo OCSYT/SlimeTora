@@ -5,9 +5,9 @@
 	import Icon from "@iconify/svelte";
 	import { invoke } from "@tauri-apps/api/core";
 	import { onMount } from "svelte";
-	import Switch from "./Switch.svelte";
-	import Input from "./Input.svelte";
-	import Checkbox from "./Checkbox.svelte";
+	import Switch from "$lib/components/settings/Switch.svelte";
+	import Input from "$lib/components/settings/Input.svelte";
+	import Checkbox from "$lib/components/settings/Checkbox.svelte";
 	import { error, info, warn } from "$lib/log";
 
 	let portsInitialized = $state(false);

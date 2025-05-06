@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { tracker } from "$lib/store/settings";
 	import { SensorAutoCorrection, FPSMode, SensorMode } from "$lib/types/tracker";
-	import Switch from "./Switch.svelte";
-	import Input from "./Input.svelte";
-	import Select from "./Select.svelte";
+	import Switch from "$lib/components/settings/Switch.svelte";
+	import Input from "$lib/components/settings/Input.svelte";
+	import Select from "$lib/components/settings/Select.svelte";
 	import Icon from "@iconify/svelte";
 
 	let fps = $state($tracker.fps === FPSMode.Mode100 ? "100" : "50");
