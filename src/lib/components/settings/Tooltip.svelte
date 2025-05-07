@@ -109,6 +109,10 @@
 	{/if}
 </div>
 
+<!--
+	code partially "stolen" from https://github.com/VERT-sh/VERT
+	it's "stolen".. because I wrote it
+-->
 <style>
 	@reference "../../../app.css";
 

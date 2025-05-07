@@ -4,6 +4,7 @@
 	import Card from "$lib/components/trackers/Card.svelte";
 	import { trackerOpenStates, trackers } from "$lib/store";
 	import { program } from "$lib/store/settings";
+	import { addToast } from "$lib/store/ToastProvider";
 
 	let preciseData = $state($program.preciseData);
 	let fastData = $state($program.fastData);
