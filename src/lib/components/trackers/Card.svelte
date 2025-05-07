@@ -6,6 +6,7 @@
 	import { info } from "@tauri-apps/plugin-log";
 	import { program } from "$lib/store/settings";
 	import TrackerVisualization from "./TrackerVisualization.svelte";
+	import Tooltip from "../settings/Tooltip.svelte";
 
 	let { name, id, type } = $props();
 	let isOpen = $state(false);
@@ -148,18 +149,30 @@
 				<b>Status:</b>
 				<div class="flex items-center gap-2" id="battery-status">
 					<div class="flex items-center gap-1" id="mag-status">
-						<Icon
-							icon="ri:compass-3-fill"
-							width={16}
-							class={`!bg-transparent ${magStatusClass(magStatus)}`}
-							id="mag-icon"
-						/>
+						<Tooltip
+							content={'Magnetometer status. If all trackers are consistently "GREAT", it is preferred to use sensor mode 1.'}
+							position="up"
+							width="200px"
+						>
+							<Icon
+								icon="ri:compass-3-fill"
+								width={16}
+								class={`!bg-transparent ${magStatusClass(magStatus)}`}
+								id="mag-icon"
+							/>
+						</Tooltip>
 						<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text"
 							>{magStatus}</span
 						>
 					</div>
 					<div class="flex items-center gap-1" id="rssi-status">
-						<Icon icon="ri:signal-wifi-fill" width={16} class="text-text-alt" />
+						<Tooltip
+							content="Wireless signal strength (RSSI). Higher (closer to 0) is better."
+							position="up"
+							width="200px"
+						>
+							<Icon icon="ri:signal-wifi-fill" width={16} class="text-text-alt" />
+						</Tooltip>
 						<span class="text-text-alt" id="rssi">-{rssi} dBm</span>
 					</div>
 				</div>

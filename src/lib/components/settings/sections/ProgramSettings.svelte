@@ -64,6 +64,7 @@
 					icon="ri:timer-line"
 					tooltip="Sets the framerate for the 3D tracker visualization. Lower values save resources."
 					tooltipPosition="up"
+					tooltipWidth="250px"
 				/>
 			</div>
 		</div>
