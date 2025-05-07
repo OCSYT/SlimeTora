@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { page } from "$app/state";
+	import { goto } from "$app/navigation";
 	import { trackers } from "$lib/store";
 	import Icon from "@iconify/svelte";
 	import Select from "$lib/components/settings/Select.svelte";
 	import Switch from "$lib/components/settings/Switch.svelte";
 	import Button from "$lib/components/settings/Button.svelte";
-
-	import { goto } from "$app/navigation";
 	import { error, info } from "$lib/log";
+	import Tooltip from "$lib/components/settings/Tooltip.svelte";
+
+	// TODO: finish this
 
 	let trackerId: string | null = null;
 	let trackerData: any = $state(null);
@@ -63,10 +65,11 @@
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 					FPS transfer rate
-					<Icon
+					<Tooltip
+						content="Select how many times the trackers send data per second. 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS."
 						icon="ri:information-line"
-						width={20}
-						class="text-text-alt hover:text-white transition-colors"
+						position="up"
+						width="300px"
 					/>
 				</h3>
 				<Select
@@ -82,10 +85,11 @@
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 					Sensor mode
-					<Icon
+					<Tooltip
+						content="Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables magnetometer and is recommended for unstable environments."
 						icon="ri:information-line"
-						width={20}
-						class="text-text-alt hover:text-white transition-colors"
+						position="up"
+						width="300px"
 					/>
 				</h3>
 				<Select
@@ -101,10 +105,11 @@
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 					Sensor auto correction
-					<Icon
+					<Tooltip
+						content="Enable or disable sensor auto correction (dynamic calibration) features. Usually not needed to be changed and results vary between environments."
 						icon="ri:information-line"
-						width={20}
-						class="text-text-alt hover:text-white transition-colors"
+						position="up"
+						width="300px"
 					/>
 				</h3>
 				<div class="flex flex-col gap-3 pl-1">
@@ -128,17 +133,18 @@
 
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-					Ankle motion detection
-					<Icon
+					Virtual feet trackers
+					<Tooltip
+						content="Enables the use of the ankle/leg sensor to track the motion of your feet."
 						icon="ri:information-line"
-						width={20}
-						class="text-text-alt hover:text-white transition-colors"
+						position="up"
+						width="250px"
 					/>
 				</h3>
 				<Switch
-					label="Enable ankle motion detection"
-					selected={trackerData?.ankleMotionDetection}
-					onChange={(value) => (trackerData.ankleMotionDetection = value)}
+					label="Enable virtual feet trackers"
+					selected={trackerData?.emulatedFeet}
+					onChange={(value) => (trackerData.emulatedFeet = value)}
 				/>
 			</div>
 

@@ -1,9 +1,12 @@
 <script lang="ts">
 	import Icon from "@iconify/svelte";
+	import Tooltip from "./Tooltip.svelte";
 
 	interface Props {
 		label: string;
 		value: string | number;
+		tooltip?: string;
+		tooltipPosition?: "up" | "down" | "left" | "right";
 		className?: string;
 		placeholder?: string;
 		type?: string;
@@ -11,7 +14,7 @@
 		onChange: (value: string | number) => void;
 	}
 
-	let { label, value, className, type = "text", onChange, icon = null, placeholder }: Props = $props();
+	let { label, value, tooltip, tooltipPosition, className, type = "text", onChange, icon = null, placeholder }: Props = $props();
 
 	function handleChange(event: Event) {
 		const target = event.target as HTMLInputElement;
@@ -20,7 +23,16 @@
 </script>
 
 <div class="flex flex-col gap-2 {className}">
+<div class="flex flex-row items-center gap-2">
 	<label class="font-medium" for="input">{label}</label>
+	{#if tooltip}
+		<Tooltip
+			content={tooltip}
+			icon="ri:information-line"
+			position={tooltipPosition}
+		/>
+	{/if}
+</div>
 	<div class="relative w-full">
 		<input
 			id="input"

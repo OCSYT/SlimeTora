@@ -9,6 +9,7 @@
 	import Input from "$lib/components/settings/Input.svelte";
 	import Checkbox from "$lib/components/settings/Checkbox.svelte";
 	import { error, info, warn } from "$lib/log";
+	import Tooltip from "../Tooltip.svelte";
 
 	let portsInitialized = $state(false);
 	let haritoraPorts: string[] = $state([]);
@@ -106,7 +107,12 @@
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				Tracker Model
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Select the model(s) of HaritoraX trackers you have. Multiple can be used at the same time for advanced users."
+					icon="ri:information-line"
+					position="up"
+					width="250px"
+				/>
 			</h3>
 			<div class="flex flex-col gap-3 pl-1">
 				<Checkbox
@@ -128,7 +134,12 @@
 
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				Connection Mode
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Select the connection mode used to connect to the trackers. Multiple modes can be used simultaneously."
+					icon="ri:information-line"
+					position="up"
+					width="250px"
+				/>
 			</h3>
 			<div class="flex flex-col gap-3 pl-1">
 				<Checkbox
@@ -147,7 +158,12 @@
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				Serial Ports
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Select the serial port(s) your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using."
+					icon="ri:information-line"
+					position="up"
+					width="250px"
+				/>
 			</h3>
 			{#if Object.keys(serialPorts).length > 0}
 				<div class="grid grid-cols-2 gap-3 pl-1">
@@ -166,7 +182,12 @@
 
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				SlimeVR Server
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Configure where SlimeTora looks for the SlimeVR server. By default, it will look for the server across your whole network."
+					icon="ri:information-line"
+					position="up"
+					width="250px"
+				/>
 			</h3>
 			<div class="grid grid-cols-3 gap-4">
 				<div class="col-span-2">

@@ -6,6 +6,7 @@
 	import Button from "$lib/components/settings/Button.svelte";
 	import { error } from "$lib/log";
 	import { advanced, type LoggingMode } from "$lib/store/settings";
+	import Tooltip from "../Tooltip.svelte";
 
 	let bypassSerialLimit = $state($advanced.bypassSerialLimit);
 	let writeLogs = $state($advanced.writeLogs);
@@ -40,10 +41,10 @@
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 					Serial Settings
-					<Icon
+					<Tooltip
+						content="Advanced serial port configurations. Options with yellow text require a restart of the connection or program to apply."
 						icon="ri:information-line"
-						width={20}
-						class="text-text-alt hover:text-white transition-colors"
+						position="up"
 					/>
 				</h3>
 				<div class="flex flex-col gap-3 pl-1">
@@ -58,10 +59,10 @@
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 					Logging
-					<Icon
+					<Tooltip
+						content="Configure how the application handles logging information. Higher logging levels may impact performance."
 						icon="ri:information-line"
-						width={20}
-						class="text-text-alt hover:text-white transition-colors"
+						position="up"
 					/>
 				</h3>
 				<div class="flex flex-col gap-3 pl-1">

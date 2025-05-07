@@ -33,7 +33,7 @@ export type TrackerSettings = {
 	fps: FPSMode;
 	mode: SensorMode;
 	dynamicCalibration: SensorAutoCorrection[];
-	ankleMotionDetection: boolean;
+	emulatedFeet: boolean;
 	heartbeat: number;
 	buttonDebounce: number;
 };
@@ -69,7 +69,7 @@ export const tracker = writable<TrackerSettings>({
 	fps: 100,
 	mode: 2,
 	dynamicCalibration: [SensorAutoCorrection.Accel],
-	ankleMotionDetection: false,
+	emulatedFeet: false,
 	heartbeat: 2000,
 	buttonDebounce: 500,
 });

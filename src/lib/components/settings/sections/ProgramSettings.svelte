@@ -21,7 +21,7 @@
 			visualizationFPS,
 			checkUpdatesApp: appUpdates,
 			checkUpdatesLanguage: languageUpdates,
-			updateChannel
+			updateChannel,
 		}));
 	});
 </script>
@@ -62,6 +62,8 @@
 					value={visualizationFPS}
 					onChange={(value) => (visualizationFPS = Number(value))}
 					icon="ri:timer-line"
+					tooltip="Sets the framerate for the 3D tracker visualization. Lower values save resources."
+					tooltipPosition="up"
 				/>
 			</div>
 		</div>
@@ -69,7 +71,12 @@
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				Update Settings
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Manage how the app and language updates are handled."
+					icon="ri:information-line"
+					position="up"
+					width="220px"
+				/>
 			</h3>
 			<div class="flex flex-col gap-3 pl-1">
 				<div class="flex flex-col gap-3 pl-1">

@@ -5,6 +5,7 @@
 	import Input from "$lib/components/settings/Input.svelte";
 	import Select from "$lib/components/settings/Select.svelte";
 	import Icon from "@iconify/svelte";
+	import Tooltip from "../Tooltip.svelte";
 
 	let fps = $state($tracker.fps === FPSMode.Mode100 ? "100" : "50");
 	let sensorMode = $state($tracker.mode === SensorMode.MagEnabled ? "1" : "2");
@@ -15,7 +16,7 @@
 		gyroscope: $tracker.dynamicCalibration.includes(SensorAutoCorrection.Gyro),
 		magnetometer: $tracker.dynamicCalibration.includes(SensorAutoCorrection.Mag),
 	});
-	let ankleMotionDetection = $state($tracker.ankleMotionDetection);
+	let emulatedFeet = $state($tracker.emulatedFeet);
 
 	$effect(() => {
 		const calibrations: SensorAutoCorrection[] = [];
@@ -44,7 +45,12 @@
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				FPS transfer rate
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Select how many times the trackers send data per second. 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS."
+					icon="ri:information-line"
+					position="up"
+					width="300px"
+				/>
 			</h3>
 			<Select
 				options={[
@@ -59,7 +65,12 @@
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				Sensor mode
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables magnetometer and is recommended for unstable environments."
+					icon="ri:information-line"
+					position="up"
+					width="300px"
+				/>
 			</h3>
 			<Select
 				options={[
@@ -74,8 +85,14 @@
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				Sensor auto correction
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Enable or disable sensor auto correction (dynamic calibration) features. Usually not needed to be changed and results vary between environments."
+					icon="ri:information-line"
+					position="up"
+					width="300px"
+				/>
 			</h3>
+
 			<div class="flex flex-col gap-3 pl-1">
 				<Switch
 					label="Accelerometer"
@@ -97,20 +114,31 @@
 
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				Ankle motion detection
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				Virtual feet trackers
+				<Tooltip
+					content="Enables the use of the ankle/leg sensor to track the motion of your feet."
+					icon="ri:information-line"
+					position="up"
+					width="250px"
+				/>
 			</h3>
 			<Switch
-				label="Enable ankle motion detection"
-				selected={ankleMotionDetection}
-				onChange={(value) => (ankleMotionDetection = value)}
+				label="Enable virtual feet trackers"
+				selected={emulatedFeet}
+				onChange={(value) => (emulatedFeet = value)}
 			/>
+			<!-- TODO: should probably detect if (x) tracker is an ankle tracker automatically. look for the char that writes the tracker assignment later -->
 		</div>
 
 		<div class="col-span-2 flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
 				Other settings
-				<Icon icon="ri:information-line" width={20} class="text-text-alt hover:text-white transition-colors" />
+				<Tooltip
+					content="Additional tracker settings that affect overall performance."
+					icon="ri:information-line"
+					position="up"
+					width="250px"
+				/>
 			</h3>
 			<div class="flex flex-row gap-3 pl-1">
 				<Input
