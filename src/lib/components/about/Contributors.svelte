@@ -18,7 +18,7 @@
 		<Icon icon="ri:id-card-line" class="text-secondary" width={20} />
 		Contributors
 	</div>
-	<div class="bg-panel rounded-xl p-4 shadow flex flex-col gap-4 min-w-[338px] min-h-[176px]">
+	<div class="bg-panel rounded-xl p-4 shadow flex flex-col gap-4 min-w-[338px]">
 		{#each contributors as c}
 			<div class="flex items-center gap-3">
 				<img src={c.pfp} alt={c.name} class="w-10 h-10 rounded-full bg-black object-cover" />

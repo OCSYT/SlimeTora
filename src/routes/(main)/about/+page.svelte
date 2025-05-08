@@ -2,6 +2,20 @@
 	import ContributorsPanel from "$lib/components/about/Contributors.svelte";
 	import TranslatorsPanel from "$lib/components/about/Translators.svelte";
 	import OtherCreditsPanel from "$lib/components/about/OtherCredits.svelte";
+	import GHContributors from "$lib/components/about/GHContributors.svelte";
+	import { onMount } from "svelte";
+	import { getVersion } from "@tauri-apps/api/app";
+	import { error } from "$lib/log";
+	
+	let appVersion = $state("0.0.0");
+
+	onMount(async () => {
+		try {
+			appVersion = await getVersion();
+		} catch (err) {
+			error("Failed to fetch app version:", err);
+		}
+	});
 
 	const contributors = [
 		{
@@ -9,8 +23,8 @@
 			name: "JovannMC",
 			byline: "Developer, has a tail",
 			links: [
-				{ icon: "ri:github-fill", url: "https://github.com/JovannMC" },
 				{ icon: "ri:link", url: "https://jovann.me" },
+				{ icon: "ri:github-fill", url: "https://github.com/JovannMC" },
 			],
 		},
 		{
@@ -18,8 +32,8 @@
 			name: "BracketProto",
 			byline: "Developer, loves scugs",
 			links: [
-				{ icon: "ri:github-fill", url: "https://github.com/OCSYT" },
 				{ icon: "ri:link", url: "https://bracketproto.com" },
+				{ icon: "ri:github-fill", url: "https://github.com/OCSYT" },
 			],
 		},
 		{
@@ -27,9 +41,22 @@
 			name: "Realmy",
 			byline: "UI designer, growls occasionally",
 			links: [
-				{ icon: "ri:github-fill", url: "https://github.com/Realmy" },
 				{ icon: "ri:link", url: "https://realmy.net" },
+				{ icon: "ri:github-fill", url: "https://github.com/RealmyTheMan" },
 			],
+		},
+	];
+
+	const ghContribs = [
+		{
+			name: "Lillith",
+			link: "https://github.com/lillithkt",
+			pfp: "/pfp/lillithkt.png",
+		},
+		{
+			name: "Francesca",
+			link: "https://github.com/francescatanuki",
+			pfp: "/pfp/francescatanuki.png",
 		},
 	];
 
@@ -45,7 +72,7 @@
 				{
 					name: "Realmy",
 					pfp: "/pfp/realmy.jpg",
-					link: "https://github.com/Realmy",
+					link: "https://github.com/RealmyTheMan",
 				},
 			],
 		},
@@ -63,9 +90,9 @@
 			language: "uwu language",
 			contributors: [
 				{
-					name: "JowannWC, your sleep paralysis demon",
+					name: "JowannUwU, your sleep paralysis demon",
 					pfp: "/pfp/jovannmc.png",
-					link: "https://github.com/JowannWC",
+					link: "https://github.com/JovannMC",
 				},
 			],
 		},
@@ -78,24 +105,66 @@
 			author: "JovannMC",
 		},
 		{
-			name: "another-package",
-			link: "https://example.com",
-			author: "Mr. Blue Sky",
+			name: "haritorax-slimevr-bridge",
+			link: "https://github.com/sim1222/haritorax-slimevr-bridge",
+			author: "sim1222",
 		},
 		{
-			name: "love-and-appreciation",
-			link: "https://example.com",
-			author: "ur mom",
+			name: "slimevr-rust",
+			link: "https://github.com/SlimeVR/slimevr-rust",
+			author: "SlimeVR",
+		},
+		{
+			name: "slimevr-node",
+			link: "https://github.com/SlimeVR/slimevr-node",
+			author: "SlimeVR",
+		},
+		{
+			name: "MoSlime",
+			link: "https://MoSlime/MoSlime",
+			author: "MoSlime",
+		},
+		{
+			name: "Onboarding media",
+			link: "https://github.com/SlimeVR/SlimeVR-Server",
+			author: "SlimeVR",
 		},
 	];
 </script>
 
-<div class="flex flex-row gap-8 p-4">
-	<div class="flex flex-col gap-8">
-		<ContributorsPanel {contributors} />
-		<OtherCreditsPanel {others} />
+<div class="flex flex-col items-center">
+	<div class="flex flex-col items-center p-4">
+		<div class="bg-panel rounded-xl p-4 shadow flex flex-col items-center gap-4 w-full">
+			<div class="flex items-center gap-3">
+				<img src="/logo.png" alt="SlimeTora Logo" class="w-14 h-14 rounded-lg drop-shadow-lg" />
+				<span class="text-3xl font-heading font-bold text-text">SlimeTora <span class="text-xs text-text-alt">v{appVersion}</span></span>
+			</div>
+			<p class="text-center text-base text-text-alt max-w-lg">
+				SlimeTora is a middleware program that allows you to connect the HaritoraX trackers to the
+				SlimeVR server instead of the OEM software.
+			</p>
+		</div>
 	</div>
-	<div class="flex flex-col gap-8 flex-1">
-		<TranslatorsPanel {translators} />
+	<div class="flex flex-row gap-8 p-4">
+		<div class="flex flex-col gap-8">
+			<ContributorsPanel {contributors} />
+			<GHContributors {ghContribs} />
+		</div>
+		<div class="flex flex-col gap-8 flex-1">
+			<TranslatorsPanel {translators} />
+			<OtherCreditsPanel {others} />
+		</div>
 	</div>
+	<!-- <div class="flex flex-col items-center p-4">
+		<div class="bg-panel rounded-xl p-4 shadow flex flex-col items-center gap-4 w-full">
+			<div class="flex items-center gap-3">
+				<img src="/logo.png" alt="SlimeTora Logo" class="w-14 h-14 rounded-lg drop-shadow-lg" />
+				<span class="text-3xl font-heading font-bold text-text">SlimeTora <span class="text-xs text-text-alt">v{appVersion}</span></span>
+			</div>
+			<p class="text-center text-base text-text-alt">
+				SlimeTora is a middleware program that allows you to connect the HaritoraX trackers to the
+				SlimeVR server instead of the OEM software.
+			</p>
+		</div>
+	</div> -->
 </div>

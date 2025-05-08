@@ -44,6 +44,7 @@ isOn.subscribe(async (value) => {
 });
 
 export const currentPath = writable("/");
+
 export const navLinks = [
 	{
 		name: "Home",
@@ -66,6 +67,7 @@ export const navLinks = [
 		link: "/about",
 	},
 ];
+
 export const externalNavLinks = [
 	{
 		name: "GitHub",
@@ -73,8 +75,13 @@ export const externalNavLinks = [
 		link: "https://github.com/OCSYT/SlimeTora",
 	},
 	{
-		name: "Docs",
-		icon: "ri:book-marked-line",
-		link: "https://github.com/OCSYT/SlimeTora/wiki",
+		name: "Discord",
+		icon: "ri:discord-line",
+		link: "https://discord.gg/3J6q2a5k4C",
+	},
+	{
+		name: "Help",
+		icon: "ri:question-line",
+		link: "https://github.com/OCSYT/SlimeTora/wiki/",
 	},
 ];
