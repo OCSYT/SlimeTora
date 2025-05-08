@@ -10,6 +10,7 @@
 	--color-card: var(--card);
 	--color-primary: var(--primary);
 	--color-secondary: var(--secondary);
+	--color-secondary-alt: var(--secondary-alt);
 	--color-tertiary: var(--tertiary);
 	--color-quaternary: var(--quaternary);
 
@@ -30,6 +31,7 @@
 	--card: var(--quaternary);
 	--primary: #9a48ee;
 	--secondary: #f05d38;
+	--secondary-alt: #F9B5A4;
 	--tertiary: #62656a;
 	--quaternary: #45464a;
 
