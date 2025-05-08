@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onNavigate } from "$app/navigation";
 	import { currentPath } from "$lib/store";
-	import { onDestroy, onMount } from "svelte";
+	import { onMount } from "svelte";
 	import { OverlayScrollbars } from "OverlayScrollbars";
-	import { attachConsole } from "@tauri-apps/plugin-log";
 	import Toast from "$lib/components/Toast.svelte";
 	import { type Toast as ToastType, toasts } from "$lib/store/ToastProvider";
 	import "../app.css";
@@ -33,12 +32,6 @@
 				theme: "os-theme-dark",
 			},
 		});
-
-		detach = await attachConsole();
-	});
-
-	onDestroy(() => {
-		if (detach) detach();
 	});
 </script>
 

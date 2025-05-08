@@ -87,7 +87,6 @@ fn main() {
                         path,
                         file_name: Some("slimetora_".to_string() + &current_date),
                     }),
-                    Target::new(TargetKind::Webview),
                 ])
                 .build(),
         )
