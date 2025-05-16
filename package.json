@@ -26,6 +26,7 @@
     "overlayscrollbars": "^2.11.1",
     "prettier-plugin-svelte": "^3.3.3",
     "rand-seed": "^2.1.7",
+    "sveltekit-i18n": "^2.4.2",
     "tailwindcss": "^4.0.16",
     "three": "^0.176.0"
   },

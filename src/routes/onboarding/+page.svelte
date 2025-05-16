@@ -1,6 +1,7 @@
 <script>
 	import { goto } from "$app/navigation";
 	import Button from "$lib/components/settings/Button.svelte";
+	import { t } from "$lib/lang";
 </script>
 
 <div class="flex flex-col justify-between text-center min-h-screen">
@@ -10,27 +11,25 @@
 			<img src="/logo.png" alt="SlimeTora Logo" class="w-32 h-32 rounded-[20px] drop-shadow-lg" />
 		</div>
 		<div class="flex flex-col gap-3">
-			<h1 class="text-[40px]">Welcome to SlimeTora!</h1>
+			<h1 class="text-[40px]">{$t("onboarding.title")}</h1>
 			<p class="w-[600px] text-text-alt">
-				SlimeTora is a middleware program that allows you to connect your HaritoraX trackers to the SlimeVR
-				server, bypassing the official software!
+				{$t("onboarding.welcome")}
 			</p>
 		</div>
 	</div>
 
 	<div class="w-full p-8 flex flex-col items-center gap-6 bg-panel">
 		<p class="w-[600px] text-text-alt">
-			Please select how you would like to setup SlimeTora. After you have set up the program, you will be guided
-			on how to set up SlimeVR server.
+			{$t("onboarding.setup")}
 		</p>
 		<div class="flex flex-row gap-4">
 			<Button
 				type="onboarding"
-				label="Guided Setup"
+				label="{$t("onboarding.start")}"
 				background="secondary"
 				onClick={() => goto("/onboarding/setup")}
 			/>
-			<Button type="onboarding" label="Manual Setup (Skip)" background="button" onClick={() => goto("/")} />
+			<Button type="onboarding" label="{$t("onboarding.skip")}" background="button" onClick={() => goto("/")} />
 		</div>
 	</div>
 </div>
