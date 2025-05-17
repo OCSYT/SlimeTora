@@ -4,7 +4,7 @@
 		"welcome": "SlimeTora is a middleware program that allows you to connect your HaritoraX trackers to the SlimeVR server, bypassing the official software!",
 		"setup": "Please select how you would like to setup SlimeTora. After you have set up the program, you will be guided on how to set up SlimeVR server.",
 		"start": "Guided Setup",
-		"skip": "Manua; Setup (skip)",
+		"skip": "Manual Setup (skip)",
 		"next": "Next",
 		"back": "Back"
 	},

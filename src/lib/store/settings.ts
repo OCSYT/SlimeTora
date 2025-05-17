@@ -4,7 +4,7 @@ import { load } from "@tauri-apps/plugin-store";
 import { derived } from "svelte/store";
 import { error, info } from "$lib/log";
 
-export const config = await load("config.json", { autoSave: true });
+let config: Awaited<ReturnType<typeof load>>;
 
 export type LoggingMode = "minimal" | "debug" | "all";
 
@@ -80,24 +80,32 @@ export const advanced = writable<AdvancedSettings>({
 	loggingMode: "minimal",
 });
 
-try {
-	const loaded = await config.get("settings");
-	if (loaded && typeof loaded === "object") {
-		const settings = loaded as {
-			program?: ProgramSettings;
-			connection?: ConnectionSettings;
-			tracker?: TrackerSettings;
-			advanced?: AdvancedSettings;
-		};
-		if (settings.program) program.set(settings.program);
-		if (settings.connection) connection.set(settings.connection);
-		if (settings.tracker) tracker.set(settings.tracker);
-		if (settings.advanced) advanced.set(settings.advanced);
+(async () => {
+	try {
+		config = await load("config.json", { autoSave: true });
+
+		try {
+			const loaded = await config.get("settings");
+			if (loaded && typeof loaded === "object") {
+				const settings = loaded as {
+					program?: ProgramSettings;
+					connection?: ConnectionSettings;
+					tracker?: TrackerSettings;
+					advanced?: AdvancedSettings;
+				};
+				if (settings.program) program.set(settings.program);
+				if (settings.connection) connection.set(settings.connection);
+				if (settings.tracker) tracker.set(settings.tracker);
+				if (settings.advanced) advanced.set(settings.advanced);
+			}
+			info(`Loaded settings from config.json: ${JSON.stringify(loaded, null, 2)}`);
+		} catch (e) {
+			error(`Failed to load settings from config.json: ${e}`);
+		}
+	} catch (e) {
+		error(`Failed to load config.json: ${e}`);
 	}
-	info(`Loaded settings from config.json: ${JSON.stringify(loaded, null, 2)}`);
-} catch (e) {
-	error(`Failed to load settings from config.json: ${e}`);
-}
+})();
 
 type SettingsType = {
 	[key: string]: any;

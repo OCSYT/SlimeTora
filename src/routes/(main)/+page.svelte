@@ -18,12 +18,12 @@
 			if (value) {
 				if (status) status.innerText = $t("home.connected");
 				if (button) button.classList.add("connected");
-			} else {
+			} else if (value === false) {
 				if (status) status.innerText = $t("home.disconnected");
 				if (button) button.classList.remove("connected");
 				trackers.update(() => []);
 			}
-	});
+		});
 	});
 </script>
 
