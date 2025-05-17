@@ -1,36 +1,59 @@
+import { appConfigDir, join } from "@tauri-apps/api/path";
+import { readDir, readTextFile, exists } from "@tauri-apps/plugin-fs";
 import i18n, { type Config } from "sveltekit-i18n";
-import fs from "fs";
-import path from "path";
-const config: Config = {
-    initLocale: "en",
-    loaders: [
-        {
-            locale: "en",
-            key: "",
-            loader: async () => (await import("./en.json")).default,
-        },
-        // dynamically load all other language JSON files
-        // TODO: probably copy translation files to app directory and load translations from there instead on first launch / doesnt exist, to allow users to make their own translations easily / add new ones
-        ...(() => {
-            try {
-                const langDir = path.resolve(__dirname, "./lang");
-                const files = fs.readdirSync(langDir);
-                return files
-                    .filter(file => file.endsWith(".json") && file !== "en.json")
-                    .map(file => {
-                        const locale = file.replace(".json", "");
-                        return {
-                            locale,
-                            key: "",
-                            loader: async () => (await import(`./lang/${file}`)).default,
-                        };
-                    });
-            } catch (error) {
-                console.error(`Error loading language files: ${error}`);
-                return [];
-            }
-        })(),
-    ],
-};
+import { browser } from "$app/environment";
+import { info, error } from "$lib/log";
 
-export const { t, loading, locales, locale, initialized, translations, loadTranslations } = new i18n(config);
+async function createI18nConfig(): Promise<Config> {
+	const defaultConfig: Config = {
+		initLocale: "en",
+		loaders: [],
+	};
+
+	if (browser) {
+		try {
+			const baseAppConfigPath = await appConfigDir();
+			const langDirPath = await join(baseAppConfigPath, "langs");
+
+			info(`Attempting to load language files from: ${langDirPath}`);
+
+			if (!(await exists(langDirPath))) {
+				error(
+					`Language directory does not exist: ${langDirPath}. Ensure Rust code copies files to $APPCONFIG/langs/ and capabilities are set.`,
+				);
+				return defaultConfig;
+			}
+
+			const files = await readDir(langDirPath);
+			info(`Files found in ${langDirPath}: ${files.map((f) => f.name ?? "[unknown]").join(", ")}`);
+
+			const loaders = await Promise.all(
+				files
+					.filter((file) => file.isFile && file.name?.endsWith(".json"))
+					.map(async (fileEntry) => {
+						const locale = fileEntry.name!.replace(".json", "");
+						const filePath = await join(langDirPath, fileEntry.name!);
+						return {
+							locale,
+							key: "",
+							loader: async () => {
+								const content = await readTextFile(filePath);
+								return JSON.parse(content);
+							},
+						};
+					}),
+			);
+			if (!defaultConfig.loaders) defaultConfig.loaders = [];
+			defaultConfig.loaders.push(...loaders);
+			info(`Configured loaders for locales: ${loaders.map((l) => l.locale).join(", ")}`);
+		} catch (err: any) {
+			error(`Error preparing language loaders: ${err.message || err}`);
+		}
+	}
+	return defaultConfig;
+}
+
+const i18nConfig = await createI18nConfig();
+const i18nInstance = new i18n(i18nConfig);
+
+export const { t, loading, locales, locale, initialized, translations, loadTranslations } = i18nInstance;

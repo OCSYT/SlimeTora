@@ -1,27 +1,27 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": [
-    "main"
-  ],
-  "permissions": [
-    "core:default",
-    "core:webview:allow-set-webview-zoom",
-    "opener:default",
-    "prevent-default:default",
-    {
-      "identifier": "opener:allow-open-path",
-      "allow": [
-        {
-          "path": [
-            "https://**",
-            "**/*"
-          ]
-        }
-      ]
-    },
-    "store:default",
-    "log:default"
-  ]
+	"$schema": "../gen/schemas/desktop-schema.json",
+	"identifier": "default",
+	"description": "Capability for the main window",
+	"windows": ["main"],
+	"permissions": [
+		"core:default",
+		"core:webview:allow-set-webview-zoom",
+		"opener:default",
+		"prevent-default:default",
+		{
+			"identifier": "opener:allow-open-path",
+			"allow": [
+				{
+					"path": ["https://**", "**/*"]
+				}
+			]
+		},
+		"store:default",
+		"log:default",
+		"fs:default",
+		{
+			"identifier": "fs:scope",
+			"allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }, { "path": "$APPCONFIG/langs/**" }]
+		}
+	]
 }

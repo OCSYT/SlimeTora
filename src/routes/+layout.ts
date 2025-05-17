@@ -12,7 +12,11 @@ export const load: LayoutLoad = async ({ url }) => {
 	const { pathname } = url;
 	const initLocale = getInitialLocale();
 
-	await loadTranslations(initLocale, pathname);
+	try {
+		await loadTranslations(initLocale, pathname);
+	} catch (error) {
+		console.error(`[i18n]: Failed to load translation for locale '${initLocale}' and route '${pathname}'. Error:`, error);
+	}
 
 	return { locale: initLocale, route: pathname };
 };

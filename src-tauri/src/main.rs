@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use log::{error, info};
+use tauri::path::BaseDirectory;
 use tauri_plugin_log::RotationStrategy;
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -40,14 +41,19 @@ fn main() {
     let context: tauri::Context<tauri::Wry> = tauri::generate_context!();
     let identifier = context.config().identifier.clone();
 
-    let path = dirs::config_dir()
+    let logs_path = dirs::config_dir()
         .expect("Failed to find config dir")
-        .join(identifier)
+        .join(&identifier)
         .join("logs");
+    let langs_path = dirs::config_dir()
+        .expect("Failed to find config dir")
+        .join(&identifier)
+        .join("langs");
 
     let current_date = chrono::Local::now().format("%Y%m%d").to_string();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
             tauri_plugin_prevent_default::Builder::new()
@@ -84,15 +90,46 @@ fn main() {
                 .targets([
                     Target::new(TargetKind::Stdout),
                     Target::new(TargetKind::Folder {
-                        path,
+                        path: logs_path,
                         file_name: Some("slimetora_".to_string() + &current_date),
                     }),
                 ])
                 .build(),
         )
-        .setup(|_app: &mut tauri::App| {
+        .setup(move |app: &mut tauri::App| {
+            // only copy language files if the langs_path directory does not exist
+            if !langs_path.exists() {
+                let resource_path = app
+                    .path()
+                    .resolve("resources/lang/", BaseDirectory::Resource)?;
+
+                // for every language in folder, copy to lang/ in langs_path
+                if let Ok(entries) = std::fs::read_dir(&resource_path) {
+                    info!("Copying language files to {}", langs_path.display());
+                    // Ensure the langs_path directory exists before copying
+                    if let Err(e) = std::fs::create_dir_all(&langs_path) {
+                        error!("Failed to create langs directory: {}", e);
+                    }
+                    for entry in entries.flatten() {
+                        println!("Processing entry: {}", entry.path().display());
+                        if let Some(file_name) = entry.file_name().to_str() {
+                            let lang_path = langs_path.join(file_name);
+                            if !lang_path.exists() {
+                                std::fs::copy(entry.path(), lang_path).expect(&format!(
+                                    "Failed to copy language file: {}",
+                                    file_name
+                                ));
+                                info!("Copied language file: {}", file_name);
+                            }
+                        }
+                    }
+                } else {
+                    error!("Failed to read resource path for languages");
+                }
+            }
+
             #[cfg(mobile)]
-            _app.btleplug()
+            app.btleplug()
                 .request_permissions(tauri_plugin_btleplug::permission::RequestPermission {
                     bluetooth: true,
                     bluetooth_admin: true,

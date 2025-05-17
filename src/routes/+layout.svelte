@@ -10,7 +10,6 @@
 	import "overlayscrollbars/overlayscrollbars.css";
 
 	let { children } = $props();
-	let detach: () => void;
 
 	let toastList = $state<ToastType[]>([]);
 	toasts.subscribe((value) => {
