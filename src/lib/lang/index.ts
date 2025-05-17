@@ -4,9 +4,14 @@ import i18n, { type Config } from "sveltekit-i18n";
 import { browser } from "$app/environment";
 import { info, error } from "$lib/log";
 
-async function createI18nConfig(): Promise<Config> {
-	const defaultConfig: Config = {
+interface Params {
+  value: any;
+}
+
+async function createI18nConfig(): Promise<Config<Params>> {
+	const defaultConfig: Config<Params> = {
 		initLocale: "en",
+		fallbackLocale: "en",
 		loaders: [],
 	};
 
@@ -19,7 +24,7 @@ async function createI18nConfig(): Promise<Config> {
 
 			if (!(await exists(langDirPath))) {
 				error(
-					`Language directory does not exist: ${langDirPath}. Ensure Rust code copies files to $APPCONFIG/langs/ and capabilities are set.`,
+					`Language directory does not exist: ${langDirPath}.`,
 				);
 				return defaultConfig;
 			}

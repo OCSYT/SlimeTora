@@ -1,20 +1,28 @@
 {
 	"onboarding": {
 		"title": "Welcome to SlimeTora!",
-        "welcome": "SlimeTora is a middleware program that allows you to connect your HaritoraX trackers to the SlimeVR server, bypassing the official software!",
-        "setup": "Please select how you would like to setup SlimeTora. After you have set up the program, you will be guided on how to set up SlimeVR server.",
+		"welcome": "SlimeTora is a middleware program that allows you to connect your HaritoraX trackers to the SlimeVR server, bypassing the official software!",
+		"setup": "Please select how you would like to setup SlimeTora. After you have set up the program, you will be guided on how to set up SlimeVR server.",
 		"start": "Guided Setup",
-        "skip": "Manua; Setup (skip)",
+		"skip": "Manua; Setup (skip)",
 		"next": "Next",
 		"back": "Back"
 	},
 
-    "home": {
-    },
+	"home": {
+		"connected": "Trackers are connected",
+		"disconnected": "Trackers are not connected",
+		"count": "{{value:gt; 0:{{value; 1:{{value}} tracker connected; default:{{value}} trackers connected}}; default:{{value}} trackers connected}}",
+		"onboarding": "Open onboarding"
+	},
+
+	"trackers": {
+
+	},
 
 	"settings": {
-
-    },
+		
+	},
 
 	"about": {
 		"title": "About SlimeTora",

@@ -4,6 +4,7 @@
 	import Icon from "@iconify/svelte";
 	import { onMount } from "svelte";
 	import { trackers } from "$lib/store";
+	import { t } from "$lib/lang";
 
 	let trackerCount = $state(0);
 
@@ -15,27 +16,29 @@
 			const button = document.querySelector(".power-button");
 
 			if (value) {
-				if (status) status.innerText = "Trackers are connected";
+				if (status) status.innerText = $t("home.connected");
 				if (button) button.classList.add("connected");
 			} else {
-				if (status) status.innerText = "Trackers are not connected";
+				if (status) status.innerText = $t("home.disconnected");
 				if (button) button.classList.remove("connected");
 				trackers.update(() => []);
 			}
-		});
+	});
 	});
 </script>
 
 <div class="flex flex-col justify-center items-center w-full h-full gap-12">
 	<div class="power-button-bg"></div>
 
-	<p class="text-2xl font-heading" id="tracker-status">Trackers are not connected</p>
+	<p class="text-2xl font-heading" id="tracker-status">{$t("home.disconnected")}</p>
 	<button class="power-button hoverable" onclick={() => isOn.update((value) => !value)}>
 		<Icon class="icon text-white" icon="ri:shut-down-line" width={78} />
 	</button>
-	<p class="text-xl text-text-alt font-heading"><span id="tracker-count">{trackerCount}</span> connected trackers</p>
+	<p class="text-xl text-text-alt font-heading">
+		{$t("home.count", { value: trackerCount })}
+	</p>
 
-	<button onclick={() => goto("/onboarding")}>Open onboarding</button>
+	<button onclick={() => goto("/onboarding")}>{$t("home.onboarding")}</button>
 </div>
 
 <style>
