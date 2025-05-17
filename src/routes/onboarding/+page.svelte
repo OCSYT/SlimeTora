@@ -1,10 +1,34 @@
-<script>
+<script lang="ts">
 	import { goto } from "$app/navigation";
 	import Button from "$lib/components/settings/Button.svelte";
-	import { t } from "$lib/lang";
+	import Select from "$lib/components/settings/Select.svelte";
+	import { t, locales, locale } from "$lib/lang";
+
+	let availableLocales = $state<string[]>([]);
+	let currentLocale = $state($locale);
+
+	$effect(() => {
+		locales.subscribe((value) => (availableLocales = value));
+		locale.subscribe((value) => (currentLocale = value));
+	});
+
+	function changeLocale(newLocale: string) {
+		locale.set(newLocale);
+	}
 </script>
 
 <div class="flex flex-col justify-between text-center min-h-screen">
+	<!-- Locale Dropdown -->
+	<!-- TODO: add to main window also -->
+	<div class="absolute top-4 left-4">
+		<Select
+			options={availableLocales.map((loc) => ({ value: loc, label: loc }))}
+			selected={currentLocale || ""}
+			onChange={(value: string) => changeLocale(value)}
+			icon="ri:translate"
+		/>
+	</div>
+
 	<div class="flex flex-col justify-center items-center gap-6 flex-1">
 		<div class="flex justify-center items-center">
 			<div class="logo-bg"></div>
@@ -25,11 +49,11 @@
 		<div class="flex flex-row gap-4">
 			<Button
 				type="onboarding"
-				label="{$t("onboarding.start")}"
+				label={$t("onboarding.start")}
 				background="secondary"
 				onClick={() => goto("/onboarding/setup")}
 			/>
-			<Button type="onboarding" label="{$t("onboarding.skip")}" background="button" onClick={() => goto("/")} />
+			<Button type="onboarding" label={$t("onboarding.skip")} background="button" onClick={() => goto("/")} />
 		</div>
 	</div>
 </div>

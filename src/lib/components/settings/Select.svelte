@@ -11,9 +11,11 @@
 		tooltip?: string;
 		tooltipPosition?: TooltipPosition;
 		tooltipWidth?: string;
+		icon?: string;
 	}
 
-	let { label, className, options, selected, onChange, tooltip, tooltipPosition, tooltipWidth }: Props = $props();
+	let { label, className, options, selected, onChange, tooltip, tooltipPosition, tooltipWidth, icon }: Props =
+		$props();
 
 	function handleChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
@@ -29,11 +31,15 @@
 		{/if}
 	</div>
 	<div class="relative w-full">
+		{#if icon}
+			<Icon {icon} width={18} class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+		{/if}
 		<select
 			id="select-input"
 			bind:value={selected}
 			onchange={handleChange}
 			class="appearance-none bg-quaternary rounded-md px-3 py-2 pr-8 w-full focus:outline-none focus:ring-2 focus:ring-secondary transition-shadow"
+			style="padding-left: {icon ? '2.5rem' : '0.75rem'}"
 		>
 			{#each options as { value, label }}
 				<option {value}>{label}</option>
