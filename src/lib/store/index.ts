@@ -45,6 +45,7 @@ isOn.subscribe(async (value) => {
 
 export const currentPath = writable("/");
 
+// TODO: change this so it can be translated by files
 export const navLinks = [
 	{
 		name: "Home",

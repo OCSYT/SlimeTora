@@ -10,6 +10,7 @@
 	},
 
 	"home": {
+		"title": "Home",
 		"connected": "Trackers are connected",
 		"disconnected": "Trackers are not connected",
 		"count": "{{value:gt; 0:{{value; 1:{{value}} tracker connected; default:{{value}} trackers connected}}; default:{{value}} trackers connected}}",
@@ -17,17 +18,193 @@
 	},
 
 	"trackers": {
-
+		"title": "Trackers",
+		"none": "No trackers found! Maybe connect some :)",
+		"card": {
+			"device": "Device:",
+			"imu": "IMU:",
+			"battery": "Battery:",
+			"status": "Status:",
+			"settings": "Open tracker settings: {{name}}",
+			"power_off": "Power off tracker: {{name}}",
+			"tooltip": {
+				"mag_status": "Magnetometer status. If all trackers are consistently \"GREAT\", it is preferred to use sensor mode 1.'}",
+				"rssi": "Wireless signal strength (RSSI). Higher (closer to 0) is better."
+			}
+		},
+		"settings": {
+			"title": "Settings",
+			"collapse_expand": "Collapse/expand all trackers",
+			"precise_data": "Precise data",
+			"fast_data": "Fast data",
+			"visualization": "Show tracker visualization"
+		},
+		"per_tracker": {
+			"title": "{{name}} Settings",
+			"description": "Override the hardware settings for this tracker. Can be useful if only certain trackers have bad magnetometer statuses.",
+			"fps": {
+				"name": "FPS transfer rate",
+				"tooltip": "Select how many times the trackers send data per second. 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS."
+			},
+			"sensor_mode": {
+				"name": "Sensor mode",
+				"tooltip": "Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables magnetometer and is recommended for unstable environments."
+			},
+			"sensor_auto_correction": {
+				"name": "Sensor auto correction",
+				"tooltip": "Enable or disable sensor auto correction (dynamic calibration) features. Usually not needed to be changed and results vary between environments."
+			},
+			"virtual_feet": {
+				"name": "Virtual feet trackers",
+				"tooltip": "Enables the use of the ankle/leg sensor to track the motion of your feet."
+			},
+			"debugging": "Debugging",
+			"get_settings": "Get tracker settings",
+			"reset_settings": "Reset settings"
+		}
 	},
 
 	"settings": {
-		
+		"title": "Settings",
+		"program": {
+			"title": "Program Settings",
+			"app_behavior": {
+				"name": "App Behavior",
+				"tooltip": "Controls general behavior of the app."
+			},
+			"start_connection": {
+				"name": "Start connection on open",
+				"tooltip": "Automatically start the connection when the app opens."
+			},
+			"turn_off_trackers": {
+				"name": "Turn off trackers on exit",
+				"tooltip": "Automatically turn off trackers when exiting the app."
+			},
+			"visualization_fps": {
+				"name": "Tracker Visualization FPS",
+				"tooltip": "Sets the framerate for the 3D tracker visualization. Lower values save resources."
+			},
+			"update_settings": {
+				"name": "Update Settings",
+				"tooltip": "Manage how the app and language updates are handled.",
+				"app": "App updates",
+				"language": "Language updates",
+				"channel": {
+					"name": "Update Channel",
+					"tooltip": "Select the update channel for the app. Beta gives you the very latest features, but may be more buggy.",
+					"stable": "Stable",
+					"beta": "Beta"
+				}
+			}
+		},
+		"connection": {
+			"title": "Connection Settings",
+			"tracker_model": {
+				"name": "Tracker Model",
+				"tooltip": "Select the model(s) of HaritoraX trackers you have. Multiple can be used at the same time for advanced users."
+			},
+			"connection_mode": {
+				"name": "Connection Mode",
+				"tooltip": "Select the connection mode used to connect to the trackers. Multiple modes can be used simultaneously."
+			},
+			"serial_ports": {
+				"name": "Serial Ports",
+				"tooltip": "Select the serial port(s) your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using.",
+				"none": "No serial ports detected"
+			},
+			"slimevr_server": {
+				"name": "SlimeVR Server",
+				"tooltip": "Configure where SlimeTora looks for the SlimeVR server. By default, it will look for the server across all of your networks using the local broadcast address (255.255.255.255)."
+			},
+			"server_ip": "Server IP",
+			"server_port": "Server Port"
+		},
+		"tracker": {
+			"title": "Tracker Settings",
+			"fps": {
+				"name": "FPS transfer rate",
+				"tooltip": "Select how many times the trackers send data per second. 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS.",
+				"100": "100 FPS",
+				"50": "50 FPS"
+			},
+			"sensor_mode": {
+				"name": "Sensor mode",
+				"tooltip": "Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables magnetometer and is recommended for unstable environments.",
+				"1": "Mode 1 (magnetometer enabled)",
+				"2": "Mode 2 (magnetometer disabled)"
+			},
+			"sensor_auto_correction": {
+				"name": "Sensor auto correction",
+				"tooltip": "Enable or disable sensor auto correction (dynamic calibration) features. Usually not needed to be changed and results vary between environments."
+			},
+			"virtual_feet": {
+				"name": "Virtual feet trackers",
+				"tooltip": "Enables the use of the ankle/leg sensor to track the motion of your feet."
+			},
+			"other_settings": {
+				"name": "Other settings",
+				"tooltip": "Additional tracker settings that affect overall performance."
+			},
+			"heartbeat": {
+				"name": "Heartbeat Interval (ms)",
+				"tooltip": "Sets the interval at which the program sends heartbeat signals to the tracker to keep them connected. Usually not necessary to change."
+			},
+			"button_debounce": {
+				"name": "Button Debounce (ms)",
+				"tooltip": "Sets the debounce time for button presses to avoid accidental multiple activations."
+			}
+		},
+		"advanced": {
+			"title": "Advanced Settings",
+			"serial_settings": {
+				"name": "Serial Settings",
+				"tooltip": "Advanced serial port configurations. Options with yellow text require a restart of the connection or program to apply."
+			},
+			"bypass_serial_limit": {
+				"name": "Bypass serial port limit",
+				"tooltip": "Allows bypassing the serial port limit imposed by the operating system. Use with caution."
+			},
+			"logging": {
+				"name": "Logging",
+				"tooltip": "Configure how the application handles logging information for the frontend and backend of the program."
+			},
+			"write_logs": {
+				"name": "Write logs",
+				"tooltip": "Enable or disable writing logs to the disk."
+			},
+			"logging_mode": {
+				"name": "Logging Mode",
+				"tooltip": "Select the level of detail for logging. Higher levels may impact performance, do not change if you don't have issues!",
+				"minimal": "Minimal data",
+				"debug": "Debug data",
+				"all": "All data (!!!)"
+			},
+			"open_logs_folder": {
+				"name": "Open Logs Folder",
+				"tooltip": "Opens the folder where logs are stored."
+			}
+		}
 	},
 
 	"about": {
-		"title": "About SlimeTora",
+		"title": "About",
 		"description": "The SlimeTora project is a middleware program that allows you to connect the HaritoraX trackers to the SlimeVR server.",
-		"made_by": "Made by: {names}"
+		"contributors": {
+			"title": "Contributors",
+			"byline": {
+				"jovannmc": "Developer, has a tail",
+				"bracketproto": "Developer, loves scugs",
+				"realmy": "UI designer, growls occasionally"
+			},
+			"easter_egg": {
+				"joe-van": "Has Joe Biden, is a van, maybe a Joe-van",
+				"bracketproto": "Developer, loves scugs",
+				"grrealmy": "grrgrgrhrtgrgrrrgtdg!!!grrr!!! !!"
+			}
+		},
+		"translators": "Translators",
+		"other_credits": "Other Credits",
+		"gh_contributors": "GitHub Contributors"
 	},
 
 	"common": {

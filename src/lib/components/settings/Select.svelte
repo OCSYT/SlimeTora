@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from "@iconify/svelte";
+	import Tooltip, { type TooltipPosition } from "./Tooltip.svelte";
 
 	interface Props {
 		label?: string;
@@ -7,9 +8,12 @@
 		options: { value: string; label: string }[];
 		selected: string;
 		onChange: (value: string) => void;
+		tooltip?: string;
+		tooltipPosition?: TooltipPosition;
+		tooltipWidth?: string;
 	}
 
-	let { label, className, options, selected, onChange }: Props = $props();
+	let { label, className, options, selected, onChange, tooltip, tooltipPosition, tooltipWidth }: Props = $props();
 
 	function handleChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
@@ -18,7 +22,12 @@
 </script>
 
 <div class="flex flex-col gap-2 {className}">
-	<label class="font-medium" for="select-input">{label}</label>
+	<div class="flex flex-row items-center gap-2">
+		<label class="font-medium" for="select-input">{label}</label>
+		{#if tooltip}
+			<Tooltip content={tooltip} icon="ri:information-line" position={tooltipPosition} width={tooltipWidth} />
+		{/if}
+	</div>
 	<div class="relative w-full">
 		<select
 			id="select-input"

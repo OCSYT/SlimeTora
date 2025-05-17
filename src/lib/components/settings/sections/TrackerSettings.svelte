@@ -6,6 +6,7 @@
 	import Select from "$lib/components/settings/Select.svelte";
 	import Icon from "@iconify/svelte";
 	import Tooltip from "../Tooltip.svelte";
+	import { t } from "$lib/lang";
 
 	let fps = $state($tracker.fps === FPSMode.Mode100 ? "100" : "50");
 	let sensorMode = $state($tracker.mode === SensorMode.MagEnabled ? "1" : "2");
@@ -38,15 +39,15 @@
 <div class="bg-panel rounded-lg p-6 shadow">
 	<h2 class="text-2xl font-heading mb-6 flex items-center gap-2">
 		<Icon icon="ri:compass-3-line" class="text-secondary" width={28} />
-		Tracker Settings
+		{$t("settings.tracker.title")}
 	</h2>
 
 	<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				FPS transfer rate
+				{$t("settings.tracker.fps.name")}
 				<Tooltip
-					content="Select how many times the trackers send data per second. 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS."
+					content={$t("settings.tracker.fps.tooltip")}
 					icon="ri:information-line"
 					position="up"
 					width="300px"
@@ -54,8 +55,8 @@
 			</h3>
 			<Select
 				options={[
-					{ value: "50", label: "50 FPS" },
-					{ value: "100", label: "100 FPS" },
+					{ value: "50", label: $t("settings.tracker.fps.50") },
+					{ value: "100", label: $t("settings.tracker.fps.100") },
 				]}
 				selected={fps}
 				onChange={(value) => (fps = value)}
@@ -64,9 +65,9 @@
 
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				Sensor mode
+				{$t("settings.tracker.sensor_mode.name")}
 				<Tooltip
-					content="Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables magnetometer and is recommended for unstable environments."
+					content={$t("settings.tracker.sensor_mode.tooltip")}
 					icon="ri:information-line"
 					position="up"
 					width="300px"
@@ -74,8 +75,8 @@
 			</h3>
 			<Select
 				options={[
-					{ value: "2", label: "Mode 2" },
-					{ value: "1", label: "Mode 1" },
+					{ value: "2", label: $t("settings.tracker.sensor_mode.2") },
+					{ value: "1", label: $t("settings.tracker.sensor_mode.1") },
 				]}
 				selected={sensorMode}
 				onChange={(value) => (sensorMode = value)}
@@ -84,9 +85,9 @@
 
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				Sensor auto correction
+				{$t("settings.tracker.sensor_auto_correction.name")}
 				<Tooltip
-					content="Enable or disable sensor auto correction (dynamic calibration) features. Usually not needed to be changed and results vary between environments."
+					content={$t("settings.tracker.sensor_auto_correction.tooltip")}
 					icon="ri:information-line"
 					position="up"
 					width="300px"
@@ -114,27 +115,26 @@
 
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				Virtual feet trackers
+				{$t("settings.tracker.virtual_feet.name")}
 				<Tooltip
-					content="Enables the use of the ankle/leg sensor to track the motion of your feet."
+					content={$t("settings.tracker.virtual_feet.tooltip")}
 					icon="ri:information-line"
 					position="up"
 					width="250px"
 				/>
 			</h3>
 			<Switch
-				label="Enable virtual feet trackers"
+				label={$t("settings.tracker.virtual_feet.name")}
 				selected={emulatedFeet}
 				onChange={(value) => (emulatedFeet = value)}
 			/>
-			<!-- TODO: should probably detect if (x) tracker is an ankle tracker automatically. look for the char that writes the tracker assignment later -->
 		</div>
 
 		<div class="col-span-2 flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				Other settings
+				{$t("settings.tracker.other_settings.name")}
 				<Tooltip
-					content="Additional tracker settings that affect overall performance."
+					content={$t("settings.tracker.other_settings.tooltip")}
 					icon="ri:information-line"
 					position="up"
 					width="250px"
@@ -143,21 +143,27 @@
 			<div class="flex flex-row gap-3 pl-1">
 				<Input
 					className="flex-1"
-					label="Heartbeat Interval (ms)"
+					label={$t("settings.tracker.heartbeat.name")}
 					type="number"
 					value={heartbeat}
 					onChange={(value) => (heartbeat = Number(value))}
 					icon="ri:heart-pulse-line"
 					placeholder="2000"
+					tooltip={$t("settings.tracker.heartbeat.tooltip")}
+					tooltipPosition="up"
+					tooltipWidth="250px"
 				/>
 				<Input
 					className="flex-1"
-					label="Button Debounce (ms)"
+					label={$t("settings.tracker.button_debounce.name")}
 					type="number"
 					value={buttonDebounce}
 					onChange={(value) => (buttonDebounce = Number(value))}
 					icon="ri:timer-line"
 					placeholder="500"
+					tooltip={$t("settings.tracker.button_debounce.tooltip")}
+					tooltipPosition="up"
+					tooltipWidth="250px"
 				/>
 			</div>
 		</div>

@@ -6,6 +6,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import { getVersion } from "@tauri-apps/api/app";
 	import { error } from "$lib/log";
+	import { t } from "$lib/lang";
 
 	let appVersion = $state("0.0.0");
 	let showingEasterEgg = $state(false);
@@ -22,7 +23,7 @@
 		{
 			pfp: "/pfp/jovannmc.png",
 			name: "JovannMC (Maya)",
-			byline: "Developer, has a tail",
+			byline: $t("about.contributors.byline.jovannmc"), // Developer, has a tail
 			links: [
 				{ icon: "ri:link", url: "https://jovann.me" },
 				{ icon: "ri:github-fill", url: "https://github.com/JovannMC" },
@@ -31,7 +32,7 @@
 		{
 			pfp: "/pfp/bracketproto.png",
 			name: "BracketProto",
-			byline: "Developer, loves scugs",
+			byline: $t("about.contributors.byline.bracketproto"), // Developer, loves scugs
 			links: [
 				{ icon: "ri:link", url: "https://bracketproto.com" },
 				{ icon: "ri:github-fill", url: "https://github.com/OCSYT" },
@@ -40,7 +41,7 @@
 		{
 			pfp: "/pfp/realmy.jpg",
 			name: "Realmy",
-			byline: "UI designer, growls occasionally",
+			byline: $t("about.contributors.byline.realmy"), // UI designer, growls occasionally
 			links: [
 				{ icon: "ri:link", url: "https://realmy.net" },
 				{ icon: "ri:github-fill", url: "https://github.com/RealmyTheMan" },
@@ -52,7 +53,7 @@
 		{
 			pfp: "/pfp/easter-egg/joe-van.png",
 			name: "Joe-van",
-			byline: "Has Joe Biden, is a van, maybe a Joe-van",
+			byline: $t("about.contributors.easter_egg.joe-van"), // Has Joe Biden, is a van, maybe a Joe-van
 			links: [
 				{ icon: "ri:link", url: "https://jovann.me" },
 				{ icon: "ri:github-fill", url: "https://github.com/JovannMC" },
@@ -61,7 +62,7 @@
 		{
 			pfp: "/pfp/bracketproto.png",
 			name: "BracketProto",
-			byline: "Developer, loves scugs",
+			byline: $t("about.contributors.easter_egg.bracketproto"), // Developer, loves scugs
 			links: [
 				{ icon: "ri:link", url: "https://bracketproto.com" },
 				{ icon: "ri:github-fill", url: "https://github.com/OCSYT" },
@@ -70,7 +71,7 @@
 		{
 			pfp: "/pfp/realmy.jpg",
 			name: "Grrealmy",
-			byline: "grrgrgrhrtgrgrrrgtdg!!!grrr!!! !!",
+			byline: $t("about.contributors.easter_egg.grrealmy"), // grrgrgrhrtgrgrrrgtdg!!!grrr!!! !!
 			links: [
 				{ icon: "ri:link", url: "https://realmy.net" },
 				{ icon: "ri:github-fill", url: "https://github.com/RealmyTheMan" },
@@ -193,8 +194,7 @@
 				>
 			</div>
 			<p class="text-center text-base text-text-alt max-w-lg">
-				SlimeTora is a middleware program that allows you to connect the HaritoraX trackers to the SlimeVR
-				server instead of the OEM software.
+				{$t("about.description")}
 			</p>
 		</div>
 	</div>

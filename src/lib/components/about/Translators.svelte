@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from "$lib/lang";
 	import Icon from "@iconify/svelte";
 
 	interface Props {
@@ -15,10 +16,11 @@
 	let { translators }: Props = $props();
 </script>
 
+<!-- TODO: dynamically load translators by including "credits" line in translation files, including name, pfp (GH profile link), and links -->
 <div class="flex flex-col gap-3">
 	<div class="flex items-center gap-2 text-xl font-heading">
 		<Icon icon="ri:translate-2" class="text-secondary" width={20} />
-		Translators
+		{$t("about.translators")}
 	</div>
 	<div class="bg-panel rounded-xl p-4 shadow flex flex-col gap-5 text-text-alt min-w-[338px]">
 		{#each translators as t}

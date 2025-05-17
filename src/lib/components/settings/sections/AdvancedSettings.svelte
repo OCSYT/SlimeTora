@@ -7,6 +7,7 @@
 	import { error } from "$lib/log";
 	import { advanced, type LoggingMode } from "$lib/store/settings";
 	import Tooltip from "../Tooltip.svelte";
+	import { t } from "$lib/lang";
 
 	let bypassSerialLimit = $state($advanced.bypassSerialLimit);
 	let writeLogs = $state($advanced.writeLogs);
@@ -33,53 +34,66 @@
 <div class="bg-panel rounded-lg p-6 shadow">
 	<h2 class="text-2xl font-heading mb-6 flex items-center gap-2">
 		<Icon icon="ri:tools-line" class="text-secondary" width={28} />
-		Advanced Settings
+		{$t("settings.advanced.title")}
 	</h2>
 
 	<div class="flex flex-col gap-4">
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-					Serial Settings
+					{$t("settings.advanced.serial_settings.name")}
 					<Tooltip
-						content="Advanced serial port configurations. Options with yellow text require a restart of the connection or program to apply."
+						content={$t("settings.advanced.serial_settings.tooltip")}
 						icon="ri:information-line"
 						position="up"
 					/>
 				</h3>
 				<div class="flex flex-col gap-3 pl-1">
 					<Checkbox
-						label="Bypass serial port limit"
+						label={$t("settings.advanced.bypass_serial_limit.name")}
 						checked={bypassSerialLimit}
 						onChange={(value) => (bypassSerialLimit = value)}
+						tooltip={$t("settings.advanced.bypass_serial_limit.tooltip")}
+						tooltipPosition="up"
+						tooltipWidth="250px"
 					/>
 				</div>
 			</div>
 
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-					Logging
+					{$t("settings.advanced.logging.name")}
 					<Tooltip
-						content="Configure how the application handles logging information. Higher logging levels may impact performance."
+						content={$t("settings.advanced.logging.tooltip")}
 						icon="ri:information-line"
 						position="up"
 					/>
 				</h3>
 				<div class="flex flex-col gap-3 pl-1">
-					<Checkbox label="Write logs" checked={writeLogs} onChange={(value) => (writeLogs = value)} />
+					<Checkbox
+						label={$t("settings.advanced.write_logs.name")}
+						checked={writeLogs}
+						onChange={(value) => (writeLogs = value)}
+						tooltip={$t("settings.advanced.write_logs.tooltip")}
+						tooltipPosition="up"
+						tooltipWidth="250px"
+					/>
 					<Select
-						label="Logging Mode"
+						label={$t("settings.advanced.logging_mode.name")}
 						options={[
-							{ value: "minimal", label: "Minimal data" },
-							{ value: "debug", label: "Debug data" },
-							{ value: "all", label: "All data (!!!)" },
+							{ value: "minimal", label: $t("settings.advanced.logging_mode.minimal") },
+							{ value: "debug", label: $t("settings.advanced.logging_mode.debug") },
+							{ value: "all", label: $t("settings.advanced.logging_mode.all") },
 						]}
 						selected={loggingMode}
 						onChange={(value) => (loggingMode = value as LoggingMode)}
+						tooltip={$t("settings.advanced.logging_mode.tooltip")}
+						tooltipPosition="up"
+						tooltipWidth="250px"
 					/>
 					<div class="mt-2">
 						<Button
-							label="Open Logs Folder"
+							label={$t("settings.advanced.open_logs_folder.name")}
 							icon="ri:folder-open-line"
 							iconPosition="left"
 							background="quaternary"

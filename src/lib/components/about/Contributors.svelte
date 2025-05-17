@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from "$lib/lang";
 	import Icon from "@iconify/svelte";
 
     interface Props {
@@ -16,7 +17,7 @@
 <div class="flex flex-col gap-3">
 	<div class="flex items-center gap-2 text-xl font-heading">
 		<Icon icon="ri:id-card-line" class="text-secondary" width={20} />
-		Contributors
+		{$t("about.contributors.title")}
 	</div>
 	<div class="bg-panel rounded-xl p-4 shadow flex flex-col gap-4 min-w-[338px]">
 		{#each contributors as c}

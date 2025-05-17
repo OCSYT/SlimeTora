@@ -10,6 +10,7 @@
 	import Checkbox from "$lib/components/settings/Checkbox.svelte";
 	import { error, info, warn } from "$lib/log";
 	import Tooltip from "../Tooltip.svelte";
+	import { t } from "$lib/lang";
 
 	let portsInitialized = $state(false);
 	let haritoraPorts: string[] = $state([]);
@@ -100,15 +101,15 @@
 <div class="bg-panel rounded-lg p-6 shadow">
 	<h2 class="text-2xl font-heading mb-6 flex items-center gap-2">
 		<Icon icon="ri:link" class="text-secondary" width={28} />
-		Connection Settings
+		{$t("settings.connection.title")}
 	</h2>
 
 	<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				Tracker Model
+				{$t("settings.connection.tracker_model.name")}
 				<Tooltip
-					content="Select the model(s) of HaritoraX trackers you have. Multiple can be used at the same time for advanced users."
+					content={$t("settings.connection.tracker_model.tooltip")}
 					icon="ri:information-line"
 					position="up"
 					width="250px"
@@ -133,9 +134,9 @@
 			</div>
 
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				Connection Mode
+				{$t("settings.connection.connection_mode.name")}
 				<Tooltip
-					content="Select the connection mode used to connect to the trackers. Multiple modes can be used simultaneously."
+					content={$t("settings.connection.connection_mode.tooltip")}
 					icon="ri:information-line"
 					position="up"
 					width="250px"
@@ -157,9 +158,9 @@
 
 		<div class="flex flex-col gap-4">
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				Serial Ports
+				{$t("settings.connection.serial_ports.name")}
 				<Tooltip
-					content="Select the serial port(s) your GX(6/2) dongles or HaritoraX 1.1b/1.1/1.0 trackers are using."
+					content={$t("settings.connection.serial_ports.tooltip")}
 					icon="ri:information-line"
 					position="up"
 					width="250px"
@@ -167,7 +168,7 @@
 			</h3>
 			{#if Object.keys(serialPorts).length > 0}
 				<div class="grid grid-cols-2 gap-3 pl-1">
-					{#each Object.entries(serialPorts) as [port, isActive]}
+					{#each Object.entries(serialPorts) as [port, _isActive]}
 						<Switch
 							label={port}
 							selected={serialPorts[port]}
@@ -177,22 +178,22 @@
 					{/each}
 				</div>
 			{:else}
-				<p class="text-text-alt italic">No serial ports detected</p>
+				<p class="text-text-alt italic">{$t("settings.connection.serial_ports.none")}</p>
 			{/if}
 
 			<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-				SlimeVR Server
+				{$t("settings.connection.slimevr_server.name")}
 				<Tooltip
-					content="Configure where SlimeTora looks for the SlimeVR server. By default, it will look for the server across your whole network."
+					content={$t("settings.connection.slimevr_server.tooltip")}
 					icon="ri:information-line"
 					position="up"
-					width="250px"
+					width="300px"
 				/>
 			</h3>
 			<div class="grid grid-cols-3 gap-4">
 				<div class="col-span-2">
 					<Input
-						label="Server IP"
+						label={$t("settings.connection.server_ip")}
 						type="text"
 						value={slimevrIP}
 						onChange={(value) => (slimevrIP = String(value))}
@@ -202,7 +203,7 @@
 				</div>
 				<div>
 					<Input
-						label="Server Port"
+						label={$t("settings.connection.server_port")}
 						type="number"
 						value={slimevrPort}
 						onChange={(value) => (slimevrPort = Number(value))}

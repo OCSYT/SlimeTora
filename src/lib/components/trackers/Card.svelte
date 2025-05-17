@@ -7,6 +7,7 @@
 	import { program } from "$lib/store/settings";
 	import TrackerVisualization from "./TrackerVisualization.svelte";
 	import Tooltip from "../settings/Tooltip.svelte";
+	import { t } from "$lib/lang";
 
 	let { name, id, type } = $props();
 	let isOpen = $state(false);
@@ -102,7 +103,7 @@
 		<div class="flex items-center gap-1">
 			<button
 				class="p-1 rounded-md hover:bg-secondary/20 active:bg-secondary/10"
-				aria-label="Power off tracker: {name}"
+				aria-label={$t("trackers.card.power_off", { name })}
 				onclick={(e) => {
 					e.stopPropagation();
 					info(`Powered off tracker: ${name} (${id})`);
@@ -112,7 +113,7 @@
 			</button>
 			<button
 				class="p-1 rounded-md hover:bg-secondary/20 active:bg-secondary/10"
-				aria-label="Open tracker settings for: {name}"
+				aria-label={$t("trackers.card.settings", { name })}
 				onclick={(e) => {
 					e.stopPropagation();
 					info(`Settings clicked for: ${name}`);
@@ -132,10 +133,12 @@
 	{#if isOpen}
 		<!-- Expanded content -->
 		<div class="p-4 bg-panel rounded-lg m-4 mt-0 flex flex-col gap-2">
-			<p><b>Device:</b> <span id="device-type">{id} ({type})</span></p>
-			<p><b>IMU:</b> <span id="imu">{rotation.join(", ")} ({acceleration.join(", ")})</span></p>
+			<p><b>{$t("trackers.card.device")}</b> <span id="device-type">{id} ({type})</span></p>
+			<p>
+				<b>{$t("trackers.card.imu")}</b> <span id="imu">{rotation.join(", ")} ({acceleration.join(", ")})</span>
+			</p>
 			<p class="flex flex-row items-center">
-				<b>Battery:</b>
+				<b>{$t("trackers.card.battery")}</b>
 				<span class="flex flex-row items-center justify-center gap-1 ml-1" id="battery-main">
 					<span>{batteryPercent}% ({batteryVoltage / 1000}V)</span>
 					{#if batteryStatus === "Charging"}
@@ -144,14 +147,10 @@
 				</span>
 			</p>
 			<div id="status" class="flex items-center text-center gap-1">
-				<b>Status:</b>
+				<b>{$t("trackers.card.status")}</b>
 				<div class="flex items-center gap-2" id="battery-status">
 					<div class="flex items-center gap-1" id="mag-status">
-						<Tooltip
-							content={'Magnetometer status. If all trackers are consistently "GREAT", it is preferred to use sensor mode 1.'}
-							position="up"
-							width="200px"
-						>
+						<Tooltip content={$t("trackers.card.tooltip.mag_status")} position="up" width="200px">
 							<Icon
 								icon="ri:compass-3-fill"
 								width={16}
@@ -160,15 +159,11 @@
 							/>
 						</Tooltip>
 						<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text"
-							>{magStatus}</span
+							>{$t("trackers.card.status", { status: magStatus })}</span
 						>
 					</div>
 					<div class="flex items-center gap-1" id="rssi-status">
-						<Tooltip
-							content="Wireless signal strength (RSSI). Higher (closer to 0) is better."
-							position="up"
-							width="200px"
-						>
+						<Tooltip content={$t("trackers.card.tooltip.rssi")} position="up" width="200px">
 							<Icon icon="ri:signal-wifi-fill" width={16} class="text-text-alt" />
 						</Tooltip>
 						<span class="text-text-alt" id="rssi">-{rssi} dBm</span>

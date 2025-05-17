@@ -8,6 +8,7 @@
 	import Button from "$lib/components/settings/Button.svelte";
 	import { error, info } from "$lib/log";
 	import Tooltip from "$lib/components/settings/Tooltip.svelte";
+	import { t } from "$lib/lang";
 
 	// TODO: finish this
 
@@ -55,18 +56,17 @@
 
 <div class="flex flex-col p-4 gap-8">
 	<div class="bg-panel rounded-lg p-6 shadow">
-		<h1 class="text-2xl font-heading mb-4">{trackerData?.name} settings</h1>
+		<h1 class="text-2xl font-heading mb-4">{$t("trackers.per_tracker.title", { name: trackerData?.name })}</h1>
 		<p class="text-text-alt mb-6">
-			Override the hardware settings for this tracker. Can be useful if only certain trackers have bad mag
-			statuses.
+			{$t("trackers.per_tracker.description")}
 		</p>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-					FPS transfer rate
+					{$t("trackers.per_tracker.fps.name")}
 					<Tooltip
-						content="Select how many times the trackers send data per second. 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS."
+						content={$t("trackers.per_tracker.fps.tooltip")}
 						icon="ri:information-line"
 						position="up"
 						width="300px"
@@ -84,9 +84,9 @@
 
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-					Sensor mode
+					{$t("trackers.per_tracker.sensor_mode.name")}
 					<Tooltip
-						content="Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables magnetometer and is recommended for unstable environments."
+						content={$t("trackers.per_tracker.sensor_mode.tooltip")}
 						icon="ri:information-line"
 						position="up"
 						width="300px"
@@ -104,9 +104,9 @@
 
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-					Sensor auto correction
+					{$t("trackers.per_tracker.sensor_auto_correction.name")}
 					<Tooltip
-						content="Enable or disable sensor auto correction (dynamic calibration) features. Usually not needed to be changed and results vary between environments."
+						content={$t("trackers.per_tracker.sensor_auto_correction.tooltip")}
 						icon="ri:information-line"
 						position="up"
 						width="300px"
@@ -133,16 +133,16 @@
 
 			<div class="flex flex-col gap-4">
 				<h3 class="text-lg font-heading flex items-center gap-2 pb-2 border-b border-secondary/50">
-					Virtual feet trackers
+					{$t("trackers.per_tracker.virtual_feet.name")}
 					<Tooltip
-						content="Enables the use of the ankle/leg sensor to track the motion of your feet."
+						content={$t("trackers.per_tracker.virtual_feet.tooltip")}
 						icon="ri:information-line"
 						position="up"
 						width="250px"
 					/>
 				</h3>
 				<Switch
-					label="Enable virtual feet trackers"
+					label={$t("trackers.per_tracker.virtual_feet.name")}
 					selected={trackerData?.emulatedFeet}
 					onChange={(value) => (trackerData.emulatedFeet = value)}
 				/>
@@ -152,7 +152,7 @@
 				<h3
 					class="text-lg font-heading flex items-center gap-2 pb-2 mb-4 border-b border-secondary/50 text-warning"
 				>
-					Debugging
+					{$t("trackers.per_tracker.debugging")}
 					<Icon
 						icon="ri:information-line"
 						width={20}
@@ -160,13 +160,8 @@
 					/>
 				</h3>
 				<div class="flex flex-col gap-4">
-					<!-- <Button
-                        label="Turn off tracker"
-                        background="danger"
-                        onClick={turnOffTracker}
-                    /> -->
-					<Button label="Get tracker settings" background="primary" onClick={getTrackerSettings} />
-					<Button label="Reset settings" background="primary" onClick={resetSettings} />
+					<Button label={$t("trackers.per_tracker.get_settings")} background="primary" onClick={getTrackerSettings} />
+					<Button label={$t("trackers.per_tracker.reset_settings")} background="primary" onClick={resetSettings} />
 				</div>
 			</div>
 		</div>
