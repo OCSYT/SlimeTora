@@ -56,6 +56,7 @@ let appUpdatesEnabled = true;
 let translationsUpdatesEnabled = true;
 let updateChannel = "stable";
 let buttonTimeout = 500;
+let buttonDebounce = 100;
 // this variable is literally only used so i can fix a stupid issue where with both BT+COM enabled, it sometimes connects the BT trackers again directly after again, breaking the program
 // why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
 // -jovannmc
@@ -93,6 +94,7 @@ try {
     heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
     loggingMode = config.global?.debug?.loggingMode ?? 1;
     buttonTimeout = config.global?.buttonTimeout ?? 500;
+    buttonDebounce = config.global?.buttonDebounce ?? 100;
 
     serverAddress = config.global?.serverAddress ?? "255.255.255.255";
     serverPort = config.global?.serverPort ?? 6969;
@@ -708,6 +710,11 @@ ipcMain.on("set-server-port", (_event, arg) => {
 ipcMain.on("set-button-timeout", (_event, arg) => {
     buttonTimeout = arg;
     log(`Button timeout set to: ${arg}`, "settings");
+});
+
+ipcMain.on("set-button-debounce", (_event, arg) => {
+    buttonDebounce = arg;
+    log(`Button debounce set to: ${arg}`, "settings");
 });
 
 ipcMain.on("fix-trackers", async () => {
@@ -1429,11 +1436,19 @@ function startDeviceListeners() {
 
     let clickCounts: { [key: string]: number } = {};
     let clickTimeouts: { [key: string]: NodeJS.Timeout } = {};
+    let buttonDebounceTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
     device.on("button", (trackerName: string, buttonPressed: string, isOn: boolean) => {
         if (!trackerName || !buttonPressed || !isOn || isClosing) return;
 
         let key = `${trackerName}-${buttonPressed}`;
+
+        // button debounce
+        if (buttonDebounceTimeouts[key] !== undefined) return;
+
+        buttonDebounceTimeouts[key] = setTimeout(() => {
+            delete buttonDebounceTimeouts[key];
+        }, buttonDebounce);
 
         if (!clickCounts[key]) clickCounts[key] = 0;
         clickCounts[key]++;

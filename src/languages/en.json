@@ -104,7 +104,8 @@
             "heartbeat": "Tracker heartbeat interval",
             "serverAddress": "SlimeVR server address",
             "serverPort": "SlimeVR server port",
-            "button": "Tracker button timeout"
+            "button": "Tracker button timeout",
+            "debounce": "Tracker button debounce"
         },
         "updates": {
             "title": "Update checking",

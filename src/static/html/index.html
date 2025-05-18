@@ -77,11 +77,7 @@
                     >
                         Open onboarding
                     </button>
-                    <button
-                        class="button is-warning is-hidden"
-                        id="debugging-button"
-                        onclick="debugTrackers()"
-                    >
+                    <button class="button is-warning is-hidden" id="debugging-button" onclick="debugTrackers()">
                         Debug trackers
                     </button>
                 </div>
@@ -450,8 +446,8 @@
                         </div>
                         <br />
                         <div class="columns is-centered">
-                            <div class="column is-centered">
-                                <div class="input-container">
+                            <div class="column is-half is-centered">
+                                <div class="input-container" style="margin-bottom: 16px;">
                                     <label
                                         for="server-address"
                                         class="label has-text-warning"
@@ -466,8 +462,6 @@
                                         style="max-width: 100%"
                                     />
                                 </div>
-                            </div>
-                            <div class="column is-centered">
                                 <div class="input-container">
                                     <label
                                         for="server-port"
@@ -484,17 +478,32 @@
                                     />
                                 </div>
                             </div>
-                            <div class="column is-centered">
-                                <div class="input-container">
+                            <div class="column is-half is-centered">
+                                <div class="input-container"  style="margin-bottom: 16px;">
                                     <label
                                         for="button-timeout"
-                                        class="label has-text-warning"
+                                        class="label"
                                         data-i18n="programSettings.other.button"
                                         >Tracker button timeout</label
                                     >
                                     <input
                                         type="text"
                                         id="button-timeout"
+                                        placeholder="500"
+                                        class="input"
+                                        style="max-width: 100%"
+                                    />
+                                </div>
+                                <div class="input-container">
+                                    <label
+                                        for="button-timeout"
+                                        class="label"
+                                        data-i18n="programSettings.other.debounce"
+                                        >Tracker button debounce</label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="button-debounce"
                                         placeholder="500"
                                         class="input"
                                         style="max-width: 100%"

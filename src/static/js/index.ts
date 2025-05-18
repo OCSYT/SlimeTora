@@ -47,6 +47,7 @@ let trackerHeartbeatInterval = 2000;
 let serverAddress = "255.255.255.255";
 let serverPort = 6969;
 let buttonTimeout = 500;
+let buttonDebounce = 100;
 
 let appUpdates = true;
 let translationUpdates = true;
@@ -169,6 +170,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     serverAddress = settings.global?.serverAddress ?? "255.255.255.255";
     serverPort = settings.global?.serverPort ?? 6969;
     buttonTimeout = settings.global?.buttonTimeout ?? 500;
+    buttonDebounce = settings.global?.buttonDebounce ?? 100;
 
     // Set switch states based on settings
     setSwitchState("compact-view-switch", compactView);
@@ -211,6 +213,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const buttonTimeoutInput = document.getElementById("button-timeout") as HTMLInputElement;
     buttonTimeoutInput.value = buttonTimeout.toString();
+
+    const buttonDebounceInput = document.getElementById("button-debounce") as HTMLInputElement;
+    buttonDebounceInput.value = buttonDebounce.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
@@ -1685,6 +1690,18 @@ function addEventListeners() {
         });
 
         window.ipc.send("set-button-timeout", buttonTimeout);
+    });
+
+    document.getElementById("button-debounce").addEventListener("change", async function () {
+        buttonDebounce = parseInt((document.getElementById("button-debounce") as HTMLInputElement).value);
+        l(`Changed button debounce to: ${buttonDebounce}`);
+        window.ipc.send("save-setting", {
+            global: {
+                buttonDebounce: buttonDebounce,
+            },
+        });
+
+        window.ipc.send("set-button-debounce", buttonDebounce);
     });
 
     document.getElementById("language-select").addEventListener("change", async function () {
