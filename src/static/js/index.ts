@@ -854,10 +854,12 @@ function toggleConnectionButtons(state: boolean) {
     if (startButton) startButton.disabled = state;
     if (stopButton) stopButton.disabled = !state;
 
-    if (wirelessTrackerEnabled && comEnabled) {
-        if (pairingButton) pairingButton.disabled = !state;
+    if (wirelessTrackerEnabled) {
         if (turnOffTrackersButton) turnOffTrackersButton.disabled = !state;
-        if (fixTrackersButton) fixTrackersButton.disabled = !state;
+        if (comEnabled) {
+            if (pairingButton) pairingButton.disabled = !state;
+            if (fixTrackersButton) fixTrackersButton.disabled = !state;
+        }
     }
 }
 
@@ -1889,7 +1891,7 @@ function addEventListeners() {
     document.getElementById("randomize-mac-switch").addEventListener("change", function () {
         randomizeMacAddress = !randomizeMacAddress;
         l(`Switched randomize MAC address: ${randomizeMacAddress}`);
-        window.ipc.send("set-randomize-mac", randomizeMacAddress)
+        window.ipc.send("set-randomize-mac", randomizeMacAddress);
         window.ipc.send("save-setting", {
             global: {
                 randomizeMacAddress,
