@@ -1777,6 +1777,9 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
         tracker.on("outgoing-packet", (packet: any) => {
             log(`Tracker "${trackerName}" outgoing packet: ${packet}`, "@slimevr/emulated-tracker");
         });
+        tracker.on("incoming-packet", (packet: any) => {
+            log(`Tracker "${trackerName}" incoming packet: ${packet}`, "@slimevr/emulated-tracker");
+        });
     }
 }
 
