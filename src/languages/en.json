@@ -160,6 +160,7 @@
         "writeToFile": "Write to log files",
         "bypassPortLimit": "Bypass port limit",
         "randomMac": "Randomize tracker MAC address",
+        "slimevrWarning": "Disable SlimeVR warning",
         "loggingMode": {
             "title": "Logging mode",
             "minimal": "Minimal data",

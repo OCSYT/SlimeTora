@@ -50,7 +50,7 @@
             "text": "Owewwide the gwobaw twacker meowings fow this twacker. Can be usefuw if onwy cewtain twackers hawe bad mag statuses.",
             "fps": {
                 "title": "Nyas twansfew wate",
-                "tooltip": "Sewect the nyas twansfew wate fow the twackers. If using Bwuetooth, 50FPS may be mowe stabwe.",
+                "tooltip": "Sewect the nyas twansfew wate fow the twackers. If using Bwuetooth, 50MPS may be mowe stabwe.",
                 "50": "50 nyas",
                 "100": "100 nyas"
             },
@@ -98,8 +98,10 @@
         "other": {
             "title": "Othew meowings",
             "tooltip": "Some meowings fow the pwogwam that don't fit in the othew categowies.",
-			"autoStart": "Stawt meowing on lawnch :3",
-			"autoOff": "Tuwn off twackers on stop :(",
+            "autoStart": "Stawt meowing on lawnch :3",
+            "autoOff": "Tuwn off twackers on stop :(",
+            "button": "Tracker button timeout",
+            "debounce": "Tracker button debounce",
             "trackerVisualizationFPS": "Twacker wisuawization nyas",
             "heartbeat": "Twacker heawtbeat intewwaw",
             "serverAddress": "SwimeVR servew addwess",
@@ -122,7 +124,7 @@
         "tooltip": "Set the gwobaw meowings fow the twackers (can be uvwwiden pew-twacker).",
         "fps": {
             "title": "Nyas twansfew wate",
-            "tooltip": "Sewect the nyas twansfew wate fow the twackers. If using Bwuetooth, 50FPS may be mowe stabwe.",
+            "tooltip": "Sewect the nyas twansfew wate fow the twackers. If using Bwuetooth, 50MPS may be mowe stabwe.",
             "50": "50 nyas",
             "100": "100 nyas"
         },
@@ -157,6 +159,8 @@
         "text": "Enyabwe ow disabwe demeowing featuwes fow the pwogwam. Using wogging mode 'Awl nibbles (!!!)' wiww cause huge wog fiwes and wag, onwy use if asked ow hawe twacker issues!",
         "writeToFile": "Wwite 2 wog fiwes",
         "bypassPortLimit": "Bypass powt wimit",
+        "randomMac": "Randomize tracker MAC address",
+        "slimevrWarning": "Disable SlimeVR warning",
         "loggingMode": {
             "title": "Wogging mode",
             "minimal": "Minyimaw nibbles",
@@ -176,13 +180,14 @@
         "steps": {
             "step-2": {
                 "title": "Gwided setup",
-                "text": "Gwided setup wiww hewp you thwough the pwocess of setting up the pwogwam step-by-step. You can wet the pwogwam twy to cat-detect youw settings ow answew the questions about youw setup. <br /><br /> It is wecommended (but nyot nyecessawy) to hawe at weast onye of youw twackers tuwnyed on and connyected to youw computew befowe continyuing. When you awe weady, cwick the \"Nyext\" button."
+                "text": "Gwided setup wiww hewp you thwough the pwocess of setting up the pwogwam step-by-step. You can answew questions about youw setup ow wet the pwogwam twy to cat-detect youw meowings.<br /><br />It is wecommended (but nyot nyecessawy) to hawe at weast onye of youw twackers tuwnyed on and connyected to youw computew befowe continyuing. When you awe weady, cwick the \"Nyext\" button."
             },
             "step-3": {
-                "title": "Cat-detection",
-                "text": "Pwess the button bewow 2 stawt the cat-detection pwocess. The pwocess may take up 2 20 seconds 2 compwete, <b>make suwe the officiaw softwawe is cwosed</b>.<br />Aftew the pwocess is compwete, u wiww weceiwe a pop-up with the wesuwts - make suwe they awe accuwate. If the pwocess faiws, u can twy again ow set up SwimeTowa manyuawwy.",
-                "autodetect": "Stawt cat-detection",
-                "text2": "If u awe happy with the wesuwts, cwick the \"Nyext\" button 2 continyue. Othewwise, u may set up SwimeTowa manyuawwy."
+                "title": "Gwided setup",
+                "text": "Pwess eithew button found bewow to set up the connyection (and meowings) to youw twackers. It is wecommended to use manyuaw and answew the questions, but cat-detection is awways an option.",
+                "autodetect": "Automatic (cat-detection)",
+                "questions": "Manyuaw (questions, wecommended)",
+                "text2": "If you awe happy with the meowings you (ow cat-detection) has chosen, cwick the \"Nyext\" button to continyue."
             },
             "step-4": {
                 "title": "SwimeVR setup",
@@ -327,7 +332,7 @@
                 "message": "Cat-detect faiwed. Pwease make suwe u hawe youw Bwuetooth/GX(6/2) dongwes pwugged in & tuwnyed on."
             }
         },
-		"questions": {
+        "questions": {
             "initial": {
                 "title": "Manyuaw setup",
                 "message": "Pwease answew the fowwowing questions to set up the pwogwam. If you awe unsuwe, you can awways use the cat-detect featuwe in the onboawding scween."
@@ -349,6 +354,43 @@
                 "title": "COM powts",
                 "message": "Sewect the COM powts youw GX(6/2) dongwes ow HawitowaX 1.1b/1.1/1.0 twackers awe using.\n\r\n\rSewected: {ports}"
             },
+            "sensorMode": {
+                "title": "Sensow mode",
+                "message": "Sewect the sensow mode fow the twackers.\r\n\r\nMode 1 enyabwes the magnyetometew which is best (weduces dwift) if you hawe a stabwe geomagnyetic enwiwonment (mag status is gween ow yewwow).\r\nIf youw enwiwonment is unstabwe (mag status is wed) ow you'we nyot suwe, use mode 2 (which is the defauwt).",
+                "2": "Mode 2 (defauwt)",
+                "1": "Mode 1 (magnyetometew)"
+            },
+            "fps": {
+                "title": "MPS twansfew wate",
+                "message": "Sewect how many times the twackers send meows pew second (\"MPS\"). 50 FPS may be mowe stabwe on Bwuetooth and use wess battewy, but isn't as smooth as 100 FPS.",
+                "50": "50 MPS",
+                "100": "100 MPS"
+            },
+            "sensorAutoCorrection": {
+                "title": "Sensow auto cowwection",
+                "message": "Enyabwe ow disabwe sensow auto cowwection featuwes (dynyamic cawibwation). Usuawwy nyot nyeeded to be changed and wesuwts wawy between enwiwonments.\r\n\r\nSewected sensows: {sensors}",
+                "accelerometer": "Accewewometew",
+                "gyroscope": "Gywoscope",
+                "magnetometer": "Magnyetometew"
+            },
+            "appUpdates": {
+                "title": "App updates",
+                "message": "Wouwd you wike to awwow the pwogwam to check fow updates on stawtup?",
+                "yes": "Yes",
+                "no": "Nyo"
+            },
+            "appUpdatesChannel": {
+                "title": "App updates channyew",
+                "message": "Sewect the update channyew you wouwd wike to weceiwe updates fwom.\r\nStabwe is wecommended fow most usews, whiwe beta is fow those who want to test nyew featuwes (but may be mowe buggy).",
+                "stable": "Stabwe (defauwt)",
+                "beta": "Beta"
+            },
+            "languageUpdates": {
+                "title": "Wanguage updates",
+                "message": "Wouwd you wike to awwow the pwogwam to check fow wanguage updates on stawtup?",
+                "yes": "Yes",
+                "no": "Nyo"
+            },
             "autoStart": {
                 "title": "Auto-stawt connyection",
                 "message": "Awwow the pwogwam to automaticawwy connyect to youw twackers wen openying the pwogwam??",
@@ -363,7 +405,7 @@
             },
             "finish": {
                 "title": "Setup compwete",
-                "message": "The pwogwam has been successfuwwy set up with the settings u choosed, you can awways modifwy this latew. Weview what you hawe chosen bewow: {settings}"
+                "message": "The pwogwam has been successfuwwy set up with the meowings u choosed, you can awways modifwy this latew. Weview what you hawe chosen bewow: {settings}"
             }
         },
         "updates": {
@@ -405,7 +447,7 @@
         },
         "fixTrackers": {
             "title": "Fix bwoken twackers meow",
-            "message": "Fow as wong as this diawog box is open, this featuwe wiww attempt 2 fix youw hawd-bwicked GX(6/2) twackers if they awe boot-wooping (tuwnying off immediatewy aftew being powewed on). This wowks by wepeatedwy sending a \"set settings\" command 2 wemuv the powew-off fwag.\r\n\r\nAttempt 2 keep tuwnying on youw twackers untiw they stay on, then cwose this diawog when they awe fixed. If youw twackers awe stiww nyot wowking, pwease wefew 2 the suppowt page.\r\n\r\nAftew pewfowming this, youw settings wiww weset 2 the fowwowing:\r\nSensow mode: 2\r\nFPS: 50\r\nSensow auto cowwection: accew"
+            "message": "Fow as wong as this diawog box is open, this featuwe wiww attempt 2 fix youw hawd-bwicked GX(6/2) twackers if they awe boot-wooping (tuwnying off immediatewy aftew being powewed on). This wowks by wepeatedwy sending a \"set meowings\" command 2 wemuv the powew-off fwag.\r\n\r\nAttempt 2 keep tuwnying on youw twackers untiw they stay on, then cwose this diawog when they awe fixed. If youw twackers awe stiww nyot wowking, pwease wefew 2 the suppowt page.\r\n\r\nAftew pewfowming this, youw meowings wiww weset 2 the fowwowing:\r\nSensow mode: 2\r\nMPS: 50\r\nSensow auto cowwection: accew"
         }
     }
 }
