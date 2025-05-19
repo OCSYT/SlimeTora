@@ -447,7 +447,7 @@
                         <br />
                         <div class="columns is-centered">
                             <div class="column is-half is-centered">
-                                <div class="input-container" style="margin-bottom: 16px;">
+                                <div class="input-container" style="margin-bottom: 16px">
                                     <label
                                         for="server-address"
                                         class="label has-text-warning"
@@ -479,11 +479,8 @@
                                 </div>
                             </div>
                             <div class="column is-half is-centered">
-                                <div class="input-container"  style="margin-bottom: 16px;">
-                                    <label
-                                        for="button-timeout"
-                                        class="label"
-                                        data-i18n="programSettings.other.button"
+                                <div class="input-container" style="margin-bottom: 16px">
+                                    <label for="button-timeout" class="label" data-i18n="programSettings.other.button"
                                         >Tracker button timeout</label
                                     >
                                     <input
@@ -495,10 +492,7 @@
                                     />
                                 </div>
                                 <div class="input-container">
-                                    <label
-                                        for="button-timeout"
-                                        class="label"
-                                        data-i18n="programSettings.other.debounce"
+                                    <label for="button-timeout" class="label" data-i18n="programSettings.other.debounce"
                                         >Tracker button debounce</label
                                     >
                                     <input
@@ -776,6 +770,25 @@
                     huge log files and lag, only use if asked or have tracker issues!
                 </h2>
                 <div class="column is-12">
+                    <div class="input-container is-centered has-text-centered">
+                        <label
+                            for="logging-mode-select"
+                            class="label has-text-warning"
+                            data-i18n="debugging.loggingMode.title"
+                            >Logging mode</label
+                        >
+                        <div class="settings-container">
+                            <div class="select">
+                                <select id="logging-mode-select">
+                                    <option value="1" data-i18n="debugging.loggingMode.minimal">Minimal data</option>
+                                    <option value="2" data-i18n="debugging.loggingMode.extra">Extra data</option>
+                                    <option value="3" data-i18n="debugging.loggingMode.all">All data (!!!)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-12">
                     <div class="debugging-container">
                         <div class="switch-container is-centered">
                             <div class="switch">
@@ -784,24 +797,12 @@
                             </div>
                             <label for="log-to-file-switch" data-i18n="debugging.writeToFile">Write to log files</label>
                         </div>
-                        <div class="input-container is-centered has-text-centered">
-                            <label
-                                for="tracker-visualization-fps"
-                                class="label has-text-warning"
-                                data-i18n="debugging.loggingMode.title"
-                                >Logging mode</label
-                            >
-                            <div class="settings-container">
-                                <div class="select">
-                                    <select id="logging-mode-select">
-                                        <option value="1" data-i18n="debugging.loggingMode.minimal">
-                                            Minimal data
-                                        </option>
-                                        <option value="2" data-i18n="debugging.loggingMode.extra">Extra data</option>
-                                        <option value="3" data-i18n="debugging.loggingMode.all">All data (!!!)</option>
-                                    </select>
-                                </div>
+                        <div class="switch-container is-centered">
+                            <div class="switch">
+                                <input type="checkbox" id="slimevr-warning-switch" checked />
+                                <label for="slimevr-warning-switch" class="slider round"></label>
                             </div>
+                            <label for="slimevr-warning-switch" data-i18n="debugging.slimevrWarning">Disable SlimeVR warning</label>
                         </div>
                         <div class="switch-container is-centered">
                             <div class="switch">

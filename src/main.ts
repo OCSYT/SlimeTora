@@ -46,6 +46,7 @@ let serverAddress = "255.255.255.255";
 let serverPort = 6969;
 
 let canLogToFile = true;
+let slimevrWarning = false;
 let loggingMode = 1;
 let randomizeMacAddress = false;
 let heartbeatInterval = 2000;
@@ -85,6 +86,7 @@ try {
 
     // Set configuration variables
     canLogToFile = config.global?.debug?.canLogToFile ?? true;
+    slimevrWarning = config.global?.debug?.slimevrWarning ?? false;
     wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
     wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
     autoOff = config.global?.autoOff ?? false;
@@ -667,6 +669,11 @@ ipcMain.on("set-log-to-file", (_event, arg) => {
     log(`Logging to file set to: ${arg}`, "settings");
 });
 
+ipcMain.on("set-slimevr-warning", (_event, arg) => {
+    slimevrWarning = arg;
+    log(`SlimeVR warning set to: ${arg}`, "settings");
+});
+
 ipcMain.on("set-logging", (_event, arg) => {
     loggingMode = arg;
     log(`Logging mode set to: ${arg}`, "settings");
@@ -921,7 +928,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     // Set a timeout to warn user if the SlimeVR server wasn't found
     setTimeout(() => {
-        if (foundSlimeVR || !connectionActive) return;
+        if (foundSlimeVR || !connectionActive || slimevrWarning) return;
 
         warn("SlimeVR server seemingly not found, warning user...", "connection");
         showError("dialogs.slimevrNotFound.title", "dialogs.slimevrNotFound.message", false);

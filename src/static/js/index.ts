@@ -32,6 +32,7 @@ let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
 
 let canLogToFile = true;
+let slimevrWarning = false;
 let bypassCOMPortLimit = false;
 let randomizeMacAddress = false;
 
@@ -164,6 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     translationUpdates = settings.global?.updates?.translationsUpdatesEnabled ?? true;
     updateChannel = settings.global?.updates?.updateChannel ?? "stable";
     canLogToFile = settings.global?.debug?.canLogToFile ?? true;
+    slimevrWarning = settings.global?.debug?.slimevrWarning ?? false;
     loggingMode = settings.global?.debug?.loggingMode ?? 1;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit ?? false;
     randomizeMacAddress = settings.global?.debug?.randomizeMacAddress ?? false;
@@ -188,6 +190,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("app-updates-switch", appUpdates);
     setSwitchState("translations-updates-switch", translationUpdates);
     setSwitchState("log-to-file-switch", canLogToFile);
+    setSwitchState("slimevr-warning-switch", slimevrWarning);
     setSwitchState("bypass-com-limit-switch", bypassCOMPortLimit);
     setSwitchState("randomize-mac-switch", randomizeMacAddress);
 
@@ -1838,6 +1841,19 @@ function addEventListeners() {
             global: {
                 debug: {
                     canLogToFile: canLogToFile,
+                },
+            },
+        });
+    });
+
+    document.getElementById("slimevr-warning-switch").addEventListener("change", function () {
+        slimevrWarning = !slimevrWarning;
+        l(`Switched SlimeVR warning: ${slimevrWarning}`);
+        window.ipc.send("set-slimevr-warning", slimevrWarning);
+        window.ipc.send("save-setting", {
+            global: {
+                debug: {
+                    slimevrWarning: slimevrWarning,
                 },
             },
         });
