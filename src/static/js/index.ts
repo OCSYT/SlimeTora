@@ -32,7 +32,9 @@ let gyroscopeEnabled = false;
 let magnetometerEnabled = false;
 
 let canLogToFile = true;
+let slimevrWarning = false;
 let bypassCOMPortLimit = false;
+let randomizeMacAddress = false;
 
 let language = "en";
 let censorSerialNumbers = false;
@@ -45,6 +47,8 @@ let trackerHeartbeatInterval = 2000;
 
 let serverAddress = "255.255.255.255";
 let serverPort = 6969;
+let buttonTimeout = 500;
+let buttonDebounce = 100;
 
 let appUpdates = true;
 let translationUpdates = true;
@@ -161,10 +165,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     translationUpdates = settings.global?.updates?.translationsUpdatesEnabled ?? true;
     updateChannel = settings.global?.updates?.updateChannel ?? "stable";
     canLogToFile = settings.global?.debug?.canLogToFile ?? true;
+    slimevrWarning = settings.global?.debug?.slimevrWarning ?? false;
     loggingMode = settings.global?.debug?.loggingMode ?? 1;
     bypassCOMPortLimit = settings.global?.debug?.bypassCOMPortLimit ?? false;
+    randomizeMacAddress = settings.global?.debug?.randomizeMacAddress ?? false;
     serverAddress = settings.global?.serverAddress ?? "255.255.255.255";
     serverPort = settings.global?.serverPort ?? 6969;
+    buttonTimeout = settings.global?.buttonTimeout ?? 500;
+    buttonDebounce = settings.global?.buttonDebounce ?? 100;
 
     // Set switch states based on settings
     setSwitchState("compact-view-switch", compactView);
@@ -182,7 +190,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("app-updates-switch", appUpdates);
     setSwitchState("translations-updates-switch", translationUpdates);
     setSwitchState("log-to-file-switch", canLogToFile);
+    setSwitchState("slimevr-warning-switch", slimevrWarning);
     setSwitchState("bypass-com-limit-switch", bypassCOMPortLimit);
+    setSwitchState("randomize-mac-switch", randomizeMacAddress);
 
     // Set select values based on settings
     setSelectValue("fps-mode-select", fpsMode.toString());
@@ -203,6 +213,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const serverPortInput = document.getElementById("server-port") as HTMLInputElement;
     serverPortInput.value = serverPort.toString();
+
+    const buttonTimeoutInput = document.getElementById("button-timeout") as HTMLInputElement;
+    buttonTimeoutInput.value = buttonTimeout.toString();
+
+    const buttonDebounceInput = document.getElementById("button-debounce") as HTMLInputElement;
+    buttonDebounceInput.value = buttonDebounce.toString();
 
     // Set the selected COM ports
     const comPortsSwitches = Array.from(document.getElementById("com-ports").querySelectorAll("input"));
@@ -762,8 +778,8 @@ async function questions() {
                         : bluetoothEnabled
                         ? ConnectionMode.Bluetooth
                         : ConnectionMode.COM;
-                    
-                    window.log(`sensorAutoCorrectionList: ${sensorAutoCorrectionList}`);
+
+                window.log(`sensorAutoCorrectionList: ${sensorAutoCorrectionList}`);
 
                 const newMsg = msg.replace(
                     "{settings}",
@@ -841,10 +857,12 @@ function toggleConnectionButtons(state: boolean) {
     if (startButton) startButton.disabled = state;
     if (stopButton) stopButton.disabled = !state;
 
-    if (wirelessTrackerEnabled && comEnabled) {
-        if (pairingButton) pairingButton.disabled = !state;
+    if (wirelessTrackerEnabled) {
         if (turnOffTrackersButton) turnOffTrackersButton.disabled = !state;
-        if (fixTrackersButton) fixTrackersButton.disabled = !state;
+        if (comEnabled) {
+            if (pairingButton) pairingButton.disabled = !state;
+            if (fixTrackersButton) fixTrackersButton.disabled = !state;
+        }
     }
 }
 
@@ -1128,7 +1146,7 @@ async function addDeviceToList(deviceID: string) {
     if (deviceName !== deviceID) l(`Got user-specified name for "${deviceID}": ${deviceName}`);
 
     // Fill the div with device card data (depending on compactView)
-    newDevice.innerHTML = compactView ? CompactCard(deviceID, deviceName) : NormalCard(deviceID, deviceName);
+    newDevice.innerHTML = compactView ? CompactCard(deviceName, deviceID) : NormalCard(deviceName, deviceID);
 
     const deviceNameElement = newDevice.querySelector("#device-name");
     const deviceIDElement = newDevice.querySelector("#device-id");
@@ -1318,6 +1336,10 @@ window.ipc.on("localize", (_event, resources) => {
 window.ipc.on("version", (_event, version) => {
     document.getElementById("version").textContent = version;
     l(`Got app version: ${version}`);
+});
+
+window.ipc.on("found-data-debug", () => {
+    document.getElementById("debugging-button").classList.remove("is-hidden");
 });
 
 window.ipc.on("set-status", (_event, msg) => {
@@ -1663,6 +1685,30 @@ function addEventListeners() {
         window.ipc.send("set-server-port", serverPort);
     });
 
+    document.getElementById("button-timeout").addEventListener("change", async function () {
+        buttonTimeout = parseInt((document.getElementById("button-timeout") as HTMLInputElement).value);
+        l(`Changed button timeout to: ${buttonTimeout}`);
+        window.ipc.send("save-setting", {
+            global: {
+                buttonTimeout: buttonTimeout,
+            },
+        });
+
+        window.ipc.send("set-button-timeout", buttonTimeout);
+    });
+
+    document.getElementById("button-debounce").addEventListener("change", async function () {
+        buttonDebounce = parseInt((document.getElementById("button-debounce") as HTMLInputElement).value);
+        l(`Changed button debounce to: ${buttonDebounce}`);
+        window.ipc.send("save-setting", {
+            global: {
+                buttonDebounce: buttonDebounce,
+            },
+        });
+
+        window.ipc.send("set-button-debounce", buttonDebounce);
+    });
+
     document.getElementById("language-select").addEventListener("change", async function () {
         const language: string = (document.getElementById("language-select") as HTMLSelectElement).value;
         selectLanguage(language);
@@ -1800,6 +1846,19 @@ function addEventListeners() {
         });
     });
 
+    document.getElementById("slimevr-warning-switch").addEventListener("change", function () {
+        slimevrWarning = !slimevrWarning;
+        l(`Switched SlimeVR warning: ${slimevrWarning}`);
+        window.ipc.send("set-slimevr-warning", slimevrWarning);
+        window.ipc.send("save-setting", {
+            global: {
+                debug: {
+                    slimevrWarning: slimevrWarning,
+                },
+            },
+        });
+    });
+
     document.getElementById("bypass-com-limit-switch").addEventListener("change", function () {
         bypassCOMPortLimit = !bypassCOMPortLimit;
         l(`Switched bypass COM port limit: ${bypassCOMPortLimit}`);
@@ -1844,6 +1903,17 @@ function addEventListeners() {
             },
         });
     });
+
+    document.getElementById("randomize-mac-switch").addEventListener("change", function () {
+        randomizeMacAddress = !randomizeMacAddress;
+        l(`Switched randomize MAC address: ${randomizeMacAddress}`);
+        window.ipc.send("set-randomize-mac", randomizeMacAddress);
+        window.ipc.send("save-setting", {
+            global: {
+                randomizeMacAddress,
+            },
+        });
+    });
 }
 
 function selectLanguage(language: string) {
@@ -1867,6 +1937,11 @@ function showOnboarding() {
 function showPairing() {
     l("Opening pairing screen...");
     window.ipc.send("show-pairing", selectedComPorts);
+}
+
+function turnOffTrackers() {
+    l("Turning off all trackers...");
+    window.ipc.send("turn-off-tracker", "all");
 }
 
 function saveSettings() {
@@ -1937,6 +2012,11 @@ function saveSettings() {
     l("Settings saved");
 }
 
+function debugTrackers() {
+    l("Emulating COM trackers via debug.txt...");
+    window.ipc.send("debug-trackers", null);
+}
+
 function simulateChangeEvent(element: HTMLInputElement | HTMLSelectElement, value: boolean | string) {
     if (element instanceof HTMLInputElement) {
         if (element.checked === value) return;
@@ -1959,10 +2039,8 @@ window.stopConnection = stopConnection;
 window.showOnboarding = showOnboarding;
 window.showPairing = showPairing;
 window.saveSettings = saveSettings;
-window.turnOffTrackers = () => {
-    l("Turning off all trackers...");
-    window.ipc.send("turn-off-tracker", "all");
-};
+window.turnOffTrackers = turnOffTrackers;
+window.debugTrackers = debugTrackers;
 
 window.fixTrackers = () => {
     l("Fixing soft-bricked (boot-looping) trackers...");
@@ -1997,5 +2075,4 @@ window.openSupport = () => {
     window.ipc.send("open-support-page", null);
 };
 
-export { };
-
+export {};

@@ -77,6 +77,9 @@
                     >
                         Open onboarding
                     </button>
+                    <button class="button is-warning is-hidden" id="debugging-button" onclick="debugTrackers()">
+                        Debug trackers
+                    </button>
                 </div>
                 <br />
                 <div class="title is-3 has-text-centered">
@@ -203,7 +206,7 @@
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
                                     data-i18n="programSettings.trackerModel.tooltip"
-                                    >Select the model of HaritoraX trackers you have, the HaritoraX Wireless or
+                                    >Select the model of HaritoraX trackers you have, the HaritoraX Wireless/2 or
                                     HaritoraX Wired (1.1b/1.1/1.0).</span
                                 >
                             </div>
@@ -218,7 +221,7 @@
                                     for="wireless-tracker-switch"
                                     style="min-width: 170px"
                                     data-i18n="programSettings.trackerModel.wireless"
-                                    >HaritoraX Wireless</label
+                                    >HaritoraX Wireless/2</label
                                 >
                             </div>
                             <div class="switch-container">
@@ -443,8 +446,8 @@
                         </div>
                         <br />
                         <div class="columns is-centered">
-                            <div class="column is-two-fifths is-centered">
-                                <div class="input-container">
+                            <div class="column is-half is-centered">
+                                <div class="input-container" style="margin-bottom: 16px">
                                     <label
                                         for="server-address"
                                         class="label has-text-warning"
@@ -459,8 +462,6 @@
                                         style="max-width: 100%"
                                     />
                                 </div>
-                            </div>
-                            <div class="column is-two-fifths is-centered">
                                 <div class="input-container">
                                     <label
                                         for="server-port"
@@ -472,6 +473,32 @@
                                         type="text"
                                         id="server-port"
                                         placeholder="6969"
+                                        class="input"
+                                        style="max-width: 100%"
+                                    />
+                                </div>
+                            </div>
+                            <div class="column is-half is-centered">
+                                <div class="input-container" style="margin-bottom: 16px">
+                                    <label for="button-timeout" class="label" data-i18n="programSettings.other.button"
+                                        >Tracker button timeout</label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="button-timeout"
+                                        placeholder="500"
+                                        class="input"
+                                        style="max-width: 100%"
+                                    />
+                                </div>
+                                <div class="input-container">
+                                    <label for="button-timeout" class="label" data-i18n="programSettings.other.debounce"
+                                        >Tracker button debounce</label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="button-debounce"
+                                        placeholder="500"
                                         class="input"
                                         style="max-width: 100%"
                                     />
@@ -743,7 +770,26 @@
                     huge log files and lag, only use if asked or have tracker issues!
                 </h2>
                 <div class="column is-12">
-                    <div class="vertical-settings-container">
+                    <div class="input-container is-centered has-text-centered">
+                        <label
+                            for="logging-mode-select"
+                            class="label has-text-warning"
+                            data-i18n="debugging.loggingMode.title"
+                            >Logging mode</label
+                        >
+                        <div class="settings-container">
+                            <div class="select">
+                                <select id="logging-mode-select">
+                                    <option value="1" data-i18n="debugging.loggingMode.minimal">Minimal data</option>
+                                    <option value="2" data-i18n="debugging.loggingMode.extra">Extra data</option>
+                                    <option value="3" data-i18n="debugging.loggingMode.all">All data (!!!)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-12">
+                    <div class="debugging-container">
                         <div class="switch-container is-centered">
                             <div class="switch">
                                 <input type="checkbox" id="log-to-file-switch" checked />
@@ -751,24 +797,12 @@
                             </div>
                             <label for="log-to-file-switch" data-i18n="debugging.writeToFile">Write to log files</label>
                         </div>
-                        <div class="input-container is-centered has-text-centered">
-                            <label
-                                for="tracker-visualization-fps"
-                                class="label has-text-warning"
-                                data-i18n="debugging.loggingMode.title"
-                                >Logging mode</label
-                            >
-                            <div class="settings-container">
-                                <div class="select">
-                                    <select id="logging-mode-select">
-                                        <option value="1" data-i18n="debugging.loggingMode.minimal">
-                                            Minimal data
-                                        </option>
-                                        <option value="2" data-i18n="debugging.loggingMode.extra">Extra data</option>
-                                        <option value="3" data-i18n="debugging.loggingMode.all">All data (!!!)</option>
-                                    </select>
-                                </div>
+                        <div class="switch-container is-centered">
+                            <div class="switch">
+                                <input type="checkbox" id="slimevr-warning-switch" checked />
+                                <label for="slimevr-warning-switch" class="slider round"></label>
                             </div>
+                            <label for="slimevr-warning-switch" data-i18n="debugging.slimevrWarning">Disable SlimeVR warning</label>
                         </div>
                         <div class="switch-container is-centered">
                             <div class="switch">
@@ -777,6 +811,15 @@
                             </div>
                             <label for="bypass-com-limit-switch" data-i18n="debugging.bypassPortLimit"
                                 >Bypass port limit</label
+                            >
+                        </div>
+                        <div class="switch-container is-centered">
+                            <div class="switch">
+                                <input type="checkbox" id="randomize-mac-switch" />
+                                <label for="randomize-mac-switch" class="slider round"></label>
+                            </div>
+                            <label for="randomize-mac-switch" data-i18n="debugging.randomMac"
+                                >Randomize tracker MAC address</label
                             >
                         </div>
                     </div>

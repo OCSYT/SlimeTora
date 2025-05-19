@@ -81,8 +81,8 @@
         "tooltip": "Set the settings of the program. An option with yellow text requires a restart of the connection or program to apply.",
         "trackerModel": {
             "title": "Tracker model",
-            "tooltip": "Select the model of HaritoraX trackers you have, the HaritoraX Wireless or HaritoraX Wired (1.1b/1.1/1.0).",
-            "wireless": "HaritoraX Wireless",
+            "tooltip": "Select the model of HaritoraX trackers you have, the HaritoraX Wireless/2 or HaritoraX Wired (1.1b/1.1/1.0).",
+            "wireless": "HaritoraX Wireless/2",
             "wired": "HaritoraX 1.1b/1.1/1.0"
         },
         "connectionMode": {
@@ -103,7 +103,9 @@
             "trackerVisualizationFPS": "Tracker visualization FPS",
             "heartbeat": "Tracker heartbeat interval",
             "serverAddress": "SlimeVR server address",
-            "serverPort": "SlimeVR server port"
+            "serverPort": "SlimeVR server port",
+            "button": "Tracker button timeout",
+            "debounce": "Tracker button debounce"
         },
         "updates": {
             "title": "Update checking",
@@ -157,6 +159,8 @@
         "text": "Enable or disable debugging features for the program. Using logging mode 'All data (!!!)' will cause huge log files and lag, only use if asked or have tracker issues!",
         "writeToFile": "Write to log files",
         "bypassPortLimit": "Bypass port limit",
+        "randomMac": "Randomize tracker MAC address",
+        "slimevrWarning": "Disable SlimeVR warning",
         "loggingMode": {
             "title": "Logging mode",
             "minimal": "Minimal data",
@@ -336,7 +340,7 @@
             "trackerModel": {
                 "title": "Tracker model",
                 "message": "Select the model of HaritoraX trackers you have from the list.",
-                "wireless": "HaritoraX Wireless",
+                "wireless": "HaritoraX Wireless/2",
                 "wired": "HaritoraX 1.1b/1.1/1.0"
             },
             "connectionMode": {

@@ -14,6 +14,7 @@ const __dirname = dirname(__filename);
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
 const configPath = app.isPackaged ? path.resolve(mainPath, "config.json") : path.resolve(path.join(mainPath, ".."), "config.json")
+const dataDebugPath = path.resolve(mainPath, "debug.txt");
 const isMac = process.platform === "darwin";
 // don't mess with this or languages will fail to load cause of how the project is structured, lol
 // i hate how this is done.
@@ -31,6 +32,7 @@ let connectedDevices = new Map<string, EmulatedTracker>();
 let deviceBattery: {
     [key: string]: { batteryRemaining: number; batteryVoltage: number };
 } = {};
+let dataDebug: string | null;
 
 /*
  * Renderer variables
@@ -44,7 +46,9 @@ let serverAddress = "255.255.255.255";
 let serverPort = 6969;
 
 let canLogToFile = true;
+let slimevrWarning = false;
 let loggingMode = 1;
+let randomizeMacAddress = false;
 let heartbeatInterval = 2000;
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
@@ -52,6 +56,8 @@ let autoOff = false;
 let appUpdatesEnabled = true;
 let translationsUpdatesEnabled = true;
 let updateChannel = "stable";
+let buttonTimeout = 500;
+let buttonDebounce = 100;
 // this variable is literally only used so i can fix a stupid issue where with both BT+COM enabled, it sometimes connects the BT trackers again directly after again, breaking the program
 // why.. i don't god damn know. i need to do a rewrite of the rewrite fr, i'm going crazy
 // -jovannmc
@@ -80,6 +86,7 @@ try {
 
     // Set configuration variables
     canLogToFile = config.global?.debug?.canLogToFile ?? true;
+    slimevrWarning = config.global?.debug?.slimevrWarning ?? false;
     wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
     wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
     autoOff = config.global?.autoOff ?? false;
@@ -88,6 +95,8 @@ try {
     updateChannel = config.global?.updates?.updateChannel ?? "stable";
     heartbeatInterval = config.global?.trackers?.heartbeatInterval ?? 2000;
     loggingMode = config.global?.debug?.loggingMode ?? 1;
+    buttonTimeout = config.global?.buttonTimeout ?? 500;
+    buttonDebounce = config.global?.buttonDebounce ?? 100;
 
     serverAddress = config.global?.serverAddress ?? "255.255.255.255";
     serverPort = config.global?.serverPort ?? 6969;
@@ -360,10 +369,17 @@ function clearTrackers() {
 const createWindow = async () => {
     mainWindow = createBrowserWindow("SlimeTora: Main", "index.html", "en", null, 900, 700);
 
+    try {
+        await fs.promises.access(dataDebugPath);
+    } catch (err) {
+        dataDebug = null;
+    }
+
     mainWindow.webContents.on("did-finish-load", async () => {
         mainWindow.webContents.send("localize", resources);
         mainWindow.webContents.send("version", app.getVersion());
         mainWindow.webContents.send("set-switch", { id: "accelerometer-switch", state: true });
+        if (dataDebug !== null) mainWindow.webContents.send("found-data-debug");
 
         if (firstLaunch) onboarding("en");
 
@@ -386,7 +402,7 @@ const closeApp = async () => {
         log("Auto-off is enabled, turning off all trackers (if available)...", "connection");
         const activeTrackers = Array.from(connectedDevices.keys());
         const powerOffPromises = activeTrackers.map(async (tracker) => {
-            await device.powerOffTracker(tracker as string);
+            await device.powerOffTracker(tracker);
             log(`Turned off tracker: ${tracker}`, "connection");
         });
 
@@ -546,6 +562,35 @@ ipcMain.on("update-titles", async () => {
     }
 });
 
+ipcMain.on("debug-trackers", async () => {
+    if (dataDebug === null) return;
+
+    const response = await dialog.showMessageBox({
+        type: "info",
+        buttons: ["OK"],
+        title: "Secret debugging function",
+        message:
+            "You've found a secret debugging function (haii)! We will start emulating COM trackers from debug.txt after this dialog...",
+    });
+
+    if (response.response === 0) {
+        dataDebug = fs.readFileSync(dataDebugPath, "utf-8");
+        const lines = dataDebug.split("\n");
+
+        for (const line of lines) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            device.getComInstance().processData(line, "DEBUG");
+        }
+
+        await dialog.showMessageBox({
+            type: "info",
+            buttons: ["OK"],
+            title: "Debug data processed",
+            message: "All debug data has been parsed and processed.",
+        });
+    }
+});
+
 ipcMain.handle("get-os", () => {
     return process.platform;
 });
@@ -624,9 +669,19 @@ ipcMain.on("set-log-to-file", (_event, arg) => {
     log(`Logging to file set to: ${arg}`, "settings");
 });
 
+ipcMain.on("set-slimevr-warning", (_event, arg) => {
+    slimevrWarning = arg;
+    log(`SlimeVR warning set to: ${arg}`, "settings");
+});
+
 ipcMain.on("set-logging", (_event, arg) => {
     loggingMode = arg;
     log(`Logging mode set to: ${arg}`, "settings");
+});
+
+ipcMain.on("set-randomize-mac", (_event, arg) => {
+    randomizeMacAddress = arg;
+    log(`Randomize tracker MAC Address set to: ${arg}`, "settings");
 });
 
 ipcMain.on("set-wireless-tracker", (_event, arg) => {
@@ -657,6 +712,16 @@ ipcMain.on("set-server-address", (_event, arg) => {
 ipcMain.on("set-server-port", (_event, arg) => {
     serverPort = arg;
     log(`Server port set to: ${arg}`, "settings");
+});
+
+ipcMain.on("set-button-timeout", (_event, arg) => {
+    buttonTimeout = arg;
+    log(`Button timeout set to: ${arg}`, "settings");
+});
+
+ipcMain.on("set-button-debounce", (_event, arg) => {
+    buttonDebounce = arg;
+    log(`Button debounce set to: ${arg}`, "settings");
 });
 
 ipcMain.on("fix-trackers", async () => {
@@ -863,7 +928,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     // Set a timeout to warn user if the SlimeVR server wasn't found
     setTimeout(() => {
-        if (foundSlimeVR || !connectionActive) return;
+        if (foundSlimeVR || !connectionActive || slimevrWarning) return;
 
         warn("SlimeVR server seemingly not found, warning user...", "connection");
         showError("dialogs.slimevrNotFound.title", "dialogs.slimevrNotFound.message", false);
@@ -871,10 +936,12 @@ ipcMain.on("start-connection", async (_event, arg) => {
 });
 
 function isValidDeviceConfiguration(types: string[], ports?: string[]): boolean {
-    if (
-        (!wirelessTrackerEnabled && !wiredTrackerEnabled) ||
-        (types.includes("COM") && (!ports || ports.length === 0))
-    ) {
+    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
+        log("Device configuration invalid: Both wireless and wired trackers are disabled.", "validation");
+        return false;
+    }
+    if (types.includes("com") && (!ports || ports.length === 0)) {
+        log("Device configuration invalid: COM type selected but no ports provided.", "validation");
         return false;
     }
     return true;
@@ -1241,8 +1308,14 @@ async function addTracker(trackerName: string) {
 }
 
 function MacAddressFromName(name: string) {
-    const rand = new Rand(name);
-    return new MACAddress(new Array(6).fill(0).map(() => Math.floor(rand.next() * 256)) as any)
+    if (randomizeMacAddress) {
+        // random MAC address
+        return MACAddress.random();
+    } else {
+        // get MAC address from name
+        const rand = new Rand(name);
+        return new MACAddress(new Array(6).fill(0).map(() => Math.floor(rand.next() * 256)) as any);
+    }
 }
 
 async function processQueue() {
@@ -1370,11 +1443,19 @@ function startDeviceListeners() {
 
     let clickCounts: { [key: string]: number } = {};
     let clickTimeouts: { [key: string]: NodeJS.Timeout } = {};
+    let buttonDebounceTimeouts: { [key: string]: NodeJS.Timeout } = {};
 
     device.on("button", (trackerName: string, buttonPressed: string, isOn: boolean) => {
         if (!trackerName || !buttonPressed || !isOn || isClosing) return;
 
         let key = `${trackerName}-${buttonPressed}`;
+
+        // button debounce
+        if (buttonDebounceTimeouts[key] !== undefined) return;
+
+        buttonDebounceTimeouts[key] = setTimeout(() => {
+            delete buttonDebounceTimeouts[key];
+        }, buttonDebounce);
 
         if (!clickCounts[key]) clickCounts[key] = 0;
         clickCounts[key]++;
@@ -1396,7 +1477,7 @@ function startDeviceListeners() {
             }
 
             clickCounts[key] = 0;
-        }, 750);
+        }, buttonTimeout);
     });
 
     let imuErrorCount: { [key: string]: number } = {};
@@ -1717,6 +1798,9 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
     if (loggingMode === 3) {
         tracker.on("outgoing-packet", (packet: any) => {
             log(`Tracker "${trackerName}" outgoing packet: ${packet}`, "@slimevr/emulated-tracker");
+        });
+        tracker.on("incoming-packet", (packet: any) => {
+            log(`Tracker "${trackerName}" incoming packet: ${packet}`, "@slimevr/emulated-tracker");
         });
     }
 }
