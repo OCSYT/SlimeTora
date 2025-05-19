@@ -104,7 +104,8 @@
             "heartbeat": "トラッカーのハートビート間隔",
             "serverAddress": "SlimeVR serverのアドレス",
             "serverPort": "SlimeVR serverのポート",
-            "button": "トラッカーボタンのタイムアウト"
+            "button": "トラッカーボタンのタイムアウト",
+            "debounce": "トラッカーボタンの短期間における入力制限"
         },
         "updates": {
             "title": "アップデートを確認",
@@ -159,6 +160,7 @@
         "writeToFile": "デバッグログを有効にする",
         "bypassPortLimit": "ポート制限をバイパスする",
         "randomMac": "トラッカーのMACアドレスをランダム化する",
+        "slimevrWarning": "SlimeVRの警告を無効にする",
         "loggingMode": {
             "title": "記録モード",
             "minimal": "最小限のデータ",
