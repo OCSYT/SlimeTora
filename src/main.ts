@@ -928,7 +928,7 @@ ipcMain.on("start-connection", async (_event, arg) => {
 
     // Set a timeout to warn user if the SlimeVR server wasn't found
     setTimeout(() => {
-        if ((foundSlimeVR || !connectionActive) && slimevrWarning) return;
+        if (foundSlimeVR || !connectionActive || !slimevrWarning) return;
 
         warn("SlimeVR server seemingly not found, warning user...", "connection");
         showError("dialogs.slimevrNotFound.title", "dialogs.slimevrNotFound.message", false);
