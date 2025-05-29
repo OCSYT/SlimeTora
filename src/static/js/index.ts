@@ -1229,7 +1229,7 @@ async function addDeviceToList(deviceID: string) {
     localStorage.setItem("trackerCount", document.getElementById("tracker-count").textContent);
 
     // Disable tracker settings button if wired tracker is enabled
-    if (wiredTrackerEnabled) {
+    if (wiredTrackerEnabled && (deviceID.startsWith("HaritoraX-") || deviceID.startsWith("Haritora-"))) {
         const settingsButton = newDevice.querySelector("#tracker-settings-button");
         if (settingsButton) settingsButton.setAttribute("disabled", "true");
         l(`Disabled tracker settings button for "${deviceID}" (wired tracker)`);

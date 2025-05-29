@@ -1138,8 +1138,8 @@ ipcMain.on("turn-off-tracker", async (_event, arg) => {
         }
 
         log("Manually turning off all trackers", "connection");
-        const powerOffPromises = activeTrackers.map(async (tracker) => {
-            await device.powerOffTracker(tracker as string);
+        const powerOffPromises = activeTrackers.map(async (tracker: string) => {
+            await device.powerOffTracker(tracker);
         });
 
         // Wait for all trackers to power off
