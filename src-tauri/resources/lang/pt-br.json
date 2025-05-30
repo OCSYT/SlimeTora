@@ -1,0 +1,231 @@
+{
+	"onboarding": {
+		"title": "Bem-vindo(a) ao SlimeTora!",
+		"welcome": "SlimeTora é um programa middleware que deixa você conectar os seus rastreadores HaritoraX ao servidor do SlimeVR, ignorando o software oficial!",
+		"setup": "Por favor selecione como você quer configurar o SlimeTora. Depois de configurar o programa, você vai ser guiado a como configurar o servidor SlimeVR.",
+		"start": "Configuração guiada",
+		"skip": "Configuração Manual (pular)",
+		"next": "Próximo",
+		"back": "Voltar"
+	},
+
+	"home": {
+		"title": "Menu Principal",
+		"connected": "Rastreadores conectados",
+		"disconnected": "Rastreadores não estão conectados",
+		"count": "{{value}} rastreadores conectados",
+		"onboarding": "Abrir onfiguração inicial"
+	},
+
+	"trackers": {
+		"title": "Rastreadores",
+		"none": "Nenhum rastreador encontrado! Talvez conecte algum :)",
+		"card": {
+			"device": "Dispositivo:",
+			"imu": "IMU:",
+			"battery": "Bateria:",
+			"settings": "Abrir configurações do rastreador: {{name}}",
+			"power_off": "Desligar rastreador: {{name}}",
+			"status": {
+				"text": "Status:",
+				"great": "ÓTIMO",
+				"okay": "OK",
+				"bad": "RUIM",
+				"very_bad": "MUITO RUIM",
+				"unknown": "N/A"
+			},
+			"tooltip": {
+				"mag_status": "Status do magnetômetro. Se todos rastreadores estarem consistentemente \"ÓTIMO\", é recomendado usar o modo de sensor 1.'}",
+				"rssi": "Força da conexão sem fio(RSSI). Maior (perto de 0) é melhor."
+			}
+		},
+		"settings": {
+			"title": "Configurações",
+			"collapse_expand": "Colapsar/expandir todos rastreadores",
+			"precise_data": "Dados precisos",
+			"fast_data": "Dados básicos",
+			"visualization": "Mostrar visualização do rastreador"
+		},
+		"per_tracker": {
+			"title": "Configurações do rastreador {{name}}",
+			"description": "Substituir as configurações de hardware para esse rastreador. Pode ser útil se apenas alguns rastreadores tiverem status de magnetômetro ruim.",
+			"fps": {
+				"name": "Taxa de transferência de FPS",
+				"tooltip": "Selecione quantas vezes por segundo os rastreadores mandam dados. 50 FPS pode ser mais estável no Bluetooth e usa menos bateria, mas não é tão suave quanto 100 FPS."
+			},
+			"sensor_mode": {
+				"name": "Modo de sensor",
+				"tooltip": "Modo 1 ativa o magnetômetro que reduz drift se você tem um ambiente geomagnético estável. Modo 2 desliga o magnetômetro e é recomendado para ambientes instáveis."
+			},
+			"sensor_auto_correction": {
+				"name": "Correção automática do sensor",
+				"tooltip": "Ligue ou desligue funções de correção automática (calibração dinâmica). Geralmente não precisa ser alterado e os resultados variam entre os ambientes."
+			},
+			"virtual_feet": {
+				"name": "Rastreadores de pé virtuais",
+				"tooltip": "Liga o uso do sensor do tornozelo/perna para rastrear o movimento do seu pé."
+			},
+			"debugging": "Depuração",
+			"get_settings": "Pegar configurações dos rastreadores",
+			"reset_settings": "Redefinir configurações"
+		}
+	},
+
+	"settings": {
+		"title": "Configurações",
+		"program": {
+			"title": "Configurações do programa",
+			"app_behavior": {
+				"name": "Funcionamento do aplicativo",
+				"tooltip": "Controla como o aplicativo funciona no geral."
+			},
+			"start_connection": {
+				"name": "Iniciar conexão quando aberto",
+				"tooltip": "Automaticamente começar a conexão quando o aplicativo for aberto."
+			},
+			"turn_off_trackers": {
+				"name": "Desligar rastreadores quando fechar",
+				"tooltip": "Automaticamente desligar os rastreadores quando fechar o aplicativo."
+			},
+			"visualization_fps": {
+				"name": "FPS da visualização do rastreador",
+				"tooltip": "Define a taxa de quadros para a visualização do rastreador 3D. Valores menores vão economizar recursos."
+			},
+			"update_settings": {
+				"name": "Configurações de atualização",
+				"tooltip": "Controle como atualizações do aplicativo e linguagem são tratadas.",
+				"app": "Atualizações do aplicativo",
+				"language": "Atualizações de linguagem",
+				"channel": {
+					"name": "Tipo de atualização",
+					"tooltip": "Selecione o tipo de atualização para o aplicativo. Beta vai te dar as funções mais recentes, mas pode ter mais bugs.",
+					"stable": "Estável",
+					"beta": "Beta"
+				}
+			}
+		},
+		"connection": {
+			"title": "Configurações de conexão",
+			"tracker_model": {
+				"name": "Modelo de rastreadors",
+				"tooltip": "Selecione qual modelo dos rastreadores HaritoraX você tem. Vários podem ser usados ao mesmo tempo para usuários avançados."
+			},
+			"connection_mode": {
+				"name": "Modo de conexão",
+				"tooltip": "Selecione o modo de conexão usado para conectar aos rastreadores. Vários modos podem ser usados simultaneamente."
+			},
+			"serial_ports": {
+				"name": "Portas seriais",
+				"tooltip": "Selecione a porta serial o seu dongle GX(6/2) ou rastreadores HaritoraX 1.1b/1.1/1.0 está usando.",
+				"none": "Nenhuma porta serial detectada"
+			},
+			"slimevr_server": {
+				"name": "Servidor SlimeVR",
+				"tooltip": "Configure onde o SlimeTora procura pelo servidor SlimeVR. Por padrão, o SlimeTora vai procurar o servidor em todas as suas redes usando o endereço de transmissão local. (255.255.255.255)."
+			},
+			"server_ip": "IP do servidor",
+			"server_port": "Porta do servidor"
+		},
+		"tracker": {
+			"title": "Tracker Settings",
+			"fps": {
+				"name": "Taxa de transferência de FPS",
+				"tooltip": "Selecione quantas vezes por segundo os rastreadores mandam dados. 50 FPS pode ser mais estável no Bluetooth e usa menos bateria, mas não é tão suave quanto 100 FPS.",
+				"100": "100 FPS",
+				"50": "50 FPS"
+			},
+			"sensor_mode": {
+				"name": "Modo de sensor",
+				"tooltip": "Modo 1 ativa o magnetômetro que reduz drift se você tem um ambiente geomagnético estável. Modo 2 desliga o magnetômetro e é recomendado para ambientes instáveis.",
+				"1": "Modo 1 (magnetômetro ativado)",
+				"2": "Modo 2 (magnetômetro desativado)"
+			},
+			"sensor_auto_correction": {
+				"name": "Correção automática do sensor",
+				"tooltip": "Ligue ou desligue funções de correção automática (calibração dinâmica). Geralmente não precisa ser alterado e os resultados variam entre os ambientes."
+			},
+			"virtual_feet": {
+				"name": "Rastreadores de pé virtuais",
+				"tooltip": "Liga o uso do sensor do tornozelo/perna para rastrear o movimento do seu pé."
+			},
+			"other_settings": {
+				"name": "Outras configurações",
+				"tooltip": "Configurações de rastreador adicionais que afetam desempenho geral."
+			},
+			"heartbeat": {
+				"name": "Intervalo de pulsação (ms)",
+				"tooltip": "Define o intervalo em que o programa envia sinais de pulsação ao rastreador para mantê-lo conectado. Normalmente, não e necessário alterar."
+			},
+			"button_debounce": {
+				"name": "Rebote de botão (ms)",
+				"tooltip": "Define o intervalo de rebote para botões para evitar ativações múltiplas acidentais."
+			}
+		},
+		"advanced": {
+			"title": "Configurações avançadas",
+			"serial_settings": {
+				"name": "Configurações de serial",
+				"tooltip": "Configurações avançadas de porta serial. Opções com texto amarelo necessita reiniciar a conexão ou programa para aplicar."
+			},
+			"bypass_serial_limit": {
+				"name": "Ignorar limite de porta serial",
+				"tooltip": "Permite ignorar o limite de porta serial do sistema operacional. Use com cuidado."
+			},
+			"logging": {
+				"name": "Registros",
+				"tooltip": "Configure como o aplicativo manipula as informações de registro para o frontend e backend do programa."
+			},
+			"write_logs": {
+				"name": "Gravar registros",
+				"tooltip": "Ativar or desativar a gravação de registros ao disco."
+			},
+			"logging_mode": {
+				"name": "Modo de registro",
+				"tooltip": "Selecione o nível de detalhe dos registros. Níveis maiores podem afetar desempenho, não troque se não tiver problemas!",
+				"minimal": "Dados mínimos",
+				"debug": "Dados de depuração",
+				"all": "Todos os dados (!!!)"
+			},
+			"open_logs_folder": {
+				"name": "Abrir pasta de registros",
+				"tooltip": "Abre a pasta onde os registros estão salvos."
+			}
+		}
+	},
+
+	"about": {
+		"title": "Sobre",
+		"description": "O projeto SlimeTora é um programa middleware que permite você a conectar os rastreadores HaritoraX ao servidor SlimeVR.",
+		"contributors": {
+			"title": "Contribuidores",
+			"byline": {
+				"jovannmc": "Desenvolvedora, tem uma cauda",
+				"bracketproto": "Desenvolvedor, ama scugs",
+				"realmy": "Designer de IU, rosna ocasionalmente"
+			},
+			"easter_egg": {
+				"joe-van": "Tem Joe Biden, é uma van, talvez uma Joe-van",
+				"bracketproto": "Desenvolvedor, ama scugs",
+				"grrealmy": "grrgrgrhrtgrgrrrgtdg!!!grrr!!! !!"
+			}
+		},
+		"translators": "Tradutores",
+		"other_credits": "Outros Créditos",
+		"gh_contributors": "Contribuidores do GitHub"
+	},
+
+	"common": {
+		"ok": "OK",
+		"cancel": "Cancelar",
+		"close": "Fechar",
+		"yes": "Sim",
+		"no": "Não"
+	},
+
+	"toast": {
+		"success": "Sucesso!",
+		"error": "Ocorreu um erro.",
+		"info": "Informação",
+		"warning": "Aviso"
+	}
+}
