@@ -29,10 +29,10 @@ static TRACKER_ASSIGNMENT: Lazy<Mutex<HashMap<&'static str, [String; 3]>>> = Laz
         ("leftElbow", "7"),
         ("rightElbow", "8"),
         ("leftWrist", "9"),
-        ("rightWrist", "10"),
-        ("head", "11"),
-        ("leftFoot", "12"),
-        ("rightFoot", "13"),
+        ("rightWrist", "a"),
+        ("head", "b"),
+        ("leftFoot", "c"),
+        ("rightFoot", "d"),
     ];
 
     let map = entries
