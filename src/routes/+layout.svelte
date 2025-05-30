@@ -8,6 +8,7 @@
 	import "../app.css";
 	import "@fontsource/chakra-petch";
 	import "overlayscrollbars/overlayscrollbars.css";
+	import { initialized, initTranslations } from "$lib/lang";
 
 	let { children } = $props();
 
@@ -23,6 +24,10 @@
 	onMount(async () => {
 		currentPath.set(window.location.pathname);
 
+		if (!$initialized) {
+			await initTranslations("en");
+		}
+
 		OverlayScrollbars(document.body, {
 			scrollbars: {
 				autoHide: "leave",
@@ -35,9 +40,7 @@
 </script>
 
 {@render children()}
-<div
-	class="fixed bottom-28 md:bottom-0 right-0 p-4 flex flex-col-reverse gap-4 z-50"
->
+<div class="fixed bottom-28 md:bottom-0 right-0 p-4 flex flex-col-reverse gap-4 z-50">
 	{#each toastList as { id, type, message, durations }}
 		<div class="flex justify-end">
 			<Toast {id} {type} {message} {durations} />

@@ -2,7 +2,7 @@ use crate::interpreters::common::CONNECTED_TRACKERS;
 use firmware_protocol::{
     ActionType, BoardType, ImuType, McuType, SensorDataType, SensorStatus, SlimeQuaternion,
 };
-use log::{error, info, warn};
+use log::{error, info};
 use tauri::AppHandle;
 use tracker_emulation_rs::EmulatedTracker;
 
@@ -21,6 +21,7 @@ pub async fn start_heartbeat(app_handle: &AppHandle) {
     // this would be ran as soon as app is open
 
     // TODO: figure out why tf pings/heartbeats arent being sent to and from server
+    // likely a bug with slimevr server actually...
 }
 
 pub async fn add_tracker(

@@ -211,7 +211,7 @@ async fn handle_device_discovered(
 ) -> Result<(), String> {
     let name = &device.name;
 
-    if name.contains("Haritora") {
+    if name.starts_with("Haritora") {
         info!("Found Haritora device: {} ({})", name, device.address);
 
         let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;

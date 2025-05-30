@@ -2,29 +2,23 @@
 	import { goto } from "$app/navigation";
 	import Button from "$lib/components/settings/Button.svelte";
 	import Select from "$lib/components/settings/Select.svelte";
-	import { t, locales, locale } from "$lib/lang";
+	import { t, locales, locale, loading, changeLocale } from "$lib/lang";
+	import { info } from "$lib/log";
 
-	let availableLocales = $state<string[]>([]);
-	let currentLocale = $state($locale);
-
-	$effect(() => {
-		locales.subscribe((value) => (availableLocales = value));
-		locale.subscribe((value) => (currentLocale = value));
-	});
-
-	function changeLocale(newLocale: string) {
-		locale.set(newLocale);
+	function handleLocaleChange(newLocale: string) {
+		changeLocale(newLocale);
+		info(`Locale changed to ${newLocale} from ${$locale}`);
 	}
 </script>
 
 <div class="flex flex-col justify-between text-center min-h-screen">
-	<!-- Locale Dropdown -->
+	<!-- locale dropdown -->
 	<!-- TODO: add to main window also -->
 	<div class="absolute top-4 left-4">
 		<Select
-			options={availableLocales.map((loc) => ({ value: loc, label: loc }))}
-			selected={currentLocale || ""}
-			onChange={(value: string) => changeLocale(value)}
+			options={$locales.map((loc) => ({ value: loc, label: loc }))}
+			selected={$locale || ""}
+			onChange={(value: string) => handleLocaleChange(value)}
 			icon="ri:translate"
 		/>
 	</div>

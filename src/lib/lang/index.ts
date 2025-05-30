@@ -1,94 +1,126 @@
 import { appConfigDir, join } from "@tauri-apps/api/path";
-import { readDir, readTextFile, exists } from "@tauri-apps/plugin-fs";
-import i18n, { type Config } from "sveltekit-i18n";
+import { readTextFile, exists } from "@tauri-apps/plugin-fs";
 import { browser } from "$app/environment";
 import { info, error } from "$lib/log";
-import { writable, type Readable, type Writable } from "svelte/store";
-interface Params {
-	value: any;
+import { writable, derived } from "svelte/store";
+
+type Translations = Record<string, any>;
+type TranslationParams = Record<string, string | number>;
+
+const AVAILABLE_LOCALES = ['en', 'ja'];
+const DEFAULT_LOCALE = 'en';
+
+export const locale = writable<string>(DEFAULT_LOCALE);
+export const translations = writable<Record<string, Translations>>({});
+export const loading = writable<boolean>(true);
+export const initialized = writable<boolean>(false);
+
+export const locales = writable<string[]>(AVAILABLE_LOCALES);
+
+function getNestedValue(obj: any, path: string): any {
+	return path.split('.').reduce((current, key) => {
+		return current && typeof current === 'object' ? current[key] : undefined;
+	}, obj);
 }
 
-async function createI18nConfig(): Promise<Config<Params>> {
-	const defaultConfig: Config<Params> = {
-		initLocale: "en",
-		fallbackLocale: "en",
-		loaders: [],
-	};
+function replaceVariables(text: string, params: TranslationParams = {}): string {
+	return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+		return params[key]?.toString() || match;
+	});
+}
 
-	if (browser) {
-		try {
-			const baseAppConfigPath = await appConfigDir();
-			const langDirPath = await join(baseAppConfigPath, "langs");
-
-			info(`Attempting to load language files from: ${langDirPath}`);
-
-			if (!(await exists(langDirPath))) {
-				error(`Language directory does not exist: ${langDirPath}.`);
-				return defaultConfig;
+export const t = derived(
+	[translations, locale],
+	([$translations, $locale]) => {
+		return (key: string, params: TranslationParams = {}): string => {
+			const localeTranslations = $translations[$locale];
+			
+			if (!localeTranslations) {
+				console.warn(`No translations found for locale: ${$locale}`);
+				return key;
 			}
-
-			const files = await readDir(langDirPath);
-			info(`Files found in ${langDirPath}: ${files.map((f) => f.name ?? "[unknown]").join(", ")}`);
-
-			const loaders = await Promise.all(
-				files
-					.filter((file) => file.isFile && file.name?.endsWith(".json"))
-					.map(async (fileEntry) => {
-						const locale = fileEntry.name!.replace(".json", "");
-						const filePath = await join(langDirPath, fileEntry.name!);
-						return {
-							locale,
-							key: "",
-							loader: async () => {
-								const content = await readTextFile(filePath);
-								return JSON.parse(content);
-							},
-						};
-					}),
-			);
-			if (!defaultConfig.loaders) defaultConfig.loaders = [];
-			defaultConfig.loaders.push(...loaders);
-			info(`Configured loaders for locales: ${loaders.map((l) => l.locale).join(", ")}`);
-		} catch (err: any) {
-			error(`Error preparing language loaders: ${err.message || err}`);
-		}
+			
+			const value = getNestedValue(localeTranslations, key);
+			
+			if (typeof value === 'string') {
+				return replaceVariables(value, params);
+			}
+			
+			// fallback to default locale if translation not found
+			if ($locale !== DEFAULT_LOCALE) {
+				const fallbackValue = getNestedValue($translations[DEFAULT_LOCALE], key);
+				if (typeof fallbackValue === 'string') {
+					return replaceVariables(fallbackValue, params);
+				}
+			}
+			
+			// return key if no translation found
+			console.warn(`Translation not found for key: ${key}`);
+			return key;
+		};
 	}
-	return defaultConfig;
+);
+
+async function loadLocaleTranslations(targetLocale: string): Promise<Translations | null> {
+	if (!browser) return null;
+	
+	try {
+		const baseAppConfigPath = await appConfigDir();
+		const filePath = await join(baseAppConfigPath, 'langs', `${targetLocale}.json`);
+		
+		if (await exists(filePath)) {
+			const content = await readTextFile(filePath);
+			const parsed = JSON.parse(content);
+			info(`Loaded translations for locale: ${targetLocale}`);
+			return parsed;
+		} else {
+			error(`Translation file not found: ${filePath}`);
+			return null;
+		}
+	} catch (err: any) {
+		error(`Error loading translations for ${targetLocale}: ${err.message || err}`);
+		return null;
+	}
 }
 
-// honestly, i have no idea what this does, but this is so we can actually build
-// the damn tauri app lmfao. basically, it would have empty entries at first, and then
-// it will load the actual functions when subscribed, since we can't do top-level awaits
+export async function initTranslations(initialLocale: string = DEFAULT_LOCALE): Promise<void> {
+	if (!browser) return;
+	
+	loading.set(true);
+	
+	try {
+		const allTranslations: Record<string, Translations> = {};
+		
+		// load all available locales in %identifier%/langs/
+		for (const loc of AVAILABLE_LOCALES) {
+			const localeTranslations = await loadLocaleTranslations(loc);
+			if (localeTranslations) {
+				allTranslations[loc] = localeTranslations;
+			}
+		}
+		
+		translations.set(allTranslations);
+		
+		if (AVAILABLE_LOCALES.includes(initialLocale)) {
+			locale.set(initialLocale);
+		} else {
+			locale.set(DEFAULT_LOCALE);
+		}
+		
+		initialized.set(true);
+		info(`Translations initialized. Available locales: ${Object.keys(allTranslations).join(', ')}`);
+	} catch (err: any) {
+		error(`Failed to initialize translations: ${err.message || err}`);
+	} finally {
+		loading.set(false);
+	}
+}
 
-// --- Add these placeholder stores and function ---
-const _t = writable((key: string) => key);
-const _loading = writable(true);
-const _locales = writable<string[]>([]);
-const _locale = writable<string | null>(null);
-const _initialized = writable(false);
-const _translations = writable<any>({});
-type LoadTranslationsArgs = Parameters<typeof i18n.prototype.loadTranslations>;
-let _loadTranslationsFunc: (
-	...args: LoadTranslationsArgs
-) => ReturnType<typeof i18n.prototype.loadTranslations> = async () => {};
-
-// --- Export these proxies instead of destructuring from i18nInstance ---
-export const t = _t as Readable<(key: string, params?: any) => string>;
-export const loading = _loading as Readable<boolean>;
-export const locales = _locales as Readable<string[]>;
-export const locale = _locale as Writable<string | null>;
-export const initialized = _initialized as Readable<boolean>;
-export const translations = _translations as Readable<any>;
-export const loadTranslations = (...args: LoadTranslationsArgs) => _loadTranslationsFunc(...args);
-
-// --- Update your async init to sync these proxies ---
-createI18nConfig().then((config) => {
-	const instance = new i18n(config);
-	instance.t.subscribe((val) => _t.set(val));
-	instance.loading.subscribe((val) => _loading.set(val));
-	instance.locales.subscribe((val) => _locales.set(val));
-	instance.locale.subscribe((val) => _locale.set(val));
-	instance.initialized.subscribe((val) => _initialized.set(val));
-	instance.translations.subscribe((val) => _translations.set(val));
-	_loadTranslationsFunc = instance.loadTranslations;
-});
+export function changeLocale(newLocale: string): void {
+	if (AVAILABLE_LOCALES.includes(newLocale)) {
+		locale.set(newLocale);
+		info(`Locale changed to: ${newLocale}`);
+	} else {
+		error(`Unsupported locale: ${newLocale}. Available locales: ${AVAILABLE_LOCALES.join(', ')}`);
+	}
+}

@@ -13,7 +13,7 @@
 		"title": "Home",
 		"connected": "Trackers are connected",
 		"disconnected": "Trackers are not connected",
-		"count": "{{value:gt; 0:{{value; 1:{{value}} tracker connected; default:{{value}} trackers connected}}; default:{{value}} trackers connected}}",
+		"count": "{{value}} trackers connected",
 		"onboarding": "Open onboarding"
 	},
 
