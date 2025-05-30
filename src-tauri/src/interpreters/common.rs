@@ -155,6 +155,33 @@ pub fn decode_imu(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
     })
 }
 
+/// Processes magnetometer data for a tracker.
+/// 
+/// ### Connections supported:
+/// - BLE
+/// 
+/// ### Trackers supported:
+/// - HaritoraX Wireless
+/// - HaritoraX 2
+pub fn process_mag_data(data: &str) -> Result<String, String> {
+    // convert data into base64 buffer
+    let buffer = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
+
+    let mag_data = buffer[0];
+
+    let mag_status = match mag_data {
+        3 => "GREAT",
+        2 => "OKAY",
+        1 => "BAD",
+        0 => "VERY_BAD",
+        _ => "UNKNOWN",
+    };
+
+    Ok(mag_status.to_string())
+}
+
 /// Processes battery data for a tracker.
 ///
 /// ### Connections supported:

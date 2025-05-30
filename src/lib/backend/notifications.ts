@@ -134,6 +134,10 @@ async function magNotification() {
 		const trackerId = payload.tracker;
 		const data = payload.data;
 
+		if (!data || !data.magnetometer) {
+			return;
+		}
+
 		// check and only update trackers store if it's changed
 		if (!browser) return;
 		const currentTrackers = get(trackers);

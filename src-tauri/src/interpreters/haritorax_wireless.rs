@@ -10,7 +10,7 @@ use log::{error, info, warn};
 use tauri::{AppHandle, Emitter};
 
 use super::common::{
-    decode_imu, process_battery_data, process_button_data, process_settings_data,
+    decode_imu, process_battery_data, process_button_data, process_mag_data, process_settings_data,
     CONNECTED_TRACKERS,
 };
 
@@ -44,6 +44,7 @@ impl Interpreter for HaritoraXWireless {
             }
             "Magnetometer" => {
                 // TODO: Implement magnetometer data processing
+                process_mag(app_handle, device_id, "bluetooth", data).await?;
             }
             _ => {
                 warn!("Unknown data from {}: {} - {}", device_id, data, char_name);
@@ -180,20 +181,24 @@ async fn process_imu(
             "ankle": ankle,
         },
     });
-    let mag_payload = serde_json::json!({
-        "tracker": tracker_name,
-        "connection_mode": connection_mode,
-        "tracker_type": "Wireless",
-        "data": {
-            "magnetometer": mag_status,
-        },
-    });
     app_handle
         .emit("imu", imu_payload)
         .map_err(|e| format!("Failed to emit IMU data: {}", e))?;
-    app_handle
-        .emit("mag", mag_payload)
-        .map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
+
+    // only fire mag event if not null (BLE tracker. if null, it's a BLE tracker and we skipped it)
+    if let Some(status) = mag_status {
+        let mag_payload = serde_json::json!({
+            "tracker": tracker_name,
+            "connection_mode": connection_mode,
+            "tracker_type": "Wireless",
+            "data": {
+                "magnetometer": status,
+            },
+        });
+        app_handle
+            .emit("mag", mag_payload)
+            .map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
+    }
 
     let rotation_data = [
         imu_data.rotation.raw.x,
@@ -213,6 +218,36 @@ async fn process_imu(
 
     if let Err(e) = send_accel(tracker_name, 0, accel_data).await {
         error!("Failed to send acceleration: {}", e);
+    }
+
+    Ok(())
+}
+
+async fn process_mag(
+    app_handle: &AppHandle,
+    tracker_name: &str,
+    connection_mode: &str,
+    data: &str,
+) -> Result<(), String> {
+    let mag_status = process_mag_data(data, tracker_name)?;
+    if mag_status.is_empty() {
+        return Ok(());
+    }
+
+    let payload = serde_json::json!({
+        "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
+        "data": {
+            "magnetometer": mag_status,
+        },
+    });
+    app_handle
+        .emit("mag", payload)
+        .map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
+
+    if connection_mode == "bluetooth" {
+        info!("Mag data for {}: {:?}", tracker_name, mag_status);
     }
 
     Ok(())
