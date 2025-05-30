@@ -55,6 +55,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_blec::init())
         .plugin(
             tauri_plugin_prevent_default::Builder::new()
                 .with_flags(Flags::all().difference(Flags::RELOAD | Flags::DEV_TOOLS))
@@ -67,12 +68,13 @@ fn main() {
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_btleplug::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal) // use local time instead of UTC
                 .rotation_strategy(RotationStrategy::KeepAll)
                 .max_file_size(8_000_000) // bytes - 8mb
+                .level(log::LevelFilter::Info)
+                .level_for("slimetora", log::LevelFilter::Trace)
                 .format(|out, message, record| {
                     let source = if record.target().starts_with("webview") {
                         "Webview"
@@ -128,16 +130,6 @@ fn main() {
                 }
             }
 
-            #[cfg(mobile)]
-            app.btleplug()
-                .request_permissions(tauri_plugin_btleplug::permission::RequestPermission {
-                    bluetooth: true,
-                    bluetooth_admin: true,
-                    bluetooth_advertise: true,
-                    bluetooth_connect: true,
-                    bluetooth_scan: true,
-                })
-                .expect("error while requesting permissions");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

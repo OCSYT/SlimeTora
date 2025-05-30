@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "tauri": "cross-env WEBKIT_DISABLE_DMABUF_RENDERER=1 tauri"
+    "tauri": "cross-env WEBKIT_DISABLE_DMABUF_RENDERER=1 RUST_LOG=info tauri",
+    "tauri:trace": "cross-env WEBKIT_DISABLE_DMABUF_RENDERER=1 tauri"
   },
   "license": "MIT",
   "dependencies": {

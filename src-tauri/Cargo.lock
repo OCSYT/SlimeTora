@@ -469,6 +469,8 @@ dependencies = [
  "objc2-core-bluetooth",
  "objc2-foundation 0.2.2",
  "once_cell",
+ "serde",
+ "serde_bytes",
  "static_assertions",
  "thiserror 2.0.12",
  "tokio",
@@ -3787,6 +3789,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_bytes"
+version = "0.11.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8437fd221bde2d4ca316d61b90e337e9e702b3820b87d63caa9ba6c02bd06d96"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.219"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4027,7 +4038,7 @@ dependencies = [
  "serialport",
  "tauri",
  "tauri-build",
- "tauri-plugin-btleplug",
+ "tauri-plugin-blec",
  "tauri-plugin-fs",
  "tauri-plugin-log",
  "tauri-plugin-opener",
@@ -4036,6 +4047,7 @@ dependencies = [
  "tokio",
  "tokio-macros",
  "tracker_emulation-rs",
+ "uuid",
 ]
 
 [[package]]
@@ -4432,18 +4444,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-btleplug"
-version = "0.0.0"
-source = "git+https://github.com/Dreaming-Codes/tauri-plugin-btleplug#203e3fd1b71ef5b2e37aee6198f1873382911bcd"
+name = "tauri-plugin-blec"
+version = "0.5.3"
 dependencies = [
+ "async-trait",
+ "base64 0.22.1",
  "btleplug",
- "jni 0.19.0",
- "lazy_static",
+ "enumflags2",
+ "futures",
+ "once_cell",
  "serde",
+ "serde_json",
  "tauri",
+ "tauri-build",
  "tauri-plugin",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tokio",
+ "tokio-stream",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -4940,7 +4959,6 @@ dependencies = [
 [[package]]
 name = "tracker_emulation-rs"
 version = "0.1.0"
-source = "git+https://github.com/JovannMC/tracker_emulation-rs#bf3c63ecf9dad39d31f4e4c6b411f4668b7834a7"
 dependencies = [
  "firmware_protocol",
  "rand 0.9.1",

@@ -16,7 +16,6 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-prevent-default = { version = "1.2", features = ["unstable-windows"] }
-tauri-plugin-btleplug = { git = "https://github.com/Dreaming-Codes/tauri-plugin-btleplug", version = "0.0.0" }
 futures = "0.3.31"
 tokio = { version = "1", features = ["full"] }
 tokio-macros = "2"
@@ -27,7 +26,7 @@ byteorder = "1.5.0"
 hex = "0.4.3"
 nalgebra = "0.33.2"
 firmware_protocol = { git = "https://github.com/JovannMC/SlimeVR-Rust", package = "firmware_protocol", branch = "more-packets" }
-tracker_emulation-rs = { git = "https://github.com/JovannMC/tracker_emulation-rs" }
+tracker_emulation-rs = { path = "C:/Users/JovannMC/Desktop/Desktop/GitHub_Projects/tracker_emulation-rs" }
 dashmap = "6.1.0"
 async-trait = "0.1.88"
 open = "5.3.2"
@@ -37,3 +36,5 @@ log = "0.4.27"
 dirs = "6.0.0"
 chrono = "0.4.41"
 tauri-plugin-fs = "2"
+uuid = "1.0"
+tauri-plugin-blec = { path = "C:/Users/JovannMC/Desktop/Desktop/GitHub_Projects/tauri-plugin-blec" }
