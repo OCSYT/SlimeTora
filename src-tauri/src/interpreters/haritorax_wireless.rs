@@ -1,8 +1,7 @@
-use crate::connection::slimevr::{remove_tracker, send_battery};
-use crate::interpreters::common::process_connection_data;
 use crate::{
-    connection::slimevr::{add_tracker, send_accel, send_rotation},
-    interpreters::core::Interpreter,
+    connection::slimevr::{add_tracker, send_accel, send_rotation, remove_tracker, send_battery},
+    interpreters::common::process_connection_data,
+    interpreters::core::{Interpreter, MagStatus},
 };
 use async_trait::async_trait;
 use base64::Engine;
@@ -37,13 +36,12 @@ impl Interpreter for HaritoraXWireless {
                 // TODO: Implement button data processing
             }
             "BatteryLevel" | "BatteryVoltage" | "ChargeStatus" => {
-                // TODO: Implement battery data processing
+                process_battery(app_handle, device_id, "bluetooth", data, Some(char_name)).await?;
             }
             "SensorModeSetting" | "FpsSetting" | "AutoCalibrationSetting" | "TofSetting" => {
                 // TODO: Implement settings data processing
             }
             "Magnetometer" => {
-                // TODO: Implement magnetometer data processing
                 process_mag(app_handle, device_id, "bluetooth", data).await?;
             }
             _ => {
@@ -77,7 +75,7 @@ impl Interpreter for HaritoraXWireless {
                 process_imu(app_handle, tracker_name, "serial", buffer).await?;
             }
             Some('v') => {
-                process_battery(app_handle, tracker_name, "serial", data).await?;
+                process_battery(app_handle, tracker_name, "serial", data, None).await?;
             }
             Some('r') => {
                 process_button(app_handle, tracker_name, "serial", data).await?;
@@ -158,16 +156,16 @@ async fn process_imu(
     } else {
         None
     };
-    let mut mag_status: Option<&str> = None;
+    let mut mag_status: Option<MagStatus> = None;
 
     if connection_mode == "serial" {
         let magnetometer_data = buffer_data.chars().nth(buffer_data.len() - 5);
         mag_status = match magnetometer_data {
-            Some('A') => Some("VERY_BAD"),
-            Some('B') => Some("BAD"),
-            Some('C') => Some("OKAY"),
-            Some('D') => Some("GREAT"),
-            _ => Some("UNKNOWN"),
+            Some('A') => Some(MagStatus::VeryBad),
+            Some('B') => Some(MagStatus::Bad),
+            Some('C') => Some(MagStatus::Okay),
+            Some('D') => Some(MagStatus::Great),
+            _ => Some(MagStatus::Unknown),
         };
     }
 
@@ -229,7 +227,7 @@ async fn process_mag(
     connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
-    let mag_status = process_mag_data(data, tracker_name)?;
+    let mag_status = process_mag_data(data)?;
     if mag_status.is_empty() {
         return Ok(());
     }
@@ -258,12 +256,14 @@ async fn process_battery(
     tracker_name: &str,
     connection_mode: &str,
     data: &str,
+    characteristic: Option<&str>,
 ) -> Result<(), String> {
-    let battery_data = process_battery_data(data, tracker_name, None)?;
-    if data.is_empty() {
+    let battery_option = process_battery_data(data, tracker_name, characteristic)?;
+    if data.is_empty() | battery_option.is_none() {
         return Ok(());
     }
 
+    let battery_data = battery_option.unwrap();
     let payload = serde_json::json!({
         "tracker": tracker_name,
         "connection_mode": connection_mode,

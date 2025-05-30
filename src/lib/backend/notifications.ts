@@ -171,7 +171,20 @@ async function batteryNotification() {
 		trackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
-				const updatedTracker = { ...prev[index], battery: data };
+				let updatedBattery = data;
+				// if both remaining and voltage are null, but status is present, keep previous remaining and voltage and update w/ new status
+				if (
+					data.remaining == null &&
+					data.voltage == null &&
+					data.status != null &&
+					prev[index].battery
+				) {
+					updatedBattery = {
+						...prev[index].battery,
+						status: data.status,
+					};
+				}
+				const updatedTracker = { ...prev[index], battery: updatedBattery };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			}
 			return prev;

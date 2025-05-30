@@ -24,9 +24,16 @@
 			"device": "Device:",
 			"imu": "IMU:",
 			"battery": "Battery:",
-			"status": "Status:",
 			"settings": "Open tracker settings: {{name}}",
 			"power_off": "Power off tracker: {{name}}",
+			"status": {
+				"text": "Status:",
+				"great": "GREAT",
+				"okay": "OKAY",
+				"bad": "BAD",
+				"very_bad": "VERY BAD",
+				"unknown": "N/A"
+			},
 			"tooltip": {
 				"mag_status": "Magnetometer status. If all trackers are consistently \"GREAT\", it is preferred to use sensor mode 1.'}",
 				"rssi": "Wireless signal strength (RSSI). Higher (closer to 0) is better."

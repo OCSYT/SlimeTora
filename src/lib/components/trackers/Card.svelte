@@ -147,7 +147,7 @@
 				</span>
 			</p>
 			<div id="status" class="flex items-center text-center gap-1">
-				<b>{$t("trackers.card.status")}</b>
+				<b>{$t("trackers.card.status.text")}</b>
 				<div class="flex items-center gap-2" id="battery-status">
 					<div class="flex items-center gap-1" id="mag-status">
 						<Tooltip content={$t("trackers.card.tooltip.mag_status")} position="up" width="200px">
@@ -158,9 +158,11 @@
 								id="mag-icon"
 							/>
 						</Tooltip>
-						<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text"
-							>{$t("trackers.card.status", { status: magStatus })}</span
-						>
+						<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text">
+							{magStatus === "N/A"
+								? $t("trackers.card.status.unknown")
+								: $t(`trackers.card.status.${magStatus}`)}
+						</span>
 					</div>
 					<div class="flex items-center gap-1" id="rssi-status">
 						<Tooltip content={$t("trackers.card.tooltip.rssi")} position="up" width="200px">
