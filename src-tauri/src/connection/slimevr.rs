@@ -33,6 +33,9 @@ pub async fn add_tracker(
         return Err(format!("Tracker {} already exists", tracker_name));
     }
 
+    // insert without EmulatedTracker so we know its already being initialized
+    CONNECTED_TRACKERS.insert(tracker_name.to_string(), None);
+
     let version = &app_handle.package_info().version;
     let mut tracker = EmulatedTracker::new(
         mac_address,
@@ -52,6 +55,7 @@ pub async fn add_tracker(
         .await
         .map_err(|e| format!("Failed to initialize tracker: {}", e))?;
 
+    // NOW insert the EmulatedTracker instance after it's been initialized
     CONNECTED_TRACKERS.insert(tracker_name.to_string(), Some(tracker));
 
     add_sensor(tracker_name)

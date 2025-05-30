@@ -25,9 +25,13 @@ impl Interpreter for HaritoraXWireless {
         char_name: &str,
         data: &str,
     ) -> Result<(), String> {
+        let buffer = base64::engine::general_purpose::STANDARD
+            .decode(data)
+            .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
+
         match char_name {
             "Sensor" => {
-                // TODO: Implement sensor data processing
+                process_imu(app_handle, device_id, "bluetooth", buffer).await?;
             }
             "MainButton" | "SecondaryButton" => {
                 // TODO: Implement button data processing
@@ -99,26 +103,38 @@ async fn process_imu(
     connection_mode: &str,
     data: Vec<u8>,
 ) -> Result<(), String> {
-    if !CONNECTED_TRACKERS.contains_key(tracker_name) && !tracker_name.is_empty() {
-        info!("Creating new tracker: {}", tracker_name);
+    if !tracker_name.is_empty() {
+        match CONNECTED_TRACKERS.get(tracker_name) {
+            Some(entry) => {
+                if entry.is_none() {
+                    // still initializing tracker
+                    return Ok(());
+                }
+            }
+            None => {
+                info!("Creating new tracker: {}", tracker_name);
 
-        if let Err(e) = add_tracker(app_handle, tracker_name, [0, 0, 0, 0, 0, 0x01]).await {
-            error!("Failed to add tracker: {}", e);
-            return Err(format!("Failed to add tracker: {}", e));
+                // TODO: seed tracker serial for mac address
+                // we should get the serial and seed that for the mac address, so when users switch between BT or serial they are the same tracker to SlimeVR Server
+                if let Err(e) = add_tracker(app_handle, tracker_name, [0, 0, 0, 0, 0, 0x01]).await {
+                    error!("Failed to add tracker: {}", e);
+                    return Err(format!("Failed to add tracker: {}", e));
+                }
+
+                let payload = serde_json::json!({
+                    "tracker": tracker_name,
+                    "connection_mode": connection_mode,
+                    "tracker_type": "Wireless",
+                });
+
+                app_handle.emit("connect", payload).map_err(|e| {
+                    format!(
+                        "Failed to emit tracker added event for {}: {}",
+                        tracker_name, e
+                    )
+                })?;
+            }
         }
-
-        let payload = serde_json::json!({
-            "tracker": tracker_name,
-            "connection_mode": connection_mode,
-            "tracker_type": "Wireless",
-        });
-
-        app_handle.emit("connect", payload).map_err(|e| {
-            format!(
-                "Failed to emit tracker added event for {}: {}",
-                tracker_name, e
-            )
-        })?;
     }
 
     let imu_data = match decode_imu(&data, tracker_name) {
@@ -132,7 +148,7 @@ async fn process_imu(
         }
     };
 
-    // since we are in wireless trackers, the ankle and wireless data is actually within the data
+    // since we are in wireless trackers, the ankle and mag data is actually within the data
     // this probably also applies to X2's, but ofc it's very different (with the new LiDAR sensor)
     let buffer_data = base64::engine::general_purpose::STANDARD.encode(data.clone());
     let ankle = if !buffer_data.ends_with("==") {
@@ -143,7 +159,7 @@ async fn process_imu(
     };
     let mut mag_status: Option<&str> = None;
 
-    if !tracker_name.starts_with("HaritoraXW") {
+    if connection_mode == "serial" {
         let magnetometer_data = buffer_data.chars().nth(buffer_data.len() - 5);
         mag_status = match magnetometer_data {
             Some('A') => Some("VERY_BAD"),

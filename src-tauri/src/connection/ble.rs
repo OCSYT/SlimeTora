@@ -31,39 +31,39 @@ static SERVICES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
 });
 
 // HaritoraX Wireless (2?)
-static CHARACTERISTICS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+static CHARACTERISTICS: Lazy<HashMap<&'static str, (&'static str, bool)>> = Lazy::new(|| {
     let mut map = HashMap::new();
-    map.insert("2a19", "BatteryLevel");
-    map.insert("2a25", "SerialNumber");
-    map.insert("2a29", "Manufacturer");
-    map.insert("2a27", "HardwareRevision");
-    map.insert("2a26", "FirmwareRevision");
-    map.insert("2a28", "SoftwareRevision");
-    map.insert("2a24", "ModelNumber");
-    map.insert("00dbf1c6-90aa-11ed-a1eb-0242ac120002", "Sensor");
-    map.insert("00dbf07c-90aa-11ed-a1eb-0242ac120002", "NumberOfImu");
-    map.insert("00dbf306-90aa-11ed-a1eb-0242ac120002", "Magnetometer");
-    map.insert("00dbf450-90aa-11ed-a1eb-0242ac120002", "MainButton");
-    map.insert("00dbf586-90aa-11ed-a1eb-0242ac120002", "SecondaryButton");
-    map.insert("00dbf6a8-90aa-11ed-a1eb-0242ac120002", "TertiaryButton");
-    map.insert("ef844202-90a9-11ed-a1eb-0242ac120002", "FpsSetting");
-    map.insert("ef8443f6-90a9-11ed-a1eb-0242ac120002", "TofSetting");
-    map.insert("ef8445c2-90a9-11ed-a1eb-0242ac120002", "SensorModeSetting");
+    map.insert("2a19", ("BatteryLevel", true));
+    map.insert("2a25", ("SerialNumber", false));
+    map.insert("2a29", ("Manufacturer", false));
+    map.insert("2a27", ("HardwareRevision", false));
+    map.insert("2a26", ("FirmwareRevision", false));
+    map.insert("2a28", ("SoftwareRevision", false));
+    map.insert("2a24", ("ModelNumber", false));
+    map.insert("00dbf1c6-90aa-11ed-a1eb-0242ac120002", ("Sensor", true));
+    map.insert("00dbf07c-90aa-11ed-a1eb-0242ac120002", ("NumberOfImu", false));
+    map.insert("00dbf306-90aa-11ed-a1eb-0242ac120002", ("Magnetometer", false));
+    map.insert("00dbf450-90aa-11ed-a1eb-0242ac120002", ("MainButton", true));
+    map.insert("00dbf586-90aa-11ed-a1eb-0242ac120002", ("SecondaryButton", true));
+    map.insert("00dbf6a8-90aa-11ed-a1eb-0242ac120002", ("TertiaryButton", true));
+    map.insert("ef844202-90a9-11ed-a1eb-0242ac120002", ("FpsSetting", false));
+    map.insert("ef8443f6-90a9-11ed-a1eb-0242ac120002", ("TofSetting", false));
+    map.insert("ef8445c2-90a9-11ed-a1eb-0242ac120002", ("SensorModeSetting", false));
     map.insert(
         "ef84c300-90a9-11ed-a1eb-0242ac120002",
-        "WirelessModeSetting",
+        ("WirelessModeSetting", false),
     );
     map.insert(
         "ef84c305-90a9-11ed-a1eb-0242ac120002",
-        "AutoCalibrationSetting",
+        ("AutoCalibrationSetting", false),
     );
-    map.insert("ef844766-90a9-11ed-a1eb-0242ac120002", "SensorDataControl");
-    map.insert("ef843b54-90a9-11ed-a1eb-0242ac120002", "BatteryVoltage");
-    map.insert("ef843cb2-90a9-11ed-a1eb-0242ac120002", "ChargeStatus");
-    map.insert("8ec90003-f315-4f60-9fb8-838830daea50", "DFUControl");
-    map.insert("0c900914-a85e-11ed-afa1-0242ac120002", "CommandMode");
-    map.insert("0c900c84-a85e-11ed-afa1-0242ac120002", "Command");
-    map.insert("0c900df6-a85e-11ed-afa1-0242ac120002", "Response");
+    map.insert("ef844766-90a9-11ed-a1eb-0242ac120002", ("SensorDataControl", false));
+    map.insert("ef843b54-90a9-11ed-a1eb-0242ac120002", ("BatteryVoltage", true));
+    map.insert("ef843cb2-90a9-11ed-a1eb-0242ac120002", ("ChargeStatus", true));
+    map.insert("8ec90003-f315-4f60-9fb8-838830daea50", ("DFUControl", false));
+    map.insert("0c900914-a85e-11ed-afa1-0242ac120002", ("CommandMode", false));
+    map.insert("0c900c84-a85e-11ed-afa1-0242ac120002", ("Command", false));
+    map.insert("0c900df6-a85e-11ed-afa1-0242ac120002", ("Response", false));
     map
 });
 
@@ -267,21 +267,23 @@ async fn setup_notifications(
 ) -> Result<(), String> {
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
 
-    // subscribe to all characteristics
-    for (char_uuid_str, char_name) in CHARACTERISTICS.iter() {
+    // subscribe only to characteristics where the bool is true
+    for (char_uuid_str, (char_name, can_subscribe)) in CHARACTERISTICS.iter() {
+        if !*can_subscribe {
+            continue;
+        }
+
         let char_uuid = normalize_uuid(char_uuid_str)
             .map_err(|e| format!("Invalid characteristic UUID {}: {}", char_uuid_str, e))?;
 
         let app_handle_clone = app_handle.clone();
         let device_name_clone = device_name.to_string();
         let char_name_clone = char_name.to_string();
-        let char_uuid_str_clone = char_uuid_str.to_string();
 
         let callback = move |data: Vec<u8>| {
             let app_handle = app_handle_clone.clone();
             let device_name = device_name_clone.clone();
             let char_name = char_name_clone.clone();
-            let char_uuid_str = char_uuid_str_clone.clone();
 
             tokio::spawn(async move {
                 // convert data into base64 and process in interpreter
@@ -290,7 +292,7 @@ async fn setup_notifications(
                 if let Err(e) = crate::interpreters::core::process_ble(
                     &app_handle,
                     &device_name,
-                    &char_uuid_str,
+                    &char_name,
                     &data_str,
                 )
                 .await
