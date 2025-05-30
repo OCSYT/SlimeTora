@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use dashmap::{DashMap, DashSet};
-use log::{error, info, warn};
+use log::{error, info};
 use once_cell::sync::Lazy;
 use std::sync::Arc;
 use tauri::AppHandle;
@@ -20,8 +20,8 @@ pub trait Interpreter: Send + Sync {
     async fn parse_ble(
         &self,
         app_handle: &AppHandle,
-        device_id: Option<&str>,
-        characteristic_uuid: &str,
+        device_id: &str,
+        char_name: &str,
         data: &str,
     ) -> Result<(), String>;
 
@@ -100,11 +100,9 @@ pub static INTERPRETERS: Lazy<DashMap<TrackerModel, Arc<dyn Interpreter + Send +
     Lazy::new(DashMap::new);
 pub static ACTIVE_MODELS: Lazy<DashSet<TrackerModel>> = Lazy::new(DashSet::new);
 
-// Initialize the interpreters in your init function or at program start
 pub fn init_interpreters() {
     info!("Initializing interpreters");
 
-    // Store each implementation as a trait object
     INTERPRETERS.insert(
         TrackerModel::X2,
         Arc::new(haritorax_2::HaritoraX2) as Arc<dyn Interpreter + Send + Sync>,
@@ -128,7 +126,6 @@ pub fn start_interpreting(model: &str) -> Result<(), String> {
 
     info!("Starting interpreter for model: {}", model);
 
-    // Convert string to enum
     let tracker_model = match model {
         "X2" => TrackerModel::X2,
         "Wireless" => TrackerModel::Wireless,
@@ -136,12 +133,10 @@ pub fn start_interpreting(model: &str) -> Result<(), String> {
         _ => return Err(format!("Unknown tracker model: {}", model)),
     };
 
-    // Check if the interpreter exists
     if !INTERPRETERS.contains_key(&tracker_model) {
         return Err(format!("No interpreter found for model: {}", model));
     }
 
-    // Add the model to active models
     ACTIVE_MODELS.insert(tracker_model);
     info!("Interpreter started for model: {}", model);
     Ok(())
@@ -150,7 +145,6 @@ pub fn start_interpreting(model: &str) -> Result<(), String> {
 pub fn stop_interpreting(model: &str) -> Result<(), String> {
     info!("Stopping interpreter for model: {}", model);
 
-    // Convert string to enum
     let tracker_model = match model {
         "X2" => TrackerModel::X2,
         "Wireless" => TrackerModel::Wireless,
@@ -158,7 +152,6 @@ pub fn stop_interpreting(model: &str) -> Result<(), String> {
         _ => return Err(format!("Unknown tracker model: {}", model)),
     };
 
-    // Remove the model from active models
     ACTIVE_MODELS.remove(&tracker_model);
     info!("Interpreter stopped for model: {}", model);
     Ok(())
@@ -221,8 +214,8 @@ pub async fn process_serial(
 
 pub async fn process_ble(
     app_handle: &AppHandle,
-    device_id: Option<&str>,
-    characteristic_uuid: &str,
+    device_id: &str,
+    char_name: &str,
     data: &str,
 ) -> Result<(), String> {
     if ACTIVE_MODELS.is_empty() {
@@ -230,12 +223,12 @@ pub async fn process_ble(
     }
 
     // Try to identify model from device_id if available
-    if let Some(id) = device_id {
-        let model = if id.starts_with("HaritoraX2-") {
+    if !device_id.is_empty() {
+        let model = if device_id.starts_with("HaritoraX2-") {
             Some(TrackerModel::X2)
-        } else if id.starts_with("HaritoraXW-") {
+        } else if device_id.starts_with("HaritoraXW-") {
             Some(TrackerModel::Wireless)
-        } else if id.starts_with("HaritoraX-") {
+        } else if device_id.starts_with("HaritoraX-") {
             Some(TrackerModel::Wired)
         } else {
             None
@@ -246,7 +239,7 @@ pub async fn process_ble(
             if ACTIVE_MODELS.contains(&identified_model) {
                 if let Some(interpreter_ref) = INTERPRETERS.get(&identified_model) {
                     return interpreter_ref
-                        .parse_ble(app_handle, device_id, characteristic_uuid, data)
+                        .parse_ble(app_handle, device_id, char_name, data)
                         .await;
                 }
             }
@@ -257,7 +250,7 @@ pub async fn process_ble(
     for active_model in ACTIVE_MODELS.iter() {
         if let Some(interpreter_ref) = INTERPRETERS.get(active_model.key()) {
             match interpreter_ref
-                .parse_ble(app_handle, device_id, characteristic_uuid, data)
+                .parse_ble(app_handle, device_id, char_name, data)
                 .await
             {
                 Ok(_) => return Ok(()),

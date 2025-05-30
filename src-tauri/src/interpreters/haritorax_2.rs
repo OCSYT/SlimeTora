@@ -9,8 +9,8 @@ impl Interpreter for HaritoraX2 {
     async fn parse_ble(
         &self,
         app_handle: &AppHandle,
-        device_id: Option<&str>,
-        characteristic_uuid: &str,
+        device_id: &str,
+        char_name: &str,
         data: &str,
     ) -> Result<(), String> {
         // Implement BLE parsing logic for HaritoraX 2

@@ -21,11 +21,32 @@ impl Interpreter for HaritoraXWireless {
     async fn parse_ble(
         &self,
         app_handle: &AppHandle,
-        device_id: Option<&str>,
-        characteristic_uuid: &str,
+        device_id: &str,
+        char_name: &str,
         data: &str,
     ) -> Result<(), String> {
-        // Implement BLE parsing logic for HaritoraX Wireless
+        match char_name {
+            "Sensor" => {
+                // TODO: Implement sensor data processing
+            }
+            "MainButton" | "SecondaryButton" => {
+                // TODO: Implement button data processing
+            }
+            "BatteryLevel" | "BatteryVoltage" | "ChargeStatus" => {
+                // TODO: Implement battery data processing
+            }
+            "SensorModeSetting" | "FpsSetting" | "AutoCalibrationSetting" | "TofSetting" => {
+                // TODO: Implement settings data processing
+            }
+            "Magnetometer" => {
+                // TODO: Implement magnetometer data processing
+            }
+            _ => {
+                warn!("Unknown data from {}: {} - {}", device_id, data, char_name);
+                return Ok(());
+            }
+        }
+
         Ok(())
     }
 

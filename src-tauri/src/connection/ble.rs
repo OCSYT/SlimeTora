@@ -289,7 +289,7 @@ async fn setup_notifications(
 
                 if let Err(e) = crate::interpreters::core::process_ble(
                     &app_handle,
-                    Some(&device_name),
+                    &device_name,
                     &char_uuid_str,
                     &data_str,
                 )
