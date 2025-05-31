@@ -55,7 +55,7 @@
 			},
 			"sensor_mode": {
 				"name": "Sensor mode",
-				"tooltip": "Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables magnetometer and is recommended for unstable environments."
+				"tooltip": "Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables the magnetometer and is recommended for unstable environments."
 			},
 			"sensor_auto_correction": {
 				"name": "Sensor auto correction",
@@ -169,7 +169,7 @@
 			},
 			"bypass_serial_limit": {
 				"name": "Bypass serial port limit",
-				"tooltip": "Allows bypassing the serial port limit imposed by the operating system. Use with caution."
+				"tooltip": "Allows bypassing the limit of 3 serial ports. Useful for multiple GX dongles or tracker sets."
 			},
 			"logging": {
 				"name": "Logging",
