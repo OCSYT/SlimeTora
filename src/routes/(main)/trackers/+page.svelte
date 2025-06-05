@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import Button from "$lib/components/settings/Button.svelte";
 	import Switch from "$lib/components/settings/Switch.svelte";
 	import Card from "$lib/components/trackers/Card.svelte";
@@ -61,10 +62,21 @@
 		<h2 class="text-lg font-semibold mb-4">{$t("trackers.settings.title")}</h2>
 		<div class="flex flex-row gap-4">
 			<div class="flex flex-col gap-4 flex-1">
-				<Button label={$t("trackers.settings.collapse_expand")} onClick={() => toggleTrackers()} />
+				<div class="flex flex-row gap-2">
+					<Button label={$t("trackers.settings.collapse_expand")} onClick={() => toggleTrackers()} />
+					<Button label={$t("trackers.settings.pairing")} onClick={() => goto("/trackers/pairing")} />
+				</div>
 				<div class="flex flex-row items-center justify-evenly gap-2">
-					<Switch label={$t("trackers.settings.precise_data")} selected={preciseData} onChange={(value) => (preciseData = value)} />
-					<Switch label={$t("trackers.settings.fast_data")} selected={fastData} onChange={(value) => (fastData = value)} />
+					<Switch
+						label={$t("trackers.settings.precise_data")}
+						selected={preciseData}
+						onChange={(value) => (preciseData = value)}
+					/>
+					<Switch
+						label={$t("trackers.settings.fast_data")}
+						selected={fastData}
+						onChange={(value) => (fastData = value)}
+					/>
 					<Switch
 						label="Show tracker visualization"
 						selected={visualization}

@@ -35,13 +35,14 @@
 				"unknown": "N/A"
 			},
 			"tooltip": {
-				"mag_status": "Magnetometer status. If all trackers are consistently \"GREAT\", it is preferred to use sensor mode 1.'}",
+				"mag_status": "Magnetometer status. If all trackers are consistently \"GREAT\", it is preferred to use sensor mode 1.",
 				"rssi": "Wireless signal strength (RSSI). Higher (closer to 0) is better."
 			}
 		},
 		"settings": {
 			"title": "Settings",
 			"collapse_expand": "Collapse/expand all trackers",
+			"pairing": "Tracker pairing",
 			"precise_data": "Precise data",
 			"fast_data": "Fast data",
 			"visualization": "Show tracker visualization"
@@ -112,7 +113,8 @@
 			},
 			"connection_mode": {
 				"name": "Connection Mode",
-				"tooltip": "Select the connection mode used to connect to the trackers. Multiple modes can be used simultaneously."
+				"tooltip": "Select the connection mode used to connect to the trackers. Multiple modes can be used simultaneously.",
+				"tip": "Need to pair your trackers via Bluetooth or the GX dongle? Head to the {{link}} page!"
 			},
 			"serial_ports": {
 				"name": "Serial Ports",
