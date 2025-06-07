@@ -47,6 +47,39 @@
 			"fast_data": "Fast data",
 			"visualization": "Show tracker visualization"
 		},
+		"pairing": {
+			"title": "Pairing management",
+			"subtitle": "Pair and manage your HaritoraX trackers via Bluetooth (LE) or Serial/GX(6/2) connections",
+			"bluetooth": {
+				"title": "Bluetooth (LE) Pairing",
+				"paired_devices": "Paired devices",
+				"discovered_devices": "Discovered devices",
+				"scan_devices": "Scan for devices",
+				"stop_scanning": "Stop scanning",
+				"unpair_all": "Unpair All",
+				"pair": "Pair",
+				"unpair": "Unpair",
+				"connected": "Connected",
+				"disconnected": "Disconnected",
+				"no_paired_devices": "No paired devices. Scan for devices to pair them.",
+				"searching": "Searching for devices...",
+				"no_devices_found": "No devices found."
+			},
+			"serial": {
+				"title": "Serial / GX(6/2) Pairing",
+				"no_ports": "No serial ports configured. Please configure the serial ports in the connection settings first.",
+				"serial_port": "Serial port: {{port}}",
+				"channel_num": "Channel {{num}}",
+				"port_id": "Port ID {{id}}",
+				"tracker": "Tracker:",
+				"none": "None",
+				"paired": "Paired",
+				"pairing": "Pairing",
+				"unpaired": "Unpaired",
+				"pair": "Pair",
+				"unpair": "Unpair"
+			}
+		},
 		"per_tracker": {
 			"title": "{{name}} Settings",
 			"description": "Override the hardware settings for this tracker. Can be useful if only certain trackers have bad magnetometer statuses.",
@@ -113,8 +146,7 @@
 			},
 			"connection_mode": {
 				"name": "Connection Mode",
-				"tooltip": "Select the connection mode used to connect to the trackers. Multiple modes can be used simultaneously.",
-				"tip": "Need to pair your trackers via Bluetooth or the GX dongle? Head to the {{link}} page!"
+				"tooltip": "Select the connection mode used to connect to the trackers. Multiple modes can be used simultaneously."
 			},
 			"serial_ports": {
 				"name": "Serial Ports",

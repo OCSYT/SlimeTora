@@ -278,6 +278,8 @@ async function connectionNotification() {
 		const tracker = payload.tracker;
 		//const dongle_rssi = payload.data.dongle_rssi;
 		const tracker_rssi = payload.data.tracker_rssi;
+		const connection_mode = payload.connection_mode;
+		const tracker_type = payload.tracker_type;
 
 		if (!browser) return;
 		trackers.update((prev) => {
@@ -286,8 +288,19 @@ async function connectionNotification() {
 				const updatedTracker = { ...prev[index], rssi: tracker_rssi };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			} else {
-				warn(`Tracker with id ${tracker} not found in store`);
-				return prev;
+				warn(`Tracker with id ${tracker} not found in store, adding new tracker`);
+				return [
+					...prev,
+					{
+						name: tracker,
+						id: tracker,
+						connection_mode: connection_mode as ConnectionMode,
+						tracker_type: tracker_type as TrackerModel,
+						rotation: [0, 0, 0],
+						acceleration: [0, 0, 0],
+						rssi: tracker_rssi,
+					}
+				];
 			}
 		});
 	});

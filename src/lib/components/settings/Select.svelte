@@ -24,12 +24,16 @@
 </script>
 
 <div class="flex flex-col gap-2 {className}">
-	<div class="flex flex-row items-center gap-2">
-		<label class="font-medium" for="select-input">{label}</label>
-		{#if tooltip}
-			<Tooltip content={tooltip} icon="ri:information-line" position={tooltipPosition} width={tooltipWidth} />
-		{/if}
-	</div>
+	{#if label || tooltip}
+		<div class="flex flex-row items-center gap-2">
+			{#if label}
+				<label class="font-medium" for="select-input">{label}</label>
+			{/if}
+			{#if tooltip}
+				<Tooltip content={tooltip} icon="ri:information-line" position={tooltipPosition} width={tooltipWidth} />
+			{/if}
+		</div>
+	{/if}
 	<div class="relative w-full">
 		{#if icon}
 			<Icon {icon} width={18} class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />

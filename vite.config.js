@@ -25,8 +25,12 @@ export default defineConfig(async () => ({
         }
       : undefined,
     watch: {
-      // 3. tell vite to ignore watching `src-tauri` and `src-tauri/resources/lang`
-      ignored: ["**/src-tauri/**", "**/src-tauri/resources/lang/**"], // added resources exclusion
+      // 3. tell vite to ignore watching `src-tauri`
+      ignored: [
+        "**/src-tauri/**",
+        "**/src-tauri/resources/lang/**",
+        "**/src-tauri/resources/lang/**/*.json"
+      ],
     },
   },
 }));

@@ -11,7 +11,10 @@
 	import { error, info, warn } from "$lib/log";
 	import Tooltip from "../Tooltip.svelte";
 	import { t } from "$lib/lang";
+	import { goto } from "$app/navigation";
+	import Button from "../Button.svelte";
 
+	const tip = $t("settings.connection.connection_mode.tip");
 	let portsInitialized = $state(false);
 	let haritoraPorts: string[] = $state([]);
 	let serialPorts: Record<string, boolean> = $state({});
@@ -154,6 +157,13 @@
 					onChange={(value) => (connectionModes.serial = value)}
 				/>
 			</div>
+			<Button
+				label={$t("trackers.settings.pairing")}
+				icon="ri:bluetooth-connect-line"
+				iconPosition="left"
+				background="quaternary"
+				onClick={() => goto("/trackers/pairing")}
+			/>
 		</div>
 
 		<div class="flex flex-col gap-4">

@@ -132,10 +132,9 @@ static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
 
 pub async fn start_scanning(
     _app_handle: tauri::AppHandle,
-    timeout_seconds: Option<u64>,
-) -> Result<(), String> {
-    let timeout = timeout_seconds.unwrap_or(5);
-    info!("Starting BLE device scanning for {} seconds", timeout);
+    timeout: Option<u64>,
+) -> Result<Vec<BleDevice>, String> {
+    let timeout = timeout.unwrap_or(5000);
 
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
 
@@ -147,14 +146,36 @@ pub async fn start_scanning(
         state.scanning = true;
     }
 
-    info!("Started BLE device scanning for {} seconds", timeout);
-    if let Err(e) = handler.start_scan(ScanFilter::None, timeout).await {
-        error!("Failed to start BLE scan: {}", e);
-        Err(format!("Failed to start BLE scan: {}", e))
-    } else {
-        info!("Finished BLE device scanning");
-        Ok(())
+    info!("Started BLE device scanning for {}ms", timeout);
+    let result = match handler.start_scan(ScanFilter::None, timeout).await {
+        Ok(result) => {
+            info!("Finished BLE device scanning");
+            let filtered: Vec<BleDevice> = result
+                .into_iter()
+                .filter(|dev| {
+                    dev.name.starts_with("HaritoraX")
+                        || dev.services.iter().any(|uuid| {
+                            uuid.to_string().to_lowercase()
+                                == "ef84369a-90a9-11ed-a1eb-0242ac120002"
+                        })
+                })
+                .collect();
+            Ok(filtered)
+        }
+        Err(e) => {
+            error!("Failed to start BLE scan: {}", e);
+            Err(format!("Failed to start BLE scan: {}", e))
+        }
+    };
+
+    {
+        let mut state = BLE_STATE.lock().await;
+        state.scanning = false;
     }
+
+    info!("Result of BLE scan: {:?}", result);
+
+    result
 }
 
 pub async fn stop_scanning() -> Result<(), String> {
