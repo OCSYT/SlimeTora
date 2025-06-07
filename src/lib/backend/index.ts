@@ -26,7 +26,7 @@ export async function startInterpreting() {
 	info(`Starting interpreting with modes: ${modes}, models: ${models}, ports: ${ports}`);
 
 	for (const model of models) {
-		await invoke("start", { model, modes, ports });
+		await invoke("start_connection", { model, modes, ports });
 	}
 	activeModes.set(modes);
 
@@ -48,7 +48,7 @@ export async function stopInterpreting() {
 		return error("No modes to stop");
 	}
 
-	await invoke("stop", { models, modes });
+	await invoke("stop_connection", { models, modes });
 
 	if (notification === null) return error("No notification instance to stop");
 	let activeNotifications = notification.getActiveNotifications();

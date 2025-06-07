@@ -64,7 +64,13 @@
 			<div class="flex flex-col gap-4 flex-1">
 				<div class="flex flex-row gap-2">
 					<Button label={$t("trackers.settings.collapse_expand")} onClick={() => toggleTrackers()} />
-					<Button label={$t("trackers.settings.pairing")} onClick={() => goto("/trackers/pairing")} />
+					<Button
+						label={$t("trackers.settings.pairing")}
+						icon="ri:bluetooth-connect-line"
+						iconPosition="left"
+						background="quaternary"
+						onClick={() => goto("/trackers/pairing")}
+					/>
 				</div>
 				<div class="flex flex-row items-center justify-evenly gap-2">
 					<Switch

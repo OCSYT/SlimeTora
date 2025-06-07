@@ -132,10 +132,9 @@ static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
 
 pub async fn start_scanning(
     _app_handle: tauri::AppHandle,
-    timeout_seconds: Option<u64>,
-) -> Result<(), String> {
-    let timeout = timeout_seconds.unwrap_or(5);
-    info!("Starting BLE device scanning for {} seconds", timeout);
+    timeout: Option<u64>,
+) -> Result<Vec<BleDevice>, String> {
+    let timeout = timeout.unwrap_or(5000);
 
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
 
@@ -147,14 +146,36 @@ pub async fn start_scanning(
         state.scanning = true;
     }
 
-    info!("Started BLE device scanning for {} seconds", timeout);
-    if let Err(e) = handler.start_scan(ScanFilter::None, timeout).await {
-        error!("Failed to start BLE scan: {}", e);
-        Err(format!("Failed to start BLE scan: {}", e))
-    } else {
-        info!("Finished BLE device scanning");
-        Ok(())
+    info!("Started BLE device scanning for {}ms", timeout);
+    let result = match handler.start_scan(ScanFilter::None, timeout).await {
+        Ok(result) => {
+            info!("Finished BLE device scanning");
+            let filtered: Vec<BleDevice> = result
+                .into_iter()
+                .filter(|dev| {
+                    dev.name.starts_with("HaritoraX")
+                        || dev.services.iter().any(|uuid| {
+                            uuid.to_string().to_lowercase()
+                                == "ef84369a-90a9-11ed-a1eb-0242ac120002"
+                        })
+                })
+                .collect();
+            Ok(filtered)
+        }
+        Err(e) => {
+            error!("Failed to start BLE scan: {}", e);
+            Err(format!("Failed to start BLE scan: {}", e))
+        }
+    };
+
+    {
+        let mut state = BLE_STATE.lock().await;
+        state.scanning = false;
     }
+
+    info!("Result of BLE scan: {:?}", result);
+
+    result
 }
 
 pub async fn stop_scanning() -> Result<(), String> {
@@ -372,72 +393,6 @@ async fn handle_device_disconnect(
         }
     } else {
         warn!("Device {} not found in connected devices", mac_address);
-    }
-
-    Ok(())
-}
-
-async fn handle_device_discovered(
-    app_handle: tauri::AppHandle,
-    device: BleDevice,
-) -> Result<(), String> {
-    let address = &device.address;
-    let device_name = &device.name;
-
-    info!(
-        "Processing discovered device: {} ({})",
-        device_name, address
-    );
-
-    // Check advertised services
-    info!("Advertised services for {}: {:?}", address, device.services);
-
-    // Check if this could be a HaritoraX device by name
-    let is_haritora_by_name =
-        device_name.starts_with("Haritora") || device_name.starts_with("HaritoraX");
-
-    // Check if this could be a HaritoraX device by advertised services
-    let haritora_service_uuids = [
-        "ef84369a-90a9-11ed-a1eb-0242ac120002", // Setting Service
-        "00dbec3a-90aa-11ed-a1eb-0242ac120002", // Tracker Service
-    ];
-
-    let is_haritora_by_service = device.services.iter().any(|service_uuid| {
-        let service_str = service_uuid.to_string().to_lowercase();
-        haritora_service_uuids
-            .iter()
-            .any(|&haritora_uuid| service_str == haritora_uuid)
-    });
-
-    info!(
-        "Device {} - Name match: {}, Service match: {}",
-        address, is_haritora_by_name, is_haritora_by_service
-    );
-
-    if !is_haritora_by_name && !is_haritora_by_service {
-        return Ok(()); // Not a HaritoraX device, skip silently
-    }
-
-    info!("Found HaritoraX device: {} ({})", device_name, address);
-
-    // Store discovered device
-    {
-        let mut state = BLE_STATE.lock().await;
-        state
-            .discovered_devices
-            .insert(address.clone(), device.clone());
-    }
-
-    // Send device to UI for user selection
-    let device_info = serde_json::json!({
-        "address": address,
-        "name": device_name,
-        "rssi": device.rssi,
-        "services": device.services
-    });
-
-    if let Err(e) = app_handle.emit("haritora_device_discovered", device_info) {
-        error!("Failed to emit haritora_device_discovered: {}", e);
     }
 
     Ok(())

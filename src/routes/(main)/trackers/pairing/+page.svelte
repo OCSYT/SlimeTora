@@ -1,223 +1,436 @@
 <script lang="ts">
-	import ContributorsPanel from "$lib/components/about/Contributors.svelte";
-	import TranslatorsPanel from "$lib/components/about/Translators.svelte";
-	import OtherCreditsPanel from "$lib/components/about/OtherCredits.svelte";
-	import GHContributors from "$lib/components/about/GHContributors.svelte";
 	import { onDestroy, onMount } from "svelte";
-	import { getVersion } from "@tauri-apps/api/app";
-	import { error } from "$lib/log";
+	import { invoke } from "@tauri-apps/api/core";
+	import { listen } from "@tauri-apps/api/event";
+	import { error, info } from "$lib/log";
 	import { t } from "$lib/lang";
+	import { connection } from "$lib/store/settings";
+	import Button from "$lib/components/settings/Button.svelte";
+	import Icon from "@iconify/svelte";
+	import Select from "$lib/components/settings/Select.svelte";
 
-	let appVersion = $state("0.0.0");
-	let showingEasterEgg = $state(false);
+	interface DiscoveredDevice {
+		address: string;
+		name: string;
+		rssi?: number;
+		services: string[];
+	}
 
-	onMount(async () => {
-		try {
-			appVersion = await getVersion();
-		} catch (err) {
-			error("Failed to fetch app version:", err);
+	interface PairedDevice {
+		address: string;
+		name: string;
+		connected: boolean;
+	}
+
+	interface PortTracker {
+		portId: string;
+		status: "paired" | "unpaired" | "pairing";
+		trackerName: string;
+		channel: number;
+	}
+
+	let isScanning = $state(false);
+	let discoveredDevices: DiscoveredDevice[] = $state([]);
+	let pairedDevices: PairedDevice[] = $state([]);
+	let portTrackers: Record<string, PortTracker[]> = $state({});
+
+	let scanTimeout: NodeJS.Timeout | null = null;
+	let unsubscribeDeviceConnected: (() => void) | null = null;
+	let unsubscribeDeviceDisconnected: (() => void) | null = null;
+
+	// initialize serial trackers based on settings
+	$effect(() => {
+		if ($connection.ports) {
+			const newPortTrackers: Record<string, PortTracker[]> = {};
+			$connection.ports.forEach((port) => {
+				newPortTrackers[port] = [
+					{ portId: "0", status: "unpaired", trackerName: "", channel: 1 },
+					{ portId: "1", status: "unpaired", trackerName: "", channel: 1 },
+				];
+			});
+			portTrackers = newPortTrackers;
 		}
 	});
 
-	const contributors = [
-		{
-			pfp: "/pfp/jovannmc.png",
-			name: "JovannMC (Maya)",
-			byline: $t("about.contributors.byline.jovannmc"), // Developer, has a tail
-			links: [
-				{ icon: "ri:link", url: "https://jovann.me" },
-				{ icon: "ri:github-fill", url: "https://github.com/JovannMC" },
-			],
-		},
-		{
-			pfp: "/pfp/bracketproto.png",
-			name: "BracketProto",
-			byline: $t("about.contributors.byline.bracketproto"), // Developer, loves scugs
-			links: [
-				{ icon: "ri:link", url: "https://bracketproto.com" },
-				{ icon: "ri:github-fill", url: "https://github.com/OCSYT" },
-			],
-		},
-		{
-			pfp: "/pfp/realmy.jpg",
-			name: "Realmy",
-			byline: $t("about.contributors.byline.realmy"), // UI designer, growls occasionally
-			links: [
-				{ icon: "ri:link", url: "https://realmy.net" },
-				{ icon: "ri:github-fill", url: "https://github.com/RealmyTheMan" },
-			],
-		},
-	];
+	onMount(async () => {
+		try {
+			await loadPairedDevices();
 
-	const contributorsEasterEgg = [
-		{
-			pfp: "/pfp/easter-egg/joe-van.png",
-			name: "Joe-van",
-			byline: $t("about.contributors.easter_egg.joe-van"), // Has Joe Biden, is a van, maybe a Joe-van
-			links: [
-				{ icon: "ri:link", url: "https://jovann.me" },
-				{ icon: "ri:github-fill", url: "https://github.com/JovannMC" },
-			],
-		},
-		{
-			pfp: "/pfp/bracketproto.png",
-			name: "BracketProto",
-			byline: $t("about.contributors.easter_egg.bracketproto"), // Developer, loves scugs
-			links: [
-				{ icon: "ri:link", url: "https://bracketproto.com" },
-				{ icon: "ri:github-fill", url: "https://github.com/OCSYT" },
-			],
-		},
-		{
-			pfp: "/pfp/realmy.jpg",
-			name: "Grrealmy",
-			byline: $t("about.contributors.easter_egg.grrealmy"), // grrgrgrhrtgrgrrrgtdg!!!grrr!!! !!
-			links: [
-				{ icon: "ri:link", url: "https://realmy.net" },
-				{ icon: "ri:github-fill", url: "https://github.com/RealmyTheMan" },
-			],
-		},
-	];
+			unsubscribeDeviceConnected = await listen("device_connected", (event: any) => {
+				const macAddress = event.payload as string;
+				info(`Device connected: ${macAddress}`);
 
-	const ghContribs = [
-		{
-			name: "Lillith",
-			link: "https://github.com/lillithkt",
-			pfp: "/pfp/lillithkt.png",
-		},
-		{
-			name: "Francesca",
-			link: "https://github.com/francescatanuki",
-			pfp: "/pfp/francescatanuki.png",
-		},
-	];
+				const deviceIndex = pairedDevices.findIndex((d) => d.address === macAddress);
+				if (deviceIndex >= 0) {
+					pairedDevices[deviceIndex].connected = true;
+					pairedDevices = [...pairedDevices];
+				}
+			});
 
-	const translators = [
-		{
-			language: "English",
-			contributors: [
-				{
-					name: "JovannMC",
-					pfp: "/pfp/jovannmc.png",
-					link: "https://github.com/JovannMC",
-				},
-				{
-					name: "Realmy",
-					pfp: "/pfp/realmy.jpg",
-					link: "https://github.com/RealmyTheMan",
-				},
-			],
-		},
-		{
-			language: "Japanese",
-			contributors: [
-				{
-					name: "pikepikeid",
-					pfp: "/pfp/pikepikeid.png",
-					link: "https://github.com/pikepikeid",
-				},
-			],
-		},
-		{
-			language: "uwu language",
-			contributors: [
-				{
-					name: "JowannUwU, your sleep paralysis demon",
-					pfp: "/pfp/jovannmc.png",
-					link: "https://github.com/JovannMC",
-				},
-			],
-		},
-	];
+			unsubscribeDeviceDisconnected = await listen("device_disconnected", (event: any) => {
+				const macAddress = event.payload as string;
+				info(`Device disconnected: ${macAddress}`);
 
-	const others = [
-		{
-			name: "haritorax-interpreter",
-			link: "https://github.com/JovannMC/haritorax-interpreter",
-			author: "JovannMC",
-		},
-		{
-			name: "haritorax-slimevr-bridge",
-			link: "https://github.com/sim1222/haritorax-slimevr-bridge",
-			author: "sim1222",
-		},
-		{
-			name: "slimevr-rust",
-			link: "https://github.com/SlimeVR/slimevr-rust",
-			author: "SlimeVR",
-		},
-		{
-			name: "slimevr-node",
-			link: "https://github.com/SlimeVR/slimevr-node",
-			author: "SlimeVR",
-		},
-		{
-			name: "MoSlime",
-			link: "https://MoSlime/MoSlime",
-			author: "MoSlime",
-		},
-		{
-			name: "Onboarding media",
-			link: "https://github.com/SlimeVR/SlimeVR-Server",
-			author: "SlimeVR",
-		},
-	];
-
-	onMount(() => {
-		// funny easter egg if holding shift
-		document.addEventListener("keydown", (event) => {
-			if (event.key === "Shift") {
-				showingEasterEgg = true;
-			}
-		});
-		document.addEventListener("keyup", (event) => {
-			if (event.key === "Shift") {
-				showingEasterEgg = false;
-			}
-		});
+				const deviceIndex = pairedDevices.findIndex((d) => d.address === macAddress);
+				if (deviceIndex >= 0) {
+					pairedDevices[deviceIndex].connected = false;
+					pairedDevices = [...pairedDevices];
+				}
+			});
+		} catch (err) {
+			error(`Failed to initialize pairing page: ${err}`);
+		}
 	});
 
 	onDestroy(() => {
-		// remove event listeners
-		document.removeEventListener("keydown", () => {});
-		document.removeEventListener("keyup", () => {});
+		if (unsubscribeDeviceConnected) unsubscribeDeviceConnected();
+		if (unsubscribeDeviceDisconnected) unsubscribeDeviceDisconnected();
+
+		if (isScanning) stopBleScan();
+
+		if (scanTimeout) clearTimeout(scanTimeout);
 	});
+
+	async function loadPairedDevices() {
+		try {
+			// TODO: load devices from config
+			pairedDevices = [];
+		} catch (err) {
+			error(`Failed to load paired devices: ${err}`);
+		}
+	}
+
+	async function startBleScan() {
+		if (isScanning) return;
+
+		try {
+			isScanning = true;
+			discoveredDevices = [];
+			info("Started BLE scanning");
+
+			const devices = await invoke<DiscoveredDevice[]>("start_ble_scanning", { timeout: 5000 });
+
+			// update list with results
+			discoveredDevices = devices.map((device) => ({
+				address: device.address,
+				name: device.name,
+				rssi: device.rssi,
+				services: device.services,
+			}));
+
+			info(`BLE scanning completed. Found ${devices.length} HaritoraX devices`);
+		} catch (err) {
+			error(`Failed to start BLE scanning: ${err}`);
+		} finally {
+			isScanning = false;
+		}
+	}
+
+	async function stopBleScan() {
+		if (!isScanning) return;
+
+		try {
+			await invoke("stop_ble_scanning");
+			isScanning = false;
+			info("Stopped BLE scanning");
+
+			if (scanTimeout) {
+				clearTimeout(scanTimeout);
+				scanTimeout = null;
+			}
+		} catch (err) {
+			error(`Failed to stop BLE scanning: ${err}`);
+		}
+	}
+
+	async function pairDevice(address: string, name: string) {
+		try {
+			await invoke("set_target_ble_devices", { macAddresses: [address] });
+
+			const existingIndex = pairedDevices.findIndex((d) => d.address === address);
+			if (existingIndex === -1) {
+				pairedDevices = [...pairedDevices, { address, name, connected: false }];
+			}
+
+			discoveredDevices = discoveredDevices.filter((d) => d.address !== address);
+
+			info(`Started pairing process for device: ${name}`);
+		} catch (err) {
+			error(`Failed to pair device: ${err}`);
+		}
+	}
+
+	async function unpairDevice(address: string) {
+		try {
+			pairedDevices = pairedDevices.filter((d) => d.address !== address);
+
+			// TODO: disconnect specific tracker via address
+			await invoke("stop_ble_connections");
+
+			info(`Unpaired device: ${address}`);
+		} catch (err) {
+			error(`Failed to unpair device: ${err}`);
+		}
+	}
+
+	async function unpairAllDevices() {
+		try {
+			await invoke("stop_ble_connections");
+			pairedDevices = [];
+			info("Unpaired all devices");
+		} catch (err) {
+			error(`Failed to unpair all devices: ${err}`);
+		}
+	}
+
+	function togglePortTracker(port: string, portId: string, trackerName: string) {
+		if (!portTrackers[port]) return;
+
+		const tracker = portTrackers[port].find((t) => t.portId === portId);
+		if (!tracker) return;
+
+		if (tracker.status === "unpaired") {
+			tracker.status = "paired";
+			tracker.trackerName = trackerName;
+		} else {
+			tracker.status = "unpaired";
+			tracker.trackerName = "";
+		}
+
+		portTrackers = { ...portTrackers };
+	}
+
+	function updateChannel(port: string, portId: string, channel: number) {
+		if (!portTrackers[port]) return;
+
+		const tracker = portTrackers[port].find((t) => t.portId === portId);
+		if (tracker) {
+			tracker.channel = channel;
+			portTrackers = { ...portTrackers };
+		}
+	}
 </script>
 
-<div class="flex flex-col items-center">
-	<div class="flex flex-col items-center p-4">
-		<div class="bg-panel rounded-xl p-4 shadow flex flex-col items-center gap-4 w-full">
-			<div class="flex items-center gap-3">
-				<img src="/logo.png" alt="SlimeTora Logo" class="w-14 h-14 rounded-lg drop-shadow-lg" />
-				<span class="text-3xl font-heading font-bold text-text"
-					>SlimeTora <span class="text-xs text-text-alt">v{appVersion}</span></span
-				>
+<div class="flex flex-col gap-6 p-6 max-w-6xl mx-auto">
+	<div class="text-center">
+		<h1 class="text-3xl font-bold mb-2">{$t("trackers.pairing.title")}</h1>
+		<p>{$t("trackers.pairing.subtitle")}</p>
+	</div>
+
+	<!-- Bluetooth LE pairing section -->
+	<div class="bg-panel rounded-lg p-6">
+		<div class="flex items-center gap-3 mb-4">
+			<Icon icon="mdi:bluetooth" width={24} class="text-secondary" />
+			<h2 class="text-xl font-semibold">{$t("trackers.pairing.bluetooth.title")}</h2>
+		</div>
+
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			<!-- Paired devices row -->
+			<div class="bg-quaternary rounded-lg p-4">
+				<div class="flex items-center justify-between mb-3">
+					<h3 class="text-base font-medium flex-grow">{$t("trackers.pairing.bluetooth.paired_devices")}</h3>
+					{#if pairedDevices.length > 0}
+						<div class="text-sm">
+							<Button
+								label={$t("trackers.pairing.bluetooth.unpair_all")}
+								icon="mdi:link-off"
+								background="danger"
+								onClick={unpairAllDevices}
+							/>
+						</div>
+					{/if}
+				</div>
+				<div class="grid grid-cols-2 gap-2">
+					{#if pairedDevices.length === 0}
+						<div class="col-span-2 text-center py-4 text-sm">
+							<Icon icon="mdi:bluetooth-off" width={24} class="mx-auto mb-2 opacity-50" />
+							<p>{$t("trackers.pairing.bluetooth.no_paired_devices")}</p>
+						</div>
+					{:else}
+						{#each pairedDevices as device}
+							<div class="bg-tertiary rounded-md p-2 flex flex-col gap-1.5">
+								<div class="flex items-center gap-1.5">
+									<Icon icon="mdi:bluetooth" width={14} class="text-blue-400 flex-shrink-0" />
+									<span class="font-medium text-xs truncate">{device.name}</span>
+									{#if device.connected}
+										<span class="bg-green-500 text-white text-xs px-1 py-0.5 rounded flex-shrink-0">
+											{$t("trackers.pairing.bluetooth.connected")}
+										</span>
+									{:else}
+										<span class="bg-gray-500 text-white text-xs px-1 py-0.5 rounded flex-shrink-0">
+											{$t("trackers.pairing.bluetooth.disconnected")}
+										</span>
+									{/if}
+								</div>
+								<div class="text-xs font-mono truncate">{device.address}</div>
+								<Button
+									label={$t("trackers.pairing.bluetooth.unpair")}
+									icon="mdi:link-off"
+									background="danger"
+									onClick={() => unpairDevice(device.address)}
+									className="text-xs h-7 px-2"
+								/>
+							</div>
+						{/each}
+					{/if}
+				</div>
 			</div>
-			<p class="text-center text-base text-text-alt max-w-lg">
-				{$t("about.description")}
-			</p>
+			<!-- Discovered devices row -->
+			<div class="bg-quaternary rounded-lg p-4">
+				<div class="flex items-center justify-between mb-3">
+					<h3 class="text-base font-medium flex-grow">
+						{$t("trackers.pairing.bluetooth.discovered_devices")}
+					</h3>
+					<div class="text-sm">
+						<Button
+							label={isScanning
+								? $t("trackers.pairing.bluetooth.stop_scanning")
+								: $t("trackers.pairing.bluetooth.scan_devices")}
+							icon={isScanning ? "mdi:stop" : "mdi:magnify"}
+							background={isScanning ? "danger" : "primary"}
+							onClick={isScanning ? stopBleScan : startBleScan}
+						/>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-2 gap-2">
+					{#if discoveredDevices.length === 0}
+						<div class="col-span-2 text-center py-4 text-sm">
+							{#if isScanning}
+								<Icon icon="mdi:loading" width={24} class="animate-spin mx-auto mb-2" />
+								<p>{$t("trackers.pairing.bluetooth.searching")}</p>
+							{:else}
+								<Icon icon="mdi:bluetooth-off" width={24} class="mx-auto mb-2 opacity-50" />
+								<p>{$t("trackers.pairing.bluetooth.no_devices_found")}</p>
+							{/if}
+						</div>
+					{:else}
+						{#each discoveredDevices as device}
+							<div class="bg-tertiary rounded-md p-2 flex flex-col gap-1.5">
+								<div class="flex items-center gap-1.5">
+									<Icon icon="mdi:bluetooth" width={14} class="text-blue-400 flex-shrink-0" />
+									<span class="font-medium text-xs truncate">{device.name}</span>
+									{#if device.rssi}
+										<div class="flex items-center gap-1 flex-shrink-0">
+											<Icon
+												icon="mdi:wifi"
+												width={10}
+												class={device.rssi > -50
+													? "text-green-400"
+													: device.rssi > -70
+														? "text-yellow-400"
+														: "text-red-400"}
+											/>
+											<span class="text-xs">{device.rssi}</span>
+										</div>
+									{/if}
+								</div>
+								<div class="text-xs font-mono truncate">{device.address}</div>
+								<Button
+									label={$t("trackers.pairing.bluetooth.pair")}
+									icon="mdi:link"
+									background="primary"
+									onClick={() => pairDevice(device.address, device.name)}
+									className="text-xs h-7 px-2"
+								/>
+							</div>
+						{/each}
+					{/if}
+				</div>
+			</div>
 		</div>
 	</div>
-	<div class="flex flex-row gap-8 p-4">
-		<div class="flex flex-col gap-8">
-			<ContributorsPanel contributors={!showingEasterEgg ? contributors : contributorsEasterEgg} />
-			<GHContributors {ghContribs} />
+
+	<!-- Serial/GX(6/2) pairing section -->
+	<div class="bg-panel rounded-lg p-6">
+		<div class="flex items-center gap-3 mb-4">
+			<Icon icon="mdi:usb-port" width={24} class="text-secondary" />
+			<h2 class="text-xl font-semibold">{$t("trackers.pairing.serial.title")}</h2>
 		</div>
-		<div class="flex flex-col gap-8 flex-1">
-			<TranslatorsPanel {translators} />
-			<OtherCreditsPanel {others} />
+
+		<div class="space-y-6">
+			{#if $connection.ports.length === 0}
+				<div class="text-center py-8 text-secondary">
+					<Icon icon="mdi:usb-off" width={32} class="mx-auto mb-2 opacity-50" />
+					<p>{$t("trackers.pairing.serial.no_ports")}</p>
+				</div>
+			{:else}
+				{#each $connection.ports as port}
+					<div class="bg-quaternary rounded-lg p-4">
+						<h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+							<Icon icon="mdi:usb-port" width={20} class="text-secondary" />
+							{$t("trackers.pairing.serial.serial_port", { port })}
+						</h3>
+
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{#each portTrackers[port] || [] as tracker}
+								<div class="bg-panel rounded-md p-4 flex flex-col justify-between h-full">
+									<div class="flex items-center justify-between mb-3">
+										<h4 class="font-medium">
+											{$t("trackers.pairing.serial.port_id", { id: tracker.portId })}
+										</h4>
+										<span
+											class="text-sm px-2 py-1 rounded {tracker.status === 'paired'
+												? 'bg-green-500 text-white'
+												: tracker.status === 'pairing'
+													? 'bg-yellow-500 text-white'
+													: 'bg-gray-500 text-white'}"
+										>
+											{tracker.status === "paired"
+												? $t("trackers.pairing.paired")
+												: tracker.status === "pairing"
+													? $t("trackers.pairing.serial.pairing")
+													: $t("trackers.pairing.serial.unpaired")}
+										</span>
+									</div>
+
+									<div class="mb-4">
+										<label
+											class="block text-base font-semibold"
+											for={`tracker-name-${port}-${tracker.portId}`}
+										>
+											{$t("trackers.pairing.serial.tracker")}
+										</label>
+										<span
+											id={`tracker-name-${port}-${tracker.portId}`}
+											class="text-base font-normal"
+										>
+											{tracker.status === "paired"
+												? tracker.trackerName
+												: $t("trackers.pairing.serial.none")}
+										</span>
+									</div>
+									<div class="flex flex-row items-center justify-center gap-2">
+										<Select
+											options={Array.from({ length: 10 }, (_, i) => ({
+												value: String(i + 1),
+												label: $t("trackers.pairing.serial.channel_num", { num: i + 1 }),
+											}))}
+											selected={String(tracker.channel)}
+											onChange={(value) => updateChannel(port, tracker.portId, parseInt(value))}
+											className="w-full"
+										/>
+										<Button
+											label={tracker.status === "paired"
+												? $t("trackers.pairing.serial.unpair")
+												: $t("trackers.pairing.serial.pair")}
+											icon={tracker.status === "paired" ? "mdi:link-off" : "mdi:link"}
+											background={tracker.status === "paired" ? "danger" : "button"}
+											className="w-full text-xs h-8"
+											onClick={() =>
+												togglePortTracker(
+													port,
+													tracker.portId,
+													tracker.status === "paired" ? "" : "meow",
+												)}
+										/>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/each}
+			{/if}
 		</div>
 	</div>
-	<!-- <div class="flex flex-col items-center p-4">
-		<div class="bg-panel rounded-xl p-4 shadow flex flex-col items-center gap-4 w-full">
-			<div class="flex items-center gap-3">
-				<img src="/logo.png" alt="SlimeTora Logo" class="w-14 h-14 rounded-lg drop-shadow-lg" />
-				<span class="text-3xl font-heading font-bold text-text">SlimeTora <span class="text-xs text-text-alt">v{appVersion}</span></span>
-			</div>
-			<p class="text-center text-base text-text-alt">
-				SlimeTora is a middleware program that allows you to connect the HaritoraX trackers to the
-				SlimeVR server instead of the OEM software.
-			</p>
-		</div>
-	</div> -->
 </div>
