@@ -8,6 +8,15 @@
 	import Button from "$lib/components/settings/Button.svelte";
 	import Icon from "@iconify/svelte";
 	import Select from "$lib/components/settings/Select.svelte";
+	import type { ConnectionMode } from "$lib/types/connection";
+	import { TrackerModel } from "$lib/types/tracker";
+	import { trackers } from "$lib/store";
+
+	// TODO: i should probably rework how to handle devices - bluetooth and serial handle trackers differently and its kinda a mess
+	// probably should unify it in one list of devices with type and connection mode
+	// we could probably also just use the serial number purely (can get it on both bt and serial)
+
+	// TODO: componetize stuff in this page
 
 	interface DiscoveredDevice {
 		address: string;
@@ -15,11 +24,11 @@
 		rssi?: number;
 		services: string[];
 	}
-
 	interface PairedDevice {
 		address: string;
 		name: string;
 		connected: boolean;
+		trackerType: TrackerModel;
 	}
 
 	interface PortTracker {
@@ -56,19 +65,47 @@
 		try {
 			await loadPairedDevices();
 
-			unsubscribeDeviceConnected = await listen("device_connected", (event: any) => {
-				const macAddress = event.payload as string;
-				info(`Device connected: ${macAddress}`);
+			unsubscribeDeviceConnected = await listen("connect", async (event: any) => {
+				// we are also listening to this "connect" event in notifications.ts, for the trackers store
+				const payload = event.payload as {
+					tracker: string;
+					connection_mode: ConnectionMode;
+					tracker_type: TrackerModel;
+				};
+				const macAddress = payload.tracker;
+				const trackerType = payload.tracker_type;
 
 				const deviceIndex = pairedDevices.findIndex((d) => d.address === macAddress);
 				if (deviceIndex >= 0) {
 					pairedDevices[deviceIndex].connected = true;
+					pairedDevices[deviceIndex].trackerType = trackerType;
 					pairedDevices = [...pairedDevices];
+				} else {
+					// device not in paired list, add it
+					try {
+						const deviceName = await invoke<string>("get_ble_device_name", { macAddress });
+						pairedDevices = [
+							...pairedDevices,
+							{
+								address: macAddress,
+								name: deviceName,
+								connected: true,
+								trackerType,
+							},
+						];
+					} catch (err) {
+						error(`Failed to get device name for ${macAddress}: ${err}`);
+					}
 				}
 			});
 
-			unsubscribeDeviceDisconnected = await listen("device_disconnected", (event: any) => {
-				const macAddress = event.payload as string;
+			unsubscribeDeviceDisconnected = await listen("disconnect", (event: any) => {
+				const payload = event.payload as {
+					tracker: string;
+					connection_mode: ConnectionMode;
+					tracker_type: TrackerModel;
+				};
+				const macAddress = payload.tracker;
 				info(`Device disconnected: ${macAddress}`);
 
 				const deviceIndex = pairedDevices.findIndex((d) => d.address === macAddress);
@@ -87,16 +124,17 @@
 		if (unsubscribeDeviceDisconnected) unsubscribeDeviceDisconnected();
 
 		if (isScanning) stopBleScan();
-
 		if (scanTimeout) clearTimeout(scanTimeout);
 	});
 
 	async function loadPairedDevices() {
 		try {
 			// TODO: load devices from config
+			// and check which is connected
 			pairedDevices = [];
 		} catch (err) {
 			error(`Failed to load paired devices: ${err}`);
+			pairedDevices = [];
 		}
 	}
 
@@ -149,7 +187,13 @@
 
 			const existingIndex = pairedDevices.findIndex((d) => d.address === address);
 			if (existingIndex === -1) {
-				pairedDevices = [...pairedDevices, { address, name, connected: false }];
+				const trackerType = name.startsWith("HaritoraX2-")
+					? TrackerModel.X2
+					: name.startsWith("HaritoraXW-")
+						? TrackerModel.Wireless
+						: TrackerModel.Wired;
+
+				pairedDevices = [...pairedDevices, { address, name, connected: false, trackerType }];
 			}
 
 			discoveredDevices = discoveredDevices.filter((d) => d.address !== address);
@@ -164,8 +208,7 @@
 		try {
 			pairedDevices = pairedDevices.filter((d) => d.address !== address);
 
-			// TODO: disconnect specific tracker via address
-			await invoke("stop_ble_connections");
+			await invoke("disconnect_device", { macAddress: address });
 
 			info(`Unpaired device: ${address}`);
 		} catch (err) {
@@ -262,7 +305,14 @@
 										</span>
 									{/if}
 								</div>
-								<div class="text-xs font-mono truncate">{device.address}</div>
+								<div class="flex items-center justify-between">
+									<div class="text-xs font-mono truncate">{device.address}</div>
+									{#if device.trackerType}
+										<span class="bg-blue-500 text-white text-xs px-1 py-0.5 rounded flex-shrink-0">
+											{device.trackerType}
+										</span>
+									{/if}
+								</div>
 								<Button
 									label={$t("trackers.pairing.bluetooth.unpair")}
 									icon="mdi:link-off"

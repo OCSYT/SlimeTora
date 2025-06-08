@@ -149,6 +149,7 @@ fn main() {
             stop_ble_scanning,
             set_target_ble_devices,
             stop_ble_connections,
+            disconnect_device,
             get_ble_device_name,
             write_ble,
             read_ble,
@@ -395,6 +396,22 @@ async fn stop_ble_connections() -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn disconnect_device(mac_address: String) -> Result<(), String> {
+    info!("Disconnecting BLE device with MAC address: {}", mac_address);
+
+    match ble::disconnect_device(&mac_address).await {
+        Ok(_) => {
+            info!("Successfully disconnected device: {}", mac_address);
+            Ok(())
+        }
+        Err(e) => {
+            error!("Failed to disconnect device {}: {}", mac_address, e);
+            Err(format!("Failed to disconnect device: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
 async fn get_ble_device_name(mac_address: String) -> Result<String, String> {
     info!("Getting device name for MAC address: {}", mac_address);
 
@@ -455,6 +472,10 @@ async fn read_ble(mac_address: String, characteristic_uuid: String) -> Result<Ve
         }
     }
 }
+
+/*
+ * Serial commands
+ */
 
 #[tauri::command]
 async fn write_serial(port_path: String, data: String) -> Result<(), String> {

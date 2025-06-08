@@ -13,6 +13,12 @@ use tokio::sync::Mutex;
 use crate::util::normalize_uuid;
 use log::{error, info, warn};
 
+#[derive(Debug, Clone)]
+struct ConnectedDevice {
+    device_name: String,
+    tracker_type: String, // "wired", "wireless", or "x2"
+}
+
 /*
  * BLE constants
 */
@@ -111,8 +117,8 @@ static CHARACTERISTICS: Lazy<HashMap<&'static str, (&'static str, bool)>> = Lazy
 struct BleState {
     // mac_address, BleDevice
     discovered_devices: HashMap<String, BleDevice>,
-    // mac_address, device_name
-    connected_devices: HashMap<String, String>,
+    // mac_address, ConnectedDevice
+    connected_devices: HashMap<String, ConnectedDevice>,
     paired_devices: Vec<String>,
     scanning: bool,
 }
@@ -241,15 +247,21 @@ pub async fn start_connections(
 
             // Check each paired device
             for mac_address in &current_pairs {
-                let is_connected = {
+                let (is_connected, tracker_type) = {
                     let state = BLE_STATE.lock().await;
-                    state.connected_devices.contains_key(mac_address)
+                    let is_connected = state.connected_devices.contains_key(mac_address);
+                    let tracker_type = state
+                        .connected_devices
+                        .get(mac_address)
+                        .map(|dev| dev.tracker_type.clone())
+                        .unwrap_or_else(|| "wireless".to_string()); // default to wireless cause, yeah
+                    (is_connected, tracker_type)
                 };
 
                 if !is_connected {
                     info!("Attempting to connect to paired device: {}", mac_address);
 
-                    match connect_to_device(app_handle.clone(), mac_address).await {
+                    match connect_to_device(app_handle.clone(), mac_address, &tracker_type).await {
                         Ok(_) => {
                             info!("Successfully connected to device: {}", mac_address);
                         }
@@ -288,6 +300,19 @@ pub async fn stop_connections() -> Result<(), String> {
     }
 
     info!("Stopped all connections");
+    Ok(())
+}
+
+pub async fn disconnect_device(mac_address: &str) -> Result<(), String> {
+    let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
+
+    if let Err(e) = handler.disconnect(mac_address).await {
+        error!("Failed to disconnect device {}: {}", mac_address, e);
+        return Err(e.to_string());
+    }
+
+    info!("Disconnected device: {}", mac_address);
+
     Ok(())
 }
 
@@ -362,20 +387,19 @@ async fn handle_device_disconnect(
     mac_address: String,
 ) -> Result<(), String> {
     info!("Handling device disconnect for: {}", mac_address);
-
-    let device_name = {
+    let device_info = {
         let mut state = BLE_STATE.lock().await;
         state.connected_devices.remove(&mac_address)
     };
 
-    if let Some(name) = device_name {
+    if let Some(connected_device) = device_info {
         info!(
             "Removed device {} ({}) from connected devices",
-            name, mac_address
+            connected_device.device_name, mac_address
         );
 
-        if let Err(e) = app_handle.emit("device_disconnected", &mac_address) {
-            error!("Failed to emit device_disconnected: {}", e);
+        if let Err(e) = app_handle.emit("disconnect", &mac_address) {
+            error!("Failed to emit disconnect: {}", e);
         }
 
         // Check if this device should be reconnected
@@ -398,7 +422,11 @@ async fn handle_device_disconnect(
     Ok(())
 }
 
-async fn connect_to_device(app_handle: tauri::AppHandle, mac_address: &str) -> Result<(), String> {
+async fn connect_to_device(
+    app_handle: tauri::AppHandle,
+    mac_address: &str,
+    tracker_type: &str,
+) -> Result<(), String> {
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
 
     let app_handle_clone = app_handle.clone();
@@ -427,18 +455,21 @@ async fn connect_to_device(app_handle: tauri::AppHandle, mac_address: &str) -> R
     let device_name = get_device_name(mac_address)
         .await
         .unwrap_or_else(|_| mac_address.to_string());
-
     {
         let mut state = BLE_STATE.lock().await;
+        let connected_device = ConnectedDevice {
+            device_name: device_name.clone(),
+            tracker_type: tracker_type.to_string(),
+        };
         state
             .connected_devices
-            .insert(mac_address_string.clone(), device_name.clone());
+            .insert(mac_address_string.clone(), connected_device);
     }
 
     info!("Connected to device: {} ({})", device_name, mac_address);
 
-    if let Err(e) = app_handle.emit("device_connected", &mac_address_string) {
-        error!("Failed to emit device_connected: {}", e);
+    if let Err(e) = app_handle.emit("disconnect", &mac_address_string) {
+        error!("Failed to emit disconnect: {}", e);
     }
 
     if let Err(e) = setup_notifications(app_handle, &mac_address_string, &device_name).await {
@@ -532,11 +563,10 @@ async fn setup_notifications(
 
 pub async fn get_device_name(mac_address: &str) -> Result<String, String> {
     let state = BLE_STATE.lock().await;
-
     if let Some(device) = state.discovered_devices.get(mac_address) {
         Ok(device.name.clone())
-    } else if let Some(name) = state.connected_devices.get(mac_address) {
-        Ok(name.clone())
+    } else if let Some(connected_device) = state.connected_devices.get(mac_address) {
+        Ok(connected_device.device_name.clone())
     } else {
         Err(format!(
             "Device with MAC address '{}' not found",
