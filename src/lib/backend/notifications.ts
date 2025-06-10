@@ -227,6 +227,8 @@ async function connectNotification() {
 		const connection_mode = payload.connection_mode;
 		const tracker_type = payload.tracker_type;
 
+		if (!tracker || !connection_mode || !tracker_type) return;
+
 		info(`Tracker connected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`);
 
 		if (!browser) return;

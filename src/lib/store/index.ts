@@ -13,6 +13,7 @@ export interface BatteryData {
 	status?: ChargeStatus;
 }
 
+// TODO: save this data in config, prob move "data" into another interface
 export interface Tracker {
 	// Info
 	name: string; // can be user-set
@@ -20,6 +21,7 @@ export interface Tracker {
 	connection_mode: ConnectionMode;
 	tracker_type: TrackerModel;
 	mac?: string;
+	settings?: Exclude<TrackerSettings, "heartbeat" | "buttonDebounce">;
 
 	// Data
 	rotation: number[];
@@ -27,7 +29,6 @@ export interface Tracker {
 	rssi?: number;
 	battery?: BatteryData;
 	magnetometer?: MagStatus;
-	settings?: Exclude<TrackerSettings, "heartbeat" | "buttonDebounce">;
 }
 
 export const trackers = writable<Tracker[]>([]);

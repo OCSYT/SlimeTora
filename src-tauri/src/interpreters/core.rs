@@ -8,7 +8,7 @@ use tauri::AppHandle;
 use super::{haritorax_2, haritorax_wired, haritorax_wireless};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize)]
 pub enum TrackerModel {
     X2,
     Wireless,

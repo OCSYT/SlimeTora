@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import { isOn } from "$lib/store";
 	import Icon from "@iconify/svelte";
 	import { onMount } from "svelte";
 	import { trackers } from "$lib/store";
 	import { t } from "$lib/lang";
-	import Button from "$lib/components/settings/Button.svelte";
 
 	let trackerCount = $state(0);
 

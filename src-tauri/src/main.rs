@@ -151,7 +151,6 @@ fn main() {
             stop_ble_scanning,
             stop_ble_connections,
             disconnect_device,
-            get_ble_device_name,
             write_ble,
             read_ble,
             // serial commands
@@ -390,25 +389,6 @@ async fn disconnect_device(mac_address: String) -> Result<(), String> {
         Err(e) => {
             error!("Failed to disconnect device {}: {}", mac_address, e);
             Err(format!("Failed to disconnect device: {}", e))
-        }
-    }
-}
-
-#[tauri::command]
-async fn get_ble_device_name(mac_address: String) -> Result<String, String> {
-    info!("Getting device name for MAC address: {}", mac_address);
-
-    match ble::get_device_name(&mac_address).await {
-        Ok(name) => {
-            info!(
-                "Found device name '{}' for MAC address: {}",
-                name, mac_address
-            );
-            Ok(name)
-        }
-        Err(e) => {
-            error!("Failed to get device name for {}: {}", mac_address, e);
-            Err(format!("Failed to get device name: {}", e))
         }
     }
 }
