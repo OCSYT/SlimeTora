@@ -44,7 +44,40 @@
 			"collapse_expand": "Colapsar/expandir todos rastreadores",
 			"precise_data": "Dados precisos",
 			"fast_data": "Dados básicos",
-			"visualization": "Mostrar visualização do rastreador"
+			"visualization": "Mostrar visualização do rastreador"	
+		},			
+			"pairing": {
+			"title": "Gerenciamento de Emparelhamento",
+			"subtitle": "Emparelhe e gerencie seus rastreadores HaritoraX por conexões Bluetooth (LE) ou Serial/GX(6/2)",
+			"bluetooth": {
+				"title": "Emparelhamento Bluetooth (LE)",
+				"paired_devices": "Dispositivos emparelhados",
+				"discovered_devices": "Dispositivos descobertos",
+				"scan_devices": "Procurar dispositivos",
+				"stop_scanning": "Cancelar pesquisa",
+				"unpair_all": "Desemparelhar todos",
+				"pair": "Emparelhar",
+				"unpair": "Desemparelhar",
+				"connected": "Conectado",
+				"disconnected": "Disconectado",
+				"no_paired_devices": "Nenhum dispositivo emparelhado. Procure por dispositivos para pareá-los.",
+				"searching": "Procurando por dispositivos...",
+				"no_devices_found": "Nenhum dispositivo encontrado."
+			},
+			"serial": {
+				"title": "Emparelhamento com Serial / GX(6/2)",
+				"no_ports": "Nenhuma porta serial foi configurada. Por favor configure as portas seriais nas configurações de conexão.",
+				"serial_port": "Porta Serial: {{port}}",
+				"channel_num": "Canal {{num}}",
+				"port_id": "ID da Porta {{id}}",
+				"tracker": "Rastreador:",
+				"none": "Nenhum",
+				"paired": "Emparelhado",
+				"pairing": "Emparelhando",
+				"unpaired": "Desemparelhado",
+				"pair": "Emparelhar",
+				"unpair": "Desemparelhar"
+			}
 		},
 		"per_tracker": {
 			"title": "Configurações do rastreador {{name}}",
@@ -107,7 +140,7 @@
 		"connection": {
 			"title": "Configurações de conexão",
 			"tracker_model": {
-				"name": "Modelo de rastreadors",
+				"name": "Modelo de rastreadores",
 				"tooltip": "Selecione qual modelo dos rastreadores HaritoraX você tem. Vários podem ser usados ao mesmo tempo para usuários avançados."
 			},
 			"connection_mode": {
