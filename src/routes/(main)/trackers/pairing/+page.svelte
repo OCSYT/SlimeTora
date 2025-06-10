@@ -47,7 +47,7 @@
 	let unsubscribeDeviceConnected: (() => void) | null = null;
 	let unsubscribeDeviceDisconnected: (() => void) | null = null;
 
-	// initialize serial trackers based on settings
+	// TODO: initialize serial trackers based on settings
 	$effect(() => {
 		if ($connection.ports) {
 			const newPortTrackers: Record<string, PortTracker[]> = {};
@@ -58,6 +58,12 @@
 				];
 			});
 			portTrackers = newPortTrackers;
+		}
+	});
+
+	$effect(() => {
+		if (pairedDevices) {
+			$connection.macAddresses = pairedDevices.map((d) => d.address);
 		}
 	});
 
@@ -183,8 +189,8 @@
 
 	async function pairDevice(address: string, name: string) {
 		try {
-			await invoke("set_target_ble_devices", { macAddresses: [address] });
-
+			// TODO: restart ble connection when we pair a new device probably?
+			// TODO: constantly keep trackers connected when app is running, start connection to actually forward data? (like VR Manager)
 			const existingIndex = pairedDevices.findIndex((d) => d.address === address);
 			if (existingIndex === -1) {
 				const trackerType = name.startsWith("HaritoraX2-")

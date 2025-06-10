@@ -147,7 +147,6 @@ fn main() {
             // ble commands
             start_ble_scanning,
             stop_ble_scanning,
-            set_target_ble_devices,
             stop_ble_connections,
             disconnect_device,
             get_ble_device_name,
@@ -196,6 +195,7 @@ async fn start_connection(
     ports: Option<Vec<String>>,
     mac_addresses: Option<Vec<String>>,
 ) -> Result<(), String> {
+    // TODO: maybe we want to merge ports and mac_addesses into one "identifiers"?
     if ports.as_ref().map_or(true, |p| p.is_empty())
         && mac_addresses.as_ref().map_or(true, |m| m.is_empty())
     {
@@ -356,25 +356,6 @@ async fn stop_ble_scanning() -> Result<(), String> {
         Err(e) => {
             error!("Failed to stop BLE scanning: {}", e);
             Err(format!("Failed to stop BLE scanning: {}", e))
-        }
-    }
-}
-
-#[tauri::command]
-async fn set_target_ble_devices(
-    app_handle: AppHandle,
-    mac_addresses: Vec<String>,
-) -> Result<(), String> {
-    info!("Setting target BLE devices: {:?}", mac_addresses);
-
-    match ble::start_connections(app_handle, mac_addresses).await {
-        Ok(_) => {
-            info!("Successfully set target BLE devices");
-            Ok(())
-        }
-        Err(e) => {
-            error!("Failed to set target BLE devices: {}", e);
-            Err(format!("Failed to set target BLE devices: {}", e))
         }
     }
 }

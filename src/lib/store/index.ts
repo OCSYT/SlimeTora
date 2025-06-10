@@ -3,6 +3,7 @@ import type { ConnectionMode } from "$lib/types/connection";
 import { startInterpreting, stopInterpreting } from "$lib/backend";
 import type { ChargeStatus, MagStatus, TrackerModel } from "$lib/types/tracker";
 import { info } from "$lib/log";
+import type { TrackerSettings } from "./settings";
 
 export * as settings from "./settings";
 
@@ -14,8 +15,8 @@ export interface BatteryData {
 
 export interface Tracker {
 	// Info
-	name: string;
-	id: string;
+	name: string; // can be user-set
+	id: string; // does NOT change (MAC address or serial num (in format of bt names: HaritoraX()-(serial)?)
 	connection_mode: ConnectionMode;
 	tracker_type: TrackerModel;
 	mac?: string;
@@ -26,6 +27,7 @@ export interface Tracker {
 	rssi?: number;
 	battery?: BatteryData;
 	magnetometer?: MagStatus;
+	settings?: Exclude<TrackerSettings, "heartbeat" | "buttonDebounce">;
 }
 
 export const trackers = writable<Tracker[]>([]);
