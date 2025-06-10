@@ -18,15 +18,16 @@
 
 	// TODO: componetize stuff in this page
 
-	interface DiscoveredDevice {
-		address: string;
-		name: string;
+	interface TrackerDevice {
+		deviceName: string;
+		macAddress: string;
+		trackerType: TrackerModel;
 		rssi?: number;
-		services: string[];
 	}
+
 	interface PairedDevice {
-		address: string;
-		name: string;
+		deviceName: string;
+		macAddress: string;
 		connected: boolean;
 		trackerType: TrackerModel;
 	}
@@ -39,7 +40,7 @@
 	}
 
 	let isScanning = $state(false);
-	let discoveredDevices: DiscoveredDevice[] = $state([]);
+	let discoveredDevices: TrackerDevice[] = $state([]);
 	let pairedDevices: PairedDevice[] = $state([]);
 	let portTrackers: Record<string, PortTracker[]> = $state({});
 
@@ -63,7 +64,7 @@
 
 	$effect(() => {
 		if (pairedDevices) {
-			$connection.macAddresses = pairedDevices.map((d) => d.address);
+			$connection.macAddresses = pairedDevices.map((d) => d.macAddress);
 		}
 	});
 
@@ -81,27 +82,13 @@
 				const macAddress = payload.tracker;
 				const trackerType = payload.tracker_type;
 
-				const deviceIndex = pairedDevices.findIndex((d) => d.address === macAddress);
+				const deviceIndex = pairedDevices.findIndex((d) => d.macAddress === macAddress);
 				if (deviceIndex >= 0) {
 					pairedDevices[deviceIndex].connected = true;
 					pairedDevices[deviceIndex].trackerType = trackerType;
 					pairedDevices = [...pairedDevices];
 				} else {
 					// device not in paired list, add it
-					try {
-						const deviceName = await invoke<string>("get_ble_device_name", { macAddress });
-						pairedDevices = [
-							...pairedDevices,
-							{
-								address: macAddress,
-								name: deviceName,
-								connected: true,
-								trackerType,
-							},
-						];
-					} catch (err) {
-						error(`Failed to get device name for ${macAddress}: ${err}`);
-					}
 				}
 			});
 
@@ -114,7 +101,7 @@
 				const macAddress = payload.tracker;
 				info(`Device disconnected: ${macAddress}`);
 
-				const deviceIndex = pairedDevices.findIndex((d) => d.address === macAddress);
+				const deviceIndex = pairedDevices.findIndex((d) => d.macAddress === macAddress);
 				if (deviceIndex >= 0) {
 					pairedDevices[deviceIndex].connected = false;
 					pairedDevices = [...pairedDevices];
@@ -152,16 +139,15 @@
 			discoveredDevices = [];
 			info("Started BLE scanning");
 
-			const devices = await invoke<DiscoveredDevice[]>("start_ble_scanning", { timeout: 5000 });
+			const devices = await invoke<TrackerDevice[]>("start_ble_scanning", { timeout: 5000 });
 
 			// update list with results
 			discoveredDevices = devices.map((device) => ({
-				address: device.address,
-				name: device.name,
+				deviceName: device.deviceName,
+				macAddress: device.macAddress,
+				trackerType: device.trackerType,
 				rssi: device.rssi,
-				services: device.services,
 			}));
-
 			info(`BLE scanning completed. Found ${devices.length} HaritoraX devices`);
 		} catch (err) {
 			error(`Failed to start BLE scanning: ${err}`);
@@ -191,7 +177,7 @@
 		try {
 			// TODO: restart ble connection when we pair a new device probably?
 			// TODO: constantly keep trackers connected when app is running, start connection to actually forward data? (like VR Manager)
-			const existingIndex = pairedDevices.findIndex((d) => d.address === address);
+			const existingIndex = pairedDevices.findIndex((d) => d.macAddress === address);
 			if (existingIndex === -1) {
 				const trackerType = name.startsWith("HaritoraX2-")
 					? TrackerModel.X2
@@ -199,10 +185,10 @@
 						? TrackerModel.Wireless
 						: TrackerModel.Wired;
 
-				pairedDevices = [...pairedDevices, { address, name, connected: false, trackerType }];
+				pairedDevices = [...pairedDevices, { macAddress: address, deviceName: name, connected: false, trackerType }];
 			}
 
-			discoveredDevices = discoveredDevices.filter((d) => d.address !== address);
+			discoveredDevices = discoveredDevices.filter((d) => d.macAddress !== address);
 
 			info(`Started pairing process for device: ${name}`);
 		} catch (err) {
@@ -212,7 +198,7 @@
 
 	async function unpairDevice(address: string) {
 		try {
-			pairedDevices = pairedDevices.filter((d) => d.address !== address);
+			pairedDevices = pairedDevices.filter((d) => d.macAddress !== address);
 
 			await invoke("disconnect_device", { macAddress: address });
 
@@ -300,7 +286,7 @@
 							<div class="bg-tertiary rounded-md p-2 flex flex-col gap-1.5">
 								<div class="flex items-center gap-1.5">
 									<Icon icon="mdi:bluetooth" width={14} class="text-blue-400 flex-shrink-0" />
-									<span class="font-medium text-xs truncate">{device.name}</span>
+									<span class="font-medium text-xs truncate">{device.deviceName}</span>
 									{#if device.connected}
 										<span class="bg-green-500 text-white text-xs px-1 py-0.5 rounded flex-shrink-0">
 											{$t("trackers.pairing.bluetooth.connected")}
@@ -312,7 +298,7 @@
 									{/if}
 								</div>
 								<div class="flex items-center justify-between">
-									<div class="text-xs font-mono truncate">{device.address}</div>
+									<div class="text-xs font-mono truncate">{device.macAddress}</div>
 									{#if device.trackerType}
 										<span class="bg-blue-500 text-white text-xs px-1 py-0.5 rounded flex-shrink-0">
 											{device.trackerType}
@@ -323,7 +309,7 @@
 									label={$t("trackers.pairing.bluetooth.unpair")}
 									icon="mdi:link-off"
 									background="danger"
-									onClick={() => unpairDevice(device.address)}
+									onClick={() => unpairDevice(device.macAddress)}
 									className="text-xs h-7 px-2"
 								/>
 							</div>
@@ -365,7 +351,7 @@
 							<div class="bg-tertiary rounded-md p-2 flex flex-col gap-1.5">
 								<div class="flex items-center gap-1.5">
 									<Icon icon="mdi:bluetooth" width={14} class="text-blue-400 flex-shrink-0" />
-									<span class="font-medium text-xs truncate">{device.name}</span>
+									<span class="font-medium text-xs truncate">{device.deviceName}</span>
 									{#if device.rssi}
 										<div class="flex items-center gap-1 flex-shrink-0">
 											<Icon
@@ -381,12 +367,12 @@
 										</div>
 									{/if}
 								</div>
-								<div class="text-xs font-mono truncate">{device.address}</div>
+								<div class="text-xs font-mono truncate">{device.macAddress}</div>
 								<Button
 									label={$t("trackers.pairing.bluetooth.pair")}
 									icon="mdi:link"
 									background="primary"
-									onClick={() => pairDevice(device.address, device.name)}
+									onClick={() => pairDevice(device.macAddress, device.deviceName)}
 									className="text-xs h-7 px-2"
 								/>
 							</div>

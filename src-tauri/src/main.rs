@@ -29,6 +29,8 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_prevent_default::{Flags, WindowsOptions};
 use tokio::task;
 
+use crate::connection::ble::TrackerDevice;
+
 static DONGLES: Lazy<Vec<HashMap<&'static str, &'static str>>> = Lazy::new(|| {
     vec![
         HashMap::from([("name", "GX2"), ("vid", "1915"), ("pid", "520F")]),
@@ -336,7 +338,7 @@ async fn start_heartbeat(app_handle: AppHandle) -> Result<(), String> {
  */
 
 #[tauri::command]
-async fn start_ble_scanning(app_handle: AppHandle) -> Result<Vec<BleDevice>, String> {
+async fn start_ble_scanning(app_handle: AppHandle) -> Result<Vec<TrackerDevice>, String> {
     match ble::start_scanning(app_handle, None).await {
         Ok(devices) => Ok(devices),
         Err(e) => {

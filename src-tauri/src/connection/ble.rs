@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tauri::Emitter;
 use tauri_plugin_blec::{
     get_handler,
-    models::{BleDevice, ScanFilter, WriteType},
+    models::{ScanFilter, WriteType},
     OnDisconnectHandler,
 };
 use tokio::sync::Mutex;
@@ -13,10 +13,13 @@ use tokio::sync::Mutex;
 use crate::util::normalize_uuid;
 use log::{error, info, warn};
 
-#[derive(Debug, Clone)]
-struct ConnectedDevice {
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackerDevice {
     device_name: String,
-    tracker_type: String, // "wired", "wireless", or "x2"
+    mac_address: String,
+    tracker_type: Option<String>, // "wired", "wireless", or "x2"
+    rssi: Option<i16>, // Received Signal Strength Indicator
 }
 
 /*
@@ -115,18 +118,16 @@ static CHARACTERISTICS: Lazy<HashMap<&'static str, (&'static str, bool)>> = Lazy
 });
 
 struct BleState {
-    // mac_address, BleDevice
-    discovered_devices: HashMap<String, BleDevice>,
-    // mac_address, ConnectedDevice
-    connected_devices: HashMap<String, ConnectedDevice>,
-    paired_devices: Vec<String>,
+    discovered_devices: Vec<TrackerDevice>,
+    connected_devices: Vec<TrackerDevice>,
+    paired_devices: Vec<TrackerDevice>,
     scanning: bool,
 }
 
 static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
     Arc::new(Mutex::new(BleState {
-        discovered_devices: HashMap::new(),
-        connected_devices: HashMap::new(),
+        discovered_devices: Vec::new(),
+        connected_devices: Vec::new(),
         paired_devices: Vec::new(),
         scanning: false,
     }))
@@ -139,7 +140,7 @@ static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
 pub async fn start_scanning(
     _app_handle: tauri::AppHandle,
     timeout: Option<u64>,
-) -> Result<Vec<BleDevice>, String> {
+) -> Result<Vec<TrackerDevice>, String> {
     let timeout = timeout.unwrap_or(5000);
 
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
@@ -156,14 +157,24 @@ pub async fn start_scanning(
     let result = match handler.start_scan(ScanFilter::None, timeout).await {
         Ok(result) => {
             info!("Finished BLE device scanning");
-            let filtered: Vec<BleDevice> = result
+            let filtered: Vec<TrackerDevice> = result
                 .into_iter()
-                .filter(|dev| {
-                    dev.name.starts_with("HaritoraX")
-                        || dev.services.iter().any(|uuid| {
-                            uuid.to_string().to_lowercase()
-                                == "ef84369a-90a9-11ed-a1eb-0242ac120002"
-                        })
+                .filter_map(|dev| {
+                    let tracker_type = if dev.name.starts_with("HaritoraX-") {
+                        Some("wired".to_string())
+                    } else if dev.name.starts_with("HaritoraXW-") {
+                        Some("wireless".to_string())
+                    } else if dev.name.starts_with("HaritoraX2-") {
+                        Some("x2".to_string())
+                    } else {
+                        None
+                    };
+                    tracker_type.map(|tt| TrackerDevice {
+                        device_name: dev.name.clone(),
+                        mac_address: dev.address.clone(),
+                        tracker_type: Some(tt),
+                        rssi: dev.rssi,
+                    })
                 })
                 .collect();
             Ok(filtered)
@@ -177,6 +188,10 @@ pub async fn start_scanning(
     {
         let mut state = BLE_STATE.lock().await;
         state.scanning = false;
+        state.discovered_devices.clear();
+        if let Ok(devices) = &result {
+            state.discovered_devices.extend(devices.iter().cloned());
+        }
     }
 
     info!("Result of BLE scan: {:?}", result);
@@ -219,7 +234,15 @@ pub async fn start_connections(
 
     {
         let mut state = BLE_STATE.lock().await;
-        state.paired_devices = mac_addresses.clone();
+        state.paired_devices = mac_addresses
+            .iter()
+            .map(|mac| TrackerDevice {
+                device_name: mac.clone(),
+                mac_address: mac.clone(),
+                tracker_type: None,
+                rssi: None,
+            })
+            .collect();
     }
 
     tokio::spawn(async move {
@@ -246,16 +269,19 @@ pub async fn start_connections(
             }
 
             // Check each paired device
-            for mac_address in &current_pairs {
-                let (is_connected, tracker_type) = {
+            for paired_device in &current_pairs {
+                let mac_address = &paired_device.mac_address;
+                let tracker_type = paired_device
+                    .tracker_type
+                    .clone()
+                    .unwrap_or_else(|| "wireless".to_string());
+
+                let is_connected = {
                     let state = BLE_STATE.lock().await;
-                    let is_connected = state.connected_devices.contains_key(mac_address);
-                    let tracker_type = state
+                    state
                         .connected_devices
-                        .get(mac_address)
-                        .map(|dev| dev.tracker_type.clone())
-                        .unwrap_or_else(|| "wireless".to_string()); // default to wireless cause, yeah
-                    (is_connected, tracker_type)
+                        .iter()
+                        .any(|dev| dev.mac_address == *mac_address)
                 };
 
                 if !is_connected {
@@ -387,12 +413,21 @@ async fn handle_device_disconnect(
     mac_address: String,
 ) -> Result<(), String> {
     info!("Handling device disconnect for: {}", mac_address);
-    let device_info = {
+    let connected_device = {
         let mut state = BLE_STATE.lock().await;
-        state.connected_devices.remove(&mac_address)
+        // find and remove the device, returning it if found
+        if let Some(pos) = state
+            .connected_devices
+            .iter()
+            .position(|dev| dev.mac_address == mac_address)
+        {
+            Some(state.connected_devices.remove(pos))
+        } else {
+            None
+        }
     };
 
-    if let Some(connected_device) = device_info {
+    if let Some(connected_device) = connected_device {
         info!(
             "Removed device {} ({}) from connected devices",
             connected_device.device_name, mac_address
@@ -405,7 +440,10 @@ async fn handle_device_disconnect(
         // Check if this device should be reconnected
         let should_reconnect = {
             let state = BLE_STATE.lock().await;
-            state.paired_devices.contains(&mac_address)
+            state
+                .paired_devices
+                .iter()
+                .any(|dev| dev.mac_address == mac_address)
         };
 
         if should_reconnect {
@@ -457,13 +495,13 @@ async fn connect_to_device(
         .unwrap_or_else(|_| mac_address.to_string());
     {
         let mut state = BLE_STATE.lock().await;
-        let connected_device = ConnectedDevice {
+        let connected_device = TrackerDevice {
             device_name: device_name.clone(),
-            tracker_type: tracker_type.to_string(),
+            mac_address: mac_address_string.clone(),
+            tracker_type: Some(tracker_type.to_string()),
+            rssi: None,
         };
-        state
-            .connected_devices
-            .insert(mac_address_string.clone(), connected_device);
+        state.connected_devices.push(connected_device);
     }
 
     info!("Connected to device: {} ({})", device_name, mac_address);
@@ -563,9 +601,17 @@ async fn setup_notifications(
 
 pub async fn get_device_name(mac_address: &str) -> Result<String, String> {
     let state = BLE_STATE.lock().await;
-    if let Some(device) = state.discovered_devices.get(mac_address) {
-        Ok(device.name.clone())
-    } else if let Some(connected_device) = state.connected_devices.get(mac_address) {
+    if let Some(device) = state
+        .discovered_devices
+        .iter()
+        .find(|dev| dev.mac_address == mac_address)
+    {
+        Ok(device.device_name.clone())
+    } else if let Some(connected_device) = state
+        .connected_devices
+        .iter()
+        .find(|dev| dev.mac_address == mac_address)
+    {
         Ok(connected_device.device_name.clone())
     } else {
         Err(format!(
