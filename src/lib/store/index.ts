@@ -16,19 +16,23 @@ export interface BatteryData {
 // TODO: save this data in config, prob move "data" into another interface
 export interface Tracker {
 	// Info
+	id: string; // does NOT change and should be unique (MAC address or serial num (in format of bt names: HaritoraX()-(serial)?)
 	name: string; // can be user-set
-	id: string; // does NOT change (MAC address or serial num (in format of bt names: HaritoraX()-(serial)?)
 	connection_mode: ConnectionMode;
 	tracker_type: TrackerModel;
 	mac?: string;
 	settings?: Exclude<TrackerSettings, "heartbeat" | "buttonDebounce">;
 
 	// Data
+	data: TrackerData;
+}
+
+export interface TrackerData {
 	rotation: number[];
 	acceleration: number[];
-	rssi?: number;
-	battery?: BatteryData;
 	magnetometer?: MagStatus;
+	battery?: BatteryData;
+	rssi?: number;
 }
 
 export const trackers = writable<Tracker[]>([]);

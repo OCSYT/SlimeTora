@@ -112,8 +112,11 @@ async function imuNotification() {
 			if (index !== -1) {
 				const updatedTracker = {
 					...prev[index],
-					rotation: [rotation.x, rotation.y, rotation.z],
-					acceleration: [acceleration.x, acceleration.y, acceleration.z],
+					data: {
+						...prev[index].data,
+						rotation: [rotation.x, rotation.y, rotation.z],
+						acceleration: [acceleration.x, acceleration.y, acceleration.z],
+					},
 				};
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			} else {
@@ -143,11 +146,14 @@ async function magNotification() {
 		const currentTrackers = get(trackers);
 		const index = currentTrackers.findIndex((t) => t.id === trackerId);
 		if (index !== -1) {
-			if (currentTrackers[index].magnetometer !== data.magnetometer) {
+			if (currentTrackers[index].data.magnetometer !== data.magnetometer) {
 				trackers.update((prev) => {
-					const updatedTracker = { ...prev[index], magnetometer: data.magnetometer };
+					const updatedTracker = {
+						...prev[index],
+						data: { ...prev[index].data, magnetometer: data.magnetometer },
+					};
 					info(
-						`Tracker ${trackerId} magnetometer status changed: ${prev[index].magnetometer} -> ${data.magnetometer}`,
+						`Tracker ${trackerId} magnetometer status changed: ${prev[index].data.magnetometer} -> ${data.magnetometer}`,
 					);
 					return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 				});
@@ -173,18 +179,13 @@ async function batteryNotification() {
 			if (index !== -1) {
 				let updatedBattery = data;
 				// if both remaining and voltage are null, but status is present, keep previous remaining and voltage and update w/ new status
-				if (
-					data.remaining == null &&
-					data.voltage == null &&
-					data.status != null &&
-					prev[index].battery
-				) {
+				if (data.remaining == null && data.voltage == null && data.status != null && prev[index].data.battery) {
 					updatedBattery = {
-						...prev[index].battery,
+						...prev[index].data.battery,
 						status: data.status,
 					};
 				}
-				const updatedTracker = { ...prev[index], battery: updatedBattery };
+				const updatedTracker = { ...prev[index], data: { ...prev[index].data, battery: updatedBattery } };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			}
 			return prev;
@@ -241,8 +242,10 @@ async function connectNotification() {
 					id: tracker,
 					connection_mode,
 					tracker_type,
-					rotation: [0, 0, 0],
-					acceleration: [0, 0, 0],
+					data: {
+						rotation: [0, 0, 0],
+						acceleration: [0, 0, 0],
+					},
 				},
 			];
 		});
@@ -287,7 +290,7 @@ async function connectionNotification() {
 		trackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
-				const updatedTracker = { ...prev[index], rssi: tracker_rssi };
+				const updatedTracker = { ...prev[index], data: { ...prev[index].data, rssi: tracker_rssi } };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			} else {
 				warn(`Tracker with id ${tracker} not found in store, adding new tracker`);
@@ -298,10 +301,12 @@ async function connectionNotification() {
 						id: tracker,
 						connection_mode: connection_mode as ConnectionMode,
 						tracker_type: tracker_type as TrackerModel,
-						rotation: [0, 0, 0],
-						acceleration: [0, 0, 0],
-						rssi: tracker_rssi,
-					}
+						data: {
+							rotation: [0, 0, 0],
+							acceleration: [0, 0, 0],
+							rssi: tracker_rssi,
+						},
+					},
 				];
 			}
 		});

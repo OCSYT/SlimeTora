@@ -32,13 +32,13 @@
 	$effect(() => {
 		const t = $trackerData;
 		if (t) {
-			rotation = t.rotation?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
-			acceleration = t.acceleration?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
-			batteryPercent = t.battery?.remaining ?? -1;
-			batteryVoltage = t.battery?.voltage ?? -1;
-			batteryStatus = t.battery?.status ?? "discharging";
-			magStatus = t.magnetometer ?? "N/A";
-			rssi = t.rssi ?? 1;
+			rotation = t.data.rotation?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
+			acceleration = t.data.acceleration?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
+			batteryPercent = t.data.battery?.remaining ?? -1;
+			batteryVoltage = t.data.battery?.voltage ?? -1;
+			batteryStatus = t.data.battery?.status ?? "discharging";
+			magStatus = t.data.magnetometer ?? "N/A";
+			rssi = t.data.rssi ?? 1;
 		}
 	});
 
