@@ -1,7 +1,7 @@
 import { browser } from "$app/environment";
-import { trackers, type BatteryData } from "$lib/store";
+import { connectedTrackers, getTrackerConfig, saveTrackerConfig, type BatteryData, type TrackerSave } from "$lib/store";
 import type { ConnectionMode } from "$lib/types/connection";
-import { MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
+import { MagStatus, SensorAutoCorrection, type IMUData, type TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
 import { get } from "svelte/store";
 import { error, info, warn } from "$lib/log";
@@ -107,7 +107,7 @@ async function imuNotification() {
 		if (!fastData && lastImuUpdate[tracker] && now - lastImuUpdate[tracker] < 50) return;
 		lastImuUpdate[tracker] = now;
 
-		trackers.update((prev) => {
+		connectedTrackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
 				const updatedTracker = {
@@ -143,11 +143,11 @@ async function magNotification() {
 
 		// check and only update trackers store if it's changed
 		if (!browser) return;
-		const currentTrackers = get(trackers);
+		const currentTrackers = get(connectedTrackers);
 		const index = currentTrackers.findIndex((t) => t.id === trackerId);
 		if (index !== -1) {
 			if (currentTrackers[index].data.magnetometer !== data.magnetometer) {
-				trackers.update((prev) => {
+				connectedTrackers.update((prev) => {
 					const updatedTracker = {
 						...prev[index],
 						data: { ...prev[index].data, magnetometer: data.magnetometer },
@@ -174,7 +174,7 @@ async function batteryNotification() {
 		info(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
 
 		if (!browser) return;
-		trackers.update((prev) => {
+		connectedTrackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
 				let updatedBattery = data;
@@ -218,7 +218,7 @@ async function settingsNotification() {
  */
 
 async function connectNotification() {
-	return await listen("connect", (event) => {
+	return await listen("connect", async (event) => {
 		const payload = event.payload as {
 			tracker: string;
 			connection_mode: ConnectionMode;
@@ -232,22 +232,53 @@ async function connectNotification() {
 
 		info(`Tracker connected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`);
 
+		// load settings
+		let newTracker = await getTrackerConfig(tracker);
+		if (!newTracker) {
+			newTracker = {
+				name: tracker,
+				id: tracker,
+				connection_mode: connection_mode as ConnectionMode,
+				tracker_type: tracker_type as TrackerModel,
+				settings: {
+					fps: 50,
+					mode: 1,
+					dynamicCalibration: [SensorAutoCorrection.Accel],
+					emulatedFeet: false,
+				},
+			};
+
+			info(`No existing config found for tracker ${tracker}, creating new one`);
+		} else if (!newTracker.settings) {
+			newTracker.settings = {
+				fps: 50,
+				mode: 1,
+				dynamicCalibration: [SensorAutoCorrection.Accel],
+				emulatedFeet: false,
+			};
+			info(`Tracker ${tracker} config found, but no settings - should use global settings`);
+		} else {
+			info(`Tracker ${tracker} config found, using existing settings`);
+			info(`Tracker settings: ${JSON.stringify(newTracker.settings, null, 2)}`);
+		}
+
+		saveTrackerConfig(newTracker);
+
 		if (!browser) return;
 		// TODO: get tracker name from config if available
-		trackers.update((prev) => {
-			return [
-				...prev,
-				{
-					name: tracker,
-					id: tracker,
-					connection_mode,
-					tracker_type,
-					data: {
-						rotation: [0, 0, 0],
-						acceleration: [0, 0, 0],
-					},
+		connectedTrackers.update((prev) => {
+			const index = prev.findIndex((t) => t.id === newTracker.id);
+			const trackerData = {
+				...newTracker,
+				data: {
+					rotation: [0, 0, 0],
+					acceleration: [0, 0, 0],
 				},
-			];
+			};
+			if (index !== -1) {
+				return [...prev.slice(0, index), trackerData, ...prev.slice(index + 1)];
+			}
+			return [...prev, trackerData];
 		});
 	});
 }
@@ -261,7 +292,7 @@ async function disconnectNotification() {
 
 		info(`Tracker disconnected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`);
 		if (!browser) return;
-		trackers.update((prev) => {
+		connectedTrackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
 				return [...prev.slice(0, index), ...prev.slice(index + 1)];
@@ -287,7 +318,7 @@ async function connectionNotification() {
 		const tracker_type = payload.tracker_type;
 
 		if (!browser) return;
-		trackers.update((prev) => {
+		connectedTrackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
 				const updatedTracker = { ...prev[index], data: { ...prev[index].data, rssi: tracker_rssi } };

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from "@iconify/svelte";
-	import { trackerOpenStates, trackers } from "$lib/store";
+	import { trackerOpenStates, connectedTrackers } from "$lib/store";
 	import { derived } from "svelte/store";
 	import { goto } from "$app/navigation";
 	import { info } from "@tauri-apps/plugin-log";
@@ -12,7 +12,7 @@
 	let { name, id, type } = $props();
 	let isOpen = $state(false);
 
-	const trackerData = derived(trackers, ($trackers) => $trackers.find((t) => t.id === id));
+	const trackerData = derived(connectedTrackers, ($trackers) => $trackers.find((t) => t.id === id));
 	let preciseData = $state($program.preciseData);
 	let visualization = $state($program.visualization);
 	let visualizationFPS = $state($program.visualizationFPS);
@@ -90,7 +90,7 @@
 						class={`!bg-transparent ${magStatusClass(magStatus)}`}
 						id="mag-icon"
 					/>
-					<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text"
+					<span class={`!bg-transparent uppercase ${magStatusClass(magStatus)}`} id="mag-text"
 						>{magStatus}</span
 					>
 				</p>
@@ -158,7 +158,7 @@
 								id="mag-icon"
 							/>
 						</Tooltip>
-						<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text">
+						<span class={`!bg-transparent uppercase ${magStatusClass(magStatus)}`} id="mag-text">
 							{magStatus === "N/A"
 								? $t("trackers.card.status.unknown")
 								: $t(`trackers.card.status.${magStatus}`)}

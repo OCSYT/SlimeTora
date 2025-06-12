@@ -4,7 +4,7 @@
 	import Switch from "$lib/components/settings/Switch.svelte";
 	import Card from "$lib/components/trackers/Card.svelte";
 	import { t } from "$lib/lang";
-	import { trackerOpenStates, trackers } from "$lib/store";
+	import { trackerOpenStates, connectedTrackers } from "$lib/store";
 	import { program } from "$lib/store/settings";
 
 	let preciseData = $state($program.preciseData);
@@ -41,17 +41,17 @@
 </script>
 
 <div class="flex flex-col p-4">
-	{#if $trackers.length === 0}
+	{#if $connectedTrackers.length === 0}
 		<div class="text-center bg-panel rounded-lg py-8">{$t("trackers.none")}</div>
 	{:else}
 		<div class="flex flex-row gap-x-4">
 			<div class="flex flex-col gap-y-4 flex-1" id="left-column">
-				{#each $trackers.filter((_, i) => i % 2 === 0) as tracker}
+				{#each $connectedTrackers.filter((_, i) => i % 2 === 0) as tracker}
 					<Card name={tracker.name} id={tracker.id} type={tracker.tracker_type} />
 				{/each}
 			</div>
 			<div class="flex flex-col gap-y-4 flex-1" id="right-column">
-				{#each $trackers.filter((_, i) => i % 2 === 1) as tracker}
+				{#each $connectedTrackers.filter((_, i) => i % 2 === 1) as tracker}
 					<Card name={tracker.name} id={tracker.id} type={tracker.tracker_type} />
 				{/each}
 			</div>

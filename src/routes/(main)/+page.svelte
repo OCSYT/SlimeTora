@@ -2,13 +2,13 @@
 	import { isOn } from "$lib/store";
 	import Icon from "@iconify/svelte";
 	import { onMount } from "svelte";
-	import { trackers } from "$lib/store";
+	import { connectedTrackers } from "$lib/store";
 	import { t } from "$lib/lang";
 
 	let trackerCount = $state(0);
 
 	onMount(() => {
-		trackers.subscribe((value) => (trackerCount = value.length));
+		connectedTrackers.subscribe((value) => (trackerCount = value.length));
 
 		isOn.subscribe((value) => {
 			const status = document.getElementById("tracker-status");
@@ -20,7 +20,7 @@
 			} else if (value === false) {
 				if (status) status.innerText = $t("home.disconnected");
 				if (button) button.classList.remove("connected");
-				trackers.update(() => []);
+				connectedTrackers.update(() => []);
 			}
 		});
 	});
