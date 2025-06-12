@@ -9,6 +9,7 @@ use tauri_plugin_blec::{
     OnDisconnectHandler,
 };
 use tokio::sync::Mutex;
+use tokio_util::sync::CancellationToken;
 
 use crate::{interpreters::core::TrackerModel, util::normalize_uuid};
 use log::{error, info, warn};
@@ -122,6 +123,7 @@ struct BleState {
     connected_devices: Vec<TrackerDevice>,
     paired_devices: Vec<TrackerDevice>,
     scanning: bool,
+    connection_cancel_token: Option<CancellationToken>,
 }
 
 static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
@@ -130,6 +132,7 @@ static BLE_STATE: Lazy<Arc<Mutex<BleState>>> = Lazy::new(|| {
         connected_devices: Vec::new(),
         paired_devices: Vec::new(),
         scanning: false,
+        connection_cancel_token: None,
     }))
 });
 
@@ -232,8 +235,17 @@ pub async fn start_connections(
         mac_addresses
     );
 
+    let cancel_token = CancellationToken::new();
+
     {
         let mut state = BLE_STATE.lock().await;
+
+        // cancel any existing connection management task
+        if let Some(existing_token) = &state.connection_cancel_token {
+            existing_token.cancel();
+        }
+        state.connection_cancel_token = Some(cancel_token.clone());
+
         state.paired_devices.clear();
         let mut devices_to_add = Vec::new();
         for mac in &mac_addresses {
@@ -252,7 +264,7 @@ pub async fn start_connections(
 
     tokio::spawn(async move {
         info!(
-            "Starting connection management for {} devices",
+            "Starting BLE connection management for {} devices",
             mac_addresses.len()
         );
 
@@ -260,60 +272,66 @@ pub async fn start_connections(
         reconnect_interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
         loop {
-            reconnect_interval.tick().await;
+            tokio::select! {
+                _ = cancel_token.cancelled() => {
+                    info!("BLE connection management task cancelled, stopping");
+                    break;
+                }
+                _ = reconnect_interval.tick() => {
+                    // check if we still have paired devices
+                    let current_pairs = {
+                        let state = BLE_STATE.lock().await;
+                        state.paired_devices.clone()
+                    };
 
-            // Check if we still have paired devices
-            let current_pairs = {
-                let state = BLE_STATE.lock().await;
-                state.paired_devices.clone()
-            };
+                    if current_pairs.is_empty() {
+                        info!("No paired devices, stopping BLE connection management");
+                        break;
+                    }
 
-            if current_pairs.is_empty() {
-                info!("No paired devices, stopping connection management");
-                break;
-            }
+                    // constantly attempt to find and connect to paired devices
+                    for paired_device in &current_pairs {
+                        let name = &paired_device.device_name;
+                        let mac_address = &paired_device.mac_address;
 
-            // Check each paired device
-            for paired_device in &current_pairs {
-                let name = &paired_device.device_name;
-                let mac_address = &paired_device.mac_address;
+                        let is_connected = {
+                            let state = BLE_STATE.lock().await;
+                            state
+                                .connected_devices
+                                .iter()
+                                .any(|dev| dev.mac_address == *mac_address)
+                        };
 
-                let is_connected = {
-                    let state = BLE_STATE.lock().await;
-                    state
-                        .connected_devices
-                        .iter()
-                        .any(|dev| dev.mac_address == *mac_address)
-                };
-
-                if !is_connected {
-                    info!(
-                        "Attempting to connect to paired device: {} ({})",
-                        name, mac_address
-                    );
-
-                    match connect_to_device(app_handle.clone(), mac_address).await {
-                        Ok(_) => {
+                        if !is_connected {
                             info!(
-                                "Successfully connected to device: {} ({})",
+                                "Attempting to connect to paired device: {} ({})",
                                 name, mac_address
                             );
-                            app_handle
-                                .emit("connect", &mac_address)
-                                .unwrap_or_else(|e| {
-                                    error!("Failed to emit connect event: {}", e);
-                                });
-                        }
-                        Err(e) => {
-                            warn!(
-                                "Failed to connect to device {} ({}): {}",
-                                name, mac_address, e
-                            );
+
+                            match connect_to_device(app_handle.clone(), mac_address).await {
+                                Ok(_) => {
+                                    info!(
+                                        "Successfully connected to device: {} ({})",
+                                        name, mac_address
+                                    );
+                                    if let Err(e) = app_handle.emit("connect", mac_address) {
+                                        error!("Failed to emit connect event: {}", e);
+                                    }
+                                }
+                                Err(e) => {
+                                    warn!(
+                                        "Failed to connect to device {} ({}): {}",
+                                        name, mac_address, e
+                                    );
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+
+        info!("BLE connection management task ended");
     });
 
     Ok(())
@@ -324,17 +342,26 @@ pub async fn stop_connections() -> Result<(), String> {
 
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
 
-    // Disconnect all devices
+    {
+        let mut state = BLE_STATE.lock().await;
+
+        if let Some(cancel_token) = &state.connection_cancel_token {
+            cancel_token.cancel();
+            info!("Cancelled BLE connection management task");
+        }
+        state.connection_cancel_token = None;
+
+        state.paired_devices.clear();
+        state.connected_devices.clear();
+    }
+
     if let Err(e) = handler.disconnect_all().await {
         error!("Failed to disconnect all devices: {}", e);
     } else {
         info!("Disconnected all devices");
     }
 
-    {
-        let mut state = BLE_STATE.lock().await;
-        state.connected_devices.clear();
-    }
+    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
     info!("Stopped all connections");
     Ok(())
@@ -462,7 +489,6 @@ async fn handle_device_disconnect(
                 "Device {} is a paired device, will attempt reconnection",
                 mac_address
             );
-            // the connection management task reconnect
         }
     } else {
         warn!("Device {} not found in connected devices", mac_address);

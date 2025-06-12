@@ -2,7 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use log::{error, info};
 use tauri::path::BaseDirectory;
-use tauri_plugin_blec::models::BleDevice;
 use tauri_plugin_log::RotationStrategy;
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -286,11 +285,12 @@ async fn stop_connection(
 ) -> Result<(), String> {
     let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
 
-    for m in models {
-        crate::interpreters::core::stop_interpreting(&m)?;
+    // stop connections
+    if modes.contains(&"serial".to_string()) {
+        let serial_task = task::spawn(async move { serial::stop().await });
+        tasks.push(serial_task);
+        info!("Stopping serial connections");
     }
-
-    connection::slimevr::clear_trackers().await;
 
     if modes.contains(&"ble".to_string()) {
         let ble_task = task::spawn(async move {
@@ -300,13 +300,10 @@ async fn stop_connection(
             ble::stop_connections().await
         });
         tasks.push(ble_task);
+        info!("Stopping BLE connections");
     }
 
-    if modes.contains(&"serial".to_string()) {
-        let serial_task = task::spawn(async move { serial::stop().await });
-        tasks.push(serial_task);
-    }
-
+    info!("Stopping all connections");
     for result in future::join_all(tasks).await {
         match result {
             Ok(inner_result) => inner_result.map_err(|e| {
@@ -319,6 +316,16 @@ async fn stop_connection(
             }
         }
     }
+
+    // stop interpreting data
+    for m in models {
+        crate::interpreters::core::stop_interpreting(&m)?;
+        info!("Stopping interpreter for model: {}", m);
+    }
+
+    // clear tasks and trackers
+    connection::slimevr::cancel_all_tasks().await;
+    connection::slimevr::clear_trackers().await;
 
     info!("Stopped connection");
     Ok(())
@@ -522,6 +529,16 @@ async fn cleanup_connections() -> Result<(), String> {
         error!("Error stopping serial connections: {}", e);
     }
 
+    if let Err(e) = ble::stop_scanning().await {
+        error!("Error stopping BLE scanning: {}", e);
+    }
+
+    if let Err(e) = ble::stop_connections().await {
+        error!("Error stopping BLE connections: {}", e);
+    }
+
+    // cancel all tasks and clear trackers
+    connection::slimevr::cancel_all_tasks().await;
     connection::slimevr::clear_trackers().await;
 
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;

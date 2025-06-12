@@ -15,6 +15,9 @@ static PORTS: Mutex<Vec<Box<dyn SerialPort + Send>>> = Mutex::new(Vec::new());
 static STOP_CHANNELS: Lazy<Mutex<Vec<std::sync::mpsc::Sender<()>>>> =
     Lazy::new(|| Mutex::new(Vec::new()));
 
+static THREAD_HANDLES: Lazy<Mutex<Vec<std::thread::JoinHandle<()>>>> =
+    Lazy::new(|| Mutex::new(Vec::new()));
+
 // tracker part, [tracker id, port, port id]
 // update: i think i was thinking too much about trying to make it like the TS version, i should probably make this more efficient
 static TRACKER_ASSIGNMENT: Lazy<Mutex<HashMap<&'static str, [String; 3]>>> = Lazy::new(|| {
@@ -70,7 +73,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
         STOP_CHANNELS.lock().unwrap().push(stop_tx);
 
         let app_handle_clone = app_handle.clone();
-        thread::spawn(move || {
+        let handle = thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 let mut accumulator = Vec::new();
@@ -82,13 +85,21 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
 
                 match port_clone.read(&mut buffer) {
                     Ok(bytes_read) => {
-                        if bytes_read > 0 {
+                        if bytes_read > 0 {                            // Check for stop signal again before processing data
+                            if stop_rx.try_recv().is_ok() {
+                                return; // Exit the entire async block immediately
+                            }
+
                             accumulator.extend_from_slice(&buffer[..bytes_read]);
 
                             // process complete messages
                             while let Some(delimiter_index) =
                                 accumulator.iter().position(|&b| b == b'\n')
-                            {
+                            {                                // Check for stop signal before processing each message
+                                if stop_rx.try_recv().is_ok() {
+                                    return; // Exit the entire async block immediately
+                                }
+
                                 let message_bytes =
                                     accumulator.drain(..delimiter_index).collect::<Vec<u8>>();
                                 accumulator.remove(0);
@@ -184,6 +195,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
             }
         });
         });
+        THREAD_HANDLES.lock().unwrap().push(handle);
     }
 
     Ok(())
@@ -197,11 +209,28 @@ pub async fn stop() -> Result<(), String> {
         }
     }
 
+    {
+        let mut handles = THREAD_HANDLES.lock().unwrap();
+        for handle in handles.drain(..) {
+            if let Err(e) = handle.join() {
+                error!("Failed to join serial thread: {:?}", e);
+            }
+        }
+    }
     sleep(Duration::from_millis(100));
 
-    let mut ports = PORTS.lock().unwrap();
-    info!("Clearing {} ports", ports.len());
-    ports.clear();
+    // explicitly drop each port to ensure proper cleanup
+    {
+        let mut ports = PORTS.lock().unwrap();
+        info!("Closing and clearing {} ports", ports.len());
+
+        for port in ports.drain(..) {
+            if let Some(name) = port.name() {
+                info!("Closing port: {}", name);
+            }
+            drop(port);
+        }
+    }
 
     info!("Stopped serial connection");
     Ok(())

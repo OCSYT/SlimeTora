@@ -9,6 +9,7 @@
 	import "@fontsource/chakra-petch";
 	import "overlayscrollbars/overlayscrollbars.css";
 	import { initialized, initTranslations } from "$lib/lang";
+	import { invoke } from "@tauri-apps/api/core";
 
 	let { children } = $props();
 
@@ -35,6 +36,14 @@
 				visibility: "auto",
 				theme: "os-theme-dark",
 			},
+		});
+
+		window.addEventListener("beforeunload", async () => {
+			try {
+				await invoke("cleanup_connections");
+			} catch (err) {
+				console.error(`Failed to cleanup backend connections: ${err}`);
+			}
 		});
 	});
 </script>
