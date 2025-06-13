@@ -6,6 +6,7 @@ import { listen } from "@tauri-apps/api/event";
 import { get } from "svelte/store";
 import { error, info, warn } from "$lib/log";
 import { program } from "$lib/store/settings";
+import { invoke } from "@tauri-apps/api/core";
 
 export const Notifications = [
 	"imu",
@@ -280,6 +281,42 @@ async function connectNotification() {
 			}
 			return [...prev, trackerData];
 		});
+
+		const trackerId = await invoke("get_tracker_id", { trackerName: tracker });
+		const trackerPort = await invoke("get_tracker_port", { trackerName: tracker });
+		if (!trackerId || !trackerPort) return;
+		info(`Tracker ID: ${trackerId}, Port: ${trackerPort}`);
+
+		// Manually request all the info from the trackers
+		const initialCommands = ["r0:", "r1:", "r:", "o:"];
+		const delayedCommands = ["i:", "i0:", "i1:", "o0:", "o1:", "v0:", "v1:"];
+
+		initialCommands.forEach((cmd) => {
+			info(`Sending initial command "${cmd}" to tracker port: ${trackerPort}`);
+			invoke("write_serial", {
+				portPath: trackerPort,
+				data: cmd,
+			});
+		});
+
+		setTimeout(() => {
+			delayedCommands.forEach((cmd) => {
+				info(`Sending delayed command "${cmd}" to tracker port: ${trackerPort}`);
+				invoke("write_serial", {
+					portPath: trackerPort,
+					data: cmd,
+				});
+			});
+
+			// Repeated initial commands just to make sure, lol
+			initialCommands.forEach((cmd) => {
+				info(`Resending initial command "${cmd}" to tracker port: ${trackerPort}`);
+				invoke("write_serial", {
+					portPath: trackerPort,
+					data: cmd,
+				});
+			});
+		}, 500);
 	});
 }
 

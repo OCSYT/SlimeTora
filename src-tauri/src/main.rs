@@ -155,6 +155,8 @@ fn main() {
             // serial commands
             write_serial,
             read_serial,
+            get_tracker_id,
+            get_tracker_port,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -449,11 +451,13 @@ async fn read_ble(mac_address: String, characteristic_uuid: String) -> Result<Ve
 
 #[tauri::command]
 async fn write_serial(port_path: String, data: String) -> Result<(), String> {
-    let response = serial::write(port_path, data).await;
+    let port_path_clone = port_path.clone();
+    let data_clone = data.clone();
+    let response = serial::write(port_path, format!("\n{}\n", data_clone)).await;
 
     match response {
         Ok(_) => {
-            info!("Successfully wrote to serial port");
+            info!("Successfully wrote to serial port {} with data: {}", port_path_clone, data_clone);
             Ok(())
         }
         Err(e) => {
@@ -465,11 +469,12 @@ async fn write_serial(port_path: String, data: String) -> Result<(), String> {
 
 #[tauri::command]
 async fn read_serial(port_path: String) -> Result<String, String> {
+    let port_path_clone = port_path.clone();
     let response = serial::read(port_path).await;
 
     match response {
         Ok(result) => {
-            info!("Successfully read from serial port");
+            info!("Successfully read from serial port {}", port_path_clone);
             info!("Received data from serial port: {}", result);
             Ok(result)
         }
@@ -521,6 +526,16 @@ fn filter_ports(ports: Vec<String>) -> Result<Vec<String>, String> {
         return Err("No Haritora ports found".to_string());
     }
     Ok(filtered_ports)
+}
+
+#[tauri::command]
+fn get_tracker_id(tracker_name: String) -> Result<String, String> {
+    serial::get_tracker_id(&tracker_name)
+}
+
+#[tauri::command]
+fn get_tracker_port(tracker_name: String) -> Result<String, String> {
+    serial::get_tracker_port(&tracker_name)
 }
 
 #[tauri::command]

@@ -10,7 +10,6 @@
 	import Select from "$lib/components/settings/Select.svelte";
 	import type { ConnectionMode } from "$lib/types/connection";
 	import { TrackerModel } from "$lib/types/tracker";
-	import { trackers } from "$lib/store";
 
 	// TODO: i should probably rework how to handle devices - bluetooth and serial handle trackers differently and its kinda a mess
 	// probably should unify it in one list of devices with type and connection mode

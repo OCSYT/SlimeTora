@@ -237,6 +237,7 @@ pub async fn stop() -> Result<(), String> {
 }
 
 pub async fn write(port_path: String, data: String) -> Result<(), String> {
+    info!("Writing to port: {}", port_path);
     let mut ports = PORTS.lock().unwrap();
     for port in ports.iter_mut() {
         if let Some(name) = port.name() {
@@ -272,4 +273,22 @@ pub async fn read(port_path: String) -> Result<String, String> {
         }
     }
     Err(format!("Port {} not found or no data available", port_path))
+}
+
+pub fn get_tracker_id(tracker_name: &str) -> Result<String, String> {
+    let tracker_assignment = TRACKER_ASSIGNMENT.lock().unwrap();
+    if let Some(values) = tracker_assignment.get(tracker_name) {
+        Ok(values[2].clone()) // port id
+    } else {
+        Err(format!("Tracker {} not found in assignment", tracker_name))
+    }
+}
+
+pub fn get_tracker_port(tracker_name: &str) -> Result<String, String> {
+    let tracker_assignment = TRACKER_ASSIGNMENT.lock().unwrap();
+    if let Some(values) = tracker_assignment.get(tracker_name) {
+        Ok(values[1].clone()) // port name
+    } else {
+        Err(format!("Tracker {} not found in assignment", tracker_name))
+    }
 }
