@@ -323,23 +323,8 @@ async function connectionNotification() {
 			if (index !== -1) {
 				const updatedTracker = { ...prev[index], data: { ...prev[index].data, rssi: tracker_rssi } };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
-			} else {
-				warn(`Tracker with id ${tracker} not found in store, adding new tracker`);
-				return [
-					...prev,
-					{
-						name: tracker,
-						id: tracker,
-						connection_mode: connection_mode as ConnectionMode,
-						tracker_type: tracker_type as TrackerModel,
-						data: {
-							rotation: [0, 0, 0],
-							acceleration: [0, 0, 0],
-							rssi: tracker_rssi,
-						},
-					},
-				];
 			}
+			return prev;
 		});
 	});
 }

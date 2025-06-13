@@ -349,7 +349,7 @@ async fn process_connection(
     connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
-    let data = process_connection_data(data, tracker_name)?;
+    let data = process_connection_data(data)?;
     // Check if dongle_rssi and tracker_rssi are null, if so, return early
     let dongle_rssi = data.get("dongle_rssi");
     let tracker_rssi = data.get("tracker_rssi");

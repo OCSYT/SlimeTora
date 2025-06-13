@@ -513,8 +513,7 @@ pub fn process_settings_data(data: &str, tracker_name: &str) -> Result<serde_jso
 /// - HaritoraX Wireless
 /// - HaritoraX 2
 pub fn process_connection_data(
-    data: &str,
-    tracker_name: &str,
+    data: &str
 ) -> Result<serde_json::Value, String> {
     // data is in format 7f7f7f7f7f7f (tracker not found) OR other hex data like 284128442f30 (RSSI)
     let rssi_data = if data == "7f7f7f7f7f7f" {
