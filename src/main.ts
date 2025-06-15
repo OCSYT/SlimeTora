@@ -13,14 +13,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const mainPath = app.isPackaged ? path.dirname(app.getPath("exe")) : __dirname;
-const configPath = app.isPackaged ? path.resolve(mainPath, "config.json") : path.resolve(path.join(mainPath, ".."), "config.json")
+const configPath = app.isPackaged
+    ? path.resolve(mainPath, "config.json")
+    : path.resolve(path.join(mainPath, ".."), "config.json");
 const dataDebugPath = path.resolve(mainPath, "debug.txt");
 const isMac = process.platform === "darwin";
 // don't mess with this or languages will fail to load cause of how the project is structured, lol
 // i hate how this is done.
 const languagesPath = path.resolve(
     mainPath,
-    (isMac && app.isPackaged) ? ".." : "",
+    isMac && app.isPackaged ? ".." : "",
     app.isPackaged ? (isMac ? "Resources/languages" : "resources/languages") : "languages"
 );
 let mainWindow: BrowserWindow;
@@ -1233,7 +1235,7 @@ import { EmulatedTracker } from "@slimevr/tracker-emulation";
 import { ActivePorts } from "haritorax-interpreter/dist/mode/com";
 import BetterQuaternion from "quaternion";
 import { ParsedUrlQueryInput } from "querystring";
-import Rand from "rand-seed"
+import Rand from "rand-seed";
 
 // For haritorax-interpreter
 // Used to handle errors coming from haritorax-interpreter and display them to the user if wanted
@@ -1481,6 +1483,7 @@ function startDeviceListeners() {
     });
 
     let imuErrorCount: { [key: string]: number } = {};
+    let trackerErrorCount: { [key: string]: number } = {};
     device.on("imu", async (trackerName: string, rawRotation: Rotation, rawGravity: Gravity) => {
         if (!trackerName || !rawRotation || !rawGravity || !connectedDevices.has(trackerName) || isClosing) return;
 
@@ -1507,18 +1510,24 @@ function startDeviceListeners() {
         const gravity = new Vector(rawGravity.x, rawGravity.y, rawGravity.z);
 
         let tracker = connectedDevices.get(trackerName);
-        if (!tracker || !rotation || !gravity || !quaternion || !eulerRadians) {
-            error(`Error processing IMU data for "${trackerName}", skipping...`, "tracker");
-            log(
-                `Tracker: ${JSON.stringify(tracker)}, Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(
-                    gravity
-                )}`,
-                "tracker"
-            );
+        if (!tracker) {
+            trackerErrorCount[trackerName] = trackerErrorCount[trackerName] ? trackerErrorCount[trackerName] + 1 : 1;
+            if (trackerErrorCount[trackerName] > 500) {
+                error(`Too many errors processing tracker data for "${trackerName}", disconnecting...`, "tracker");
+                device.emit("disconnect", trackerName);
+                connectedDevices.delete(trackerName);
+                trackerErrorCount[trackerName] = 0;
+                mainWindow.webContents.send("device-error", trackerName);
+            }
+            return;
+        }
 
+        if (!rotation || !gravity || !quaternion || !eulerRadians) {
             // Prevent spam of IMU errors
             imuErrorCount[trackerName] = imuErrorCount[trackerName] ? imuErrorCount[trackerName] + 1 : 1;
             if (imuErrorCount[trackerName] > 20) {
+                error(`Error processing IMU data for "${trackerName}", skipping...`, "tracker");
+                log(`Rotation: ${JSON.stringify(rotation)}, Gravity: ${JSON.stringify(gravity)}`, "tracker");
                 error(`Too many errors processing IMU data for "${trackerName}", disconnecting...`, "tracker");
                 device.emit("disconnect", trackerName);
                 connectedDevices.delete(trackerName);
