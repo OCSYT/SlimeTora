@@ -41,6 +41,7 @@
         "electron": "^36.2.1",
         "eslint": "^9.27.0",
         "node-gyp-build": "^4.8.4",
+        "prettier": "^3.5.3",
         "sass": "^1.89.0",
         "typescript": "^5.8.3"
     },

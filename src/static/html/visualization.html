@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
     <head>
         <meta charset="UTF-8" />
@@ -87,7 +87,7 @@
                         undefined,
                         (error) => {
                             console.error("An error occurred loading the texture:", error);
-                        }
+                        },
                     );
                     cube = object;
                     scene.add(object);
@@ -97,7 +97,7 @@
                 },
                 (error) => {
                     console.log(error);
-                }
+                },
             );
 
             const composer = new EffectComposer(renderer);
@@ -110,7 +110,7 @@
             const outlinePass = new OutlinePass(
                 new THREE.Vector2(window.innerWidth, window.innerHeight),
                 scene,
-                camera
+                camera,
             );
             outlinePass.renderToScreen = true;
             outlinePass.edgeStrength = 10;
@@ -149,7 +149,7 @@
                     event.data.rotation.x,
                     event.data.rotation.y,
                     event.data.rotation.z,
-                    event.data.rotation.w
+                    event.data.rotation.w,
                 );
 
                 const gravity = new THREE.Vector3(event.data.gravity.x, event.data.gravity.y, event.data.gravity.z);

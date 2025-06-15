@@ -61,7 +61,7 @@ class Onboarding {
                                 "dialogs.onboarding.complete.message",
                                 true,
                                 true,
-                                true
+                                true,
                             );
                             window.open("https://github.com/OCSYT/SlimeTora/wiki/", "_blank");
                             window.close();
@@ -255,7 +255,7 @@ async function showMessageBox(
     messageKey: string,
     blocking: boolean = false,
     translateTitle: boolean = true,
-    translateMessage: boolean = true
+    translateMessage: boolean = true,
 ) {
     return await window.ipc.invoke("show-message", {
         title: titleKey,
@@ -294,5 +294,4 @@ window.runStartConnection = runStartConnection;
 window.runStopConnection = runStopConnection;
 
 // Required to prevent variable conflicts from other files
-export { };
-
+export {};

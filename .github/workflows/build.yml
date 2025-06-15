@@ -1,16 +1,16 @@
 name: Build application
 
 on:
-  workflow_dispatch:
-  push:
-    paths:
-    - 'package.json'
+    workflow_dispatch:
+    push:
+        paths:
+            - "package.json"
 
 jobs:
     build:
         strategy:
-          matrix:
-            os: [ubuntu-latest, windows-latest, macos-latest]
+            matrix:
+                os: [ubuntu-latest, windows-latest, macos-latest]
         runs-on: ${{ matrix.os }}
 
         steps:
@@ -21,7 +21,6 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: "20"
-
 
             - name: Install dependencies on Ubuntu
               if: matrix.os == 'ubuntu-latest'
@@ -37,18 +36,18 @@ jobs:
             - name: Compress Linux build artifacts (x64)
               if: matrix.os == 'ubuntu-latest'
               run: |
-                zip -r build/SlimeTora-linux-x64.zip build/SlimeTora-linux-x64
-                zip -r build/SlimeTora-linux-arm64.zip build/SlimeTora-linux-arm64
+                  zip -r build/SlimeTora-linux-x64.zip build/SlimeTora-linux-x64
+                  zip -r build/SlimeTora-linux-arm64.zip build/SlimeTora-linux-arm64
             - name: Compress Windows build artifacts
               if: matrix.os == 'windows-latest'
               run: |
-                powershell Compress-Archive -Path build\SlimeTora-win32-arm64\* -DestinationPath build\SlimeTora-win32-arm64.zip
-                powershell Compress-Archive -Path build\SlimeTora-win32-x64\* -DestinationPath build\SlimeTora-win32-x64.zip
+                  powershell Compress-Archive -Path build\SlimeTora-win32-arm64\* -DestinationPath build\SlimeTora-win32-arm64.zip
+                  powershell Compress-Archive -Path build\SlimeTora-win32-x64\* -DestinationPath build\SlimeTora-win32-x64.zip
             - name: Compress macOS build artifacts
               if: matrix.os == 'macos-latest'
               run: |
-                zip -r build/SlimeTora-darwin-arm64.zip build/SlimeTora-darwin-arm64
-                zip -r build/SlimeTora-darwin-x64.zip build/SlimeTora-darwin-x64
+                  zip -r build/SlimeTora-darwin-arm64.zip build/SlimeTora-darwin-arm64
+                  zip -r build/SlimeTora-darwin-x64.zip build/SlimeTora-darwin-x64
             - name: Archive build artifacts for Linux (x64)
               if: matrix.os == 'ubuntu-latest'
               uses: actions/upload-artifact@v4

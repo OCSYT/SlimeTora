@@ -322,7 +322,7 @@ async function autodetect() {
 
         const comPortsParent = document.getElementById("com-ports");
         Array.from(comPortsParent.querySelectorAll("input")).forEach((port) =>
-            simulateChangeEvent(port, comPorts.includes(port.id))
+            simulateChangeEvent(port, comPorts.includes(port.id)),
         );
         comPortsParent.dispatchEvent(new Event("change")); // simulate it here again since the actual code for handling COM port changes is in the parent element
 
@@ -422,7 +422,7 @@ COM ports (if applicable): ${comPorts}
 FPS transfer rate: ${fps}
 Sensor mode: ${sensorMode}
 Sensor auto correction: ${sensorAutoCorrectionList}
-Ankle motion detection: ${ankle}`
+Ankle motion detection: ${ankle}`,
         );
 
         saveSettings();
@@ -471,7 +471,7 @@ async function questions() {
             true,
             true,
             true,
-            buttons
+            buttons,
         );
     }
 
@@ -521,7 +521,7 @@ async function questions() {
                     true,
                     true,
                     false,
-                    wiredTrackerEnabled ? btns : [...btns, "OK"]
+                    wiredTrackerEnabled ? btns : [...btns, "OK"],
                 );
 
                 if (response === 0) {
@@ -548,7 +548,7 @@ async function questions() {
 
             const comPortsParent = document.getElementById("com-ports");
             Array.from(comPortsParent.querySelectorAll("input")).forEach((port) =>
-                simulateChangeEvent(port, selectedComPorts.includes(port.id))
+                simulateChangeEvent(port, selectedComPorts.includes(port.id)),
             );
             comPortsParent.dispatchEvent(new Event("change")); // simulate it here again since the actual code for handling COM port changes is in the parent element
             continue;
@@ -581,7 +581,7 @@ async function questions() {
                     true,
                     true,
                     false,
-                    btns
+                    btns,
                 );
 
                 if (response === 0) {
@@ -776,8 +776,8 @@ async function questions() {
                     bluetoothEnabled && comEnabled
                         ? ConnectionMode.Both
                         : bluetoothEnabled
-                        ? ConnectionMode.Bluetooth
-                        : ConnectionMode.COM;
+                          ? ConnectionMode.Bluetooth
+                          : ConnectionMode.COM;
 
                 window.log(`sensorAutoCorrectionList: ${sensorAutoCorrectionList}`);
 
@@ -797,7 +797,7 @@ App updates: ${appUpdates}
 App updates channel (if applicable): ${updateChannel}
 Language updates: ${translationUpdates}
 Auto-start: ${autoStart}
-Auto-off: ${autoOff}`
+Auto-off: ${autoOff}`,
                 );
                 await showMessageBox("dialogs.questions.finish.title", newMsg, true, true, false);
                 saveSettings();
@@ -827,7 +827,7 @@ function stopConnection() {
     if (!isActive) {
         e(
             "No connection to stop.. wait a second, you shouldn't be seeing this - get out of inspect element and stop trying to break the program!",
-            "connection"
+            "connection",
         );
         return;
     }
@@ -927,7 +927,7 @@ async function showMessageBox(
     blocking: boolean = false,
     translateTitle: boolean = true,
     translateMessage: boolean = true,
-    buttons: string[] = ["OK"]
+    buttons: string[] = ["OK"],
 ) {
     return await window.ipc.invoke("show-message", {
         title: titleKey,
@@ -944,7 +944,7 @@ async function showErrorDialog(
     messageKey: string,
     blocking: boolean = true,
     translateTitle: boolean = true,
-    translateMessage: boolean = true
+    translateMessage: boolean = true,
 ) {
     const title = translateTitle ? await t(titleKey) : titleKey;
     const message = translateMessage ? await t(messageKey) : messageKey;
@@ -1633,7 +1633,7 @@ function addEventListeners() {
 
     document.getElementById("tracker-visualization-fps").addEventListener("change", async function () {
         trackerVisualizationFPS = parseInt(
-            (document.getElementById("tracker-visualization-fps") as HTMLInputElement).value
+            (document.getElementById("tracker-visualization-fps") as HTMLInputElement).value,
         );
         l(`Selected tracker visualization FPS: ${trackerVisualizationFPS}`);
         window.ipc.send("save-setting", {
@@ -1647,7 +1647,7 @@ function addEventListeners() {
 
     document.getElementById("tracker-heartbeat-interval").addEventListener("change", async function () {
         const heartbeatInterval = parseInt(
-            (document.getElementById("tracker-heartbeat-interval") as HTMLInputElement).value
+            (document.getElementById("tracker-heartbeat-interval") as HTMLInputElement).value,
         );
         l(`Selected tracker heartbeat interval: ${heartbeatInterval}`);
         window.ipc.send("save-setting", {

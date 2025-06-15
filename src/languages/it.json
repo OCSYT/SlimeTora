@@ -1,4 +1,4 @@
-{   
+{
     "needs to be completed": "needs to be completed",
 
     "main": {
@@ -79,17 +79,17 @@
             "100": "100 FPS"
         },
         "sensorMode": {
-                "title": "Modalità Sensori",
-                "tooltip": "Seleziona la modalità di utilizzo per i tracker. La Modalità 1 abilita il magnetometro ed è consigliato se hai condizioni magnetiche stabili. In caso contrario utilizza la modalità 2 ",
-                "1": "Modalità 1",
-                "2": "Modalità 2"
+            "title": "Modalità Sensori",
+            "tooltip": "Seleziona la modalità di utilizzo per i tracker. La Modalità 1 abilita il magnetometro ed è consigliato se hai condizioni magnetiche stabili. In caso contrario utilizza la modalità 2 ",
+            "1": "Modalità 1",
+            "2": "Modalità 2"
         },
         "sensorCorrection": {
-                "title": "Correzioni Sensori",
-                "tooltip": "Enable or disable sensor auto correction features. Usually not needed to be changed and results vary between environments.",
-                "accelerometer": "Accelerometro",
-                "gyroscope": "Giroscopio",
-                "magnetometer": "Magnetometro"
+            "title": "Correzioni Sensori",
+            "tooltip": "Enable or disable sensor auto correction features. Usually not needed to be changed and results vary between environments.",
+            "accelerometer": "Accelerometro",
+            "gyroscope": "Giroscopio",
+            "magnetometer": "Magnetometro"
         },
         "other": {
             "title": "Altre Impostazioni",

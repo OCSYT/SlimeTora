@@ -66,5 +66,5 @@ export function CompactCard(deviceName: string, deviceID: string) {
                 </div>
             </div>
         </div>
-    `
+    `;
 }

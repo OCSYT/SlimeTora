@@ -35,12 +35,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (trackerName.startsWith("HaritoraX")) {
                 trackerNameElement.textContent = trackerNameElement.textContent.replace(
                     "{trackerName}",
-                    "HaritoraX-XXXXXX"
+                    "HaritoraX-XXXXXX",
                 );
             } else if (trackerName.startsWith("HaritoraXW")) {
                 trackerNameElement.textContent = trackerNameElement.textContent.replace(
                     "{trackerName}",
-                    "HaritoraXW-XXXXXX"
+                    "HaritoraXW-XXXXXX",
                 );
             }
         } else {
@@ -71,15 +71,15 @@ async function loadConfigSettings(trackerName: string) {
                 : sensorMode;
         accelerometerEnabled = await getSetting(
             `trackers.${trackerName}.accelerometerEnabled`,
-            trackerSettings.sensorAutoCorrection?.includes("accel") || false
+            trackerSettings.sensorAutoCorrection?.includes("accel") || false,
         );
         gyroscopeEnabled = await getSetting(
             `trackers.${trackerName}.gyroscopeEnabled`,
-            trackerSettings.sensorAutoCorrection?.includes("gyro") || false
+            trackerSettings.sensorAutoCorrection?.includes("gyro") || false,
         );
         magnetometerEnabled = await getSetting(
             `trackers.${trackerName}.magnetometerEnabled`,
-            trackerSettings.sensorAutoCorrection?.includes("mag") || false
+            trackerSettings.sensorAutoCorrection?.includes("mag") || false,
         );
 
         // Get the checkbox elements
@@ -284,7 +284,7 @@ async function getTrackerSettings() {
     window.ipc.invoke("show-message", {
         title: `Current settings for "${trackerName}"`,
         message: `Sensor Mode: ${sensorMode} \nFPS Mode: ${fpsMode} \nSensor Auto Correction: ${sensorAutoCorrection.join(
-            ", "
+            ", ",
         )} \nAnkle Motion Detection: ${ankleMotionDetection}`,
         translateTitle: false,
         translateMessage: false,

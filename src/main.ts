@@ -23,7 +23,7 @@ const isMac = process.platform === "darwin";
 const languagesPath = path.resolve(
     mainPath,
     isMac && app.isPackaged ? ".." : "",
-    app.isPackaged ? (isMac ? "Resources/languages" : "resources/languages") : "languages"
+    app.isPackaged ? (isMac ? "Resources/languages" : "resources/languages") : "languages",
 );
 let mainWindow: BrowserWindow;
 let trackerSettingsWindow: BrowserWindow;
@@ -210,7 +210,7 @@ async function checkForAppUpdates() {
 
         log(
             `Latest "${updateChannel}" version: ${latestVersion}, current "${versionType}" version: ${currentVersion}`,
-            "updater"
+            "updater",
         );
         if (isNewerVersion(latestVersion, currentVersion)) {
             log("Update available, notifying user...", "updater");
@@ -294,7 +294,7 @@ async function checkForTranslationUpdates() {
 
             log(
                 `Comparing "${remoteFile.name}" - local size: ${localContentSize}, remote size: ${remoteFile.size}`,
-                "updater"
+                "updater",
             );
             if (remoteFile.size !== localContentSize) {
                 log(`Update available for "${remoteFile.name}"`, "updater");
@@ -442,7 +442,7 @@ function createBrowserWindow(
     query: string | ParsedUrlQueryInput,
     parent: BrowserWindow,
     width: number = 950,
-    height: number = 750
+    height: number = 750,
 ): BrowserWindow {
     let window = new BrowserWindow({
         title: title,
@@ -467,7 +467,7 @@ function createBrowserWindow(
             protocol: "file:",
             slashes: true,
             query: query,
-        })
+        }),
     );
 
     window.webContents.setWindowOpenHandler(({ url }) => {
@@ -496,7 +496,7 @@ async function showMessage(
     blocking = false,
     translateTitle = true,
     translateMessage = true,
-    buttons = ["OK"]
+    buttons = ["OK"],
 ) {
     if (isClosing) return false;
     const show = blocking ? dialog.showMessageBoxSync : dialog.showMessageBox;
@@ -517,7 +517,7 @@ async function showError(
     message: string,
     blocking = true,
     translateTitle = true,
-    translateMessage = true
+    translateMessage = true,
 ) {
     if (isClosing) return false;
     const translatedTitle = translateTitle ? await translate(title) : title;
@@ -766,9 +766,9 @@ ipcMain.on("fix-trackers", async () => {
     const duration = (endTime - startTime) / 1000;
     log(
         `Dialog was open for ${duration} seconds, accounting for ${commandCount} times sent to ports: ${Object.keys(
-            ports
+            ports,
         ).join(", ")}`,
-        "connection"
+        "connection",
     );
 });
 
@@ -795,7 +795,7 @@ ipcMain.on("open-tracker-settings", async (_event, arg: string) => {
         { trackerName: arg },
         mainWindow,
         850,
-        650
+        650,
     );
 
     trackerSettingsWindow.webContents.on("did-finish-load", () => {
@@ -1345,7 +1345,7 @@ async function processQueue() {
             BoardType.HARITORA,
             MCUType.HARITORA,
             serverAddress,
-            serverPort
+            serverPort,
         );
 
         await newTracker.init();
@@ -1497,7 +1497,7 @@ function startDeviceListeners() {
 
         // Convert the quaternion to Euler angles
         const eulerRadians = new BetterQuaternion(quaternion.w, quaternion.x, quaternion.y, quaternion.z).toEuler(
-            "XYZ"
+            "XYZ",
         );
 
         // Convert the rotation to degrees
@@ -1601,7 +1601,7 @@ function startDeviceListeners() {
 
         log(
             `Received battery data for "${trackerName}": ${stableBatteryRemaining}% (${stableBatteryVoltage}V)`,
-            "tracker"
+            "tracker",
         );
     });
 
@@ -1729,7 +1729,7 @@ async function handleConnectionStartError(err: any) {
     mainWindow.webContents.send("set-status", "main.status.failed");
     dialog.showErrorBox(
         await translate("dialogs.connectionFailed.title"),
-        await translate("dialogs.connectionFailed.message")
+        await translate("dialogs.connectionFailed.message"),
     );
 
     connectedDevices.clear();
@@ -1740,7 +1740,7 @@ async function handleTrackerReadError(err: any) {
     error(`Failed to read data from a tracker`, "haritorax-interpreter", err);
     dialog.showErrorBox(
         await translate("dialogs.trackerReadError.title"),
-        await translate("dialogs.trackerReadError.message")
+        await translate("dialogs.trackerReadError.message"),
     );
 }
 
@@ -1748,7 +1748,7 @@ async function handleTrackerWriteError(err: any) {
     error(`Failed to write data to a tracker`, "haritorax-interpreter", err);
     dialog.showErrorBox(
         await translate("dialogs.trackerWriteError.title"),
-        await translate("dialogs.trackerWriteError.message")
+        await translate("dialogs.trackerWriteError.message"),
     );
 }
 
@@ -1756,7 +1756,7 @@ async function handleUnexpectedError(err: any) {
     error(`An unexpected error occurred`, "haritorax-interpreter", err);
     dialog.showErrorBox(
         await translate("dialogs.unexpectedError.title"),
-        await translate("dialogs.unexpectedError.message")
+        await translate("dialogs.unexpectedError.message"),
     );
 }
 
@@ -1801,7 +1801,7 @@ function setupTrackerEvents(tracker: EmulatedTracker, isHeartbeat = false) {
     });
 
     tracker.on("unknown-incoming-packet", (buf: Buffer) =>
-        warn(`Tracker "${trackerName}" unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker")
+        warn(`Tracker "${trackerName}" unknown incoming packet: ${buf.toString()}`, "@slimevr/emulated-tracker"),
     );
 
     if (loggingMode === 3) {
@@ -1821,7 +1821,7 @@ const heartbeatTracker = new EmulatedTracker(
     BoardType.HARITORA,
     MCUType.HARITORA,
     serverAddress,
-    serverPort
+    serverPort,
 );
 
 setupTrackerEvents(heartbeatTracker, true);
