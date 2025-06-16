@@ -354,21 +354,25 @@
                         Body proportions
                     </h2>
                     <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-10.text">
-                        SlimeVR applies your body proportions on a virtual skeleton for accurate tracking. Select
-                        "Automatic proportions" and follow the on-screen instructions calibrate by following a set of
-                        movements. <b>You only need to do this once and is also optional!</b> If you have issues, you
-                        can always retry or use the defaults ("Reset all proportions").
+                        SlimeVR applies your body proportions on a virtual skeleton for accurate tracking. By default,
+                        SlimeVR uses "scaled proportions" which is based off your VR headset's height (to calculate your
+                        height), which is then used to calculate the proportions of your body. This is usually accurate
+                        enough for most people, but you can also set your body proportions manually or perform
+                        "autobone" for more precise control.
                     </p>
                 </div>
 
-                <div class="is-flex is-flex-direction-row is-align-items-center" style="gap: 2rem">
+                <div class="is-flex is-flex-direction-row is-align-items-center">
                     <img
                         src="../images/onboarding/body_proportions.webp"
-                        alt="Tracker assignment page in SlimeVR Server"
+                        alt="Body proprtions page in SlimeVR sServer"
                         style="height: 280px"
                     />
-                    <!-- Video credit: SlimeVR (https://github.com/SlimeVR/SlimeVR-Server) -->
-                    <video src="../videos/autobone.webm" autoplay loop style="height: 320px"></video>
+                    <img
+                        src="../images/onboarding/body_proportions_manual.webp"
+                        alt="Manual body proprtions page in SlimeVR sServer"
+                        style="height: 270px"
+                    />
                 </div>
 
                 <div class="buttons is-centered">
@@ -383,7 +387,7 @@
                         Relaunching SlimeVR
                     </h2>
                     <p class="subtitle has-text-centered" data-i18n="onboarding.steps.step-11.text">
-                        When relaunching SlimeVR, perform a "Full Reset" and then a "Mounting Reset\" before calibrating
+                        When relaunching SlimeVR, perform a "Full Reset" and then a "Mounting Reset" before calibrating
                         in-game.
                         <b
                             >Again, you do not have to perform the proportions calibration again - it is only done
