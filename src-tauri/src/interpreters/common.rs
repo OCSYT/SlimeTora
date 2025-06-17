@@ -421,7 +421,7 @@ pub fn process_button_data(
 /// - HaritoraX Wired (1.0/1.1/1.1b)
 /// - HaritoraX Wireless
 /// - HaritoraX 2
-pub fn process_info_data(data: &str, tracker_name: &str) -> Result<InfoData, String> {
+pub fn process_info_data(data: &str, tracker_name: &str) -> Result<serde_json::Value, String> {
     // example: {"model":"MC2B", "version":"1.7.10", "serial no":"0000000", "comm":"BLT", "comm_next":"BTSPP"}
     let json_data: serde_json::Value =
         serde_json::from_str(data).expect("Failed to parse JSON data");
@@ -430,13 +430,13 @@ pub fn process_info_data(data: &str, tracker_name: &str) -> Result<InfoData, Str
     let serial = json_data["serial no"].as_str().unwrap_or("").to_string();
     let communication = json_data["comm"].as_str().map(|s| s.to_string());
     let communication_type = json_data["comm_next"].as_str().map(|s| s.to_string());
-    let info_data = InfoData {
-        version,
-        model,
-        serial,
-        communication,
-        communication_type,
-    };
+    let info_data = serde_json::json!({
+        "model": model,
+        "version": version,
+        "serial": serial,
+        "communication": communication,
+        "communication_type": communication_type,
+    });
 
     info!(
         "Received info data from tracker {}: {:?}",

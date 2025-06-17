@@ -3,7 +3,7 @@ import type { ConnectionMode } from "$lib/types/connection";
 import { startInterpreting, stopInterpreting } from "$lib/backend";
 import type { ChargeStatus, MagStatus, TrackerModel } from "$lib/types/tracker";
 import { error, info } from "$lib/log";
-import type { TrackerSettings } from "./settings";
+import { connection, type TrackerSettings } from "./settings";
 import { load } from "@tauri-apps/plugin-store";
 
 export * as settings from "./settings";
@@ -49,10 +49,19 @@ export const trackerOpenStates = writable<Record<string, boolean>>({});
 		trackersConfig = await load("trackers.json", { autoSave: true });
 
 		try {
-			const loaded = await trackersConfig.get("settings");
+			const loaded = await trackersConfig.get("trackers");
 			if (loaded && typeof loaded === "object") {
 				// for every Tracker in loaded, place into knownTrackers
 				knownTrackers.set(Object.values(loaded));
+
+				const macAddresses: string[] = Object.values(loaded)
+					.filter((tracker) => tracker.mac)
+					.map((tracker) => tracker.mac!);
+
+				console.log(`Loaded MAC addresses of paired BT trackers: ${macAddresses}`);
+
+				// update connection settings with loaded mac addresses
+				connection.update(settings => ({ ...settings, macAddresses }));
 			}
 			info(`Loaded settings from trackers.json: ${JSON.stringify(loaded, null, 2)}`);
 		} catch (e) {
