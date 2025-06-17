@@ -37,6 +37,7 @@ static DONGLES: Lazy<Vec<HashMap<&'static str, &'static str>>> = Lazy::new(|| {
     ]
 });
 
+// TODO: detect if vrmanager/haritoraconfigurator is open
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 fn main() {
     // grab identifier for path of log file

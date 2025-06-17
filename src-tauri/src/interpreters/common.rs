@@ -405,8 +405,6 @@ pub fn process_button_data(
         }
     }
 
-    // TODO: detect if vrmanager/haritoraconfigurator is open
-
     info!(
         "Button pressed from tracker {}: {}",
         tracker_name, button_pressed

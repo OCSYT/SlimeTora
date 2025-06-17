@@ -63,7 +63,7 @@ static CHARACTERISTICS: Lazy<HashMap<&'static str, (&'static str, bool)>> = Lazy
     map.insert("00dbf450-90aa-11ed-a1eb-0242ac120002", ("MainButton", true));
     map.insert(
         "00dbf586-90aa-11ed-a1eb-0242ac120002",
-        ("SecondaryButton", true),
+        ("SubButton", true),
     );
     map.insert(
         "00dbf6a8-90aa-11ed-a1eb-0242ac120002",

@@ -70,7 +70,7 @@ export async function saveTrackerConfig(tracker: TrackerSave) {
 	}
 
 	try {
-		const settings = (await trackersConfig.get("settings")) || {};
+		const settings = (await trackersConfig.get("trackers")) || {};
 		await trackersConfig.set("trackers", {
 			...settings,
 			[tracker.id]: tracker,

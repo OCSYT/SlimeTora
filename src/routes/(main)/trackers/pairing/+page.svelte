@@ -8,8 +8,9 @@
 	import Button from "$lib/components/settings/Button.svelte";
 	import Icon from "@iconify/svelte";
 	import Select from "$lib/components/settings/Select.svelte";
-	import type { ConnectionMode } from "$lib/types/connection";
+	import { ConnectionMode } from "$lib/types/connection";
 	import { TrackerModel } from "$lib/types/tracker";
+	import { saveTrackerConfig } from "$lib/store";
 
 	// TODO: i should probably rework how to handle devices - bluetooth and serial handle trackers differently and its kinda a mess
 	// probably should unify it in one list of devices with type and connection mode
@@ -130,6 +131,7 @@
 		}
 	}
 
+	// TODO: fix refreshing / hot reload not showing devices again when scanning
 	async function startBleScan() {
 		if (isScanning) return;
 
@@ -184,12 +186,23 @@
 						? TrackerModel.Wireless
 						: TrackerModel.Wired;
 
-				pairedDevices = [...pairedDevices, { macAddress: address, deviceName: name, connected: false, trackerType }];
+				pairedDevices = [
+					...pairedDevices,
+					{ macAddress: address, deviceName: name, connected: false, trackerType },
+				];
+				const newTracker = {
+					id: name, // or address?
+					name: name,
+					connection_mode: ConnectionMode.BLE,
+					tracker_type: trackerType,
+					mac: address,
+				};
+				saveTrackerConfig(newTracker);
 			}
 
 			discoveredDevices = discoveredDevices.filter((d) => d.macAddress !== address);
 
-			info(`Started pairing process for device: ${name}`);
+			info(`Paired device: ${name}`);
 		} catch (err) {
 			error(`Failed to pair device: ${err}`);
 		}

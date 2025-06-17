@@ -32,8 +32,8 @@ impl Interpreter for HaritoraXWireless {
             "Sensor" => {
                 process_imu(app_handle, device_id, "bluetooth", buffer).await?;
             }
-            "MainButton" | "SecondaryButton" => {
-                // TODO: Implement button data processing
+            "MainButton" | "SubButton" => {
+                process_button(app_handle, device_id, "bluetooth", data, Some(char_name)).await?;
             }
             "BatteryLevel" | "BatteryVoltage" | "ChargeStatus" => {
                 process_battery(app_handle, device_id, "bluetooth", data, Some(char_name)).await?;
@@ -78,7 +78,7 @@ impl Interpreter for HaritoraXWireless {
                 process_battery(app_handle, tracker_name, "serial", data, None).await?;
             }
             Some('r') => {
-                process_button(app_handle, tracker_name, "serial", data).await?;
+                process_button(app_handle, tracker_name, "serial", data, None).await?;
             }
             Some('o') => {
                 process_settings(app_handle, tracker_name, "serial", data).await?;
@@ -290,8 +290,9 @@ async fn process_button(
     tracker_name: &str,
     connection_mode: &str,
     data: &str,
+    characteristic: Option<&str>
 ) -> Result<(), String> {
-    let data = process_button_data(data, tracker_name, None)?;
+    let data = process_button_data(data, tracker_name, characteristic)?;
     if data.is_empty() {
         return Ok(());
     }
