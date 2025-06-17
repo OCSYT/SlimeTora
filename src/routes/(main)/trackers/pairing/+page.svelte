@@ -191,7 +191,7 @@
 					{ macAddress: address, deviceName: name, connected: false, trackerType },
 				];
 				const newTracker = {
-					id: name, // or address?
+					id: address,
 					name: name,
 					connection_mode: ConnectionMode.BLE,
 					tracker_type: trackerType,
