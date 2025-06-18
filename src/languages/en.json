@@ -308,10 +308,6 @@
             "title": "Unexpected error",
             "message": "An unexpected error occurred, please check log files for more information."
         },
-        "btWarning": {
-            "title": "Bluetooth connection notice",
-            "message": "The current version you are on has different logic for connecting your Bluetooth trackers to attempt to fix any stability issues certain users may have. Your trackers may take longer connect or reconnect, this is normal - if you have issues, please report them on GitHub or the Discord server! \r\n\r\nAfter closing this popup, you will not be shown this again."
-        },
         "onboarding": {
             "unix": {
                 "title": "Unix detected",

@@ -812,28 +812,6 @@ Auto-off: ${autoOff}`,
 async function startConnection() {
     l("Starting connection...", "connection");
 
-    // show warning about this version having a different bt handling / connetions being slower
-    const settings: { [key: string]: any } = await window.ipc.invoke("get-settings", null);
-    const hasShownBTWarning = settings.global?.debug?.hasShownBTWarning ?? false;
-    if (bluetoothEnabled && !hasShownBTWarning) {
-        await window.ipc.invoke("show-message", {
-            title: "dialogs.btWarning.title",
-            message: "dialogs.btWarning.message",
-            blocking: false,
-            translateTitle: true,
-            translateMessage: true,
-            buttons: ["OK"]
-        });
-        // set option so it doesn't show again
-        window.ipc.send("save-setting", { 
-            global: {
-                debug: { 
-                    hasShownBTWarning: true 
-                }
-            }
-        });
-    }
-
     try {
         if (!(await handleTrackerModelCheck())) return false;
         if (!(await handleConnectionType())) return false;
