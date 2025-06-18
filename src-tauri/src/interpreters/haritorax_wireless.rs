@@ -23,6 +23,7 @@ impl Interpreter for HaritoraXWireless {
         &self,
         app_handle: &AppHandle,
         device_id: &str,
+        device_assignment: &str,
         char_name: &str,
         data: &str,
     ) -> Result<(), String> {
@@ -32,7 +33,7 @@ impl Interpreter for HaritoraXWireless {
 
         match char_name {
             "Sensor" => {
-                process_imu(app_handle, device_id, "bluetooth", buffer).await?;
+                process_imu(app_handle, device_id, device_assignment, "bluetooth", buffer).await?;
             }
             "MainButton" | "SubButton" => {
                 process_button(app_handle, device_id, "bluetooth", data, Some(char_name)).await?;
@@ -58,10 +59,11 @@ impl Interpreter for HaritoraXWireless {
     async fn parse_serial(
         &self,
         app_handle: &AppHandle,
-        tracker_name: &str,
+        device_id: &str,
+        device_assignment: &str,
         data: &str,
     ) -> Result<(), String> {
-        if tracker_name.is_empty() {
+        if device_id.is_empty() {
             return Ok(());
         }
 
@@ -74,22 +76,22 @@ impl Interpreter for HaritoraXWireless {
                 let buffer = base64::engine::general_purpose::STANDARD
                     .decode(data)
                     .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
-                process_imu(app_handle, tracker_name, "serial", buffer).await?;
+                process_imu(app_handle, device_id, device_assignment, "serial", buffer).await?;
             }
             Some('v') => {
-                process_battery(app_handle, tracker_name, "serial", data, None).await?;
+                process_battery(app_handle, device_id, "serial", data, None).await?;
             }
             Some('r') => {
-                process_button(app_handle, tracker_name, "serial", data, None).await?;
+                process_button(app_handle, device_id, "serial", data, None).await?;
             }
             Some('o') => {
-                process_settings(app_handle, tracker_name, "serial", data).await?;
+                process_settings(app_handle, device_id, "serial", data).await?;
             }
             Some('i') => {
-                process_info(app_handle, tracker_name, "serial", data).await?;
+                process_info(app_handle, device_id, "serial", data).await?;
             }
             Some('a') => {
-                process_connection(app_handle, tracker_name, "serial", data).await?;
+                process_connection(app_handle, device_id, "serial", data).await?;
             }
             _ => warn!("Unknown identifier: {}", identifier),
         }
@@ -101,6 +103,7 @@ impl Interpreter for HaritoraXWireless {
 async fn process_imu(
     app_handle: &AppHandle,
     tracker_name: &str,
+    tracker_assignment: &str,
     connection_mode: &str,
     data: Vec<u8>,
 ) -> Result<(), String> {
@@ -126,6 +129,9 @@ async fn process_imu(
                     "tracker": tracker_name,
                     "connection_mode": connection_mode,
                     "tracker_type": "Wireless",
+                    "data": {
+                        "assignment": tracker_assignment,
+                    },
                 });
 
                 app_handle.emit("connect", payload).map_err(|e| {

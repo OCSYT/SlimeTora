@@ -11,7 +11,10 @@ use tauri_plugin_blec::{
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 
-use crate::{interpreters::core::TrackerModel, util::normalize_uuid};
+use crate::{
+    interpreters::{common::get_assignment_by_id, core::TrackerModel},
+    util::normalize_uuid,
+};
 use log::{error, info, warn};
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -320,12 +323,12 @@ pub async fn start_connections(
                                 }
                                 Err(e) => {
                                     let err_str = e.to_string();
-                                    if !err_str.contains("No devices discovered") && !err_str.contains("There is no peripheral with id") {
+                                    //if !err_str.contains("No devices discovered") && !err_str.contains("There is no peripheral with id") {
                                         warn!(
                                             "Failed to connect to device {}: {}",
                                             mac, err_str
                                         );
-                                    }
+                                   // }
                                 }
                             }
                         }
@@ -497,7 +500,10 @@ async fn handle_device_disconnect(
     Ok(())
 }
 
-async fn connect_to_device(app_handle: tauri::AppHandle, mac_address: &str) -> Result<(), String> {
+async fn connect_to_device(
+    app_handle: tauri::AppHandle,
+    mac_address: &str,
+) -> Result<String, String> {
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
     let mut state = BLE_STATE.lock().await;
 
@@ -551,24 +557,61 @@ async fn connect_to_device(app_handle: tauri::AppHandle, mac_address: &str) -> R
         error!("Failed to emit disconnect: {}", e);
     }
 
-    if let Err(e) = setup_notifications(app_handle, &mac_address_string, device_name_clone).await {
+    let part_id_result = read(&mac_address_string, "ef84c301-90a9-11ed-a1eb-0242ac120002").await;
+
+    let part = match part_id_result {
+        Ok(ref bytes) => {
+            if !bytes.is_empty() {
+                let hex_str = bytes.iter().map(|b| format!("{:02x}", b)).collect::<String>();
+                // remove the 0 at beginning
+                let trimmed = if hex_str.len() == 2 && hex_str.starts_with('0') {
+                    &hex_str[1..]
+                } else {
+                    &hex_str
+                };
+                info!("Parsed body part assignment (hex): {}", trimmed);
+                get_assignment_by_id(trimmed)
+            } else {
+                error!("Body part assignment bytes are empty");
+                None
+            }
+        }
+        Err(ref e) => {
+            error!("Failed to read body part assignment: {}", e);
+            None
+        }
+    };
+
+    info!("Body part assignment for {}: {:?}", mac_address_string, part);
+    info!("raw: {:?}", part_id_result);
+
+    if let Err(e) = setup_notifications(
+        app_handle,
+        &mac_address_string,
+        device_name_clone,
+        part.unwrap_or_default(),
+    )
+    .await
+    {
         error!(
             "Failed to setup notifications for {}: {}",
             mac_address_string, e
         );
     }
 
-    Ok(())
+    Ok(part.unwrap_or_default().to_string())
 }
 
 async fn setup_notifications(
     app_handle: tauri::AppHandle,
     mac_address: &str,
     device_name: Option<String>,
+    device_assignment: &str,
 ) -> Result<(), String> {
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
 
     // subscribe only to characteristics where the bool is true
+    let device_assignment_owned = device_assignment.to_string();
     for (char_uuid_str, (char_name, can_subscribe)) in CHARACTERISTICS.iter() {
         if !*can_subscribe {
             continue;
@@ -581,12 +624,14 @@ async fn setup_notifications(
         let mac_address_string = mac_address.to_string();
         let char_name_clone = char_name.to_string();
         let device_name_clone = device_name.clone();
+        let device_assignment_clone = device_assignment_owned.clone();
 
         let callback = move |data: Vec<u8>| {
             let app_handle = app_handle_clone.clone();
             let mac = mac_address_string.clone();
             let char_name = char_name_clone.clone();
             let device_name = device_name_clone.clone();
+            let device_assignment = device_assignment_clone.clone();
 
             tokio::spawn(async move {
                 // convert data into base64 and process in interpreter
@@ -594,9 +639,14 @@ async fn setup_notifications(
 
                 let id = device_name.as_ref().map_or(&mac, |name| name);
 
-                if let Err(e) =
-                    crate::interpreters::core::process_ble(&app_handle, id, &char_name, &data_str)
-                        .await
+                if let Err(e) = crate::interpreters::core::process_ble(
+                    &app_handle,
+                    id,
+                    &device_assignment,
+                    &char_name,
+                    &data_str,
+                )
+                .await
                 {
                     error!("Failed to process BLE data: {}", e);
                 }

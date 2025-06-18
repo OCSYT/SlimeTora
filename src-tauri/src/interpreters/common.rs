@@ -1,6 +1,6 @@
 use super::core::ChargeStatus;
 use crate::interpreters::core::{
-    Acceleration, BatteryData, IMUData, InfoData, Rotation, Rotations,
+    Acceleration, BatteryData, IMUData, Rotation, Rotations,
 };
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
@@ -32,6 +32,30 @@ static BUTTON_MAP: Lazy<DashMap<&'static str, u8>> = Lazy::new(|| {
     map.insert("tertiary", 255);
     map
 });
+
+pub static TRACKER_ASSIGNMENTS: &[(&str, &str)] = &[
+    ("DONGLE", "0"),
+    ("chest", "1"),
+    ("leftKnee", "2"),
+    ("leftAnkle", "3"),
+    ("rightKnee", "4"),
+    ("rightAnkle", "5"),
+    ("hip", "6"),
+    ("leftElbow", "7"),
+    ("rightElbow", "8"),
+    ("leftWrist", "9"),
+    ("rightWrist", "a"),
+    ("head", "b"),
+    ("leftFoot", "c"),
+    ("rightFoot", "d"),
+];
+
+pub fn get_assignment_by_id(id: &str) -> Option<&'static str> {
+    TRACKER_ASSIGNMENTS
+        .iter()
+        .find(|(_, assignment_id)| *assignment_id == id)
+        .map(|(name, _)| *name)
+}
 
 /// ### Connections supported:
 /// - Serial

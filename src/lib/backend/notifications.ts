@@ -1,6 +1,6 @@
 import { browser } from "$app/environment";
 import { connectedTrackers, getTrackerConfig, saveTrackerConfig, type BatteryData, type TrackerSave } from "$lib/store";
-import type { ConnectionMode } from "$lib/types/connection";
+import { ConnectionMode } from "$lib/types/connection";
 import { MagStatus, SensorAutoCorrection, type IMUData, type TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
 import { get } from "svelte/store";
@@ -224,21 +224,25 @@ async function connectNotification() {
 			tracker: string;
 			connection_mode: ConnectionMode;
 			tracker_type: TrackerModel;
+			data: { assignment: string };
 		};
 		const tracker = payload.tracker;
 		const connection_mode = payload.connection_mode;
 		const tracker_type = payload.tracker_type;
+		const assignment = payload.data.assignment;
 
-		if (!tracker || !connection_mode || !tracker_type) return;
+		if (!tracker || !connection_mode || !tracker_type || !assignment) return;
 
-		info(`Tracker connected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`);
+		info(`Tracker connected: ${tracker} (${assignment}, ${tracker_type}), connection mode: ${connection_mode}`);
+
+		const trackerId = tracker.split('-').pop() || tracker;
 
 		// load settings
 		let newTracker = await getTrackerConfig(tracker);
 		if (!newTracker) {
 			newTracker = {
-				name: tracker,
-				id: tracker,
+				name: connection_mode === ConnectionMode.BLE ? trackerId : assignment,
+				id: trackerId,
 				connection_mode: connection_mode as ConnectionMode,
 				tracker_type: tracker_type as TrackerModel,
 				settings: {
@@ -282,10 +286,10 @@ async function connectNotification() {
 			return [...prev, trackerData];
 		});
 
-		const trackerId = await invoke("get_tracker_id", { trackerName: tracker });
 		const trackerPort = await invoke("get_tracker_port", { trackerName: tracker });
-		if (!trackerId || !trackerPort) return;
-		info(`Tracker ID: ${trackerId}, Port: ${trackerPort}`);
+		const trackerPortId = await invoke("get_tracker_id", { trackerName: tracker });
+		if (!trackerPort || !trackerPortId) return;
+		info(`Tracker port for ${tracker} is ${trackerPort} (ID: ${trackerPortId})`);
 
 		// Manually request all the info from the trackers
 		const initialCommands = ["r0:", "r1:", "r:", "o:"];

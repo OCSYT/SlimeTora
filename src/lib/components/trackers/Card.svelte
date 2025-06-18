@@ -63,6 +63,7 @@
 	}
 </script>
 
+<!-- TODO: add tracker connection mode (maybe part assignment too?) -->
 <div
 	class={`w-[338px] h-auto bg-card rounded-xl shadow-card flex flex-col transition-all duration-300 overflow-hidden`}
 	id="tracker-card-{id}"

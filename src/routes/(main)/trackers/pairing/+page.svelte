@@ -186,12 +186,14 @@
 						? TrackerModel.Wireless
 						: TrackerModel.Wired;
 
+				const id = name.includes("-") ? name.substring(name.indexOf("-") + 1) : name;
+
 				pairedDevices = [
 					...pairedDevices,
 					{ macAddress: address, deviceName: name, connected: false, trackerType },
 				];
 				const newTracker = {
-					id: name,
+					id,
 					name: name,
 					connection_mode: ConnectionMode.BLE,
 					tracker_type: trackerType,

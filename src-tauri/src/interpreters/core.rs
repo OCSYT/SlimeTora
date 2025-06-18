@@ -21,6 +21,7 @@ pub trait Interpreter: Send + Sync {
         &self,
         app_handle: &AppHandle,
         device_id: &str,
+        device_assignment: &str,
         char_name: &str,
         data: &str,
     ) -> Result<(), String>;
@@ -28,7 +29,8 @@ pub trait Interpreter: Send + Sync {
     async fn parse_serial(
         &self,
         app_handle: &AppHandle,
-        tracker_name: &str,
+        device_id: &str,
+        device_assignment: &str,
         data: &str,
     ) -> Result<(), String>;
 }
@@ -160,52 +162,23 @@ pub fn stop_interpreting(model: &str) -> Result<(), String> {
 
 pub async fn process_serial(
     app_handle: &AppHandle,
-    tracker_name: &str,
+    tracker_id: &str,
+    tracker_assignment: &str,
+    tracker_type: &TrackerModel,
     data: &str,
 ) -> Result<(), String> {
     if ACTIVE_MODELS.is_empty() {
         return Err("No active interpreters".to_string());
     }
 
-    // Try to identify the model from tracker_name if possible
-    let model_hint = if tracker_name.contains("X2") {
-        Some(TrackerModel::X2)
-    } else if tracker_name.contains("XW") {
-        Some(TrackerModel::Wireless)
-    } else if tracker_name.contains("X") {
-        Some(TrackerModel::Wired)
-    } else {
-        None
-    };
-
-    // First try the hinted model if available and active
-    if let Some(model) = model_hint {
-        if ACTIVE_MODELS.contains(&model) {
-            if let Some(interpreter_ref) = INTERPRETERS.get(&model) {
-                match interpreter_ref
-                    .parse_serial(app_handle, tracker_name, data)
-                    .await
-                {
-                    Ok(_) => return Ok(()),
-                    Err(e) => error!("Hinted interpreter for {:?} failed: {}", model, e),
-                }
-            }
-        }
-    }
-
-    // Try all active interpreters
-    for active_model in ACTIVE_MODELS.iter() {
-        if let Some(interpreter_ref) = INTERPRETERS.get(active_model.key()) {
+    if ACTIVE_MODELS.contains(tracker_type) {
+        if let Some(interpreter_ref) = INTERPRETERS.get(tracker_type) {
             match interpreter_ref
-                .parse_serial(app_handle, tracker_name, data)
+                .parse_serial(app_handle, tracker_id, tracker_assignment, data)
                 .await
             {
                 Ok(_) => return Ok(()),
-                Err(e) => error!(
-                    "Serial Interpreter for {:?} failed: {}",
-                    active_model.key(),
-                    e
-                ),
+                Err(e) => error!("Interpreter for {:?} failed: {}", tracker_type, e),
             }
         }
     }
@@ -216,6 +189,7 @@ pub async fn process_serial(
 pub async fn process_ble(
     app_handle: &AppHandle,
     device_id: &str,
+    device_assignment: &str,
     char_name: &str,
     data: &str,
 ) -> Result<(), String> {
@@ -240,7 +214,7 @@ pub async fn process_ble(
             if ACTIVE_MODELS.contains(&identified_model) {
                 if let Some(interpreter_ref) = INTERPRETERS.get(&identified_model) {
                     return interpreter_ref
-                        .parse_ble(app_handle, device_id, char_name, data)
+                        .parse_ble(app_handle, device_id, device_assignment, char_name, data)
                         .await;
                 }
             }
@@ -251,7 +225,7 @@ pub async fn process_ble(
     for active_model in ACTIVE_MODELS.iter() {
         if let Some(interpreter_ref) = INTERPRETERS.get(active_model.key()) {
             match interpreter_ref
-                .parse_ble(app_handle, device_id, char_name, data)
+                .parse_ble(app_handle, device_id, device_assignment, char_name, data)
                 .await
             {
                 Ok(_) => return Ok(()),

@@ -9,6 +9,7 @@ use std::{
     time::Duration,
 };
 
+use crate::interpreters::{common::get_assignment_by_id, core::TrackerModel};
 use log::{error, info, warn};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -17,6 +18,7 @@ struct TrackerInfo {
     port: String,
     port_id: String,
     assignment: String,
+    tracker_type: Option<TrackerModel>,
 }
 
 static PORTS: Mutex<Vec<Box<dyn SerialPort + Send>>> = Mutex::new(Vec::new());
@@ -28,23 +30,6 @@ static THREAD_HANDLES: Lazy<Mutex<Vec<std::thread::JoinHandle<()>>>> =
     Lazy::new(|| Mutex::new(Vec::new()));
 
 static TRACKER_INFO: Lazy<Mutex<HashSet<TrackerInfo>>> = Lazy::new(|| Mutex::new(HashSet::new()));
-
-static TRACKER_ASSIGNMENTS: &[(&str, &str)] = &[
-    ("DONGLE", "0"),
-    ("chest", "1"),
-    ("leftKnee", "2"),
-    ("leftAnkle", "3"),
-    ("rightKnee", "4"),
-    ("rightAnkle", "5"),
-    ("hip", "6"),
-    ("leftElbow", "7"),
-    ("rightElbow", "8"),
-    ("leftWrist", "9"),
-    ("rightWrist", "a"),
-    ("head", "b"),
-    ("leftFoot", "c"),
-    ("rightFoot", "d"),
-];
 
 // TODO: update logic for HX2 as the "extension" trackers will have same port/port id and serial number
 pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Result<(), String> {
@@ -134,7 +119,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                             .unwrap_or('0')
                                             .to_string();
                                         let port_data = parts[1];
-
+                                        
                                         // handle "i" identifier to grab serial number
                                         if identifier.starts_with('i') && identifier.len() == 2 {
                                             if let Ok(json_data) = serde_json::from_str::<serde_json::Value>(port_data) {
@@ -142,6 +127,14 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                                 if let Some(serial) = json_data.get("serial no").and_then(|s| s.as_str()) {
                                                     if serial != "A00000" {
                                                         info!("Found serial number: {}", serial);
+                                                        
+                                                        let tracker_type = json_data.get("model")
+                                                            .and_then(|m| m.as_str())
+                                                            .and_then(|model| {
+                                                                info!("Found model: {}", model);
+                                                                get_tracker_type_from_model(model)
+                                                            });
+                                                        
                                                         let mut tracker_info = TRACKER_INFO.lock().unwrap();
                                                         info!("Adding tracker info for serial: {} on port {} with port ID {}", serial, port_path, port_id);
                                                         tracker_info.insert(TrackerInfo {
@@ -149,6 +142,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                                             port: port_path.clone(),
                                                             port_id: port_id.clone(),
                                                             assignment: String::new(), // filled later
+                                                            tracker_type,
                                                         });
                                                         info!("Created tracker info entry for serial: {} on port {} with port ID {}", serial, port_path, port_id);
                                                     }
@@ -182,8 +176,8 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                             }
                                             info!("'r' identifier received with data: {}", port_data);
                                         }
-
-                                        let assignment = {
+                                        
+                                        let tracker_assignment = {
                                             let tracker_info = TRACKER_INFO.lock().unwrap();
                                             tracker_info
                                                 .iter()
@@ -192,17 +186,31 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                                 .unwrap_or_default()
                                         };
 
-                                        // TODO: pass in assignment and "name" (now serial number)
-                                        let result = crate::interpreters::core::process_serial(
-                                            &app_handle_clone,
-                                            &assignment, // using assignment as tracker name for now
-                                            &message,
-                                        ).await;
-                                        if let Err(e) = result {
-                                            error!(
-                                                "Failed to parse serial data: {}",
-                                                e
-                                            );
+                                        let (tracker_id, tracker_type) = {
+                                            let tracker_info = TRACKER_INFO.lock().unwrap();
+                                            tracker_info
+                                                .iter()
+                                                .find(|info| info.port == port_path && info.port_id == port_id)
+                                                .map(|info| (info.serial_number.clone(), info.tracker_type.clone()))
+                                                .unwrap_or_default()
+                                        };
+
+                                        if let (Some(tracker_type), assignment) = (tracker_type.clone(), tracker_assignment.clone()) {
+                                            if !assignment.is_empty() {
+                                                let result = crate::interpreters::core::process_serial(
+                                                    &app_handle_clone,
+                                                    &tracker_id,
+                                                    &assignment,
+                                                    &tracker_type,
+                                                    &message,
+                                                ).await;
+                                                if let Err(e) = result {
+                                                    error!(
+                                                        "Failed to parse serial data: {}",
+                                                        e
+                                                    );
+                                                }
+                                            }
                                         }
                                     }
                                     Err(e) => {
@@ -347,9 +355,13 @@ pub fn get_tracker_port(tracker_name: &str) -> Result<String, String> {
     }
 }
 
-fn get_assignment_by_id(id: &str) -> Option<&'static str> {
-    TRACKER_ASSIGNMENTS
-        .iter()
-        .find(|(_, assignment_id)| *assignment_id == id)
-        .map(|(name, _)| *name)
+fn get_tracker_type_from_model(model: &str) -> Option<TrackerModel> {
+    match model.to_uppercase().as_str() {
+        "MC1S" => Some(TrackerModel::Wired), // HaritoraX 1.0
+        "MC2S" => Some(TrackerModel::Wired), // HaritoraX 1.1
+        "MC2BS" => Some(TrackerModel::Wired), // HaritoraX 1.1B
+        "MC3S" => Some(TrackerModel::Wireless), // HaritoraX Wireless
+        "AF01SB" => Some(TrackerModel::X2), // HaritoraX 2
+        _ => None,
+    }
 }
