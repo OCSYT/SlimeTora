@@ -66,7 +66,7 @@ impl Interpreter for HaritoraXWireless {
         }
 
         let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
-        //info!("Received identifier: {}, data: {}", identifier, data);
+        //info!("Received identifier for {}: {}, data: {}", tracker_name, identifier, data);
 
         let normalized_identifier = identifier.to_lowercase().chars().next();
         match normalized_identifier {
