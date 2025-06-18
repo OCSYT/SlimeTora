@@ -251,20 +251,52 @@ pub async fn start_connections(
         let mut reconnect_interval = tokio::time::interval(tokio::time::Duration::from_secs(5));
         reconnect_interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
-        if let Ok(handler) = get_handler() {
-            match handler.start_scan_stream(None).await {
-                Ok(_) => {}
-                Err(e) => {
-                    warn!("Background scan failed: {}", e);
-                }
-            }
-        }
+        let mut scan_interval = tokio::time::interval(tokio::time::Duration::from_millis(3500));
+        scan_interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
         loop {
             tokio::select! {
                 _ = cancel_token.cancelled() => {
                     info!("BLE connection management task cancelled, stopping");
                     break;
+                }
+                _ = scan_interval.tick() => {
+                    if let Ok(handler) = get_handler() {
+                        match handler.start_scan(ScanFilter::None, 3000).await {
+                            Ok(devices) => {
+                                let mut state = BLE_STATE.lock().await;
+                                state.discovered_devices.clear();
+                                for dev in devices {
+                                    // filter to haritora trackers
+                                    if !dev.services.iter().any(|s| s.to_string() == "ef84369a-90a9-11ed-a1eb-0242ac120002") {
+                                        continue
+                                    }
+
+                                    let tracker_type = if dev.name.starts_with("HaritoraX-") {
+                                        Some(TrackerModel::Wired)
+                                    } else if dev.name.starts_with("HaritoraXW-") {
+                                        Some(TrackerModel::Wireless)
+                                    } else if dev.name.starts_with("HaritoraX2-") {
+                                        Some(TrackerModel::X2)
+                                    } else {
+                                        None
+                                    };
+
+                                    let device = TrackerDevice {
+                                        device_name: dev.name.clone(),
+                                        mac_address: dev.address.clone(),
+                                        tracker_type,
+                                        rssi: dev.rssi,
+                                    };
+                                    info!("Discovered device: {:?}", &device);
+                                    state.discovered_devices.push(device);
+                                }
+                            }
+                            Err(e) => {
+                                warn!("Periodic BLE scan failed: {}", e);
+                            }
+                        }
+                    }
                 }
                 _ = reconnect_interval.tick() => {
                     // constantly attempt to find and connect to paired devices
@@ -282,19 +314,18 @@ pub async fn start_connections(
 
                             match connect_to_device(app_handle.clone(), mac).await {
                                 Ok(_) => {
-                                    info!(
-                                        "Successfully connected to device: {}",
-                                        mac
-                                    );
                                     if let Err(e) = app_handle.emit("connect", mac) {
                                         error!("Failed to emit connect event: {}", e);
                                     }
                                 }
                                 Err(e) => {
-                                    warn!(
-                                        "Failed to connect to device {}: {}",
-                                        mac, e
-                                    );
+                                    let err_str = e.to_string();
+                                    if !err_str.contains("No devices discovered") && !err_str.contains("There is no peripheral with id") {
+                                        warn!(
+                                            "Failed to connect to device {}: {}",
+                                            mac, err_str
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -419,10 +450,11 @@ pub async fn read(mac_address: &str, characteristic_uuid: &str) -> Result<Vec<u8
 async fn handle_device_disconnect(
     app_handle: tauri::AppHandle,
     mac_address: String,
+    device_name: Option<String>,
 ) -> Result<(), String> {
     info!("Handling device disconnect for: {}", mac_address);
+    let mut state = BLE_STATE.lock().await;
     let is_connected = {
-        let mut state = BLE_STATE.lock().await;
         // find and remove the mac address, returning true if found
         if let Some(pos) = state
             .connected_devices
@@ -437,13 +469,29 @@ async fn handle_device_disconnect(
     };
 
     if is_connected {
-        info!("Removed device {} from connected devices", mac_address);
+        if device_name.is_some() {
+            info!(
+                "Device {} ({}) disconnected",
+                device_name.as_ref().unwrap(),
+                mac_address
+            );
+        } else {
+            info!("Device {} disconnected", mac_address);
+        }
 
         if let Err(e) = app_handle.emit("disconnect", &mac_address) {
             error!("Failed to emit disconnect: {}", e);
         }
     } else {
-        warn!("Device {} not found in connected devices", mac_address);
+        if device_name.is_some() {
+            info!(
+                "Device {} ({}) is not connected",
+                device_name.as_ref().unwrap(),
+                mac_address
+            );
+        } else {
+            info!("Device {} is not connected", mac_address);
+        }
     }
 
     Ok(())
@@ -451,16 +499,27 @@ async fn handle_device_disconnect(
 
 async fn connect_to_device(app_handle: tauri::AppHandle, mac_address: &str) -> Result<(), String> {
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
+    let mut state = BLE_STATE.lock().await;
 
     let app_handle_clone = app_handle.clone();
     let mac_address_string = mac_address.to_string();
+    let device_name = state
+        .discovered_devices
+        .iter()
+        .find(|d| d.mac_address == mac_address_string)
+        .map(|device| device.device_name.clone());
+    let device_name_for_disconnect = device_name.clone();
+
     let disconnect_handler = OnDisconnectHandler::from({
         let mac_address = mac_address_string.clone();
+        let device_name = device_name_for_disconnect.clone();
         move || {
             let app_handle = app_handle_clone.clone();
             let mac_address = mac_address.clone();
+            let device_name = device_name.clone();
             tokio::spawn(async move {
-                if let Err(e) = handle_device_disconnect(app_handle, mac_address).await {
+                if let Err(e) = handle_device_disconnect(app_handle, mac_address, device_name).await
+                {
                     error!("Failed to handle device disconnect: {}", e);
                 }
             });
@@ -474,16 +533,25 @@ async fn connect_to_device(app_handle: tauri::AppHandle, mac_address: &str) -> R
         return Err(e.to_string());
     }
 
-    let mut state = BLE_STATE.lock().await;
-
     state.connected_devices.push(mac_address_string.clone());
-    info!("Connected to device: {}", mac_address);
+
+    // get name from discovered_devices
+    let device_name_clone = device_name.clone();
+    if device_name_clone.is_some() {
+        info!(
+            "Connected to device: {} ({})",
+            device_name_clone.as_ref().unwrap(),
+            mac_address_string
+        );
+    } else {
+        info!("Connected to device: {}", mac_address_string);
+    }
 
     if let Err(e) = app_handle.emit("disconnect", &mac_address_string) {
         error!("Failed to emit disconnect: {}", e);
     }
 
-    if let Err(e) = setup_notifications(app_handle, &mac_address_string).await {
+    if let Err(e) = setup_notifications(app_handle, &mac_address_string, device_name_clone).await {
         error!(
             "Failed to setup notifications for {}: {}",
             mac_address_string, e
@@ -496,6 +564,7 @@ async fn connect_to_device(app_handle: tauri::AppHandle, mac_address: &str) -> R
 async fn setup_notifications(
     app_handle: tauri::AppHandle,
     mac_address: &str,
+    device_name: Option<String>,
 ) -> Result<(), String> {
     let handler = get_handler().map_err(|e| format!("Failed to get BLE handler: {}", e))?;
 
@@ -511,18 +580,22 @@ async fn setup_notifications(
         let app_handle_clone = app_handle.clone();
         let mac_address_string = mac_address.to_string();
         let char_name_clone = char_name.to_string();
+        let device_name_clone = device_name.clone();
 
         let callback = move |data: Vec<u8>| {
             let app_handle = app_handle_clone.clone();
             let mac = mac_address_string.clone();
             let char_name = char_name_clone.clone();
+            let device_name = device_name_clone.clone();
 
             tokio::spawn(async move {
                 // convert data into base64 and process in interpreter
                 let data_str = base64::engine::general_purpose::STANDARD.encode(&data);
 
+                let id = device_name.as_ref().map_or(&mac, |name| name);
+
                 if let Err(e) =
-                    crate::interpreters::core::process_ble(&app_handle, &mac, &char_name, &data_str)
+                    crate::interpreters::core::process_ble(&app_handle, id, &char_name, &data_str)
                         .await
                 {
                     error!("Failed to process BLE data: {}", e);
@@ -532,16 +605,35 @@ async fn setup_notifications(
 
         match handler.subscribe(mac_address, char_uuid, callback).await {
             Ok(_) => {
-                info!(
-                    "Subscribed to characteristic {} for device {}",
-                    char_name, mac_address
-                );
+                if device_name.is_some() {
+                    info!(
+                        "Subscribed to characteristic {} for device {} ({}):",
+                        char_name,
+                        device_name.as_ref().unwrap(),
+                        mac_address
+                    );
+                } else {
+                    info!(
+                        "Subscribed to characteristic {} for device {}",
+                        char_name, mac_address
+                    );
+                }
             }
             Err(e) => {
-                warn!(
-                    "Failed to subscribe to characteristic {} for device {}: {}",
-                    char_name, mac_address, e
-                );
+                if device_name.is_some() {
+                    warn!(
+                        "Failed to subscribe to characteristic {} for device {} ({}): {}",
+                        char_name,
+                        device_name.as_ref().unwrap(),
+                        mac_address,
+                        e
+                    );
+                } else {
+                    warn!(
+                        "Failed to subscribe to characteristic {} for device {}: {}",
+                        char_name, mac_address, e
+                    );
+                }
             }
         }
     }
