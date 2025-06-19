@@ -254,7 +254,7 @@ pub async fn start_connections(
         let mut reconnect_interval = tokio::time::interval(tokio::time::Duration::from_secs(5));
         reconnect_interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
-        let mut scan_interval = tokio::time::interval(tokio::time::Duration::from_millis(3500));
+        let mut scan_interval = tokio::time::interval(tokio::time::Duration::from_millis(6000));
         scan_interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
         loop {
@@ -265,7 +265,7 @@ pub async fn start_connections(
                 }
                 _ = scan_interval.tick() => {
                     if let Ok(handler) = get_handler() {
-                        match handler.start_scan(ScanFilter::None, 3000).await {
+                        match handler.start_scan(ScanFilter::None, 5000).await {
                             Ok(devices) => {
                                 let mut state = BLE_STATE.lock().await;
                                 state.discovered_devices.clear();
