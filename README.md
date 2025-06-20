@@ -52,11 +52,24 @@ Read the wiki to get started: <https://github.com/OCSYT/SlimeTora/wiki>
 
 # Known issues
 
+- (**v1.5.0**) The "SlimeVR not found" warning always appears if not disabled
+  - Fixed with upcoming release, **`v1.5.1`**.
+- (**v1.5.0**) Battery does not show up for extensions
+  - Fixed with upcoming release, **`v1.5.1`** (will show same battery as main tracker ofc)
+- (**v1.5.0**) Mag statuses for HaritoraX 2 inaccurate
+- (**v1.5.0**) IMU / write errors for HaritoraX 2
+  - Fixed with upcoming release, **`v1.5.1`**
+- Bluetooth issues
+  - e.g. unable to find trackers at all, some disconnections
+  - This seems to be affecting a certain percentage of users and I'm unsure why this is the case - it seems to stem from a problem with the Bluetooth NPM package being used so it seems to be out of my control.
+  - SlimeTora v2 will hopefully fix issues for these people, but there are some ways and builds to hopefully minimize these on my Discord (and v1.5.1 coming soon): https://discord.gg/XdfnKD9QVM
 - macOS builds are unnecessarily large
-- Battery information jumps to incorrect percentages/voltage randomly
-  - Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers reporting those random values themselves
-  - This has been slightly mitigated with [v1.2.0](https://github.com/OCSYT/SlimeTora/releases/v1.2.0), which uses a "stable average" of the battery percentage and voltage instead
-- Running "auto-detection" more than once without restarting breaks tracker settings auto-detection (device/ports detection still works)
+-   Battery information jumps to incorrect percentages/voltage randomly
+    -   Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers reporting those random values themselves
+    -   This has been slightly mitigated with [v1.2.0](https://github.com/OCSYT/SlimeTora/releases/v1.2.0), which uses a "stable average" of the battery percentage and voltage instead
+-   Running "auto-detection" more than once without restarting breaks tracker settings auto-detection (device/ports detection still works)
+- Auto-detection *still* does not work for HaritoraX Wired (1.1b/1.1/1.0) users
+
 
 # Documentation - getting started & development
 
