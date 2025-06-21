@@ -7,7 +7,8 @@
         "strict": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
-        "strictNullChecks": false
+        "strictNullChecks": false,
+        "skipLibCheck": true
     },
     "include": ["src/**/*.ts", "src/preload.mts"],
     "exclude": ["node_modules"]

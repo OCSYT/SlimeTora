@@ -1233,7 +1233,7 @@ import {
 } from "@slimevr/firmware-protocol";
 import { EmulatedTracker } from "@slimevr/tracker-emulation";
 import { ActivePorts } from "haritorax-interpreter/dist/mode/com";
-import BetterQuaternion from "quaternion";
+import { Quaternion as BetterQuaternion } from "quaternion";
 import { ParsedUrlQueryInput } from "querystring";
 import Rand from "rand-seed";
 
