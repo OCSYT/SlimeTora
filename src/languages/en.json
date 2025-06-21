@@ -229,7 +229,7 @@
             },
             "step-10": {
                 "title": "Body proportions",
-                "text": "SlimeVR applies your body proportions on a virtual skeleton for accurate tracking. Select \"Automatic proportions\" and follow the on-screen instructions calibrate by following a set of movements. <b>You only need to do this once and is also optional!</b>\r\n\r\nIf you have issues, you can always retry or use the defaults (\"Reset all proportions\")."
+                "text": "SlimeVR applies your body proportions on a virtual skeleton for accurate tracking. By default, SlimeVR uses \"scaled proportions\" which is based off your VR headset's height (to calculate your height), which is then used to calculate the proportions of your body. This is usually accurate enough for most people, but you can also set your body proportions manually or perform \"autobone\" for more precise control."
             },
             "step-11": {
                 "title": "Relaunching SlimeVR",
