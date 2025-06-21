@@ -28,6 +28,8 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_prevent_default::{Flags, WindowsOptions};
 use tokio::task;
 
+use crate::connection::ble::TrackerDevice;
+
 static DONGLES: Lazy<Vec<HashMap<&'static str, &'static str>>> = Lazy::new(|| {
     vec![
         HashMap::from([("name", "GX2"), ("vid", "1915"), ("pid", "520F")]),
@@ -35,6 +37,7 @@ static DONGLES: Lazy<Vec<HashMap<&'static str, &'static str>>> = Lazy::new(|| {
     ]
 });
 
+// TODO: detect if vrmanager/haritoraconfigurator is open
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 fn main() {
     // grab identifier for path of log file
@@ -139,14 +142,22 @@ fn main() {
             // general commands
             open_logs_folder,
             // tracker commands
-            start,
-            stop,
+            start_connection,
+            stop_connection,
+            cleanup_connections,
             start_heartbeat,
+            // ble commands
+            start_ble_scanning,
+            stop_ble_scanning,
+            stop_ble_connections,
+            disconnect_device,
             write_ble,
             read_ble,
+            // serial commands
             write_serial,
             read_serial,
-            cleanup_connections,
+            get_tracker_id,
+            get_tracker_port,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -180,34 +191,76 @@ fn open_logs_folder(app_handle: tauri::AppHandle) {
  */
 
 #[tauri::command]
-async fn start(
+async fn start_connection(
     app_handle: AppHandle,
     model: String,
     modes: Vec<String>,
-    ports: Vec<String>,
+    ports: Option<Vec<String>>,
+    mac_addresses: Option<Vec<String>>,
 ) -> Result<(), String> {
-    info!("Starting connection with modes: {:?}", modes);
+    // TODO: maybe we want to merge ports and mac_addesses into one "identifiers"?
+    if ports.as_ref().map_or(true, |p| p.is_empty())
+        && mac_addresses.as_ref().map_or(true, |m| m.is_empty())
+    {
+        return Err("No device identifiers (MAC addresses/serial ports) provided".to_string());
+    }
+
+    if !modes.contains(&"ble".to_string()) && !modes.contains(&"serial".to_string()) {
+        return Err("No valid connection type provided".to_string());
+    }
+
+    info!(
+        "Starting connection with modes: {:?}, ports: {:?}, mac_addresses: {:?}",
+        modes, ports, mac_addresses
+    );
 
     crate::interpreters::core::start_interpreting(&model)?;
 
-    let mut tasks = vec![];
+    let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
 
-    // Start connections based on modes
+    let app_handle_ble = app_handle.clone();
+    let app_handle_serial = app_handle.clone();
+
+    // BLE
     if modes.contains(&"ble".to_string()) {
-        let ble_task = task::spawn(async move { ble::start(app_handle.clone()).await });
-        tasks.push(ble_task);
-        info!("Starting BLE connection");
-    } else if modes.contains(&"serial".to_string()) {
-        if ports.is_empty() {
-            return Err("No serial ports provided".to_string());
+        if let Some(mac_addresses) = mac_addresses.clone() {
+            if !mac_addresses.is_empty() {
+                let ble_task = task::spawn(async move {
+                    ble::start_connections(app_handle_ble, mac_addresses)
+                        .await
+                        .map_err(|e| {
+                            error!("Failed to start BLE connections: {}", e);
+                            "Failed to start BLE connections".to_string()
+                        })
+                });
+                tasks.push(ble_task);
+                info!("Starting BLE connection");
+            } else {
+                error!("No MAC addresses provided for BLE mode");
+            }
+        } else {
+            error!("No MAC addresses provided for BLE mode");
         }
+    }
 
-        let serial_task =
-            task::spawn(async move { serial::start(app_handle.clone(), ports).await });
-        tasks.push(serial_task);
-        info!("Starting serial connection");
-    } else {
-        return Err("No valid connection type provided".to_string());
+    // Serial
+    if modes.contains(&"serial".to_string()) {
+        if let Some(ports) = ports.clone() {
+            if !ports.is_empty() {
+                let serial_task =
+                    task::spawn(async move { serial::start(app_handle_serial, ports).await });
+                tasks.push(serial_task);
+                info!("Starting serial connection");
+            } else {
+                error!("No ports provided for serial mode");
+            }
+        } else {
+            error!("No ports provided for serial mode");
+        }
+    }
+
+    if tasks.is_empty() {
+        return Err("No valid device identifiers provided for the selected modes".to_string());
     }
 
     for result in future::join_all(tasks).await {
@@ -228,29 +281,32 @@ async fn start(
 }
 
 #[tauri::command]
-async fn stop(
-    app_handle: AppHandle,
+async fn stop_connection(
+    _app_handle: AppHandle,
     models: Vec<String>,
     modes: Vec<String>,
 ) -> Result<(), String> {
     let mut tasks: Vec<task::JoinHandle<Result<(), String>>> = vec![];
 
-    for m in models {
-        crate::interpreters::core::stop_interpreting(&m)?;
-    }
-
-    connection::slimevr::clear_trackers().await;
-
-    if modes.contains(&"ble".to_string()) {
-        let ble_task = task::spawn(async move { ble::stop(app_handle.clone()).await });
-        tasks.push(ble_task);
-    } else if modes.contains(&"serial".to_string()) {
+    // stop connections
+    if modes.contains(&"serial".to_string()) {
         let serial_task = task::spawn(async move { serial::stop().await });
         tasks.push(serial_task);
-    } else {
-        return Err("No valid connection type provided".to_string());
+        info!("Stopping serial connections");
     }
 
+    if modes.contains(&"ble".to_string()) {
+        let ble_task = task::spawn(async move {
+            if let Err(e) = ble::stop_scanning().await {
+                error!("Failed to stop BLE scanning: {}", e);
+            }
+            ble::stop_connections().await
+        });
+        tasks.push(ble_task);
+        info!("Stopping BLE connections");
+    }
+
+    info!("Stopping all connections");
     for result in future::join_all(tasks).await {
         match result {
             Ok(inner_result) => inner_result.map_err(|e| {
@@ -264,6 +320,16 @@ async fn stop(
         }
     }
 
+    // stop interpreting data
+    for m in models {
+        crate::interpreters::core::stop_interpreting(&m)?;
+        info!("Stopping interpreter for model: {}", m);
+    }
+
+    // clear tasks and trackers
+    connection::slimevr::cancel_all_tasks().await;
+    connection::slimevr::clear_trackers().await;
+
     info!("Stopped connection");
     Ok(())
 }
@@ -276,14 +342,75 @@ async fn start_heartbeat(app_handle: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/*
+ * BLE commands
+ */
+
+#[tauri::command]
+async fn start_ble_scanning(app_handle: AppHandle) -> Result<Vec<TrackerDevice>, String> {
+    match ble::start_scanning(app_handle, None).await {
+        Ok(devices) => Ok(devices),
+        Err(e) => {
+            error!("Failed to start BLE scanning: {}", e);
+            Err(format!("Failed to start BLE scanning: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
+async fn stop_ble_scanning() -> Result<(), String> {
+    match ble::stop_scanning().await {
+        Ok(_) => {
+            info!("Successfully stopped BLE scanning");
+            Ok(())
+        }
+        Err(e) => {
+            error!("Failed to stop BLE scanning: {}", e);
+            Err(format!("Failed to stop BLE scanning: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
+async fn stop_ble_connections() -> Result<(), String> {
+    info!("Stopping all BLE connections");
+
+    match ble::stop_connections().await {
+        Ok(_) => {
+            info!("Successfully stopped all BLE connections");
+            Ok(())
+        }
+        Err(e) => {
+            error!("Failed to stop BLE connections: {}", e);
+            Err(format!("Failed to stop BLE connections: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
+async fn disconnect_device(mac_address: String) -> Result<(), String> {
+    info!("Disconnecting BLE device with MAC address: {}", mac_address);
+
+    match ble::disconnect_device(&mac_address).await {
+        Ok(_) => {
+            info!("Successfully disconnected device: {}", mac_address);
+            Ok(())
+        }
+        Err(e) => {
+            error!("Failed to disconnect device {}: {}", mac_address, e);
+            Err(format!("Failed to disconnect device: {}", e))
+        }
+    }
+}
+
 #[tauri::command]
 async fn write_ble(
-    device_name: String,
+    mac_address: String,
     characteristic_uuid: String,
     data: Vec<u8>,
     expecting_response: bool,
 ) -> Result<Option<Vec<u8>>, String> {
-    let response = ble::write(&device_name, &characteristic_uuid, data, expecting_response).await;
+    let response = ble::write(&mac_address, &characteristic_uuid, data, expecting_response).await;
 
     match response {
         Ok(result) => {
@@ -303,8 +430,8 @@ async fn write_ble(
 }
 
 #[tauri::command]
-async fn read_ble(device_name: String, characteristic_uuid: String) -> Result<Vec<u8>, String> {
-    let response = ble::read(&device_name, &characteristic_uuid).await;
+async fn read_ble(mac_address: String, characteristic_uuid: String) -> Result<Vec<u8>, String> {
+    let response = ble::read(&mac_address, &characteristic_uuid).await;
 
     match response {
         Ok(result) => {
@@ -319,13 +446,19 @@ async fn read_ble(device_name: String, characteristic_uuid: String) -> Result<Ve
     }
 }
 
+/*
+ * Serial commands
+ */
+
 #[tauri::command]
 async fn write_serial(port_path: String, data: String) -> Result<(), String> {
-    let response = serial::write(port_path, data).await;
+    let port_path_clone = port_path.clone();
+    let data_clone = data.clone();
+    let response = serial::write(port_path, format!("\n{}\n", data_clone)).await;
 
     match response {
         Ok(_) => {
-            info!("Successfully wrote to serial port");
+            info!("Successfully wrote to serial port {} with data: {}", port_path_clone, data_clone);
             Ok(())
         }
         Err(e) => {
@@ -337,11 +470,12 @@ async fn write_serial(port_path: String, data: String) -> Result<(), String> {
 
 #[tauri::command]
 async fn read_serial(port_path: String) -> Result<String, String> {
+    let port_path_clone = port_path.clone();
     let response = serial::read(port_path).await;
 
     match response {
         Ok(result) => {
-            info!("Successfully read from serial port");
+            info!("Successfully read from serial port {}", port_path_clone);
             info!("Received data from serial port: {}", result);
             Ok(result)
         }
@@ -396,11 +530,31 @@ fn filter_ports(ports: Vec<String>) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
+fn get_tracker_id(tracker_name: String) -> Result<String, String> {
+    serial::get_tracker_id(&tracker_name)
+}
+
+#[tauri::command]
+fn get_tracker_port(tracker_name: String) -> Result<String, String> {
+    serial::get_tracker_port(&tracker_name)
+}
+
+#[tauri::command]
 async fn cleanup_connections() -> Result<(), String> {
     if let Err(e) = serial::stop().await {
         error!("Error stopping serial connections: {}", e);
     }
 
+    if let Err(e) = ble::stop_scanning().await {
+        error!("Error stopping BLE scanning: {}", e);
+    }
+
+    if let Err(e) = ble::stop_connections().await {
+        error!("Error stopping BLE connections: {}", e);
+    }
+
+    // cancel all tasks and clear trackers
+    connection::slimevr::cancel_all_tasks().await;
     connection::slimevr::clear_trackers().await;
 
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;

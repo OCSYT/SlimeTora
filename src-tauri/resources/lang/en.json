@@ -24,20 +24,61 @@
 			"device": "Device:",
 			"imu": "IMU:",
 			"battery": "Battery:",
-			"status": "Status:",
 			"settings": "Open tracker settings: {{name}}",
 			"power_off": "Power off tracker: {{name}}",
+			"status": {
+				"text": "Status:",
+				"great": "GREAT",
+				"okay": "OKAY",
+				"bad": "BAD",
+				"very_bad": "VERY BAD",
+				"unknown": "N/A"
+			},
 			"tooltip": {
-				"mag_status": "Magnetometer status. If all trackers are consistently \"GREAT\", it is preferred to use sensor mode 1.'}",
+				"mag_status": "Magnetometer status. If all trackers are consistently \"GREAT\", it is preferred to use sensor mode 1.",
 				"rssi": "Wireless signal strength (RSSI). Higher (closer to 0) is better."
 			}
 		},
 		"settings": {
 			"title": "Settings",
 			"collapse_expand": "Collapse/expand all trackers",
+			"pairing": "Tracker pairing",
 			"precise_data": "Precise data",
 			"fast_data": "Fast data",
 			"visualization": "Show tracker visualization"
+		},
+		"pairing": {
+			"title": "Pairing management",
+			"subtitle": "Pair and manage your HaritoraX trackers via Bluetooth (LE) or Serial/GX(6/2) connections",
+			"bluetooth": {
+				"title": "Bluetooth (LE) Pairing",
+				"paired_devices": "Paired devices",
+				"discovered_devices": "Discovered devices",
+				"scan_devices": "Scan for devices",
+				"stop_scanning": "Stop scanning",
+				"unpair_all": "Unpair All",
+				"pair": "Pair",
+				"unpair": "Unpair",
+				"connected": "Connected",
+				"disconnected": "Disconnected",
+				"no_paired_devices": "No paired devices. Scan for devices to pair them.",
+				"searching": "Searching for devices...",
+				"no_devices_found": "No devices found."
+			},
+			"serial": {
+				"title": "Serial / GX(6/2) Pairing",
+				"no_ports": "No serial ports configured. Please configure the serial ports in the connection settings first.",
+				"serial_port": "Serial port: {{port}}",
+				"channel_num": "Channel {{num}}",
+				"port_id": "Port ID {{id}}",
+				"tracker": "Tracker:",
+				"none": "None",
+				"paired": "Paired",
+				"pairing": "Pairing",
+				"unpaired": "Unpaired",
+				"pair": "Pair",
+				"unpair": "Unpair"
+			}
 		},
 		"per_tracker": {
 			"title": "{{name}} Settings",
@@ -48,7 +89,7 @@
 			},
 			"sensor_mode": {
 				"name": "Sensor mode",
-				"tooltip": "Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables magnetometer and is recommended for unstable environments."
+				"tooltip": "Mode 1 enables the magnetometer which reduces drift if you have a stable geomagnetic environment. Mode 2 disables the magnetometer and is recommended for unstable environments."
 			},
 			"sensor_auto_correction": {
 				"name": "Sensor auto correction",
@@ -162,7 +203,7 @@
 			},
 			"bypass_serial_limit": {
 				"name": "Bypass serial port limit",
-				"tooltip": "Allows bypassing the serial port limit imposed by the operating system. Use with caution."
+				"tooltip": "Allows bypassing the limit of 3 serial ports. Useful for multiple GX dongles or tracker sets."
 			},
 			"logging": {
 				"name": "Logging",

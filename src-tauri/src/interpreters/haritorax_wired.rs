@@ -10,6 +10,7 @@ impl Interpreter for HaritoraXWired {
         &self,
         app_handle: &AppHandle,
         device_id: &str,
+        device_assignment: &str,
         char_name: &str,
         data: &str,
     ) -> Result<(), String> {
@@ -20,7 +21,8 @@ impl Interpreter for HaritoraXWired {
     async fn parse_serial(
         &self,
         app_handle: &AppHandle,
-        tracker_name: &str,
+        device_id: &str,
+        device_assignment: &str,
         data: &str,
     ) -> Result<(), String> {
         // Implement serial parsing logic for Haritora X Wired

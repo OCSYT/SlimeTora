@@ -1,11 +1,11 @@
 use super::core::ChargeStatus;
 use crate::interpreters::core::{
-    Acceleration, BatteryData, IMUData, InfoData, Rotation, Rotations,
+    Acceleration, BatteryData, IMUData, Rotation, Rotations,
 };
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
 use dashmap::DashMap;
-use log::{error, info, warn};
+use log::info;
 use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
 use std::io::Cursor;
@@ -15,12 +15,16 @@ use tracker_emulation_rs::EmulatedTracker;
 pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> =
     Lazy::new(DashMap::new);
 
+// BatteryLevel: Option<u8>, BatteryVoltage: Option<u16>, ChargeStatus: Option<String>
+pub static BATTERY_INFO: Lazy<DashMap<String, (Option<u8>, Option<u16>, Option<String>)>> =
+    Lazy::new(DashMap::new);
+
 const ROTATION_SCALAR: f32 = 0.01 / 180.0;
 const GRAVITY_SCALAR: f32 = 1.0 / 256.0;
 const GRAVITY_CONSTANT: f32 = 9.81;
 const GRAVITY_ADJUSTMENT: f32 = 1.2;
 
-// map of tracker name and button presses int
+// map of tracker name and button presses as int
 static BUTTON_MAP: Lazy<DashMap<&'static str, u8>> = Lazy::new(|| {
     let map = DashMap::new();
     map.insert("main", 255);
@@ -28,6 +32,30 @@ static BUTTON_MAP: Lazy<DashMap<&'static str, u8>> = Lazy::new(|| {
     map.insert("tertiary", 255);
     map
 });
+
+pub static TRACKER_ASSIGNMENTS: &[(&str, &str)] = &[
+    ("DONGLE", "0"),
+    ("chest", "1"),
+    ("leftKnee", "2"),
+    ("leftAnkle", "3"),
+    ("rightKnee", "4"),
+    ("rightAnkle", "5"),
+    ("hip", "6"),
+    ("leftElbow", "7"),
+    ("rightElbow", "8"),
+    ("leftWrist", "9"),
+    ("rightWrist", "a"),
+    ("head", "b"),
+    ("leftFoot", "c"),
+    ("rightFoot", "d"),
+];
+
+pub fn get_assignment_by_id(id: &str) -> Option<&'static str> {
+    TRACKER_ASSIGNMENTS
+        .iter()
+        .find(|(_, assignment_id)| *assignment_id == id)
+        .map(|(name, _)| *name)
+}
 
 /// ### Connections supported:
 /// - Serial
@@ -129,7 +157,7 @@ pub fn decode_imu(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
         rotation_obj.x as f32,
         rotation_obj.y as f32,
         rotation_obj.z as f32,
-    )); // changed rotation to rotation_obj
+    ));
     let euler_angles = quaternion.euler_angles();
 
     // Convert radians to degrees
@@ -155,6 +183,33 @@ pub fn decode_imu(data: &[u8], tracker_name: &str) -> Result<IMUData, String> {
     })
 }
 
+/// Processes magnetometer data for a tracker.
+///
+/// ### Connections supported:
+/// - BLE
+///
+/// ### Trackers supported:
+/// - HaritoraX Wireless
+/// - HaritoraX 2
+pub fn process_mag_data(data: &str) -> Result<String, String> {
+    // convert data into base64 buffer
+    let buffer = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
+
+    let mag_data = buffer[0];
+
+    let mag_status = match mag_data {
+        3 => "GREAT",
+        2 => "OKAY",
+        1 => "BAD",
+        0 => "VERY_BAD",
+        _ => "UNKNOWN",
+    };
+
+    Ok(mag_status.to_string())
+}
+
 /// Processes battery data for a tracker.
 ///
 /// ### Connections supported:
@@ -169,59 +224,97 @@ pub fn process_battery_data(
     data: &str,
     tracker_name: &str,
     characteristic: Option<&str>,
-) -> Result<BatteryData, String> {
+) -> Result<Option<BatteryData>, String> {
     if tracker_name.is_empty() || data.is_empty() {
-        return Ok(BatteryData {
-            remaining: None,
-            voltage: None,
-            status: None,
-        });
+        return Ok(None);
     }
 
-    let mut battery_data = BatteryData {
-        remaining: None,
-        voltage: None,
-        status: None,
-    };
-
+    // for BLE, processed based on characteristics
     if let Some(characteristic) = characteristic {
+        let mut entry = BATTERY_INFO
+            .entry(tracker_name.to_string())
+            .or_insert((None, None, None));
         let buffer = base64::engine::general_purpose::STANDARD
             .decode(data)
             .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
+
+        let mut just_charge_status = false;
 
         match characteristic {
             "BatteryLevel" => {
                 let remaining = u8::from_str_radix(&hex::encode(&buffer), 16)
                     .map_err(|e| format!("Failed to parse battery level: {}", e))?;
-                battery_data.remaining = Some(remaining);
+                entry.0 = Some(remaining);
             }
             "BatteryVoltage" => {
                 let voltage =
                     i16::from_le_bytes(buffer[..2].try_into().map_err(|_| "Invalid voltage data")?)
                         as f64;
-                battery_data.voltage = Some(voltage as u16);
+                entry.1 = Some(voltage as u16);
             }
             "ChargeStatus" => {
                 let status = buffer[0];
-                battery_data.status = match status {
-                    0 => Some(ChargeStatus::Discharging),
-                    1 => Some(ChargeStatus::Charging),
-                    2 => Some(ChargeStatus::Charged),
+                let new_status = match status {
+                    0 => Some("discharging".to_string()),
+                    1 => Some("charging".to_string()),
+                    2 => Some("charged".to_string()),
                     _ => None,
                 };
-
-                if battery_data.status.is_none() {
-                    return Err(format!("Unknown charge status: {}", status));
+                // Only emit if status changed
+                if entry.2 != new_status {
+                    entry.2 = new_status;
+                    just_charge_status = true;
                 }
             }
             _ => return Err(format!("Unknown characteristic: {}", characteristic)),
         }
 
-        info!(
-            "Processed battery data for tracker \"{}\": {:?}",
-            tracker_name, battery_data
-        );
-    } else {
+        // only emit if we have both BatteryLevel and BatteryVoltage
+        if entry.0.is_some() && entry.1.is_some() {
+            let battery_data = BatteryData {
+                remaining: entry.0,
+                voltage: entry.1,
+                status: None,
+            };
+            info!(
+                "Processed BLE battery data for tracker `{}`: {:?}",
+                tracker_name, battery_data
+            );
+            // reset BatteryLevel and BatteryVoltage
+            entry.0 = None;
+            entry.1 = None;
+            return Ok(Some(battery_data));
+        } else if just_charge_status && entry.2.is_some() {
+            // emit charge status
+            let status_enum = match entry.2.as_deref() {
+                Some("discharging") => Some(ChargeStatus::Discharging),
+                Some("charging") => Some(ChargeStatus::Charging),
+                Some("charged") => Some(ChargeStatus::Charged),
+                _ => None,
+            };
+            let battery_data = BatteryData {
+                remaining: None,
+                voltage: None,
+                status: status_enum,
+            };
+            info!(
+                "Processed BLE battery data for tracker `{}`: {:?}",
+                tracker_name, battery_data
+            );
+            return Ok(Some(battery_data));
+        } else {
+            // not enough data yet
+            return Ok(None);
+        }
+    }
+
+    // for serial it's a JSON string
+    let mut battery_data = BatteryData {
+        remaining: None,
+        voltage: None,
+        status: None,
+    };
+    if characteristic.is_none() {
         let battery_info: serde_json::Value = serde_json::from_str(data)
             .map_err(|e| format!("Failed to parse battery data JSON: {}", e))?;
         battery_data.remaining = battery_info["battery remaining"].as_u64().map(|v| v as u8);
@@ -235,20 +328,19 @@ pub fn process_battery_data(
                     "charged" => Some(ChargeStatus::Charged),
                     _ => None,
                 });
-
         if battery_data.status.is_none() {
             return Err(format!(
                 "Unknown charge status: {}",
                 battery_info["charge status"].as_str().unwrap_or("Unknown")
             ));
         }
+        info!(
+            "Processed serial battery data for tracker `{}`: remaining: {:?}%, voltage: {:?}, status: {:?}",
+            tracker_name, battery_data.remaining, battery_data.voltage, battery_data.status
+        );
+        return Ok(Some(battery_data));
     }
-
-    info!(
-        "Processed battery data for tracker \"{}\": remaining: {:?}%, voltage: {:?}, status: {:?}",
-        tracker_name, battery_data.remaining, battery_data.voltage, battery_data.status
-    );
-    Ok(battery_data)
+    Ok(None)
 }
 
 /// Processes button data for a tracker.
@@ -337,8 +429,6 @@ pub fn process_button_data(
         }
     }
 
-    // TODO: detect if vrmanager/haritoraconfigurator is open
-
     info!(
         "Button pressed from tracker {}: {}",
         tracker_name, button_pressed
@@ -355,7 +445,7 @@ pub fn process_button_data(
 /// - HaritoraX Wired (1.0/1.1/1.1b)
 /// - HaritoraX Wireless
 /// - HaritoraX 2
-pub fn process_info_data(data: &str, tracker_name: &str) -> Result<InfoData, String> {
+pub fn process_info_data(data: &str, tracker_name: &str) -> Result<serde_json::Value, String> {
     // example: {"model":"MC2B", "version":"1.7.10", "serial no":"0000000", "comm":"BLT", "comm_next":"BTSPP"}
     let json_data: serde_json::Value =
         serde_json::from_str(data).expect("Failed to parse JSON data");
@@ -364,13 +454,13 @@ pub fn process_info_data(data: &str, tracker_name: &str) -> Result<InfoData, Str
     let serial = json_data["serial no"].as_str().unwrap_or("").to_string();
     let communication = json_data["comm"].as_str().map(|s| s.to_string());
     let communication_type = json_data["comm_next"].as_str().map(|s| s.to_string());
-    let info_data = InfoData {
-        version,
-        model,
-        serial,
-        communication,
-        communication_type,
-    };
+    let info_data = serde_json::json!({
+        "model": model,
+        "version": version,
+        "serial": serial,
+        "communication": communication,
+        "communication_type": communication_type,
+    });
 
     info!(
         "Received info data from tracker {}: {:?}",
@@ -445,8 +535,7 @@ pub fn process_settings_data(data: &str, tracker_name: &str) -> Result<serde_jso
 /// - HaritoraX Wireless
 /// - HaritoraX 2
 pub fn process_connection_data(
-    data: &str,
-    tracker_name: &str,
+    data: &str
 ) -> Result<serde_json::Value, String> {
     // data is in format 7f7f7f7f7f7f (tracker not found) OR other hex data like 284128442f30 (RSSI)
     let rssi_data = if data == "7f7f7f7f7f7f" {

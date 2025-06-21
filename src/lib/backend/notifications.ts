@@ -1,11 +1,12 @@
 import { browser } from "$app/environment";
-import { trackers, type BatteryData } from "$lib/store";
-import type { ConnectionMode } from "$lib/types/connection";
-import { MagStatus, type IMUData, type TrackerModel } from "$lib/types/tracker";
+import { connectedTrackers, getTrackerConfig, saveTrackerConfig, type BatteryData, type TrackerSave } from "$lib/store";
+import { ConnectionMode } from "$lib/types/connection";
+import { MagStatus, SensorAutoCorrection, type IMUData, type TrackerModel } from "$lib/types/tracker";
 import { listen } from "@tauri-apps/api/event";
 import { get } from "svelte/store";
 import { error, info, warn } from "$lib/log";
 import { program } from "$lib/store/settings";
+import { invoke } from "@tauri-apps/api/core";
 
 export const Notifications = [
 	"imu",
@@ -107,13 +108,16 @@ async function imuNotification() {
 		if (!fastData && lastImuUpdate[tracker] && now - lastImuUpdate[tracker] < 50) return;
 		lastImuUpdate[tracker] = now;
 
-		trackers.update((prev) => {
+		connectedTrackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
 				const updatedTracker = {
 					...prev[index],
-					rotation: [rotation.x, rotation.y, rotation.z],
-					acceleration: [acceleration.x, acceleration.y, acceleration.z],
+					data: {
+						...prev[index].data,
+						rotation: [rotation.x, rotation.y, rotation.z],
+						acceleration: [acceleration.x, acceleration.y, acceleration.z],
+					},
 				};
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			} else {
@@ -134,16 +138,23 @@ async function magNotification() {
 		const trackerId = payload.tracker;
 		const data = payload.data;
 
+		if (!data || !data.magnetometer) {
+			return;
+		}
+
 		// check and only update trackers store if it's changed
 		if (!browser) return;
-		const currentTrackers = get(trackers);
+		const currentTrackers = get(connectedTrackers);
 		const index = currentTrackers.findIndex((t) => t.id === trackerId);
 		if (index !== -1) {
-			if (currentTrackers[index].magnetometer !== data.magnetometer) {
-				trackers.update((prev) => {
-					const updatedTracker = { ...prev[index], magnetometer: data.magnetometer };
+			if (currentTrackers[index].data.magnetometer !== data.magnetometer) {
+				connectedTrackers.update((prev) => {
+					const updatedTracker = {
+						...prev[index],
+						data: { ...prev[index].data, magnetometer: data.magnetometer },
+					};
 					info(
-						`Tracker ${trackerId} magnetometer status changed: ${prev[index].magnetometer} -> ${data.magnetometer}`,
+						`Tracker ${trackerId} magnetometer status changed: ${prev[index].data.magnetometer} -> ${data.magnetometer}`,
 					);
 					return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 				});
@@ -164,10 +175,18 @@ async function batteryNotification() {
 		info(`Battery notification received from ${tracker}: ${JSON.stringify(data)}`);
 
 		if (!browser) return;
-		trackers.update((prev) => {
+		connectedTrackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
-				const updatedTracker = { ...prev[index], battery: data };
+				let updatedBattery = data;
+				// if both remaining and voltage are null, but status is present, keep previous remaining and voltage and update w/ new status
+				if (data.remaining == null && data.voltage == null && data.status != null && prev[index].data.battery) {
+					updatedBattery = {
+						...prev[index].data.battery,
+						status: data.status,
+					};
+				}
+				const updatedTracker = { ...prev[index], data: { ...prev[index].data, battery: updatedBattery } };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
 			}
 			return prev;
@@ -200,33 +219,108 @@ async function settingsNotification() {
  */
 
 async function connectNotification() {
-	return await listen("connect", (event) => {
+	return await listen("connect", async (event) => {
 		const payload = event.payload as {
 			tracker: string;
 			connection_mode: ConnectionMode;
 			tracker_type: TrackerModel;
+			data: { assignment: string };
 		};
 		const tracker = payload.tracker;
 		const connection_mode = payload.connection_mode;
 		const tracker_type = payload.tracker_type;
+		const assignment = payload.data.assignment;
 
-		info(`Tracker connected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`);
+		if (!tracker || !connection_mode || !tracker_type || !assignment) return;
+
+		info(`Tracker connected: ${tracker} (${assignment}, ${tracker_type}), connection mode: ${connection_mode}`);
+
+		const trackerId = tracker.split('-').pop() || tracker;
+
+		// load settings
+		let newTracker = await getTrackerConfig(tracker);
+		if (!newTracker) {
+			newTracker = {
+				name: connection_mode === ConnectionMode.BLE ? trackerId : assignment,
+				id: trackerId,
+				connection_mode: connection_mode as ConnectionMode,
+				tracker_type: tracker_type as TrackerModel,
+				settings: {
+					fps: 50,
+					mode: 1,
+					dynamicCalibration: [SensorAutoCorrection.Accel],
+					emulatedFeet: false,
+				},
+			};
+
+			info(`No existing config found for tracker ${tracker}, creating new one`);
+		} else if (!newTracker.settings) {
+			newTracker.settings = {
+				fps: 50,
+				mode: 1,
+				dynamicCalibration: [SensorAutoCorrection.Accel],
+				emulatedFeet: false,
+			};
+			info(`Tracker ${tracker} config found, but no settings - should use global settings`);
+		} else {
+			info(`Tracker ${tracker} config found, using existing settings`);
+			info(`Tracker settings: ${JSON.stringify(newTracker.settings, null, 2)}`);
+		}
+
+		saveTrackerConfig(newTracker);
 
 		if (!browser) return;
 		// TODO: get tracker name from config if available
-		trackers.update((prev) => {
-			return [
-				...prev,
-				{
-					name: tracker,
-					id: tracker,
-					connection_mode,
-					tracker_type,
+		connectedTrackers.update((prev) => {
+			const index = prev.findIndex((t) => t.id === newTracker.id);
+			const trackerData = {
+				...newTracker,
+				data: {
 					rotation: [0, 0, 0],
 					acceleration: [0, 0, 0],
 				},
-			];
+			};
+			if (index !== -1) {
+				return [...prev.slice(0, index), trackerData, ...prev.slice(index + 1)];
+			}
+			return [...prev, trackerData];
 		});
+
+		const trackerPort = await invoke("get_tracker_port", { trackerName: tracker });
+		const trackerPortId = await invoke("get_tracker_id", { trackerName: tracker });
+		if (!trackerPort || !trackerPortId) return;
+		info(`Tracker port for ${tracker} is ${trackerPort} (ID: ${trackerPortId})`);
+
+		// Manually request all the info from the trackers
+		const initialCommands = ["r0:", "r1:", "r:", "o:"];
+		const delayedCommands = ["i:", "i0:", "i1:", "o0:", "o1:", "v0:", "v1:"];
+
+		initialCommands.forEach((cmd) => {
+			info(`Sending initial command "${cmd}" to tracker port: ${trackerPort}`);
+			invoke("write_serial", {
+				portPath: trackerPort,
+				data: cmd,
+			});
+		});
+
+		setTimeout(() => {
+			delayedCommands.forEach((cmd) => {
+				info(`Sending delayed command "${cmd}" to tracker port: ${trackerPort}`);
+				invoke("write_serial", {
+					portPath: trackerPort,
+					data: cmd,
+				});
+			});
+
+			// Repeated initial commands just to make sure, lol
+			initialCommands.forEach((cmd) => {
+				info(`Resending initial command "${cmd}" to tracker port: ${trackerPort}`);
+				invoke("write_serial", {
+					portPath: trackerPort,
+					data: cmd,
+				});
+			});
+		}, 500);
 	});
 }
 
@@ -239,7 +333,7 @@ async function disconnectNotification() {
 
 		info(`Tracker disconnected: ${tracker}, connection mode: ${connection_mode}, tracker type: ${tracker_type}`);
 		if (!browser) return;
-		trackers.update((prev) => {
+		connectedTrackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
 				return [...prev.slice(0, index), ...prev.slice(index + 1)];
@@ -261,17 +355,17 @@ async function connectionNotification() {
 		const tracker = payload.tracker;
 		//const dongle_rssi = payload.data.dongle_rssi;
 		const tracker_rssi = payload.data.tracker_rssi;
+		const connection_mode = payload.connection_mode;
+		const tracker_type = payload.tracker_type;
 
 		if (!browser) return;
-		trackers.update((prev) => {
+		connectedTrackers.update((prev) => {
 			const index = prev.findIndex((t) => t.id === tracker);
 			if (index !== -1) {
-				const updatedTracker = { ...prev[index], rssi: tracker_rssi };
+				const updatedTracker = { ...prev[index], data: { ...prev[index].data, rssi: tracker_rssi } };
 				return [...prev.slice(0, index), updatedTracker, ...prev.slice(index + 1)];
-			} else {
-				warn(`Tracker with id ${tracker} not found in store`);
-				return prev;
 			}
+			return prev;
 		});
 	});
 }

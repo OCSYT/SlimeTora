@@ -3,8 +3,16 @@ use firmware_protocol::{
     ActionType, BoardType, ImuType, McuType, SensorDataType, SensorStatus, SlimeQuaternion,
 };
 use log::{error, info};
+use once_cell::sync::Lazy;
+use std::sync::Arc;
 use tauri::AppHandle;
+use tokio::sync::Mutex;
+use tokio_util::sync::CancellationToken;
 use tracker_emulation_rs::EmulatedTracker;
+
+// Global cancellation token for all SlimeVR background tasks
+static SLIMEVR_CANCEL_TOKEN: Lazy<Arc<Mutex<Option<CancellationToken>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(None)));
 
 /*
  * Tracker management
@@ -15,6 +23,12 @@ pub async fn start_heartbeat(app_handle: &AppHandle) {
         add_tracker(app_handle, "(HEARTBEAT)", [0, 0, 0, 0, 0, 0])
             .await
             .expect("Failed to add heartbeat tracker");
+    }
+
+    // Initialize cancellation token if not already done
+    let mut cancel_token_guard = SLIMEVR_CANCEL_TOKEN.lock().await;
+    if cancel_token_guard.is_none() {
+        *cancel_token_guard = Some(CancellationToken::new());
     }
 
     // check if heartbeat is connected after we start a connection in the app, if not, warn user that it couldn't find slimevr server (at time of starting connection)
@@ -33,6 +47,9 @@ pub async fn add_tracker(
         return Err(format!("Tracker {} already exists", tracker_name));
     }
 
+    // insert without EmulatedTracker so we know its already being initialized
+    CONNECTED_TRACKERS.insert(tracker_name.to_string(), None);
+
     let version = &app_handle.package_info().version;
     let mut tracker = EmulatedTracker::new(
         mac_address,
@@ -40,9 +57,9 @@ pub async fn add_tracker(
         Some(BoardType::Haritora),
         Some(McuType::Haritora),
         Some("255.255.255.255".to_string()), // TODO: get this from the app settings
-        Some(6969), // TODO: get this from the app settings
-        Some(5000), // TODO: get this from the app settings
-        Some(false), // TODO: get this from the app settings
+        Some(6969),                          // TODO: get this from the app settings
+        Some(0),                             // TODO: get this from the app settings
+        Some(false),                         // TODO: get this from the app settings
     )
     .await
     .expect("Failed to create tracker");
@@ -58,20 +75,41 @@ pub async fn add_tracker(
         .await
         .expect("Failed to add sensor");
 
-    // Set up status monitoring
+    // status monitoring
     if let Some(tracker_option) = CONNECTED_TRACKERS.get(tracker_name) {
         if let Some(tracker) = tracker_option.value() {
             let mut status_rx = tracker.subscribe_status();
-            tokio::spawn(async move {
-                while status_rx.changed().await.is_ok() {
-                    let status = status_rx.borrow().clone();
-                    info!("Tracker status changed: {status}");
 
-                    if status == "initialized" {
-                        info!("Disconnected from server.");
+            // get cancellation token
+            let cancel_token_guard = SLIMEVR_CANCEL_TOKEN.lock().await;
+            let cancel_token = cancel_token_guard.as_ref().cloned();
+            drop(cancel_token_guard);
+
+            if let Some(token) = cancel_token {
+                tokio::spawn(async move {
+                    loop {
+                        tokio::select! {
+                            _ = token.cancelled() => {
+                                info!("SlimeVR monitoring task cancelled for tracker");
+                                break;
+                            }
+                            result = status_rx.changed() => {
+                                if result.is_ok() {
+                                    let status = status_rx.borrow().clone();
+                                    info!("Tracker status changed: {status}");
+
+                                    if status == "initialized" {
+                                        info!("Disconnected from server.");
+                                    }
+                                } else {
+                                    // channel closed, exit the loop
+                                    break;
+                                }
+                            }
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     }
 
@@ -101,12 +139,14 @@ pub async fn remove_tracker(tracker_name: &str) -> Result<(), String> {
         return Err(format!("Tracker {} not found", tracker_name));
     }
 
+    info!("Removing tracker: {}", tracker_name);
     if let Some(mut tracker_ref) = CONNECTED_TRACKERS.get_mut(tracker_name) {
+        info!("Deinitializing tracker: {}", tracker_name);
         if let Some(mut tracker) = tracker_ref.take() {
-            tracker
-                .deinit()
-                .await
-                .expect("Failed to deinitialize tracker");
+            if let Err(e) = tracker.deinit().await {
+                error!("Failed to deinitialize tracker {}: {}", tracker_name, e);
+            }
+            info!("Tracker instance deinitialized: {}", tracker_name);
         }
     }
 
@@ -116,15 +156,36 @@ pub async fn remove_tracker(tracker_name: &str) -> Result<(), String> {
 }
 
 pub async fn clear_trackers() {
-    for tracker_ref in CONNECTED_TRACKERS.iter() {
-        let tracker_name = tracker_ref.key();
-        if let Err(e) = remove_tracker(tracker_name).await {
+    cancel_all_tasks().await;
+
+    // collect tracker names
+    let tracker_names: Vec<String> = CONNECTED_TRACKERS
+        .iter()
+        .map(|entry| entry.key().clone())
+        .collect();
+
+    // then remove each tracker
+    for tracker_name in tracker_names {
+        info!("Clearing tracker: {}", tracker_name);
+        if let Err(e) = remove_tracker(&tracker_name).await {
             error!("Failed to remove tracker {}: {}", tracker_name, e);
         }
+        info!("Cleared tracker: {}", tracker_name);
     }
 
     CONNECTED_TRACKERS.clear();
     info!("Cleared all trackers");
+}
+
+pub async fn cancel_all_tasks() {
+    let mut cancel_token_guard = SLIMEVR_CANCEL_TOKEN.lock().await;
+    if let Some(token) = cancel_token_guard.take() {
+        token.cancel();
+        info!("Cancelled all SlimeVR background tasks");
+    }
+
+    // Give some time for cancellation to propagate
+    tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
 }
 
 /*

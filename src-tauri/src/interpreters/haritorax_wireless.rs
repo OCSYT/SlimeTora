@@ -1,8 +1,9 @@
-use crate::connection::slimevr::{remove_tracker, send_battery};
-use crate::interpreters::common::process_connection_data;
 use crate::{
-    connection::slimevr::{add_tracker, send_accel, send_rotation},
-    interpreters::core::Interpreter,
+    connection::slimevr::{add_tracker, remove_tracker, send_accel, send_battery, send_rotation},
+    interpreters::{
+        common::{process_connection_data, process_info_data},
+        core::{Interpreter, MagStatus},
+    },
 };
 use async_trait::async_trait;
 use base64::Engine;
@@ -10,7 +11,7 @@ use log::{error, info, warn};
 use tauri::{AppHandle, Emitter};
 
 use super::common::{
-    decode_imu, process_battery_data, process_button_data, process_settings_data,
+    decode_imu, process_battery_data, process_button_data, process_mag_data, process_settings_data,
     CONNECTED_TRACKERS,
 };
 
@@ -22,24 +23,29 @@ impl Interpreter for HaritoraXWireless {
         &self,
         app_handle: &AppHandle,
         device_id: &str,
+        device_assignment: &str,
         char_name: &str,
         data: &str,
     ) -> Result<(), String> {
+        let buffer = base64::engine::general_purpose::STANDARD
+            .decode(data)
+            .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
+
         match char_name {
             "Sensor" => {
-                // TODO: Implement sensor data processing
+                process_imu(app_handle, device_id, device_assignment, "bluetooth", buffer).await?;
             }
-            "MainButton" | "SecondaryButton" => {
-                // TODO: Implement button data processing
+            "MainButton" | "SubButton" => {
+                process_button(app_handle, device_id, "bluetooth", data, Some(char_name)).await?;
             }
             "BatteryLevel" | "BatteryVoltage" | "ChargeStatus" => {
-                // TODO: Implement battery data processing
+                process_battery(app_handle, device_id, "bluetooth", data, Some(char_name)).await?;
             }
             "SensorModeSetting" | "FpsSetting" | "AutoCalibrationSetting" | "TofSetting" => {
-                // TODO: Implement settings data processing
+                // ok we don't need to process these, this is literally never send manually idk why we can even sub to these lol
             }
             "Magnetometer" => {
-                // TODO: Implement magnetometer data processing
+                process_mag(app_handle, device_id, "bluetooth", data).await?;
             }
             _ => {
                 warn!("Unknown data from {}: {} - {}", device_id, data, char_name);
@@ -53,14 +59,16 @@ impl Interpreter for HaritoraXWireless {
     async fn parse_serial(
         &self,
         app_handle: &AppHandle,
-        tracker_name: &str,
+        device_id: &str,
+        device_assignment: &str,
         data: &str,
     ) -> Result<(), String> {
-        let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
-        //info!("Received identifier: {}, data: {}", identifier, data);
-        if tracker_name.is_empty() {
+        if device_id.is_empty() {
             return Ok(());
         }
+
+        let (identifier, data) = data.split_once(':').unwrap_or(("", ""));
+        //info!("Received identifier for {}: {}, data: {}", tracker_name, identifier, data);
 
         let normalized_identifier = identifier.to_lowercase().chars().next();
         match normalized_identifier {
@@ -68,23 +76,22 @@ impl Interpreter for HaritoraXWireless {
                 let buffer = base64::engine::general_purpose::STANDARD
                     .decode(data)
                     .map_err(|e| format!("Failed to decode base64 data: {}", e))?;
-
-                process_imu(app_handle, tracker_name, "serial", buffer).await?;
+                process_imu(app_handle, device_id, device_assignment, "serial", buffer).await?;
             }
             Some('v') => {
-                process_battery(app_handle, tracker_name, "serial", data).await?;
+                process_battery(app_handle, device_id, "serial", data, None).await?;
             }
             Some('r') => {
-                process_button(app_handle, tracker_name, "serial", data).await?;
+                process_button(app_handle, device_id, "serial", data, None).await?;
             }
             Some('o') => {
-                process_settings(app_handle, tracker_name, "serial", data).await?;
+                process_settings(app_handle, device_id, "serial", data).await?;
             }
             Some('i') => {
-                process_info(app_handle, tracker_name, "serial", data).await?;
+                process_info(app_handle, device_id, "serial", data).await?;
             }
             Some('a') => {
-                process_connection(app_handle, tracker_name, "serial", data).await?;
+                process_connection(app_handle, device_id, "serial", data).await?;
             }
             _ => warn!("Unknown identifier: {}", identifier),
         }
@@ -96,29 +103,45 @@ impl Interpreter for HaritoraXWireless {
 async fn process_imu(
     app_handle: &AppHandle,
     tracker_name: &str,
+    tracker_assignment: &str,
     connection_mode: &str,
     data: Vec<u8>,
 ) -> Result<(), String> {
-    if !CONNECTED_TRACKERS.contains_key(tracker_name) && !tracker_name.is_empty() {
-        info!("Creating new tracker: {}", tracker_name);
+    if !tracker_name.is_empty() {
+        match CONNECTED_TRACKERS.get(tracker_name) {
+            Some(entry) => {
+                if entry.is_none() {
+                    // still initializing tracker
+                    return Ok(());
+                }
+            }
+            None => {
+                info!("Creating new tracker: {}", tracker_name);
 
-        if let Err(e) = add_tracker(app_handle, tracker_name, [0, 0, 0, 0, 0, 0x01]).await {
-            error!("Failed to add tracker: {}", e);
-            return Err(format!("Failed to add tracker: {}", e));
+                // TODO: seed tracker serial for mac address
+                // we should get the serial and seed that for the mac address, so when users switch between BT or serial they are the same tracker to SlimeVR Server
+                if let Err(e) = add_tracker(app_handle, tracker_name, [0, 0, 0, 0, 0, 0x01]).await {
+                    error!("Failed to add tracker: {}", e);
+                    return Err(format!("Failed to add tracker: {}", e));
+                }
+
+                let payload = serde_json::json!({
+                    "tracker": tracker_name,
+                    "connection_mode": connection_mode,
+                    "tracker_type": "Wireless",
+                    "data": {
+                        "assignment": tracker_assignment,
+                    },
+                });
+
+                app_handle.emit("connect", payload).map_err(|e| {
+                    format!(
+                        "Failed to emit tracker added event for {}: {}",
+                        tracker_name, e
+                    )
+                })?;
+            }
         }
-
-        let payload = serde_json::json!({
-            "tracker": tracker_name,
-            "connection_mode": connection_mode,
-            "tracker_type": "Wireless",
-        });
-
-        app_handle.emit("connect", payload).map_err(|e| {
-            format!(
-                "Failed to emit tracker added event for {}: {}",
-                tracker_name, e
-            )
-        })?;
     }
 
     let imu_data = match decode_imu(&data, tracker_name) {
@@ -132,7 +155,7 @@ async fn process_imu(
         }
     };
 
-    // since we are in wireless trackers, the ankle and wireless data is actually within the data
+    // since we are in wireless trackers, the ankle and mag data is actually within the data
     // this probably also applies to X2's, but ofc it's very different (with the new LiDAR sensor)
     let buffer_data = base64::engine::general_purpose::STANDARD.encode(data.clone());
     let ankle = if !buffer_data.ends_with("==") {
@@ -141,16 +164,16 @@ async fn process_imu(
     } else {
         None
     };
-    let mut mag_status: Option<&str> = None;
+    let mut mag_status: Option<MagStatus> = None;
 
-    if !tracker_name.starts_with("HaritoraXW") {
+    if connection_mode == "serial" {
         let magnetometer_data = buffer_data.chars().nth(buffer_data.len() - 5);
         mag_status = match magnetometer_data {
-            Some('A') => Some("VERY_BAD"),
-            Some('B') => Some("BAD"),
-            Some('C') => Some("OKAY"),
-            Some('D') => Some("GREAT"),
-            _ => Some("UNKNOWN"),
+            Some('A') => Some(MagStatus::VeryBad),
+            Some('B') => Some(MagStatus::Bad),
+            Some('C') => Some(MagStatus::Okay),
+            Some('D') => Some(MagStatus::Great),
+            _ => Some(MagStatus::Unknown),
         };
     }
 
@@ -164,20 +187,24 @@ async fn process_imu(
             "ankle": ankle,
         },
     });
-    let mag_payload = serde_json::json!({
-        "tracker": tracker_name,
-        "connection_mode": connection_mode,
-        "tracker_type": "Wireless",
-        "data": {
-            "magnetometer": mag_status,
-        },
-    });
     app_handle
         .emit("imu", imu_payload)
         .map_err(|e| format!("Failed to emit IMU data: {}", e))?;
-    app_handle
-        .emit("mag", mag_payload)
-        .map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
+
+    // only fire mag event if not null (BLE tracker. if null, it's a BLE tracker and we skipped it)
+    if let Some(status) = mag_status {
+        let mag_payload = serde_json::json!({
+            "tracker": tracker_name,
+            "connection_mode": connection_mode,
+            "tracker_type": "Wireless",
+            "data": {
+                "magnetometer": status,
+            },
+        });
+        app_handle
+            .emit("mag", mag_payload)
+            .map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
+    }
 
     let rotation_data = [
         imu_data.rotation.raw.x,
@@ -202,17 +229,49 @@ async fn process_imu(
     Ok(())
 }
 
-async fn process_battery(
+async fn process_mag(
     app_handle: &AppHandle,
     tracker_name: &str,
     connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
-    let battery_data = process_battery_data(data, tracker_name, None)?;
-    if data.is_empty() {
+    let mag_status = process_mag_data(data)?;
+    if mag_status.is_empty() {
         return Ok(());
     }
 
+    let payload = serde_json::json!({
+        "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
+        "data": {
+            "magnetometer": mag_status,
+        },
+    });
+    app_handle
+        .emit("mag", payload)
+        .map_err(|e| format!("Failed to emit magnetometer data: {}", e))?;
+
+    if connection_mode == "bluetooth" {
+        info!("Mag data for {}: {:?}", tracker_name, mag_status);
+    }
+
+    Ok(())
+}
+
+async fn process_battery(
+    app_handle: &AppHandle,
+    tracker_name: &str,
+    connection_mode: &str,
+    data: &str,
+    characteristic: Option<&str>,
+) -> Result<(), String> {
+    let battery_option = process_battery_data(data, tracker_name, characteristic)?;
+    if battery_option.is_none() {
+        return Ok(());
+    }
+
+    let battery_data = battery_option.unwrap();
     let payload = serde_json::json!({
         "tracker": tracker_name,
         "connection_mode": connection_mode,
@@ -239,8 +298,9 @@ async fn process_button(
     tracker_name: &str,
     connection_mode: &str,
     data: &str,
+    characteristic: Option<&str>,
 ) -> Result<(), String> {
-    let data = process_button_data(data, tracker_name, None)?;
+    let data = process_button_data(data, tracker_name, characteristic)?;
     if data.is_empty() {
         return Ok(());
     }
@@ -265,7 +325,7 @@ async fn process_settings(
     data: &str,
 ) -> Result<(), String> {
     let settings_data = process_settings_data(data, tracker_name)?;
-    if data.is_empty() {
+    if settings_data.is_null() {
         return Ok(());
     }
 
@@ -287,7 +347,20 @@ async fn process_info(
     connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
-    //let info_data
+    let info_data = process_info_data(data, tracker_name)?;
+    if info_data.is_null() {
+        return Ok(());
+    }
+
+    let payload = serde_json::json!({
+        "tracker": tracker_name,
+        "connection_mode": connection_mode,
+        "tracker_type": "Wireless",
+        "data": info_data,
+    });
+    app_handle
+        .emit("info", payload)
+        .map_err(|e| format!("Failed to emit info data: {}", e))?;
     Ok(())
 }
 
@@ -298,7 +371,7 @@ async fn process_connection(
     connection_mode: &str,
     data: &str,
 ) -> Result<(), String> {
-    let data = process_connection_data(data, tracker_name)?;
+    let data = process_connection_data(data)?;
     // Check if dongle_rssi and tracker_rssi are null, if so, return early
     let dongle_rssi = data.get("dongle_rssi");
     let tracker_rssi = data.get("tracker_rssi");

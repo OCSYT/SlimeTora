@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from "@iconify/svelte";
-	import { trackerOpenStates, trackers } from "$lib/store";
+	import { trackerOpenStates, connectedTrackers } from "$lib/store";
 	import { derived } from "svelte/store";
 	import { goto } from "$app/navigation";
 	import { info } from "@tauri-apps/plugin-log";
@@ -12,7 +12,7 @@
 	let { name, id, type } = $props();
 	let isOpen = $state(false);
 
-	const trackerData = derived(trackers, ($trackers) => $trackers.find((t) => t.id === id));
+	const trackerData = derived(connectedTrackers, ($trackers) => $trackers.find((t) => t.id === id));
 	let preciseData = $state($program.preciseData);
 	let visualization = $state($program.visualization);
 	let visualizationFPS = $state($program.visualizationFPS);
@@ -32,13 +32,13 @@
 	$effect(() => {
 		const t = $trackerData;
 		if (t) {
-			rotation = t.rotation?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
-			acceleration = t.acceleration?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
-			batteryPercent = t.battery?.remaining ?? -1;
-			batteryVoltage = t.battery?.voltage ?? -1;
-			batteryStatus = t.battery?.status ?? "discharging";
-			magStatus = t.magnetometer ?? "N/A";
-			rssi = t.rssi ?? 1;
+			rotation = t.data.rotation?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
+			acceleration = t.data.acceleration?.map((v) => Number(v.toFixed(preciseData ? 2 : 0))) ?? [0, 0, 0];
+			batteryPercent = t.data.battery?.remaining ?? -1;
+			batteryVoltage = t.data.battery?.voltage ?? -1;
+			batteryStatus = t.data.battery?.status ?? "discharging";
+			magStatus = t.data.magnetometer ?? "N/A";
+			rssi = t.data.rssi ?? 1;
 		}
 	});
 
@@ -63,6 +63,7 @@
 	}
 </script>
 
+<!-- TODO: add tracker connection mode (maybe part assignment too?) -->
 <div
 	class={`w-[338px] h-auto bg-card rounded-xl shadow-card flex flex-col transition-all duration-300 overflow-hidden`}
 	id="tracker-card-{id}"
@@ -90,7 +91,7 @@
 						class={`!bg-transparent ${magStatusClass(magStatus)}`}
 						id="mag-icon"
 					/>
-					<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text"
+					<span class={`!bg-transparent uppercase ${magStatusClass(magStatus)}`} id="mag-text"
 						>{magStatus}</span
 					>
 				</p>
@@ -147,7 +148,7 @@
 				</span>
 			</p>
 			<div id="status" class="flex items-center text-center gap-1">
-				<b>{$t("trackers.card.status")}</b>
+				<b>{$t("trackers.card.status.text")}</b>
 				<div class="flex items-center gap-2" id="battery-status">
 					<div class="flex items-center gap-1" id="mag-status">
 						<Tooltip content={$t("trackers.card.tooltip.mag_status")} position="up" width="200px">
@@ -158,9 +159,11 @@
 								id="mag-icon"
 							/>
 						</Tooltip>
-						<span class={`!bg-transparent capitalize ${magStatusClass(magStatus)}`} id="mag-text"
-							>{$t("trackers.card.status", { status: magStatus })}</span
-						>
+						<span class={`!bg-transparent uppercase ${magStatusClass(magStatus)}`} id="mag-text">
+							{magStatus === "N/A"
+								? $t("trackers.card.status.unknown")
+								: $t(`trackers.card.status.${magStatus}`)}
+						</span>
 					</div>
 					<div class="flex items-center gap-1" id="rssi-status">
 						<Tooltip content={$t("trackers.card.tooltip.rssi")} position="up" width="200px">

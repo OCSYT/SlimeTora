@@ -1,48 +1,37 @@
 use once_cell::sync::Lazy;
+use serde_json;
 use serialport::SerialPort;
 use std::{
-    collections::HashMap,
+    collections::HashSet,
     io::ErrorKind,
     sync::Mutex,
     thread::{self, sleep},
     time::Duration,
 };
 
+use crate::interpreters::{common::get_assignment_by_id, core::TrackerModel};
 use log::{error, info, warn};
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct TrackerInfo {
+    serial_number: String,
+    port: String,
+    port_id: String,
+    assignment: String,
+    tracker_type: Option<TrackerModel>,
+}
 
 static PORTS: Mutex<Vec<Box<dyn SerialPort + Send>>> = Mutex::new(Vec::new());
 
 static STOP_CHANNELS: Lazy<Mutex<Vec<std::sync::mpsc::Sender<()>>>> =
     Lazy::new(|| Mutex::new(Vec::new()));
 
-// tracker part, [tracker id, port, port id]
-// update: i think i was thinking too much about trying to make it like the TS version, i should probably make this more efficient
-static TRACKER_ASSIGNMENT: Lazy<Mutex<HashMap<&'static str, [String; 3]>>> = Lazy::new(|| {
-    let entries = [
-        ("DONGLE", "0"),
-        ("chest", "1"),
-        ("leftKnee", "2"),
-        ("leftAnkle", "3"),
-        ("rightKnee", "4"),
-        ("rightAnkle", "5"),
-        ("hip", "6"),
-        ("leftElbow", "7"),
-        ("rightElbow", "8"),
-        ("leftWrist", "9"),
-        ("rightWrist", "a"),
-        ("head", "b"),
-        ("leftFoot", "c"),
-        ("rightFoot", "d"),
-    ];
+static THREAD_HANDLES: Lazy<Mutex<Vec<std::thread::JoinHandle<()>>>> =
+    Lazy::new(|| Mutex::new(Vec::new()));
 
-    let map = entries
-        .into_iter()
-        .map(|(key, id)| (key, [id.to_string(), "".to_string(), "".to_string()]))
-        .collect();
+static TRACKER_INFO: Lazy<Mutex<HashSet<TrackerInfo>>> = Lazy::new(|| Mutex::new(HashSet::new()));
 
-    Mutex::new(map)
-});
-
+// TODO: update logic for HX2 as the "extension" trackers will have same port/port id and serial number
 pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Result<(), String> {
     info!("Starting serial connection on ports {:?}", &port_paths);
 
@@ -53,6 +42,19 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
             .open()
             .map_err(|e| format!("Failed to open port {}: {}", port_path, e))?;
         ports.push(port);
+
+        let initial_commands = [
+            "r0:", "r1:", "r:", "o:", "i:", "i0:", "i1:", "o0:", "o1:", "v0:", "v1:",
+        ];
+        for cmd in &initial_commands {
+            let command = format!("\n{}\n", cmd);
+            if let Err(e) = ports.last_mut().unwrap().write_all(command.as_bytes()) {
+                error!(
+                    "Failed to write initial command '{}' to port {}: {}",
+                    cmd, port_path, e
+                );
+            }
+        }
     }
 
     info!("Opened ports: {:?}", &port_paths);
@@ -70,7 +72,7 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
         STOP_CHANNELS.lock().unwrap().push(stop_tx);
 
         let app_handle_clone = app_handle.clone();
-        thread::spawn(move || {
+        let handle = thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 let mut accumulator = Vec::new();
@@ -83,12 +85,20 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                 match port_clone.read(&mut buffer) {
                     Ok(bytes_read) => {
                         if bytes_read > 0 {
+                            if stop_rx.try_recv().is_ok() {
+                                return;
+                            }
+
                             accumulator.extend_from_slice(&buffer[..bytes_read]);
 
                             // process complete messages
                             while let Some(delimiter_index) =
                                 accumulator.iter().position(|&b| b == b'\n')
                             {
+                                if stop_rx.try_recv().is_ok() {
+                                    return;
+                                }
+
                                 let message_bytes =
                                     accumulator.drain(..delimiter_index).collect::<Vec<u8>>();
                                 accumulator.remove(0);
@@ -109,59 +119,98 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
                                             .unwrap_or('0')
                                             .to_string();
                                         let port_data = parts[1];
-                                        // try to find find tracker name via assignments map
-                                        let mut tracker_name = None;
-                                        {
-                                            let tracker_assignment_ref =
-                                                TRACKER_ASSIGNMENT.lock().unwrap();
-                                            for (key, value) in tracker_assignment_ref.iter() {
-                                                if value[1] == port_path && value[2] == port_id {
-                                                    tracker_name = Some(*key);
-                                                    break;
+                                        
+                                        // handle "i" identifier to grab serial number
+                                        if identifier.starts_with('i') && identifier.len() == 2 {
+                                            if let Ok(json_data) = serde_json::from_str::<serde_json::Value>(port_data) {
+                                                info!("Received JSON data: {}", port_data);
+                                                if let Some(serial) = json_data.get("serial no").and_then(|s| s.as_str()) {
+                                                    if serial != "A00000" {
+                                                        info!("Found serial number: {}", serial);
+                                                        
+                                                        let tracker_type = json_data.get("model")
+                                                            .and_then(|m| m.as_str())
+                                                            .and_then(|model| {
+                                                                info!("Found model: {}", model);
+                                                                get_tracker_type_from_model(model)
+                                                            });
+                                                        
+                                                        let mut tracker_info = TRACKER_INFO.lock().unwrap();
+                                                        info!("Adding tracker info for serial: {} on port {} with port ID {}", serial, port_path, port_id);
+                                                        tracker_info.insert(TrackerInfo {
+                                                            serial_number: serial.to_string(),
+                                                            port: port_path.clone(),
+                                                            port_id: port_id.clone(),
+                                                            assignment: String::new(), // filled later
+                                                            tracker_type,
+                                                        });
+                                                        info!("Created tracker info entry for serial: {} on port {} with port ID {}", serial, port_path, port_id);
+                                                    }
+                                                } else {
+                                                    info!("No 'serial no' field found in JSON: {}", port_data);
                                                 }
+                                            } else {
+                                                info!("Failed to parse JSON: {}", port_data);
                                             }
                                         }
 
-                                        // silently listen and see if we can assign any missing trackers
+                                        // handle "r" identifier to get assignment and complete tracker info
                                         if identifier.starts_with('r') {
-                                            let mut tracker_assignment =
-                                                TRACKER_ASSIGNMENT.lock().unwrap();
-                                            for (key, value) in tracker_assignment.iter_mut() {
-                                                if value[1].is_empty() {
-                                                    if let Some(tracker_id_char) =
-                                                        port_data.chars().nth(4)
-                                                    {
-                                                        if let Ok(tracker_id) = tracker_id_char
-                                                            .to_string()
-                                                            .parse::<i32>()
+                                            if let Some(tracker_id_char) = port_data.chars().nth(4) {
+                                                if let Ok(tracker_id) = tracker_id_char.to_string().parse::<i32>() {
+                                                    let assignment_name = get_assignment_by_id(&tracker_id.to_string());
+                                                    if let Some(assignment) = assignment_name {
+                                                        let mut tracker_info = TRACKER_INFO.lock().unwrap();
+                                                        if let Some(mut info) = tracker_info
+                                                            .iter()
+                                                            .find(|info| info.port == port_path && info.port_id == port_id && info.assignment.is_empty())
+                                                            .cloned()
                                                         {
-                                                            if value[0].parse::<i32>().unwrap_or(0)
-                                                                == tracker_id
-                                                                && tracker_id != 0
-                                                            {
-                                                                value[1] = port_path.clone();
-                                                                value[2] = port_id.clone();
-                                                                info!("Setting {} to port {} with port ID {}", key, port_path, port_id);
-
-                                                                tracker_name = Some(*key);
-                                                            }
+                                                            tracker_info.remove(&info);
+                                                            info.assignment = assignment.to_string();
+                                                            tracker_info.insert(info.clone());
+                                                            info!("Updated tracker assignment: {} for serial {} on port {} with port ID {}", assignment, info.serial_number, port_path, port_id);
                                                         }
                                                     }
                                                 }
                                             }
+                                            info!("'r' identifier received with data: {}", port_data);
                                         }
+                                        
+                                        let tracker_assignment = {
+                                            let tracker_info = TRACKER_INFO.lock().unwrap();
+                                            tracker_info
+                                                .iter()
+                                                .find(|info| info.port == port_path && info.port_id == port_id && !info.assignment.is_empty())
+                                                .map(|info| info.assignment.clone())
+                                                .unwrap_or_default()
+                                        };
 
-                                        // Call the interpreter
-                                        let result = crate::interpreters::core::process_serial(
-                                            &app_handle_clone,
-                                            tracker_name.unwrap_or(""),
-                                            &message,
-                                        ).await;
-                                        if let Err(e) = result {
-                                            error!(
-                                                "Failed to parse serial data: {}",
-                                                e
-                                            );
+                                        let (tracker_id, tracker_type) = {
+                                            let tracker_info = TRACKER_INFO.lock().unwrap();
+                                            tracker_info
+                                                .iter()
+                                                .find(|info| info.port == port_path && info.port_id == port_id)
+                                                .map(|info| (info.serial_number.clone(), info.tracker_type.clone()))
+                                                .unwrap_or_default()
+                                        };
+
+                                        if let (Some(tracker_type), assignment) = (tracker_type.clone(), tracker_assignment.clone()) {
+                                            if !assignment.is_empty() {
+                                                let result = crate::interpreters::core::process_serial(
+                                                    &app_handle_clone,
+                                                    &tracker_id,
+                                                    &assignment,
+                                                    &tracker_type,
+                                                    &message,
+                                                ).await;
+                                                if let Err(e) = result {
+                                                    error!(
+                                                        "Failed to parse serial data: {}",
+                                                        e
+                                                    );
+                                                }
+                                            }
                                         }
                                     }
                                     Err(e) => {
@@ -184,7 +233,15 @@ pub async fn start(app_handle: tauri::AppHandle, port_paths: Vec<String>) -> Res
             }
         });
         });
+        THREAD_HANDLES.lock().unwrap().push(handle);
     }
+
+    // in 5 seconds, print out the tracker info
+    thread::spawn(move || {
+        sleep(Duration::from_secs(5));
+        let tracker_info = TRACKER_INFO.lock().unwrap();
+        info!("Tracker Info after 5 seconds: {:?}", *tracker_info);
+    });
 
     Ok(())
 }
@@ -197,17 +254,40 @@ pub async fn stop() -> Result<(), String> {
         }
     }
 
-    sleep(Duration::from_millis(100));
+    {
+        let mut handles = THREAD_HANDLES.lock().unwrap();
+        for handle in handles.drain(..) {
+            if let Err(e) = handle.join() {
+                error!("Failed to join serial thread: {:?}", e);
+            }
+        }
+    }
+    sleep(Duration::from_millis(100)); // explicitly drop each port to ensure proper cleanup
+    {
+        let mut ports = PORTS.lock().unwrap();
+        info!("Closing and clearing {} ports", ports.len());
 
-    let mut ports = PORTS.lock().unwrap();
-    info!("Clearing {} ports", ports.len());
-    ports.clear();
+        for port in ports.drain(..) {
+            if let Some(name) = port.name() {
+                info!("Closing port: {}", name);
+            }
+            drop(port);
+        }
+    }
+
+    // Clear tracker info
+    {
+        let mut tracker_info = TRACKER_INFO.lock().unwrap();
+        tracker_info.clear();
+        info!("Cleared tracker info");
+    }
 
     info!("Stopped serial connection");
     Ok(())
 }
 
 pub async fn write(port_path: String, data: String) -> Result<(), String> {
+    info!("Writing to port: {}", port_path);
     let mut ports = PORTS.lock().unwrap();
     for port in ports.iter_mut() {
         if let Some(name) = port.name() {
@@ -243,4 +323,45 @@ pub async fn read(port_path: String) -> Result<String, String> {
         }
     }
     Err(format!("Port {} not found or no data available", port_path))
+}
+
+pub fn get_tracker_id(tracker_name: &str) -> Result<String, String> {
+    let tracker_info = TRACKER_INFO.lock().unwrap();
+    if let Some(info) = tracker_info
+        .iter()
+        .find(|info| info.assignment == tracker_name)
+    {
+        Ok(info.port_id.clone())
+    } else {
+        Err(format!(
+            "Tracker {} not found in tracker info",
+            tracker_name
+        ))
+    }
+}
+
+pub fn get_tracker_port(tracker_name: &str) -> Result<String, String> {
+    let tracker_info = TRACKER_INFO.lock().unwrap();
+    if let Some(info) = tracker_info
+        .iter()
+        .find(|info| info.assignment == tracker_name)
+    {
+        Ok(info.port.clone())
+    } else {
+        Err(format!(
+            "Tracker {} not found in tracker info",
+            tracker_name
+        ))
+    }
+}
+
+fn get_tracker_type_from_model(model: &str) -> Option<TrackerModel> {
+    match model.to_uppercase().as_str() {
+        "MC1S" => Some(TrackerModel::Wired), // HaritoraX 1.0
+        "MC2S" => Some(TrackerModel::Wired), // HaritoraX 1.1
+        "MC2BS" => Some(TrackerModel::Wired), // HaritoraX 1.1B
+        "MC3S" => Some(TrackerModel::Wireless), // HaritoraX Wireless
+        "AF01SB" => Some(TrackerModel::X2), // HaritoraX 2
+        _ => None,
+    }
 }

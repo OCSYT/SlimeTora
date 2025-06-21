@@ -14,6 +14,7 @@ export async function startInterpreting() {
 	const modes = get(settings.connection).modes as ConnectionMode[];
 	const models = get(settings.connection).models as TrackerModel[];
 	const ports = get(settings.connection).ports as string[];
+	const macAddresses = get(settings.connection).macAddresses as string[];
 
 	if (modes.length === 0 || !models) {
 		return error("No modes or model selected for connection");
@@ -23,10 +24,10 @@ export async function startInterpreting() {
 		return error("No ports selected for serial connection");
 	}
 
-	info(`Starting interpreting with modes: ${modes}, models: ${models}, ports: ${ports}`);
+	info(`Starting interpreting with modes: ${modes}, models: ${models}, ports: ${ports}, macs: ${macAddresses}`);
 
 	for (const model of models) {
-		await invoke("start", { model, modes, ports });
+		await invoke("start_connection", { model, modes, ports, macAddresses });
 	}
 	activeModes.set(modes);
 
@@ -48,7 +49,7 @@ export async function stopInterpreting() {
 		return error("No modes to stop");
 	}
 
-	await invoke("stop", { models, modes });
+	await invoke("stop_connection", { models, modes });
 
 	if (notification === null) return error("No notification instance to stop");
 	let activeNotifications = notification.getActiveNotifications();

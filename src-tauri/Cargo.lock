@@ -4046,6 +4046,7 @@ dependencies = [
  "tauri-plugin-store",
  "tokio",
  "tokio-macros",
+ "tokio-util",
  "tracker_emulation-rs",
  "uuid",
 ]

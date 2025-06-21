@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
-	import { trackers } from "$lib/store";
+	import { connectedTrackers } from "$lib/store";
 	import Icon from "@iconify/svelte";
 	import Select from "$lib/components/settings/Select.svelte";
 	import Switch from "$lib/components/settings/Switch.svelte";
@@ -25,7 +25,7 @@
 		}
 		if (trackerId !== newId) {
 			trackerId = newId;
-			trackerData = $trackers.find((tracker) => tracker.id === trackerId);
+			trackerData = $connectedTrackers.find((tracker) => tracker.id === trackerId);
 
 			if (!trackerData) {
 				error(`Tracker with ID ${trackerId} not found. Redirecting to trackers list.`);

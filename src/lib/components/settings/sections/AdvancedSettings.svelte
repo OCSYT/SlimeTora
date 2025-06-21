@@ -8,6 +8,7 @@
 	import { advanced, type LoggingMode } from "$lib/store/settings";
 	import Tooltip from "../Tooltip.svelte";
 	import { t } from "$lib/lang";
+	import { goto } from "$app/navigation";
 
 	let bypassSerialLimit = $state($advanced.bypassSerialLimit);
 	let writeLogs = $state($advanced.writeLogs);
@@ -56,6 +57,16 @@
 						tooltip={$t("settings.advanced.bypass_serial_limit.tooltip")}
 						tooltipPosition="up"
 						tooltipWidth="250px"
+					/>
+				</div>
+
+				<div class="flex flex-row gap-3">
+					<Button
+						label={$t("home.onboarding")}
+						icon="ri:question-answer-line"
+						iconPosition="left"
+						background="quaternary"
+						onClick={() => goto("/onboarding")}
 					/>
 				</div>
 			</div>

@@ -2,9 +2,13 @@ import { writable, type Writable } from "svelte/store";
 import type { ConnectionMode } from "$lib/types/connection";
 import { startInterpreting, stopInterpreting } from "$lib/backend";
 import type { ChargeStatus, MagStatus, TrackerModel } from "$lib/types/tracker";
-import { info } from "$lib/log";
+import { error, info } from "$lib/log";
+import { connection, type TrackerSettings } from "./settings";
+import { load } from "@tauri-apps/plugin-store";
 
 export * as settings from "./settings";
+
+let trackersConfig: Awaited<ReturnType<typeof load>>;
 
 export interface BatteryData {
 	remaining?: number;
@@ -14,22 +18,94 @@ export interface BatteryData {
 
 export interface Tracker {
 	// Info
-	name: string;
-	id: string;
+	id: string; // does NOT change and should be unique (MAC address or serial num (in format of bt names: HaritoraX()-(serial)?)
+	name: string; // can be user-set
 	connection_mode: ConnectionMode;
 	tracker_type: TrackerModel;
 	mac?: string;
+	settings?: Omit<TrackerSettings, "heartbeat" | "buttonDebounce">;
 
 	// Data
-	rotation: number[];
-	acceleration: number[];
-	rssi?: number;
-	battery?: BatteryData;
-	magnetometer?: MagStatus;
+	data: TrackerData;
 }
 
-export const trackers = writable<Tracker[]>([]);
+export interface TrackerData {
+	rotation: number[];
+	acceleration: number[];
+	magnetometer?: MagStatus;
+	battery?: BatteryData;
+	rssi?: number;
+}
+
+export type TrackerSave = Omit<Tracker, "data">;
+
+export const connectedTrackers = writable<Tracker[]>([]);
+export const knownTrackers = writable<Tracker[]>([]);
+
 export const trackerOpenStates = writable<Record<string, boolean>>({});
+
+(async () => {
+	try {
+		trackersConfig = await load("trackers.json", { autoSave: true });
+
+		try {
+			const loaded = await trackersConfig.get("trackers");
+			if (loaded && typeof loaded === "object") {
+				// for every Tracker in loaded, place into knownTrackers
+				knownTrackers.set(Object.values(loaded));
+
+				const macAddresses: string[] = Object.values(loaded)
+					.filter((tracker) => tracker.mac)
+					.map((tracker) => tracker.mac!);
+
+				console.log(`Loaded MAC addresses of paired BT trackers: ${macAddresses}`);
+
+				// update connection settings with loaded mac addresses
+				connection.update(settings => ({ ...settings, macAddresses }));
+			}
+			info(`Loaded settings from trackers.json: ${JSON.stringify(loaded, null, 2)}`);
+		} catch (e) {
+			error(`Failed to load settings from trackers.json: ${e}`);
+		}
+	} catch (e) {
+		error(`Failed to load trackers.json: ${e}`);
+	}
+})();
+
+export async function saveTrackerConfig(tracker: TrackerSave) {
+	if (!trackersConfig) {
+		error("Trackers config not loaded yet.");
+		return;
+	}
+
+	try {
+		const settings = (await trackersConfig.get("trackers")) || {};
+		await trackersConfig.set("trackers", {
+			...settings,
+			[tracker.id]: tracker,
+		});
+		await trackersConfig.save();
+		info(`Tracker ${tracker.id} saved to trackers.json`);
+	} catch (e) {
+		error(`Failed to save tracker ${tracker.id} to trackers.json: ${e}`);
+	}
+}
+
+export async function getTrackerConfig(id: string): Promise<TrackerSave | undefined> {
+	if (!trackersConfig) {
+		error("Trackers config not loaded yet.");
+		return;
+	}
+
+	try {
+		const settings = await trackersConfig.get("trackers");
+		if (!settings || typeof settings !== "object") return undefined;
+		return (settings as Record<string, TrackerSave>)[id] as TrackerSave | undefined;
+	} catch (e) {
+		error(`Failed to get tracker config for id ${id}: ${e}`);
+		return undefined;
+	}
+}
 
 export const activeModes = writable<ConnectionMode[]>([]);
 // null if first time / app just launched
