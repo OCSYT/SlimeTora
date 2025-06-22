@@ -264,7 +264,23 @@ pub async fn start_connections(
                     break;
                 }
                 _ = scan_interval.tick() => {
+                    // check if already scanning
+                    let already_scanning = {
+                        let state = BLE_STATE.lock().await;
+                        state.scanning
+                    };
+
+                    if already_scanning {
+                        info!("Scan already in progress, skipping this scan cycle");
+                        continue;
+                    }
+
                     if let Ok(handler) = get_handler() {
+                        {
+                            let mut state = BLE_STATE.lock().await;
+                            state.scanning = true;
+                        }
+
                         match handler.start_scan(ScanFilter::None, 5000).await {
                             Ok(devices) => {
                                 let mut state = BLE_STATE.lock().await;
@@ -294,26 +310,50 @@ pub async fn start_connections(
                                     info!("Discovered device: {:?}", &device);
                                     state.discovered_devices.push(device);
                                 }
+                                state.scanning = false;
                             }
                             Err(e) => {
                                 warn!("Periodic BLE scan failed: {}", e);
+                                let mut state = BLE_STATE.lock().await;
+                                state.scanning = false;
                             }
                         }
+                    } else {
+                        let mut state = BLE_STATE.lock().await;
+                        state.scanning = false;
+                        warn!("Failed to get BLE handler for scanning");
                     }
                 }
                 _ = reconnect_interval.tick() => {
+                    // check if already scanning
+                    let is_scanning = {
+                        let state = BLE_STATE.lock().await;
+                        state.scanning
+                    };
+
+                    if is_scanning {
+                        info!("Skipping connection attempts - scan in progress");
+                        continue;
+                    }
+
                     // constantly attempt to find and connect to paired devices
                     for mac in &mac_addresses {
-                        let is_connected = {
+                        let (is_connected, device_available) = {
                             let state = BLE_STATE.lock().await;
-                            state.connected_devices.iter().any(|addr| addr == mac)
+                            let is_connected = state.connected_devices.iter().any(|addr| addr == mac);
+                            let device_available = state.discovered_devices.iter().any(|d| d.mac_address == *mac);
+                            (is_connected, device_available)
                         };
 
                         if !is_connected {
-                            info!(
-                                "Attempting to connect to paired device: {}",
-                                mac
-                            );
+                            if device_available {
+                                info!(
+                                    "Attempting to connect to paired device: {}",
+                                    mac
+                                );
+                            } else {
+                                continue;
+                            }
 
                             match connect_to_device(app_handle.clone(), mac).await {
                                 Ok(_) => {
@@ -472,26 +512,29 @@ async fn handle_device_disconnect(
     };
 
     if is_connected {
-        if device_name.is_some() {
-            info!(
-                "Device {} ({}) disconnected",
-                device_name.as_ref().unwrap(),
-                mac_address
-            );
+        let payload;
+        if let Some(ref name) = device_name {
+            payload = serde_json::json!({
+                "tracker": name,
+                "connection_mode": "bluetooth",
+                "tracker_type": "Wireless",
+            });
+            info!("Device {} ({}) disconnected", name, mac_address);
         } else {
+            payload = serde_json::json!({
+                "tracker": mac_address,
+                "connection_mode": "bluetooth",
+                "tracker_type": "Wireless",
+            });
             info!("Device {} disconnected", mac_address);
         }
 
-        if let Err(e) = app_handle.emit("disconnect", &mac_address) {
+        if let Err(e) = app_handle.emit("disconnect", payload) {
             error!("Failed to emit disconnect: {}", e);
         }
     } else {
-        if device_name.is_some() {
-            info!(
-                "Device {} ({}) is not connected",
-                device_name.as_ref().unwrap(),
-                mac_address
-            );
+        if let Some(ref name) = device_name {
+            info!("Device {} ({}) is not connected", name, mac_address);
         } else {
             info!("Device {} is not connected", mac_address);
         }
@@ -553,16 +596,15 @@ async fn connect_to_device(
         info!("Connected to device: {}", mac_address_string);
     }
 
-    if let Err(e) = app_handle.emit("disconnect", &mac_address_string) {
-        error!("Failed to emit disconnect: {}", e);
-    }
-
     let part_id_result = read(&mac_address_string, "ef84c301-90a9-11ed-a1eb-0242ac120002").await;
 
     let part = match part_id_result {
         Ok(ref bytes) => {
             if !bytes.is_empty() {
-                let hex_str = bytes.iter().map(|b| format!("{:02x}", b)).collect::<String>();
+                let hex_str = bytes
+                    .iter()
+                    .map(|b| format!("{:02x}", b))
+                    .collect::<String>();
                 // remove the 0 at beginning
                 let trimmed = if hex_str.len() == 2 && hex_str.starts_with('0') {
                     &hex_str[1..]
@@ -582,7 +624,10 @@ async fn connect_to_device(
         }
     };
 
-    info!("Body part assignment for {}: {:?}", mac_address_string, part);
+    info!(
+        "Body part assignment for {}: {:?}",
+        mac_address_string, part
+    );
     info!("raw: {:?}", part_id_result);
 
     if let Err(e) = setup_notifications(
