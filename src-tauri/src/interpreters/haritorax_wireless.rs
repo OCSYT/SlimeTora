@@ -33,7 +33,14 @@ impl Interpreter for HaritoraXWireless {
 
         match char_name {
             "Sensor" => {
-                process_imu(app_handle, device_id, device_assignment, "bluetooth", buffer).await?;
+                process_imu(
+                    app_handle,
+                    device_id,
+                    device_assignment,
+                    "bluetooth",
+                    buffer,
+                )
+                .await?;
             }
             "MainButton" | "SubButton" => {
                 process_button(app_handle, device_id, "bluetooth", data, Some(char_name)).await?;
@@ -309,7 +316,9 @@ async fn process_button(
         "tracker": tracker_name,
         "connection_mode": connection_mode,
         "tracker_type": "Wireless",
-        "data": data,
+        "data": {
+            "button": data,
+        },
     });
 
     app_handle

@@ -158,6 +158,7 @@ fn main() {
             read_serial,
             get_tracker_id,
             get_tracker_port,
+            connection::slimevr::send_user_action_tauri,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

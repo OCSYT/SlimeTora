@@ -1,7 +1,5 @@
 use super::core::ChargeStatus;
-use crate::interpreters::core::{
-    Acceleration, BatteryData, IMUData, Rotation, Rotations,
-};
+use crate::interpreters::core::{Acceleration, BatteryData, IMUData, Rotation, Rotations};
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
 use dashmap::DashMap;
@@ -433,6 +431,7 @@ pub fn process_button_data(
         "Button pressed from tracker {}: {}",
         tracker_name, button_pressed
     );
+
     Ok(button_pressed.to_string())
 }
 
@@ -534,9 +533,7 @@ pub fn process_settings_data(data: &str, tracker_name: &str) -> Result<serde_jso
 /// ### Trackers supported:
 /// - HaritoraX Wireless
 /// - HaritoraX 2
-pub fn process_connection_data(
-    data: &str
-) -> Result<serde_json::Value, String> {
+pub fn process_connection_data(data: &str) -> Result<serde_json::Value, String> {
     // data is in format 7f7f7f7f7f7f (tracker not found) OR other hex data like 284128442f30 (RSSI)
     let rssi_data = if data == "7f7f7f7f7f7f" {
         None

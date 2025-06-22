@@ -201,8 +201,16 @@ async function batteryNotification() {
 	});
 }
 
+// TODO: allow to be changed (grab from config)
+let BUTTON_PRESS_WINDOW_MS = 750;
+let BUTTON_DEBOUNCE_MS = 200;
+
+const buttonPressTimestamps: Record<string, number[]> = {};
+const lastButtonAction: Record<string, number> = {};
+const buttonActionTimeout: Record<string, ReturnType<typeof setTimeout> | null> = {};
+
 async function buttonNotification() {
-	return await listen("button", (event) => {
+	return await listen("button", async (event) => {
 		const payload = event.payload as { tracker: string; data: { button: string } };
 		const tracker = payload.tracker;
 		const data = payload.data;
@@ -212,6 +220,37 @@ async function buttonNotification() {
 		const trackerId = tracker.split("-").pop() || tracker;
 
 		info(`Button notification received from ${trackerId}: ${JSON.stringify(data)}`);
+
+		const now = Date.now();
+		if (!buttonPressTimestamps[trackerId]) buttonPressTimestamps[trackerId] = [];
+		if (!lastButtonAction[trackerId]) lastButtonAction[trackerId] = 0;
+
+		// debounce
+		if (now - lastButtonAction[trackerId] < BUTTON_DEBOUNCE_MS) return;
+
+		buttonPressTimestamps[trackerId].push(now);
+		buttonPressTimestamps[trackerId] = buttonPressTimestamps[trackerId].filter(
+			(ts) => now - ts <= BUTTON_PRESS_WINDOW_MS,
+		);
+
+		if (buttonActionTimeout[trackerId]) clearTimeout(buttonActionTimeout[trackerId]!);
+
+		buttonActionTimeout[trackerId] = setTimeout(async () => {
+			const pressCount = buttonPressTimestamps[trackerId].length;
+			let action: string | null = null;
+			if (pressCount === 1) action = "ResetYaw";
+			else if (pressCount === 2) action = "Reset";
+			else if (pressCount === 3) action = "ResetMounting";
+			else if (pressCount >= 4) action = "PauseTracking";
+
+			if (action) {
+				info(`Invoking send_user_action_tauri for ${trackerId} with action: ${action}`);
+				await invoke("send_user_action_tauri", { trackerName: trackerId, action });
+				lastButtonAction[trackerId] = Date.now();
+				buttonPressTimestamps[trackerId] = [];
+			}
+			buttonActionTimeout[trackerId] = null;
+		}, BUTTON_PRESS_WINDOW_MS);
 	});
 }
 

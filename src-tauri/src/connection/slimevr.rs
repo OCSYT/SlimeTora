@@ -280,3 +280,16 @@ pub async fn send_user_action(tracker_name: &str, action: ActionType) -> Result<
         Err(format!("Tracker {} not found", tracker_name))
     }
 }
+
+#[tauri::command]
+pub async fn send_user_action_tauri(tracker_name: String, action: String) -> Result<(), String> {
+    use firmware_protocol::ActionType;
+    let action_type = match action.as_str() {
+        "Reset" => ActionType::Reset,
+        "ResetYaw" => ActionType::ResetYaw,
+        "ResetMounting" => ActionType::ResetMounting,
+        "PauseTracking" => ActionType::PauseTracking,
+        _ => ActionType::Unknown(0),
+    };
+    send_user_action(&tracker_name, action_type).await
+}
