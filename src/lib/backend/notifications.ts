@@ -244,7 +244,7 @@ async function buttonNotification() {
 			else if (pressCount >= 4) action = "PauseTracking";
 
 			if (action) {
-				info(`Invoking send_user_action_tauri for ${trackerId} with action: ${action}`);
+				info(`Sending action ${action} from ${pressCount} presses: ${trackerId}`);
 				await invoke("send_user_action_tauri", { trackerName: trackerId, action });
 				lastButtonAction[trackerId] = Date.now();
 				buttonPressTimestamps[trackerId] = [];

@@ -9,6 +9,8 @@ use once_cell::sync::Lazy;
 use std::io::Cursor;
 use std::time::Instant;
 use tracker_emulation_rs::EmulatedTracker;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> =
     Lazy::new(DashMap::new);
@@ -53,6 +55,21 @@ pub fn get_assignment_by_id(id: &str) -> Option<&'static str> {
         .iter()
         .find(|(_, assignment_id)| *assignment_id == id)
         .map(|(name, _)| *name)
+}
+
+/// Generates a MAC address based on the tracker name (serial)
+pub fn get_mac_from_name(tracker_name: &str) -> [u8; 6] {
+    let mut hasher = DefaultHasher::new();
+    tracker_name.hash(&mut hasher);
+    let hash = hasher.finish();
+    [
+        0x02, // Locally administered MAC address
+        ((hash >> 40) & 0xFF) as u8,
+        ((hash >> 32) & 0xFF) as u8,
+        ((hash >> 24) & 0xFF) as u8,
+        ((hash >> 16) & 0xFF) as u8,
+        ((hash >> 8) & 0xFF) as u8,
+    ]
 }
 
 /// ### Connections supported:

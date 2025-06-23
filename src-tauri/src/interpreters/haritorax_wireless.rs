@@ -1,7 +1,7 @@
 use crate::{
     connection::slimevr::{add_tracker, remove_tracker, send_accel, send_battery, send_rotation},
     interpreters::{
-        common::{process_connection_data, process_info_data},
+        common::{get_mac_from_name, process_connection_data, process_info_data},
         core::{Interpreter, MagStatus},
     },
 };
@@ -123,11 +123,14 @@ async fn process_imu(
                 }
             }
             None => {
+                let tracker_id = tracker_name.splitn(2, '-').nth(1).unwrap_or(tracker_name);
+
                 info!("Creating new tracker: {}", tracker_name);
 
-                // TODO: seed tracker serial for mac address
-                // we should get the serial and seed that for the mac address, so when users switch between BT or serial they are the same tracker to SlimeVR Server
-                if let Err(e) = add_tracker(app_handle, tracker_name, [0, 0, 0, 0, 0, 0x01]).await {
+                // for BLE trackers, we still use the old name when passing to the UI
+                // TODO: i should change that, we will identify the connection type in the UI
+                let mac = get_mac_from_name(tracker_id);
+                if let Err(e) = add_tracker(app_handle, tracker_name, mac).await {
                     error!("Failed to add tracker: {}", e);
                     return Err(format!("Failed to add tracker: {}", e));
                 }
