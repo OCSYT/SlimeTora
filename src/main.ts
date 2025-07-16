@@ -1,8 +1,12 @@
+// LMAO all of this code is ass and i seriously need to rewrite everything
+// apparently 1230912 years ago i was having issues using multiple files to clean up code so this ended up 2k lines
+// i'm sorry
+
 /*
  * Global imports and variables
  */
 
-import { autoDetect } from "@serialport/bindings-cpp";
+import { autoDetect, PortInfo } from "@serialport/bindings-cpp";
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import fs, { PathLike } from "fs";
 import { FPSMode, HaritoraX, MagStatus, SensorAutoCorrection, SensorMode, TrackerModel } from "haritorax-interpreter";
@@ -67,6 +71,16 @@ let connectionActive = false;
 
 let resources;
 let comPorts = await Binding.list();
+// look for GX6/GX2 VID & PID
+let highlightedPorts = comPorts
+    .filter(
+        (port: PortInfo) =>
+            port.vendorId &&
+            port.productId &&
+            ((port.vendorId.toUpperCase() === "04DA" && port.productId.toUpperCase() === "3F18") ||
+                (port.vendorId.toUpperCase() === "1915" && port.productId.toUpperCase() === "520F")),
+    )
+    .map((port: PortInfo) => port.path);
 
 /*
  * Initialization
@@ -656,6 +670,16 @@ ipcMain.handle("get-com-ports", async (_event, arg: string) => {
         device = undefined;
         return ports;
     }
+});
+
+ipcMain.handle("get-com-ports-highlighted", () => {
+    if (highlightedPorts.length === 0) {
+        warn("No highlighted COM ports found", "connection");
+        return [];
+    }
+
+    log(`Highlighted COM ports: ${highlightedPorts.join(", ")}`, "connection");
+    return highlightedPorts;
 });
 
 ipcMain.handle("get-active-trackers", () => {

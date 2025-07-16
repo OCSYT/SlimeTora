@@ -55,6 +55,7 @@ let translationUpdates = true;
 let updateChannel = "stable";
 
 let loggingMode = 1;
+let highlightedPorts: string[] = [];
 
 /*
  * Renderer functions
@@ -109,6 +110,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Populate COM ports
     const comPortList = document.getElementById("com-ports");
     const comPorts: string[] = await window.ipc.invoke("get-com-ports", null);
+    const comPortsHighlighted: string[] = await window.ipc.invoke("get-com-ports-highlighted", null);
+    highlightedPorts = comPortsHighlighted;
 
     l(`COM ports: ${JSON.stringify(comPorts)}`);
 
@@ -116,6 +119,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     comPorts.forEach((port: string, index: number) => {
         // Remove /dev/tty from COM ports on Linux
         const prettyPort = port.replace("/dev/tty", "");
+        const labelClass = highlightedPorts.includes(port) ? "has-text-success" : "";
 
         const switchHTML = `
         <div class="switch-container">
@@ -123,7 +127,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             <input type="checkbox" id="${port}" />
             <label for="${port}" class="slider round"></label>
             </div>
-            <label for="${port}">${prettyPort}</label>
+            <label for="${port}" class="${labelClass}">${prettyPort}</label>
         </div>
         `;
 
@@ -347,11 +351,11 @@ async function autodetect() {
             detectedConnectionModes.push("GX2");
             await handleComPorts("GX2");
 
-            // Enable BT and COM for HaritoraX Wireless w/ GX2 (no GX6)
+            // Enable BT and COM for HaritoraX Wireless/2 w/ GX2 (no GX6)
             if (devices.has(TrackerModel.Wireless) && !devices.has("GX6")) {
                 simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                 detectedConnectionModes.push("Bluetooth");
-                l("Found HaritoraX Wireless and GX2, enabling Bluetooth and COM", "detect");
+                l("Found HaritoraX Wireless/2 and GX2, enabling Bluetooth and COM", "detect");
             }
         },
         Bluetooth: async () => {
@@ -359,7 +363,7 @@ async function autodetect() {
             simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
             if (!devices.has(TrackerModel.Wireless) || !devices.has("HaritoraX Wired")) {
                 // Assume HaritoraX Wireless if no other devices are found
-                l("No other devices found with Bluetooth, assuming HaritoraX Wireless", "detect");
+                l("No other devices found with Bluetooth, assuming HaritoraX Wireless/2", "detect");
                 detectedTrackerModel = TrackerModel.Wireless;
                 simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
             }
@@ -1590,18 +1594,39 @@ function addEventListeners() {
             },
         });
 
-        // If four ports are selected, disable the rest
-        if (selectedComPorts.length >= 4 && !bypassCOMPortLimit) {
+        // bad and rusty implementation, multiple gx dongles can be done
+        // just disable the limit if you really have multiple lol
+        if (bypassCOMPortLimit) {
+            // If bypass is enabled, always enable all ports
+            comPorts.forEach((port) => (port.disabled = false));
+        } else if (wirelessTrackerEnabled && highlightedPorts.length === 1) {
+            // Only allow checking one port for GX2
             comPorts.forEach((port) => {
-                if (!port.checked) {
-                    port.disabled = true;
-                }
+                if (!port.checked && selectedComPorts.length >= 1) port.disabled = true;
+                else port.disabled = false;
+            });
+        } else if (wirelessTrackerEnabled && highlightedPorts.length === 3) {
+            // Only allow checking three ports for GX6
+            comPorts.forEach((port) => {
+                if (!port.checked && selectedComPorts.length >= 3) port.disabled = true;
+                else port.disabled = false;
+            });
+        } else if (selectedComPorts.length >= 4) {
+            // Default to allow checking up to four ports (if 4 for GX6+GX2)
+            comPorts.forEach((port) => {
+                if (!port.checked) port.disabled = true;
+                else port.disabled = false;
             });
         } else {
-            // If less than four ports are selected, enable all ports
-            comPorts.forEach((port) => {
-                port.disabled = false;
-            });
+            // Enable all ports
+            comPorts.forEach((port) => (port.disabled = false));
+        }
+
+        if (highlightedPorts.length > 0 && selectedComPorts.some((port) => !highlightedPorts.includes(port))) {
+            showErrorDialog(
+                "dialogs.comPortsUnrecommendedSelected.title",
+                "dialogs.comPortsUnrecommendedSelected.message",
+            );
         }
     });
 

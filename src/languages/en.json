@@ -276,6 +276,10 @@
             "title": "COM ports missing",
             "message": "Some COM ports set in the config were not found, please make sure your dongle(s) and trackers are connected."
         },
+        "comPortsUnrecommendedSelected": {
+            "title": "Unrecommended COM ports selected",
+            "message": "The COM port you selected was not detected to be one from a GX(6/2) dongle. Please make sure you have the correct COM ports selected or you may experience intermittent connection issues with your trackers."
+        },
         "noLogsFolder": {
             "title": "No logs!",
             "message": "You should probably enable debug logging first in debugging settings."
