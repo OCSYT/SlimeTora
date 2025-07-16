@@ -314,6 +314,11 @@ window.turnOffTracker = () => {
     window.ipc.send("turn-off-tracker", trackerName);
     window.close();
 };
+window.switchMode = async () => {
+    window.log(`Switching mode for tracker: ${trackerName}`);
+    const response = await window.ipc.invoke("switch-mode", trackerName);
+    if (response) window.close();
+};
 window.saveTrackerSettings = saveTrackerSettings;
 window.getTrackerSettings = getTrackerSettings;
 window.resetTrackerSettings = resetTrackerSettings;

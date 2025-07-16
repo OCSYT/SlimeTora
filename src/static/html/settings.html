@@ -180,6 +180,17 @@
                         <div class="settings-container">
                             <button
                                 class="button is-info"
+                                id="turn-off-tracker-button"
+                                onclick="switchMode()"
+                                data-i18n="trackerInfo.trackerSettings.debugging.switchMode"
+                            >
+                                Switch communication mode
+                            </button>
+                        </div>
+                        <br />
+                        <div class="settings-container">
+                            <button
+                                class="button is-info"
                                 onclick="getTrackerSettings()"
                                 data-i18n="trackerInfo.trackerSettings.debugging.getSettings"
                             >

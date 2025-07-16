@@ -1181,6 +1181,46 @@ ipcMain.on("turn-off-tracker", async (_event, arg) => {
     }
 });
 
+ipcMain.handle("switch-mode", async (_event, arg) => {
+    const trackerName = arg;
+
+    if (!device) {
+        error("Device instance wasn't started correctly", "connection");
+        return;
+    }
+
+    const newMode = trackerName.startsWith("HaritoraX") ? "com" : "bluetooth";
+
+    log(`Switching mode for tracker "${trackerName}"`, "connection");
+    try {
+        const translatedTitle = await translate("dialogs.switchMode.title");
+        const translatedMessage = await translate("dialogs.switchMode.message");
+        const translatedButtonYes = await translate("dialogs.switchMode.yes");
+        const translatedButtonNo = await translate("dialogs.switchMode.no");
+
+        const response = await dialog.showMessageBox({
+            type: "question",
+            buttons: [translatedButtonYes, translatedButtonNo],
+            title: translatedTitle,
+            message: translatedMessage.replace("{trackerName}", trackerName).replace("{newMode}", newMode),
+            cancelId: 1,
+        });
+
+        if (response.response === 0) {
+            await device.switchCommunication(trackerName, newMode);
+            log(`Switched mode for tracker "${trackerName}"`, "connection");
+            return true;
+        } else {
+            log(`User cancelled switching mode for tracker "${trackerName}"`, "connection");
+            return false;
+        }
+    } catch (err) {
+        error(`Failed to switch mode for tracker "${trackerName}": ${err}`, "connection");
+        await showError("dialogs.switchModeError.title", "dialogs.switchModeError.message");
+        return false;
+    }
+});
+
 /*
  * Config handlers
  */

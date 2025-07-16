@@ -44,10 +44,10 @@
         "battery": "Battewy:",
         "magStatus": "Magnyatus:",
         "edit": "Edit",
-        "settings": "Owewwide meowings",
+        "settings": "Manyage twacker",
         "trackerSettings": {
-            "title": "{trackerName} meowings",
-            "text": "Owewwide the gwobaw twacker meowings fow this twacker. Can be usefuw if onwy cewtain twackers hawe bad mag statuses.",
+            "title": "{trackerName} manyagement",
+            "text": "Manyage the indiwiduaw twacker. Can be used to set settings pew-twacker, if onwy some twackers hawe a bad mag status fow exampwe.",
             "fps": {
                 "title": "Nyas twansfew wate",
                 "tooltip": "Sewect the nyas twansfew wate fow the twackers. If using Bwuetooth, 50MPS may be mowe stabwe.",
@@ -70,6 +70,7 @@
             "debugging": {
                 "title": "Demeowing",
                 "tooltip": "Some demeowing options fow this indiwiduaw twacker.",
+                "switchMode": "Switch meowing mode",
                 "turnOff": "Tuwn off twacker",
                 "resetSettings": "Weset meowings",
                 "getSettings": "Get twacker meowings"
@@ -202,7 +203,7 @@
             },
             "step-6": {
                 "title": "Twacker assignment",
-                "text": "With youw twackers connyected, u can go thwough the inyitiaw setup of SwimeVR servew. Cwick \"Wet's get set up!\", then \"Skip Wi-Fi meowings\", and then \"I put stickews and stwaps!\". Nyext, assign youw twackers 2 the cowwect body pawt - an exampwe is shown in the scweenshot bewow."
+                "text": "With youw twackers connyected, u can go thwough the inyitiaw setup of SwimeVR servew. Cwick \"Wet's get set up!\", then \"Skip Wi-Fi meowings\", and then \"I put stickews and stwaps!\". Nyext, assign youw twackers 2 the cowwect body pawt - an exampwe is shown in the scweenshot bewow.  <b>Fow HawitowaX 2 usews</b>, the \"weg\" twacker (bewow the knyee) shouwd be the \"ankwe\" twacker in SwimeVR, and the \"extension\" twacker (abuv the knyee, connyected by the wiwe) shouwd be the \"thigh\" twacker."
             },
             "step-7": {
                 "title": "Meowting cawibwation",
@@ -275,6 +276,20 @@
         "comPortsMissing": {
             "title": "COM powts missing",
             "message": "Some COM powts set in the config wewe nyot found, pwease make suwe youw dongwe(s) and twackers awe connyected."
+        },
+        "comPortsUnrecommendedSelected": {
+            "title": "Unwecommended COM powts sewected",
+            "message": "The COM powt you sewected was nyot detected to be onye fwom a GX(6/2) dongwe. Pwease make suwe you hawe the cowwect COM powts sewected ow you may expewience intewmittent connyection issues with youw twackers."
+        },
+        "switchMode": {
+            "title": "Switch meowing mode",
+            "message": "Awe you suwe you want to switch the meowing mode fow twacker \"{trackerName}\" to {newMode}?",
+            "yes": "okie",
+            "no": "Nyo"
+        },
+        "switchModeError": {
+            "title": "Faiwed to switch mode",
+            "message": "An ewwow occuwwed whiwe twying to switch the twacker mode."
         },
         "noLogsFolder": {
             "title": "Nyo wogs!",
@@ -376,7 +391,7 @@
             "appUpdates": {
                 "title": "App updates",
                 "message": "Wouwd you wike to awwow the pwogwam to check fow updates on stawtup?",
-                "yes": "Yes",
+                "yes": "okie",
                 "no": "Nyo"
             },
             "appUpdatesChannel": {
@@ -388,7 +403,7 @@
             "languageUpdates": {
                 "title": "Wanguage updates",
                 "message": "Wouwd you wike to awwow the pwogwam to check fow wanguage updates on stawtup?",
-                "yes": "Yes",
+                "yes": "okie",
                 "no": "Nyo"
             },
             "autoStart": {

@@ -112,6 +112,7 @@ declare global {
 
         // settings.ts
         turnOffTracker: () => void;
+        switchMode: () => void;
         saveTrackerSettings: () => void;
         getTrackerSettings: () => void;
         resetTrackerSettings: () => void;

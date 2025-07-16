@@ -44,10 +44,10 @@
         "battery": "Battery:",
         "magStatus": "Mag status:",
         "edit": "Edit",
-        "settings": "Override settings",
+        "settings": "Manage tracker",
         "trackerSettings": {
             "title": "{trackerName} settings",
-            "text": "Override the global tracker settings for this tracker. Can be useful if only certain trackers have bad mag statuses.",
+            "text": "Manage the individual tracker. Can be used to set settings per-tracker, if only some trackers have a bad mag status for example.",
             "fps": {
                 "title": "FPS transfer rate",
                 "tooltip": "Select how many times the trackers send data per second (\"FPS\"). 50 FPS may be more stable on Bluetooth and use less battery, but isn't as smooth as 100 FPS.",
@@ -70,6 +70,7 @@
             "debugging": {
                 "title": "Debugging",
                 "tooltip": "Some debugging options for this individual tracker.",
+                "switchMode": "Switch communication mode",
                 "turnOff": "Turn off tracker",
                 "resetSettings": "Reset settings",
                 "getSettings": "Get tracker settings"
@@ -279,6 +280,16 @@
         "comPortsUnrecommendedSelected": {
             "title": "Unrecommended COM ports selected",
             "message": "The COM port you selected was not detected to be one from a GX(6/2) dongle. Please make sure you have the correct COM ports selected or you may experience intermittent connection issues with your trackers."
+        },
+        "switchMode": {
+            "title": "Switch communication mode",
+            "message": "Are you sure you want to switch the communication mode for tracker \"{trackerName}\" to {newMode}?",
+            "yes": "Yes",
+            "no": "No"
+        },
+        "switchModeError": {
+            "title": "Failed to switch mode",
+            "message": "An error occurred while trying to switch the tracker mode."
         },
         "noLogsFolder": {
             "title": "No logs!",
