@@ -274,6 +274,7 @@ async function resetTrackerSettings() {
 async function getTrackerSettings() {
     const currentSettings = await window.ipc.invoke("get-tracker-settings", {
         trackerName: trackerName,
+        forceBLE: true,
     });
     const sensorMode = currentSettings.sensorMode;
     const fpsMode = currentSettings.fpsMode;

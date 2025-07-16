@@ -48,7 +48,7 @@
         "@slimevr/common": "^0.1.3",
         "@slimevr/firmware-protocol": "^0.6.6",
         "@slimevr/tracker-emulation": "^0.2.5",
-        "haritorax-interpreter": "^3.4.4",
+        "haritorax-interpreter": "^3.4.5",
         "i18next": "^25.3.2",
         "loc-i18next": "^0.1.6",
         "lodash-es": "^4.17.21",
