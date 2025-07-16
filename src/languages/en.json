@@ -202,7 +202,7 @@
             },
             "step-6": {
                 "title": "Tracker assignment",
-                "text": "With your trackers connected, you can go through the initial setup of SlimeVR Server. Click \"Let's get set up!\", then \"Skip Wi-Fi settings\", and then \"I put stickers and straps!\". Next, assign your trackers to the correct body part - an example is shown in the screenshot below."
+                "text": "With your trackers connected, you can go through the initial setup of SlimeVR Server. Click \"Let's get set up!\", then \"Skip Wi-Fi settings\", and then \"I put stickers and straps!\". Next, assign your trackers to the correct body part - an example is shown in the screenshot below. <b>For HaritoraX 2 users</b>, the \"leg\" tracker (below the knee) should be the \"ankle\" tracker in SlimeVR, and the \"extension\" tracker (above the knee, connected by the wire) should be the \"thigh\" tracker."
             },
             "step-7": {
                 "title": "Mounting calibration",
