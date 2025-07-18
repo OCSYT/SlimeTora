@@ -35,6 +35,7 @@ Read the wiki to get started: <https://github.com/OCSYT/SlimeTora/wiki>
 - Manage GX(6/2) dongles in-app - tracker pairing & changing 2.4GHz channels
 - Set tracker settings per-tracker (`HaritoraX 2` & `HaritoraX Wireless` only)
 - Turn off one or all trackers (`HaritoraX 2` & `HaritoraX Wireless` only)
+- Switch between Bluetooth or GX(6/2) dongle mode (`HaritoraX 2` & `HaritoraX Wireless` only)
 - Localization support
   - You can help translate the program! Clone the repo and make a new file under `/src/static/languages/` with a two-letter language identifier (ending with .json, e.g. `jp.json`)!
 - Linux & macOS support
@@ -52,8 +53,6 @@ Read the wiki to get started: <https://github.com/OCSYT/SlimeTora/wiki>
 
 # Known issues
 
-- (LINUX) Cannot launch on Linux, terminal shows `GTK 2/3 symbols detected. Using GTK2/3 and GTK 4 in the same process is not supported`
-  - Upstream issue with [Electron v36](https://github.com/electron/electron/issues/46538), using `--gtk-version=3` resolves this.
 - Bluetooth issues
   - e.g. unable to find trackers at all, some disconnections
   - This seems to be affecting a certain percentage of users and I'm unsure why this is the case - it seems to stem from a problem with the Bluetooth NPM package being used so it seems to be out of my control.
