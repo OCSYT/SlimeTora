@@ -30,9 +30,10 @@ Read the wiki to get started: <https://github.com/OCSYT/SlimeTora/wiki>
 - `Bluetooth` (LE/Classic) and `COM`/`GX(6/2)` support (with all at the same time supported on `HaritoraX 2` & `HaritoraX Wireless`)
 - Use of [haritorax-interpreter](https://github.com/JovannMC/haritorax-interpreter) package to process tracker data
 - Get started with the program (and SlimeVR Server) easily through the guided onboarding process!
-  - Through the "automatic setup", run auto-detection to let the program **_set itself up for you_**!
+  - Through the "guided setup", answer questions about your setup or run auto-detection to let the program **_set itself up for you_**!
   - Automatically detect your tracker model, connection mode (including COM ports), and tracker settings
 - Manage GX(6/2) dongles in-app - tracker pairing & changing 2.4GHz channels
+  - Treat it as a beta, recommended to use the official app to manage them
 - Set tracker settings per-tracker (`HaritoraX 2` & `HaritoraX Wireless` only)
 - Turn off one or all trackers (`HaritoraX 2` & `HaritoraX Wireless` only)
 - Switch between Bluetooth or GX(6/2) dongle mode (`HaritoraX 2` & `HaritoraX Wireless` only)
@@ -56,7 +57,7 @@ Read the wiki to get started: <https://github.com/OCSYT/SlimeTora/wiki>
 - Bluetooth issues
   - e.g. unable to find trackers at all, some disconnections
   - This seems to be affecting a certain percentage of users and I'm unsure why this is the case - it seems to stem from a problem with the Bluetooth NPM package being used so it seems to be out of my control.
-  - SlimeTora v2 will hopefully fix issues for these people, but there are some ways and builds to hopefully minimize these on my Discord and v1.5.1: <https://discord.gg/XdfnKD9QVM>
+  - SlimeTora v2 will hopefully fix issues for these people, but there are some ways and builds to hopefully minimize these on my Discord and v1.5.1: <https://discord.gg/XdfnKD9QVM> & <https://github.com/OCSYT/SlimeTora/releases/tag/v1.5.1>
 - macOS builds are unnecessarily large
 - Battery information jumps to incorrect percentages/voltage randomly
   - Unfortunately this is an issue I can't fix.. because it's literally an issue with the trackers reporting those random values themselves
