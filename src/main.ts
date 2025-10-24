@@ -662,7 +662,7 @@ ipcMain.handle("get-com-ports", async (_event, arg: string) => {
         const isLinux = process.platform === "linux";
         return comPorts
             .map((port: any) => port.path)
-            .filter((path: string) => (isLinux ? /\/dev\/tty(USB|ACM)\d+/.test(path) : true))
+            .filter((path: string) => (isLinux ? /\/dev\/(ttyUSB|ttyACM|rfcomm)\d+/.test(path) : true))
             .sort();
     }
 
