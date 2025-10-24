@@ -82,9 +82,10 @@
         "tooltip": "Set the settings of the program. An option with yellow text requires a restart of the connection or program to apply.",
         "trackerModel": {
             "title": "Tracker model",
-            "tooltip": "Select the model of HaritoraX trackers you have, the HaritoraX Wireless/2 or HaritoraX Wired (1.1b/1.1/1.0).",
-            "wireless": "HaritoraX Wireless/2",
-            "wired": "HaritoraX 1.1b/1.1/1.0"
+            "tooltip": "Select the model of HaritoraX trackers you have, the HaritoraX 2, HaritoraX Wireless, or HaritoraX Wired (1.1b/1.1/1.0).",
+            "wireless": "HaritoraX Wireless",
+            "wired": "HaritoraX 1.1b/1.1/1.0",
+            "x2": "HaritoraX 2"
         },
         "connectionMode": {
             "title": "Connection mode",
@@ -355,8 +356,9 @@
             "trackerModel": {
                 "title": "Tracker model",
                 "message": "Select the model of HaritoraX trackers you have from the list.",
-                "wireless": "HaritoraX Wireless/2",
-                "wired": "HaritoraX 1.1b/1.1/1.0"
+                "wireless": "HaritoraX Wireless",
+                "wired": "HaritoraX 1.1b/1.1/1.0",
+                "x2": "HaritoraX 2"
             },
             "connectionMode": {
                 "title": "Connection mode",

@@ -206,12 +206,24 @@
                                 <span
                                     class="tooltip-text subtitle is-6 has-text-weight-normal"
                                     data-i18n="programSettings.trackerModel.tooltip"
-                                    >Select the model of HaritoraX trackers you have, the HaritoraX Wireless/2 or
-                                    HaritoraX Wired (1.1b/1.1/1.0).</span
+                                    >Select the model of HaritoraX trackers you have, the HaritoraX 2, HaritoraX
+                                    Wireless, or HaritoraX Wired (1.1b/1.1/1.0).</span
                                 >
                             </div>
                         </div>
                         <div class="settings-container">
+                            <div class="switch-container">
+                                <div class="switch">
+                                    <input type="checkbox" id="x2-tracker-switch" />
+                                    <label for="x2-tracker-switch" class="slider round"></label>
+                                </div>
+                                <label
+                                    for="x2-tracker-switch"
+                                    style="min-width: 170px"
+                                    data-i18n="programSettings.trackerModel.x2"
+                                    >HaritoraX 2</label
+                                >
+                            </div>
                             <div class="switch-container">
                                 <div class="switch">
                                     <input type="checkbox" id="wireless-tracker-switch" />
@@ -221,7 +233,7 @@
                                     for="wireless-tracker-switch"
                                     style="min-width: 170px"
                                     data-i18n="programSettings.trackerModel.wireless"
-                                    >HaritoraX Wireless/2</label
+                                    >HaritoraX Wireless</label
                                 >
                             </div>
                             <div class="switch-container">
@@ -799,7 +811,7 @@
                         </div>
                         <div class="switch-container is-centered">
                             <div class="switch">
-                                <input type="checkbox" id="slimevr-warning-switch" checked />
+                                <input type="checkbox" id="slimevr-warning-switch" class="slider round" checked />
                                 <label for="slimevr-warning-switch" class="slider round"></label>
                             </div>
                             <label for="slimevr-warning-switch" data-i18n="debugging.slimevrWarning"
@@ -808,7 +820,7 @@
                         </div>
                         <div class="switch-container is-centered">
                             <div class="switch">
-                                <input type="checkbox" id="bypass-com-limit-switch" />
+                                <input type="checkbox" id="bypass-com-limit-switch" class="slider round" />
                                 <label for="bypass-com-limit-switch" class="slider round"></label>
                             </div>
                             <label for="bypass-com-limit-switch" data-i18n="debugging.bypassPortLimit"
@@ -817,7 +829,7 @@
                         </div>
                         <div class="switch-container is-centered">
                             <div class="switch">
-                                <input type="checkbox" id="randomize-mac-switch" />
+                                <input type="checkbox" id="randomize-mac-switch" class="slider round" />
                                 <label for="randomize-mac-switch" class="slider round"></label>
                             </div>
                             <label for="randomize-mac-switch" data-i18n="debugging.randomMac"

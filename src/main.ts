@@ -58,6 +58,7 @@ let randomizeMacAddress = false;
 let heartbeatInterval = 2000;
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
+let x2TrackerEnabled = false;
 let autoOff = false;
 let appUpdatesEnabled = true;
 let translationsUpdatesEnabled = true;
@@ -105,6 +106,7 @@ try {
     slimevrWarning = config.global?.debug?.slimevrWarning ?? false;
     wirelessTrackerEnabled = config.global?.trackers?.wirelessTrackerEnabled ?? false;
     wiredTrackerEnabled = config.global?.trackers?.wiredTrackerEnabled ?? false;
+    x2TrackerEnabled = config.global?.trackers?.x2TrackerEnabled ?? false;
     autoOff = config.global?.autoOff ?? false;
     appUpdatesEnabled = config.global?.updates?.appUpdatesEnabled ?? true;
     translationsUpdatesEnabled = config.global?.updates?.translationsUpdatesEnabled ?? true;
@@ -710,6 +712,11 @@ ipcMain.on("set-randomize-mac", (_event, arg) => {
     log(`Randomize tracker MAC Address set to: ${arg}`, "settings");
 });
 
+ipcMain.on("set-x2-tracker", (_event, arg) => {
+    x2TrackerEnabled = arg;
+    log(`X2 tracker enabled set to: ${arg}`, "settings");
+});
+
 ipcMain.on("set-wireless-tracker", (_event, arg) => {
     wirelessTrackerEnabled = arg;
     log(`Wireless tracker enabled set to: ${arg}`, "settings");
@@ -962,8 +969,8 @@ ipcMain.on("start-connection", async (_event, arg) => {
 });
 
 function isValidDeviceConfiguration(types: string[], ports?: string[]): boolean {
-    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
-        log("Device configuration invalid: Both wireless and wired trackers are disabled.", "validation");
+    if (!wirelessTrackerEnabled && !wiredTrackerEnabled && !x2TrackerEnabled) {
+        log("Device configuration invalid: No tracker types enabled", "validation");
         return false;
     }
     if (types.includes("com") && (!ports || ports.length === 0)) {
@@ -977,14 +984,13 @@ function shouldInitializeNewDevice(): boolean {
     return (
         !device ||
         (device.getActiveTrackerModel() === "wired" && !wiredTrackerEnabled) ||
-        (device.getActiveTrackerModel() === "wireless" && !wirelessTrackerEnabled)
+        (device.getActiveTrackerModel() === "wireless" && !wirelessTrackerEnabled) ||
+        (device.getActiveTrackerModel() === "x2" && !x2TrackerEnabled)
     );
 }
 
 function initializeDevice(forceDisableLogging: boolean = false) {
-    const trackerType = wiredTrackerEnabled ? TrackerModel.Wired : TrackerModel.Wireless;
     const effectiveLoggingMode = forceDisableLogging ? 1 : loggingMode;
-    log(`Creating new HaritoraX ${trackerType} instance with logging mode ${effectiveLoggingMode}...`, "connection");
     const loggingOptions = {
         1: [false, false, false, false],
         2: [true, false, false, true],
@@ -993,7 +999,15 @@ function initializeDevice(forceDisableLogging: boolean = false) {
     const [logging, imuProcessing, rawData, printWrites] = (loggingOptions as { [key: string]: (boolean | boolean)[] })[
         effectiveLoggingMode.toString()
     ] || [false, false, false, false];
-    device = new HaritoraX(trackerType, logging, imuProcessing, rawData, printWrites);
+
+    let trackerModel: TrackerModel | null = null;
+    if (wirelessTrackerEnabled) trackerModel = TrackerModel.Wireless;
+    else if (wiredTrackerEnabled) trackerModel = TrackerModel.Wired;
+    else if (x2TrackerEnabled) trackerModel = TrackerModel.X2;
+
+    log(`Creating new HaritoraX ${trackerModel} instance with logging mode ${effectiveLoggingMode}...`, "connection");
+
+    device = new HaritoraX(trackerModel, logging, imuProcessing, rawData, printWrites);
 
     startDeviceListeners();
 }

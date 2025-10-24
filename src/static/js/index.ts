@@ -7,6 +7,7 @@ import { CompactCard, NormalCard } from "./templates/device-card.js";
 enum TrackerModel {
     Wireless = "HaritoraX Wireless",
     Wired = "HaritoraX Wired (1.1b/1.1/1.0)",
+    X2 = "HaritoraX 2",
 }
 
 enum ConnectionMode {
@@ -24,6 +25,7 @@ const selectedComPorts: string[] = [];
 
 let wirelessTrackerEnabled = false;
 let wiredTrackerEnabled = false;
+let x2TrackerEnabled = false;
 
 let fpsMode = 50;
 let sensorMode = 2;
@@ -156,6 +158,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     trackerHeartbeatInterval = settings.global?.trackerHeartbeatInterval ?? 2000;
     wirelessTrackerEnabled = settings.global?.trackers?.wirelessTrackerEnabled ?? false;
     wiredTrackerEnabled = settings.global?.trackers?.wiredTrackerEnabled ?? false;
+    x2TrackerEnabled = settings.global?.trackers?.x2TrackerEnabled ?? false;
     bluetoothEnabled = settings.global?.connectionMode?.bluetoothEnabled ?? false;
     comEnabled = settings.global?.connectionMode?.comEnabled ?? false;
     fpsMode = settings.global?.trackers?.fpsMode ?? 50;
@@ -184,6 +187,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     setSwitchState("tracker-visualization-switch", trackerVisualization);
     setSwitchState("wireless-tracker-switch", wirelessTrackerEnabled);
     setSwitchState("wired-tracker-switch", wiredTrackerEnabled);
+    setSwitchState("x2-tracker-switch", x2TrackerEnabled);
     setSwitchState("bluetooth-switch", bluetoothEnabled);
     setSwitchState("com-switch", comEnabled);
     setSwitchState("accelerometer-switch", accelerometerEnabled);
@@ -250,13 +254,23 @@ document.addEventListener("DOMContentLoaded", async function () {
     selectedComPorts.push(...selectedPorts);
 
     // Disable unsupported settings
-    if (wirelessTrackerEnabled && !wiredTrackerEnabled) {
-        setElementDisabledState(document.getElementById("wired-tracker-switch"), true);
-    } else if (wiredTrackerEnabled && !wirelessTrackerEnabled) {
-        const ids = ["wireless-tracker-switch", "bluetooth-switch"];
+    if (wirelessTrackerEnabled && !wiredTrackerEnabled && !x2TrackerEnabled) {
+        const ids = ["wired-tracker-switch", "x2-tracker-switch"];
+        ids.forEach((id) => {
+            const element = document.getElementById(id);
+            setElementDisabledState(element, wirelessTrackerEnabled);
+        });
+    } else if (wiredTrackerEnabled && !wirelessTrackerEnabled && !x2TrackerEnabled) {
+        const ids = ["wireless-tracker-switch", "x2-tracker-switch", "bluetooth-switch"];
         ids.forEach((id) => {
             const element = document.getElementById(id);
             setElementDisabledState(element, wiredTrackerEnabled);
+        });
+    } else if (x2TrackerEnabled && !wirelessTrackerEnabled && !wiredTrackerEnabled) {
+        const ids = ["wireless-tracker-switch", "wired-tracker-switch", "bluetooth-switch"];
+        ids.forEach((id) => {
+            const element = document.getElementById(id);
+            setElementDisabledState(element, x2TrackerEnabled);
         });
     }
 
@@ -335,6 +349,10 @@ async function autodetect() {
     }
 
     const deviceHandlers: { [key: string]: () => Promise<void> } = {
+        "HaritoraX 2": async () => {
+            simulateChangeEvent(document.getElementById("x2-tracker-switch") as HTMLInputElement, true);
+            detectedTrackerModel = TrackerModel.X2;
+        },
         "HaritoraX Wireless": async () => {
             simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
             detectedTrackerModel = TrackerModel.Wireless;
@@ -352,7 +370,7 @@ async function autodetect() {
             await handleComPorts("GX2");
 
             // Enable BT and COM for HaritoraX Wireless/2 w/ GX2 (no GX6)
-            if (devices.has(TrackerModel.Wireless) && !devices.has("GX6")) {
+            if ((devices.has(TrackerModel.Wireless) || devices.has(TrackerModel.X2)) && !devices.has("GX6")) {
                 simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
                 detectedConnectionModes.push("Bluetooth");
                 l("Found HaritoraX Wireless/2 and GX2, enabling Bluetooth and COM", "detect");
@@ -362,8 +380,8 @@ async function autodetect() {
             detectedConnectionModes.push("Bluetooth");
             simulateChangeEvent(document.getElementById("bluetooth-switch") as HTMLInputElement, true);
             if (!devices.has(TrackerModel.Wireless) || !devices.has("HaritoraX Wired")) {
-                // Assume HaritoraX Wireless if no other devices are found
-                l("No other devices found with Bluetooth, assuming HaritoraX Wireless/2", "detect");
+                // Assume HaritoraX 2 if no other devices are found
+                l("No other devices found with Bluetooth, assuming HaritoraX 2", "detect");
                 detectedTrackerModel = TrackerModel.Wireless;
                 simulateChangeEvent(document.getElementById("wireless-tracker-switch") as HTMLInputElement, true);
             }
@@ -440,6 +458,7 @@ Ankle motion detection: ${ankle}`,
 }
 
 async function questions() {
+    const x2Switch = document.getElementById("x2-tracker-switch") as HTMLInputElement;
     const wirelessSwitch = document.getElementById("wireless-tracker-switch") as HTMLInputElement;
     const wiredSwitch = document.getElementById("wired-tracker-switch") as HTMLInputElement;
     const bluetoothSwitch = document.getElementById("bluetooth-switch") as HTMLInputElement;
@@ -480,6 +499,7 @@ async function questions() {
     }
 
     // Set all switches to false
+    simulateChangeEvent(x2Switch, false);
     simulateChangeEvent(wirelessSwitch, false);
     simulateChangeEvent(wiredSwitch, false);
     simulateChangeEvent(bluetoothSwitch, false);
@@ -500,7 +520,8 @@ async function questions() {
             selectedComPorts.length = 0;
             let done = false;
 
-            if (wirelessTrackerEnabled) {
+            if (wirelessTrackerEnabled || x2TrackerEnabled) {
+                console.log("Getting COM ports for wireless/2 tracker");
                 const gx6Ports = await window.ipc.invoke("get-com-ports", "GX6");
                 const gx2Ports = await window.ipc.invoke("get-com-ports", "GX2");
                 const wirelessPorts = gx6Ports.concat(gx2Ports).filter(Boolean);
@@ -560,7 +581,7 @@ async function questions() {
             let done = false;
 
             // Default settings based on tracker model
-            if (wirelessTrackerEnabled) {
+            if (wirelessTrackerEnabled || x2TrackerEnabled) {
                 accelerometerEnabled = true;
             } else if (wiredTrackerEnabled) {
                 accelerometerEnabled = true;
@@ -619,6 +640,7 @@ async function questions() {
             case "trackerModel":
                 btns = [
                     "Cancel",
+                    await t("dialogs.questions.trackerModel.x2"),
                     await t("dialogs.questions.trackerModel.wireless"),
                     await t("dialogs.questions.trackerModel.wired"),
                 ];
@@ -627,9 +649,12 @@ async function questions() {
                 if (response === 0) {
                     return;
                 } else if (response === 1) {
+                    simulateChangeEvent(document.getElementById("x2-tracker-switch") as HTMLInputElement, true);
+                    x2TrackerEnabled = true;
+                } else if (response === 2) {
                     simulateChangeEvent(wirelessSwitch, true);
                     wirelessTrackerEnabled = true;
-                } else if (response === 2) {
+                } else if (response === 3) {
                     simulateChangeEvent(wiredSwitch, true);
                     wiredTrackerEnabled = true;
                     // Skip connectionMode and autoOff dialogs (not supported)
@@ -775,7 +800,11 @@ async function questions() {
                 break;
             case "finish":
                 const msg = await t("dialogs.questions.finish.message");
-                const trackerModel = wirelessTrackerEnabled ? TrackerModel.Wireless : TrackerModel.Wired;
+                const trackerModel = x2TrackerEnabled
+                    ? TrackerModel.X2
+                    : wirelessTrackerEnabled
+                        ? TrackerModel.Wireless
+                        : TrackerModel.Wired;
                 const connectionMode =
                     bluetoothEnabled && comEnabled
                         ? ConnectionMode.Both
@@ -861,7 +890,7 @@ function toggleConnectionButtons(state: boolean) {
     if (startButton) startButton.disabled = state;
     if (stopButton) stopButton.disabled = !state;
 
-    if (wirelessTrackerEnabled) {
+    if (wirelessTrackerEnabled || x2TrackerEnabled) {
         if (turnOffTrackersButton) turnOffTrackersButton.disabled = !state;
         if (comEnabled) {
             if (pairingButton) pairingButton.disabled = !state;
@@ -871,7 +900,7 @@ function toggleConnectionButtons(state: boolean) {
 }
 
 async function handleTrackerModelCheck() {
-    if (!wirelessTrackerEnabled && !wiredTrackerEnabled) {
+    if (!wirelessTrackerEnabled && !wiredTrackerEnabled && !x2TrackerEnabled) {
         e("No tracker model enabled");
         setStatus("main.status.noTrackerModel");
         await showErrorDialog("dialogs.noTrackerModel.title", "dialogs.noTrackerModel.message");
@@ -1503,6 +1532,27 @@ function addEventListeners() {
      * "Tracker model" event listeners
      */
 
+    document.getElementById("x2-tracker-switch").addEventListener("change", (event) => {
+        x2TrackerEnabled = (event.target as HTMLInputElement).checked;
+        l(`Switched X2 tracker to: ${x2TrackerEnabled}`);
+        window.ipc.send("save-setting", {
+            global: {
+                trackers: {
+                    x2TrackerEnabled: x2TrackerEnabled,
+                },
+            },
+        });
+
+        window.ipc.send("set-x2-tracker", x2TrackerEnabled);
+
+        // Disable unsupported settings
+        const ids = ["wired-tracker-switch", "wireless-tracker-switch"];
+        ids.forEach((id) => {
+            const element = document.getElementById(id);
+            setElementDisabledState(element, x2TrackerEnabled);
+        });
+    });
+
     document.getElementById("wireless-tracker-switch").addEventListener("change", function () {
         wirelessTrackerEnabled = !wirelessTrackerEnabled;
         l(`Switched wireless tracker to: ${wirelessTrackerEnabled}`);
@@ -1517,11 +1567,11 @@ function addEventListeners() {
         window.ipc.send("set-wireless-tracker", wirelessTrackerEnabled);
 
         // Disable unsupported settings
-        if (wirelessTrackerEnabled || bluetoothEnabled) {
-            document.getElementById("wired-tracker-switch").setAttribute("disabled", "true");
-        } else {
-            document.getElementById("wired-tracker-switch").removeAttribute("disabled");
-        }
+        const ids = ["wired-tracker-switch", "x2-tracker-switch"];
+        ids.forEach((id) => {
+            const element = document.getElementById(id);
+            setElementDisabledState(element, wirelessTrackerEnabled);
+        });
     });
 
     document.getElementById("wired-tracker-switch").addEventListener("change", function () {
@@ -1538,7 +1588,7 @@ function addEventListeners() {
         window.ipc.send("set-wired-tracker", wiredTrackerEnabled);
 
         // Disable unsupported settings
-        const ids = ["wireless-tracker-switch", "bluetooth-switch"];
+        const ids = ["x2-tracker-switch", "wireless-tracker-switch", "bluetooth-switch"];
         ids.forEach((id) => {
             const element = document.getElementById(id);
             setElementDisabledState(element, wiredTrackerEnabled);
@@ -1549,8 +1599,8 @@ function addEventListeners() {
      * "Connection mode" event listeners
      */
 
-    document.getElementById("bluetooth-switch").addEventListener("change", function () {
-        bluetoothEnabled = !bluetoothEnabled;
+    document.getElementById("bluetooth-switch").addEventListener("change", (event) => {
+        bluetoothEnabled = (event.target as HTMLInputElement).checked;
         l(`Switched Bluetooth to: ${bluetoothEnabled}`);
         window.ipc.send("save-setting", {
             global: {
@@ -1560,7 +1610,7 @@ function addEventListeners() {
             },
         });
 
-        if (!wiredTrackerEnabled && wirelessTrackerEnabled) return;
+        if (!wiredTrackerEnabled && (wirelessTrackerEnabled || x2TrackerEnabled)) return;
         setElementDisabledState(document.getElementById("wired-tracker-switch"), bluetoothEnabled);
     });
 
@@ -1599,13 +1649,13 @@ function addEventListeners() {
         if (bypassCOMPortLimit) {
             // If bypass is enabled, always enable all ports
             comPorts.forEach((port) => (port.disabled = false));
-        } else if (wirelessTrackerEnabled && highlightedPorts.length === 1) {
+        } else if ((wirelessTrackerEnabled || x2TrackerEnabled) && highlightedPorts.length === 1) {
             // Only allow checking one port for GX2
             comPorts.forEach((port) => {
                 if (!port.checked && selectedComPorts.length >= 1) port.disabled = true;
                 else port.disabled = false;
             });
-        } else if (wirelessTrackerEnabled && highlightedPorts.length === 3) {
+        } else if ((wirelessTrackerEnabled || x2TrackerEnabled) && highlightedPorts.length === 3) {
             // Only allow checking three ports for GX6
             comPorts.forEach((port) => {
                 if (!port.checked && selectedComPorts.length >= 3) port.disabled = true;
@@ -1996,6 +2046,7 @@ function saveSettings() {
             trackers: {
                 wirelessTrackerEnabled: wirelessTrackerEnabled,
                 wiredTrackerEnabled: wiredTrackerEnabled,
+                x2TrackerEnabled: x2TrackerEnabled,
                 fpsMode: fpsMode,
                 sensorMode: sensorMode,
                 accelerometerEnabled: accelerometerEnabled,
