@@ -81,9 +81,10 @@
         "tooltip": "アプリケーションの設定を変更できます。 黄色の文字で表示されるオプションを適用するには、トラッカーを再接続するかアプリケーションの再起動が必要です。",
         "trackerModel": {
             "title": "トラッカーモデル",
-            "tooltip": "HaritoraX ワイヤレス(HaritoraX 2)またはHaritoraX (1.1b/1.1/1.0)のどちらを使用するか選択します。",
-            "wireless": "HaritoraX ワイヤレス(HaritoraX 2)",
-            "wired": "HaritoraX 1.1b/1.1/1.0"
+            "tooltip": "HaritoraX 2、HaritoraX ワイヤレス、またはHaritoraX (1.1b/1.1/1.0)のどれを使用するか選択します。",
+            "wireless": "HaritoraX ワイヤレス",
+            "wired": "HaritoraX 1.1b/1.1/1.0",
+            "x2": "HaritoraX 2"
         },
         "connectionMode": {
             "title": "接続モード",
@@ -341,7 +342,8 @@
                 "title": "トラッカーモデル",
                 "message": "使用するHaritoraXのモデルを選択してください。",
                 "wireless": "HaritoraX ワイヤレス",
-                "wired": "HaritoraX 1.1b/1.1/1.0"
+                "wired": "HaritoraX 1.1b/1.1/1.0",
+                "x2": "HaritoraX 2"
             },
             "connectionMode": {
                 "title": "接続モード",
