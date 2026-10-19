@@ -1,4 +1,4 @@
-use crate::interpreters::common::CONNECTED_TRACKERS;
+use crate::interpreters::common::{ConnectedTracker, TrackerType, CONNECTED_TRACKERS};
 use firmware_protocol::{
     ActionType, BoardType, ImuType, McuType, SensorDataType, SensorStatus, SlimeQuaternion,
 };
@@ -19,10 +19,17 @@ static SLIMEVR_CANCEL_TOKEN: Lazy<Arc<Mutex<Option<CancellationToken>>>> =
 */
 
 pub async fn start_heartbeat(app_handle: &AppHandle) {
-    if !CONNECTED_TRACKERS.contains_key("(HEARTBEAT)") {
-        add_tracker(app_handle, "(HEARTBEAT)", [0, 0, 0, 0, 0, 0])
-            .await
-            .expect("Failed to add heartbeat tracker");
+    let tracker_name = "(HEARTBEAT)";
+    if !CONNECTED_TRACKERS.contains_key(tracker_name) {
+        add_tracker(
+            app_handle,
+            tracker_name,
+            [0, 0, 0, 0, 0, 0],
+            "internal",
+            TrackerType::Unknown,
+        )
+        .await
+        .expect("Failed to add heartbeat tracker");
     }
 
     // Initialize cancellation token if not already done
@@ -42,13 +49,22 @@ pub async fn add_tracker(
     app_handle: &AppHandle,
     tracker_name: &str,
     mac_address: [u8; 6],
+    connection_type: &str,
+    tracker_type: TrackerType,
 ) -> Result<(), String> {
     if CONNECTED_TRACKERS.contains_key(tracker_name) {
         return Err(format!("Tracker {} already exists", tracker_name));
     }
 
     // insert without EmulatedTracker so we know its already being initialized
-    CONNECTED_TRACKERS.insert(tracker_name.to_string(), None);
+    CONNECTED_TRACKERS.insert(
+        tracker_name.to_string(),
+        ConnectedTracker {
+            tracker: None,
+            connection_type: connection_type.to_string(),
+            tracker_type: tracker_type.clone(),
+        },
+    );
 
     let version = &app_handle.package_info().version;
     let mut tracker = EmulatedTracker::new(
@@ -69,15 +85,17 @@ pub async fn add_tracker(
         .await
         .map_err(|e| format!("Failed to initialize tracker: {}", e))?;
 
-    CONNECTED_TRACKERS.insert(tracker_name.to_string(), Some(tracker));
+    if let Some(mut entry) = CONNECTED_TRACKERS.get_mut(tracker_name) {
+        entry.tracker = Some(tracker);
+    }
 
     add_sensor(tracker_name)
         .await
         .expect("Failed to add sensor");
 
     // status monitoring
-    if let Some(tracker_option) = CONNECTED_TRACKERS.get(tracker_name) {
-        if let Some(tracker) = tracker_option.value() {
+    if let Some(entry) = CONNECTED_TRACKERS.get(tracker_name) {
+        if let Some(tracker) = &entry.tracker {
             let mut status_rx = tracker.subscribe_status();
 
             // get cancellation token
@@ -119,16 +137,18 @@ pub async fn add_tracker(
 pub async fn add_sensor(tracker_name: &str) -> Result<(), String> {
     if CONNECTED_TRACKERS.contains_key(tracker_name) {
         let mut tracker_ref = CONNECTED_TRACKERS.get_mut(tracker_name).unwrap();
-        let mut tracker = tracker_ref.take().unwrap();
+        if let Some(mut tracker) = tracker_ref.tracker.take() {
+            tracker
+                .add_sensor(ImuType::Unknown(0), SensorStatus::Ok)
+                .await
+                .map_err(|e| e.to_string())?;
 
-        tracker
-            .add_sensor(ImuType::Unknown(0), SensorStatus::Ok)
-            .await
-            .map_err(|e| e.to_string())?;
+            tracker_ref.tracker = Some(tracker);
 
-        *tracker_ref = Some(tracker);
-
-        Ok(())
+            Ok(())
+        } else {
+            Err(format!("Tracker {tracker_name} has no tracker instance"))
+        }
     } else {
         Err(format!("Tracker {tracker_name} not found"))
     }
@@ -142,7 +162,7 @@ pub async fn remove_tracker(tracker_name: &str) -> Result<(), String> {
     info!("Removing tracker: {}", tracker_name);
     if let Some(mut tracker_ref) = CONNECTED_TRACKERS.get_mut(tracker_name) {
         info!("Deinitializing tracker: {}", tracker_name);
-        if let Some(mut tracker) = tracker_ref.take() {
+        if let Some(mut tracker) = tracker_ref.tracker.take() {
             if let Err(e) = tracker.deinit().await {
                 error!("Failed to deinitialize tracker {}: {}", tracker_name, e);
             }
@@ -198,7 +218,7 @@ pub async fn send_rotation(
     rotation: [f32; 4],
 ) -> Result<(), String> {
     if let Some(tracker_ref) = CONNECTED_TRACKERS.get(tracker_name) {
-        if let Some(tracker) = tracker_ref.value() {
+        if let Some(tracker) = &tracker_ref.tracker {
             // Normalize the quaternion
             let magnitude = (rotation[0] * rotation[0]
                 + rotation[1] * rotation[1]
@@ -232,7 +252,7 @@ pub async fn send_accel(
     acceleration: [f32; 3],
 ) -> Result<(), String> {
     if let Some(tracker_ref) = CONNECTED_TRACKERS.get(tracker_name) {
-        if let Some(tracker) = tracker_ref.value() {
+        if let Some(tracker) = &tracker_ref.tracker {
             tracker
                 .send_acceleration(sensor_id, acceleration.into())
                 .await
@@ -249,7 +269,7 @@ pub async fn send_accel(
 
 pub async fn send_battery(tracker_name: &str, percentage: f32, voltage: f32) -> Result<(), String> {
     if let Some(tracker_ref) = CONNECTED_TRACKERS.get(tracker_name) {
-        if let Some(tracker) = tracker_ref.value() {
+        if let Some(tracker) = &tracker_ref.tracker {
             tracker
                 .send_battery_level(percentage, voltage)
                 .await
@@ -266,7 +286,7 @@ pub async fn send_battery(tracker_name: &str, percentage: f32, voltage: f32) -> 
 
 pub async fn send_user_action(tracker_name: &str, action: ActionType) -> Result<(), String> {
     if let Some(tracker_ref) = CONNECTED_TRACKERS.get(tracker_name) {
-        if let Some(tracker) = tracker_ref.value() {
+        if let Some(tracker) = &tracker_ref.tracker {
             tracker
                 .send_user_action(action)
                 .await

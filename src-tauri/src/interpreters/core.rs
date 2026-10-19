@@ -15,6 +15,25 @@ pub enum TrackerModel {
     Wired,
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize)]
+pub enum SensorMode {
+    MagEnabled,
+    MagDisabled,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize)]
+pub enum FpsMode {
+    Fps50,
+    Fps100,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize)]
+pub enum SensorAutoCorrection {
+    Accel,
+    Gyro,
+    Mag,
+}
+
 #[async_trait]
 pub trait Interpreter: Send + Sync {
     async fn parse_ble(

@@ -114,35 +114,45 @@ async fn process_imu(
     connection_mode: &str,
     data: Vec<u8>,
 ) -> Result<(), String> {
+    use crate::interpreters::common::TrackerType;
     if !tracker_name.is_empty() {
         match CONNECTED_TRACKERS.get(tracker_name) {
             Some(entry) => {
-                if entry.is_none() {
+                if entry.tracker.is_none() {
                     // still initializing tracker
                     return Ok(());
                 }
             }
             None => {
                 let tracker_id = tracker_name.splitn(2, '-').nth(1).unwrap_or(tracker_name);
-
                 info!("Creating new tracker: {}", tracker_name);
-
-                // for BLE trackers, we still use the old name when passing to the UI
-                // TODO: i should change that, we will identify the connection type in the UI
                 let mac = get_mac_from_name(tracker_id);
-                if let Err(e) = add_tracker(app_handle, tracker_name, mac).await {
-                    error!("Failed to add tracker: {}", e);
-                    return Err(format!("Failed to add tracker: {}", e));
-                }
+                // Determine tracker_type from BLE name
+                let tracker_type = if tracker_name.starts_with("HaritoraX-") {
+                    TrackerType::Wired
+                } else if tracker_name.starts_with("HaritoraXW-") {
+                    TrackerType::Wireless
+                } else if tracker_name.starts_with("HaritoraX2-") {
+                    TrackerType::X2
+                } else {
+                    TrackerType::Unknown
+                };
 
                 let payload = serde_json::json!({
                     "tracker": tracker_name,
                     "connection_mode": connection_mode,
-                    "tracker_type": "Wireless",
+                    "tracker_type": &tracker_type,
                     "data": {
                         "assignment": tracker_assignment,
                     },
                 });
+
+                if let Err(e) =
+                    add_tracker(app_handle, tracker_name, mac, connection_mode, tracker_type).await
+                {
+                    error!("Failed to add tracker: {}", e);
+                    return Err(format!("Failed to add tracker: {}", e));
+                }
 
                 app_handle.emit("connect", payload).map_err(|e| {
                     format!(

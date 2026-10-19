@@ -1,19 +1,37 @@
 use super::core::ChargeStatus;
-use crate::interpreters::core::{Acceleration, BatteryData, IMUData, Rotation, Rotations};
+use crate::interpreters::core::{
+    Acceleration, BatteryData, FpsMode, IMUData, Rotation, Rotations, SensorAutoCorrection,
+    SensorMode,
+};
 use base64::Engine;
 use byteorder::{LittleEndian, ReadBytesExt};
 use dashmap::DashMap;
 use log::info;
 use nalgebra::{Quaternion, UnitQuaternion};
 use once_cell::sync::Lazy;
+use serde::Serialize;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use std::io::Cursor;
 use std::time::Instant;
 use tracker_emulation_rs::EmulatedTracker;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 
-pub static CONNECTED_TRACKERS: Lazy<DashMap<String, Option<EmulatedTracker>>> =
-    Lazy::new(DashMap::new);
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub enum TrackerType {
+    Wired,
+    Wireless,
+    X2,
+    Unknown,
+}
+
+#[derive(Debug)]
+pub struct ConnectedTracker {
+    pub tracker: Option<EmulatedTracker>,
+    pub connection_type: String, // "ble" or "serial"
+    pub tracker_type: TrackerType,
+}
+
+pub static CONNECTED_TRACKERS: Lazy<DashMap<String, ConnectedTracker>> = Lazy::new(DashMap::new);
 
 // BatteryLevel: Option<u8>, BatteryVoltage: Option<u16>, ChargeStatus: Option<String>
 pub static BATTERY_INFO: Lazy<DashMap<String, (Option<u8>, Option<u16>, Option<String>)>> =
@@ -71,6 +89,28 @@ pub fn get_mac_from_name(tracker_name: &str) -> [u8; 6] {
         ((hash >> 8) & 0xFF) as u8,
     ]
 }
+
+/*
+ * Tracker management functions
+*/
+
+pub fn set_tracker_settings(
+    tracker_name: &str,
+    sensor_mode: SensorMode,
+    fps_mode: FpsMode,
+    sensor_auto_correction: Vec<SensorAutoCorrection>,
+    ankle_enabled: bool,
+) -> Result<(), String> {
+    if tracker_name.is_empty() {
+        return Err("Tracker name cannot be empty".to_string());
+    }
+
+    Ok(())
+}
+
+/*
+ * Interpreter helper functions
+*/
 
 /// ### Connections supported:
 /// - Serial
